@@ -1,26 +1,23 @@
+import { Spinner } from "flowbite-react";
 import { useEffect } from "react";
-import { useAuth } from "../app/hooks";
-import config from "../config/app";
-import cookies from "../config/cookie";
+import { useAppSelector, useAuth } from "../app/hooks";
+import { RootState } from "../app/store";
 
 const SplashPage = () => {
   const auth = useAuth();
-
-  const checkAuth = async () => {
-    const token = cookies.get(config.accessTokenKey);
-    if (token) {
-      //
-    }
-    auth.setIsLoading(false);
-  };
+  const { isSuccess } = useAppSelector((state: RootState) => state.profile);
 
   useEffect(() => {
-    checkAuth();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (isSuccess) {
+      auth.signin(() => {
+        auth.setIsLoading(false);
+      });
+    }
+  }, [isSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div>
-      <h1>Splash page</h1>
+    <div className="flex justify-center items-center h-screen w-screen bg-neutral-50">
+      <Spinner size={"lg"} />
     </div>
   );
 };

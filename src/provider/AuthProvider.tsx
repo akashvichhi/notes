@@ -16,12 +16,12 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signin = (callback: VoidFunction) => {
     setIsAuthenticated(true);
-    callback();
+    setTimeout(callback);
   };
 
   const signout = (callback: VoidFunction) => {
     setIsAuthenticated(false);
-    callback();
+    setTimeout(callback);
   };
 
   const value = { isLoading, setIsLoading, isAuthenticated, signin, signout };

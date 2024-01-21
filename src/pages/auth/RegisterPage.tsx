@@ -1,38 +1,47 @@
 import { Button, Label } from "flowbite-react";
 import { useFormik } from "formik";
 import { createRef, useEffect } from "react";
-import { FaEye } from "react-icons/fa6";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector, useAuth } from "../../app/hooks";
 import { RootState } from "../../app/store";
 import Input from "../../components/form/Input";
-import { login } from "../../features/authSlice";
+import { register } from "../../features/authSlice";
 import { fetchProfile } from "../../features/profileSlice";
+import { FaEye } from "react-icons/fa6";
 
 type FormData = {
+  name: string;
   email: string;
   password: string;
+  confirmPassword?: string;
 };
 
 const validator = Yup.object({
+  name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string().required("Password is required"),
+  confirmPassword: Yup.string()
+    .required("Confirm password is required")
+    .oneOf([Yup.ref("password")], "Passwords do not match"),
 });
 
-const LoginPage = () => {
+const RegisterPage = () => {
   const auth = useAuth();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isLoading, isSuccess } = useAppSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
+
   const passwordRef = createRef<HTMLInputElement>();
 
   const { values, handleChange, errors, handleSubmit } = useFormik({
     initialValues: {
+      name: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
     onSubmit: (values: FormData) => {
       submit(values);
@@ -43,7 +52,7 @@ const LoginPage = () => {
   });
 
   const submit = (data: FormData) => {
-    dispatch(login(data));
+    dispatch(register(data));
   };
 
   useEffect(() => {
@@ -65,20 +74,32 @@ const LoginPage = () => {
     }
   };
 
-  if (auth.isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
   return (
-    <div className="bg-gray-100 flex min-h-screen flex-col justify-center px-6 py-12 lg:px-8">
+    <div className="bg-gray-100 flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-          Sign in to your account
+          Create your account
         </h2>
       </div>
 
       <div className="bg-white shadow p-8 rounded-xl mt-8 sm:mx-auto sm:w-full sm:max-w-sm">
         <form className="space-y-6" onSubmit={handleSubmit}>
+          <div>
+            <Label htmlFor="name">Name</Label>
+            <div className="mt-1">
+              <Input
+                id="name"
+                type="text"
+                name="name"
+                value={values.name}
+                onChange={handleChange}
+              />
+            </div>
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name}</p>
+            )}
+          </div>
+
           <div>
             <Label htmlFor="email">Email</Label>
             <div className="mt-1">
@@ -118,6 +139,24 @@ const LoginPage = () => {
             )}
           </div>
 
+          <div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="confirm_password">Confirm Password</Label>
+            </div>
+            <div className="mt-1">
+              <Input
+                id="confirm_password"
+                type="password"
+                name="confirmPassword"
+                value={values.confirmPassword}
+                onChange={handleChange}
+              />
+            </div>
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+            )}
+          </div>
+
           <div className="pt-2">
             <Button
               type="submit"
@@ -125,18 +164,18 @@ const LoginPage = () => {
               disabled={isLoading}
               isProcessing={isLoading}
             >
-              Sign in
+              Sign up
             </Button>
           </div>
         </form>
 
         <p className="mt-8 text-center text-sm text-gray-600">
-          Does not have an account?&nbsp;
+          Already have an account?&nbsp;
           <Link
-            to="/register"
+            to="/login"
             className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
           >
-            Create an account
+            Sign in
           </Link>
         </p>
       </div>
@@ -144,4 +183,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

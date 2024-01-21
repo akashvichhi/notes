@@ -3,7 +3,7 @@ import appConfig from "./app";
 import cookies from "./cookie";
 
 const axios = instance.create({
-  baseURL: appConfig.apiUrl,
+  baseURL: `${appConfig.apiUrl}/api`,
 });
 
 axios.interceptors.request.use(

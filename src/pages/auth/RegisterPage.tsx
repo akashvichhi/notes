@@ -1,7 +1,7 @@
 import { Button, Label } from "flowbite-react";
 import { useFormik } from "formik";
 import { createRef, useEffect, useState } from "react";
-import { FaEye, FaEyeSlash } from "react-icons/fa6";
+import { FaEye, FaEyeSlash, FaLock, FaRegEnvelope } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector, useAuth } from "../../app/hooks";
@@ -9,6 +9,7 @@ import { RootState } from "../../app/store";
 import Input from "../../components/form/Input";
 import { register } from "../../features/authSlice";
 import { fetchProfile } from "../../features/profileSlice";
+import { FiUser } from "react-icons/fi";
 
 type FormData = {
   name: string;
@@ -95,6 +96,7 @@ const RegisterPage = () => {
                 name="name"
                 value={values.name}
                 onChange={handleChange}
+                leftIcon={<FiUser />}
               />
             </div>
             {errors.name && (
@@ -111,6 +113,7 @@ const RegisterPage = () => {
                 name="email"
                 value={values.email}
                 onChange={handleChange}
+                leftIcon={<FaRegEnvelope />}
               />
             </div>
             {errors.email && (
@@ -122,7 +125,7 @@ const RegisterPage = () => {
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
             </div>
-            <div className="relative mt-1">
+            <div className="mt-1">
               <Input
                 ref={passwordRef}
                 id="password"
@@ -130,18 +133,21 @@ const RegisterPage = () => {
                 name="password"
                 value={values.password}
                 onChange={handleChange}
+                leftIcon={<FaLock />}
+                rightIcon={
+                  showPassword ? (
+                    <FaEyeSlash
+                      className="cursor-pointer"
+                      onClick={togglePassordVisibility}
+                    />
+                  ) : (
+                    <FaEye
+                      className="cursor-pointer"
+                      onClick={togglePassordVisibility}
+                    />
+                  )
+                }
               />
-              {showPassword ? (
-                <FaEyeSlash
-                  className="absolute cursor-pointer right-2 top-1/2 -translate-y-1/2"
-                  onClick={togglePassordVisibility}
-                />
-              ) : (
-                <FaEye
-                  className="absolute cursor-pointer right-2 top-1/2 -translate-y-1/2"
-                  onClick={togglePassordVisibility}
-                />
-              )}
             </div>
             {errors.password && (
               <p className="text-sm text-red-500">{errors.password}</p>
@@ -159,6 +165,7 @@ const RegisterPage = () => {
                 name="confirmPassword"
                 value={values.confirmPassword}
                 onChange={handleChange}
+                leftIcon={<FaLock />}
               />
             </div>
             {errors.confirmPassword && (

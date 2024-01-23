@@ -1,6 +1,6 @@
 import instance, { HttpStatusCode } from "axios";
 import appConfig from "./app";
-import cookies from "./cookie";
+import { clearSession, getSession } from "../utils/session";
 
 const axios = instance.create({
   baseURL: `${appConfig.apiUrl}/api`,
@@ -8,7 +8,7 @@ const axios = instance.create({
 
 axios.interceptors.request.use(
   (config) => {
-    const token = cookies.get(appConfig.accessTokenKey);
+    const token = getSession();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -22,7 +22,7 @@ axios.interceptors.request.use(
 axios.interceptors.response.use(
   (response) => {
     if (response.status === HttpStatusCode.Unauthorized) {
-      cookies.remove(appConfig.accessTokenKey);
+      clearSession();
       window.location.reload();
     }
     return response;

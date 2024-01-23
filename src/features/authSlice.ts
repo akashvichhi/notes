@@ -1,9 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import apiRoutes from "../config/apiRoutes";
-import config from "../config/app";
 import axios from "../config/axios";
-import cookies from "../config/cookie";
 import { showErrorMessage } from "../utils/messages";
+import { clearSession, setSession } from "../utils/session";
 
 type Payload = {
   name: string;
@@ -80,8 +79,7 @@ export const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-
-        cookies.set(config.accessTokenKey, action.payload?.data?.token ?? null);
+        setSession(action.payload?.data?.token ?? "");
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -99,10 +97,7 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
 
-        cookies.set(
-          config.accessTokenKey,
-          action?.payload?.data?.token ?? null,
-        );
+        setSession(action.payload?.data?.token ?? "");
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
@@ -118,11 +113,11 @@ export const authSlice = createSlice({
       })
       .addCase(logout.fulfilled, (state) => {
         state.isLoading = false;
-        cookies.remove(config.accessTokenKey);
+        clearSession();
       })
       .addCase(logout.rejected, (state) => {
         state.isLoading = false;
-        cookies.remove(config.accessTokenKey);
+        clearSession();
       });
   },
 });

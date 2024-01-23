@@ -2,20 +2,19 @@ import { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { useAppDispatch, useAuth } from "./app/hooks";
 import ProtectedRoute from "./components/ProtectedRoute";
-import config from "./config/app";
-import cookies from "./config/cookie";
 import { fetchProfile } from "./features/profileSlice";
 import HomePage from "./pages/Home";
 import SplashPage from "./pages/SplashPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import { getSession } from "./utils/session";
 
 function App() {
   const auth = useAuth();
   const dispatch = useAppDispatch();
 
   const checkAuth = async () => {
-    const token = cookies.get(config.accessTokenKey);
+    const token = getSession();
     if (!token) {
       auth.setIsLoading(false);
       return;

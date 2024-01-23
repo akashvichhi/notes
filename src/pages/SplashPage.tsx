@@ -5,7 +5,9 @@ import { RootState } from "../app/store";
 
 const SplashPage = () => {
   const auth = useAuth();
-  const { isSuccess } = useAppSelector((state: RootState) => state.profile);
+  const { isSuccess, isError } = useAppSelector(
+    (state: RootState) => state.profile,
+  );
 
   useEffect(() => {
     if (isSuccess) {
@@ -14,6 +16,12 @@ const SplashPage = () => {
       });
     }
   }, [isSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isError) {
+      auth.setIsLoading(false);
+    }
+  }, [isError]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex justify-center items-center h-screen w-screen bg-neutral-50">

@@ -1,6 +1,7 @@
 import { Button, Label } from "flowbite-react";
 import { useFormik } from "formik";
-import { createRef, useEffect } from "react";
+import { createRef, useEffect, useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector, useAuth } from "../../app/hooks";
@@ -8,7 +9,6 @@ import { RootState } from "../../app/store";
 import Input from "../../components/form/Input";
 import { register } from "../../features/authSlice";
 import { fetchProfile } from "../../features/profileSlice";
-import { FaEye } from "react-icons/fa6";
 
 type FormData = {
   name: string;
@@ -35,6 +35,7 @@ const RegisterPage = () => {
   );
 
   const passwordRef = createRef<HTMLInputElement>();
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const { values, handleChange, errors, handleSubmit } = useFormik({
     initialValues: {
@@ -66,6 +67,7 @@ const RegisterPage = () => {
 
   const togglePassordVisibility = () => {
     if (passwordRef.current) {
+      setShowPassword(!showPassword);
       if (passwordRef.current.type === "password") {
         passwordRef.current.type = "text";
       } else {
@@ -129,10 +131,17 @@ const RegisterPage = () => {
                 value={values.password}
                 onChange={handleChange}
               />
-              <FaEye
-                className="absolute cursor-pointer right-2 top-1/2 -translate-y-1/2"
-                onClick={togglePassordVisibility}
-              />
+              {showPassword ? (
+                <FaEyeSlash
+                  className="absolute cursor-pointer right-2 top-1/2 -translate-y-1/2"
+                  onClick={togglePassordVisibility}
+                />
+              ) : (
+                <FaEye
+                  className="absolute cursor-pointer right-2 top-1/2 -translate-y-1/2"
+                  onClick={togglePassordVisibility}
+                />
+              )}
             </div>
             {errors.password && (
               <p className="text-sm text-red-500">{errors.password}</p>

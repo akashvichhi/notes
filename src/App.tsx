@@ -8,6 +8,7 @@ import SplashPage from "./pages/SplashPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import { getSession } from "./utils/session";
+import NotFoundPage from "./pages/errors/404";
 
 function App() {
   const auth = useAuth();
@@ -44,6 +45,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </main>
   );

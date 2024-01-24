@@ -8,7 +8,7 @@ interface InputProps {
 const Input = forwardRef(
   (
     props: InputHTMLAttributes<HTMLInputElement> & InputProps,
-    ref: ForwardedRef<HTMLInputElement>
+    ref: ForwardedRef<HTMLInputElement>,
   ) => {
     const className = props.className;
     return (
@@ -30,7 +30,7 @@ const Input = forwardRef(
         )}
       </div>
     );
-  }
+  },
 );
 
 export default Input;

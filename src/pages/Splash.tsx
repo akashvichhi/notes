@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useAppSelector, useAuth } from "../app/hooks";
 import { RootState } from "../app/store";
 
-const SplashPage = () => {
+const Splash = () => {
   const auth = useAuth();
   const { isSuccess, isError } = useAppSelector(
     (state: RootState) => state.profile,
@@ -30,4 +30,4 @@ const SplashPage = () => {
   );
 };
 
-export default SplashPage;
+export default Splash;

@@ -2,6 +2,7 @@ import { Button, Label } from "flowbite-react";
 import { useFormik } from "formik";
 import { createRef, useEffect, useState } from "react";
 import { FaEye, FaEyeSlash, FaLock, FaRegEnvelope } from "react-icons/fa6";
+import { FiUser } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector, useAuth } from "../../app/hooks";
@@ -9,7 +10,6 @@ import { RootState } from "../../app/store";
 import Input from "../../components/form/Input";
 import { register } from "../../features/authSlice";
 import { fetchProfile } from "../../features/profileSlice";
-import { FiUser } from "react-icons/fi";
 
 type FormData = {
   name: string;
@@ -91,34 +91,36 @@ const RegisterPage = () => {
             <Label htmlFor="name">Name</Label>
             <div className="mt-1">
               <Input
-                id="name"
-                type="text"
-                name="name"
-                value={values.name}
-                onChange={handleChange}
+                inputProps={{
+                  id: "name",
+                  type: "text",
+                  name: "name",
+                  value: values.name,
+                  onChange: handleChange,
+                }}
+                helperText={errors.name ?? ""}
+                color={"error"}
                 leftIcon={<FiUser />}
               />
             </div>
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name}</p>
-            )}
           </div>
 
           <div>
             <Label htmlFor="email">Email</Label>
             <div className="mt-1">
               <Input
-                id="email"
-                type="text"
-                name="email"
-                value={values.email}
-                onChange={handleChange}
+                inputProps={{
+                  id: "email",
+                  type: "email",
+                  name: "email",
+                  value: values.email,
+                  onChange: handleChange,
+                }}
                 leftIcon={<FaRegEnvelope />}
+                helperText={errors.email ?? ""}
+                color={"error"}
               />
             </div>
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email}</p>
-            )}
           </div>
 
           <div>
@@ -128,11 +130,13 @@ const RegisterPage = () => {
             <div className="mt-1">
               <Input
                 ref={passwordRef}
-                id="password"
-                type={passwordRef.current?.type ?? "password"}
-                name="password"
-                value={values.password}
-                onChange={handleChange}
+                inputProps={{
+                  id: "password",
+                  type: showPassword ? "text" : "password",
+                  name: "password",
+                  value: values.password,
+                  onChange: handleChange,
+                }}
                 leftIcon={<FaLock />}
                 rightIcon={
                   showPassword ? (
@@ -147,11 +151,10 @@ const RegisterPage = () => {
                     />
                   )
                 }
+                helperText={errors.password ?? ""}
+                color={"error"}
               />
             </div>
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password}</p>
-            )}
           </div>
 
           <div>
@@ -160,17 +163,18 @@ const RegisterPage = () => {
             </div>
             <div className="mt-1">
               <Input
-                id="confirm_password"
-                type="password"
-                name="confirmPassword"
-                value={values.confirmPassword}
-                onChange={handleChange}
+                inputProps={{
+                  id: "confirm_password",
+                  type: showPassword ? "text" : "password",
+                  name: "confirmPassword",
+                  value: values.confirmPassword,
+                  onChange: handleChange,
+                }}
                 leftIcon={<FaLock />}
+                helperText={errors.confirmPassword ?? ""}
+                color={"error"}
               />
             </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-500">{errors.confirmPassword}</p>
-            )}
           </div>
 
           <div className="pt-2">

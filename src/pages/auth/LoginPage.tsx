@@ -85,19 +85,19 @@ const LoginPage = () => {
             <Label htmlFor="email">Email</Label>
             <div className="mt-1">
               <Input
-                id="email"
-                type="text"
-                name="email"
-                value={values.email}
-                onChange={handleChange}
+                inputProps={{
+                  id: "email",
+                  type: "text",
+                  name: "email",
+                  value: values.email,
+                  onChange: handleChange,
+                }}
+                helperText={errors.email ?? ""}
+                color={"error"}
                 leftIcon={<FaRegEnvelope />}
               />
             </div>
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email}</p>
-            )}
           </div>
-
           <div>
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
@@ -105,11 +105,15 @@ const LoginPage = () => {
             <div className="mt-1">
               <Input
                 ref={passwordRef}
-                id="password"
-                type={passwordRef.current?.type ?? "password"}
-                name="password"
-                value={values.password}
-                onChange={handleChange}
+                inputProps={{
+                  id: "password",
+                  type: showPassword ? "text" : "password",
+                  name: "password",
+                  value: values.password,
+                  onChange: handleChange,
+                }}
+                helperText={errors.password ?? ""}
+                color={"error"}
                 leftIcon={<FaLock />}
                 rightIcon={
                   showPassword ? (
@@ -126,11 +130,7 @@ const LoginPage = () => {
                 }
               />
             </div>
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password}</p>
-            )}
           </div>
-
           <div className="pt-2">
             <Button
               type="submit"

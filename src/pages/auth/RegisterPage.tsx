@@ -1,8 +1,7 @@
 import { Button, Label } from "flowbite-react";
 import { useFormik } from "formik";
 import { createRef, useEffect, useState } from "react";
-import { FaEye, FaEyeSlash, FaLock, FaRegEnvelope } from "react-icons/fa6";
-import { FiUser } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiLock, FiMail, FiUser } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector, useAuth } from "../../app/hooks";
@@ -116,7 +115,7 @@ const RegisterPage = () => {
                   value: values.email,
                   onChange: handleChange,
                 }}
-                leftIcon={<FaRegEnvelope />}
+                leftIcon={<FiMail />}
                 helperText={errors.email ?? ""}
                 color={"error"}
               />
@@ -137,15 +136,15 @@ const RegisterPage = () => {
                   value: values.password,
                   onChange: handleChange,
                 }}
-                leftIcon={<FaLock />}
+                leftIcon={<FiLock />}
                 rightIcon={
                   showPassword ? (
-                    <FaEyeSlash
+                    <FiEyeOff
                       className="cursor-pointer"
                       onClick={togglePassordVisibility}
                     />
                   ) : (
-                    <FaEye
+                    <FiEye
                       className="cursor-pointer"
                       onClick={togglePassordVisibility}
                     />
@@ -170,7 +169,7 @@ const RegisterPage = () => {
                   value: values.confirmPassword,
                   onChange: handleChange,
                 }}
-                leftIcon={<FaLock />}
+                leftIcon={<FiLock />}
                 helperText={errors.confirmPassword ?? ""}
                 color={"error"}
               />

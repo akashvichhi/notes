@@ -1,60 +1,51 @@
-import { Button, Label } from "flowbite-react";
+import { Button, Label, Modal } from "flowbite-react";
 import { useFormik } from "formik";
-import { createRef, useEffect, useState } from "react";
-import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { createRef, useState } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import * as Yup from "yup";
-import { useAppDispatch, useAppSelector, useAuth } from "../../app/hooks";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { RootState } from "../../app/store";
-import Input from "../../components/form/Input";
-import { login } from "../../features/authSlice";
-import { fetchProfile } from "../../features/profileSlice";
+import { changePassword } from "../../features/profileSlice";
+import Input from "../form/Input";
 
 type FormData = {
-  email: string;
+  currentPassword: string;
   password: string;
+  confirmPassword: string;
 };
 
 const validator = Yup.object({
-  email: Yup.string().email("Invalid email").required("Email is required"),
+  currentPassword: Yup.string().required("Current Password is required"),
   password: Yup.string().required("Password is required"),
+  confirmPassword: Yup.string()
+    .required("Confirm Password is required")
+    .oneOf([Yup.ref("password")], "Passwords do not match"),
 });
 
-const LoginPage = () => {
-  const auth = useAuth();
+interface ChangePasswordProps {
+  show: boolean;
+  onClose: () => void;
+}
+
+const ChangePassword = ({ show, onClose }: ChangePasswordProps) => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { isLoading, isSuccess } = useAppSelector(
-    (state: RootState) => state.auth,
-  );
+  const { isLoading } = useAppSelector((state: RootState) => state.profile);
   const passwordRef = createRef<HTMLInputElement>();
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const { values, handleChange, errors, handleSubmit } = useFormik({
     initialValues: {
-      email: "",
+      confirmPassword: "",
       password: "",
+      currentPassword: "",
     },
     onSubmit: (values: FormData) => {
-      submit(values);
+      dispatch(changePassword(values));
     },
     validationSchema: validator,
     validateOnBlur: false,
     validateOnChange: false,
   });
-
-  const submit = (data: FormData) => {
-    dispatch(login(data));
-  };
-
-  useEffect(() => {
-    if (isSuccess) {
-      dispatch(fetchProfile());
-      auth.signin(() => {
-        navigate("/");
-      });
-    }
-  }, [isSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePassordVisibility = () => {
     if (passwordRef.current) {
@@ -67,41 +58,29 @@ const LoginPage = () => {
     }
   };
 
-  if (auth.isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
   return (
-    <div className="flex min-h-screen flex-col justify-center px-6 py-12 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-          Sign in to your account
-        </h2>
-      </div>
-
-      <div className="bg-white shadow p-8 rounded-xl mt-8 sm:mx-auto sm:w-full sm:max-w-sm">
+    <Modal show={show} onClose={onClose} size={"md"}>
+      <Modal.Header>Change Password</Modal.Header>
+      <Modal.Body>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="name">Current Password</Label>
             <div className="mt-1">
               <Input
                 inputProps={{
-                  id: "email",
-                  type: "text",
-                  name: "email",
-                  value: values.email,
+                  id: "currentPassword",
+                  type: "password",
+                  name: "currentPassword",
+                  value: values.currentPassword,
                   onChange: handleChange,
                 }}
-                helperText={errors.email ?? ""}
+                helperText={errors.currentPassword ?? ""}
                 color={"error"}
-                leftIcon={<FiMail />}
               />
             </div>
           </div>
           <div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-            </div>
+            <Label htmlFor="name">New Password</Label>
             <div className="mt-1">
               <Input
                 ref={passwordRef}
@@ -114,7 +93,6 @@ const LoginPage = () => {
                 }}
                 helperText={errors.password ?? ""}
                 color={"error"}
-                leftIcon={<FiLock />}
                 rightIcon={
                   showPassword ? (
                     <FiEyeOff
@@ -131,6 +109,23 @@ const LoginPage = () => {
               />
             </div>
           </div>
+          <div>
+            <Label htmlFor="name">Confirm New Password</Label>
+            <div className="mt-1">
+              <Input
+                inputProps={{
+                  id: "confirmPassword",
+                  type: "password",
+                  name: "confirmPassword",
+                  value: values.confirmPassword,
+                  onChange: handleChange,
+                }}
+                helperText={errors.confirmPassword ?? ""}
+                color={"error"}
+              />
+            </div>
+          </div>
+
           <div className="pt-2">
             <Button
               type="submit"
@@ -138,23 +133,13 @@ const LoginPage = () => {
               disabled={isLoading}
               isProcessing={isLoading}
             >
-              Sign in
+              Update
             </Button>
           </div>
         </form>
-
-        <p className="mt-8 text-center text-sm text-gray-600">
-          Does not have an account?&nbsp;
-          <Link
-            to="/register"
-            className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-          >
-            Create an account
-          </Link>
-        </p>
-      </div>
-    </div>
+      </Modal.Body>
+    </Modal>
   );
 };
 
-export default LoginPage;
+export default ChangePassword;

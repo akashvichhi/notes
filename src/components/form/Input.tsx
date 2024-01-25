@@ -26,12 +26,20 @@ const Input = forwardRef(
           {...props.inputProps}
         />
         {props.leftIcon && (
-          <div className="absolute top-3 left-0 flex items-center pl-3">
+          <div
+            className={
+              "absolute top-3 left-0 flex items-center pl-3 text-gray-600"
+            }
+          >
             {props.leftIcon}
           </div>
         )}
         {props.rightIcon && (
-          <div className="absolute top-3 right-0 flex items-center pr-3">
+          <div
+            className={
+              "absolute top-3 right-0 flex items-center pr-3 text-gray-600"
+            }
+          >
             {props.rightIcon}
           </div>
         )}

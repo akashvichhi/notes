@@ -1,11 +1,12 @@
 import { Avatar, Dropdown } from "flowbite-react";
-import { useState } from "react";
+import { lazy, useState } from "react";
 import { FiLock, FiLogOut, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAuth } from "../app/hooks";
-import { logout } from "../features/authSlice";
-import ChangePassword from "./profile/ChangePassword";
-import EditProfile from "./profile/EditProfile";
+import { logout } from "../../reducers/authSlice";
+import { useAppDispatch, useAuth } from "../../store/hooks";
+
+const ChangePassword = lazy(() => import("../profile/ChangePassword"));
+const EditProfile = lazy(() => import("../profile/EditProfile"));
 
 const Header = () => {
   const auth = useAuth();
@@ -64,8 +65,15 @@ const Header = () => {
           </Dropdown>
         </div>
       </div>
-      <EditProfile show={showEditProfile} onClose={closeEditProfile} />
-      <ChangePassword show={showChangePassword} onClose={closeChangePassword} />
+      {showEditProfile && (
+        <EditProfile show={showEditProfile} onClose={closeEditProfile} />
+      )}
+      {showChangePassword && (
+        <ChangePassword
+          show={showChangePassword}
+          onClose={closeChangePassword}
+        />
+      )}
     </header>
   );
 };

@@ -3,9 +3,9 @@ import { useFormik } from "formik";
 import { useEffect } from "react";
 import { FiMail, FiUser } from "react-icons/fi";
 import * as Yup from "yup";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { RootState } from "../../app/store";
-import { updateProfile } from "../../features/profileSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { RootState } from "../../store/store";
+import { updateProfile } from "../../reducers/profileSlice";
 import Input from "../form/Input";
 
 type FormData = {
@@ -24,9 +24,7 @@ interface EditProfileProps {
 
 const EditProfile = ({ show, onClose }: EditProfileProps) => {
   const dispatch = useAppDispatch();
-  const { isLoading, user } = useAppSelector(
-    (state: RootState) => state.profile,
-  );
+  const { status, user } = useAppSelector((state: RootState) => state.profile);
 
   const { values, handleChange, errors, handleSubmit } = useFormik({
     initialValues: {
@@ -42,6 +40,7 @@ const EditProfile = ({ show, onClose }: EditProfileProps) => {
   });
 
   useEffect(() => {
+    console.log("=====> eit proil");
     if (user) {
       values.name = user?.name ?? "";
       values.email = user?.email ?? "";
@@ -91,8 +90,8 @@ const EditProfile = ({ show, onClose }: EditProfileProps) => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading}
-              isProcessing={isLoading}
+              disabled={status === "pending"}
+              isProcessing={status === "pending"}
             >
               Update
             </Button>

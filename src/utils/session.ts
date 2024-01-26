@@ -1,4 +1,4 @@
-import config from "../config/app";
+import config from "../constants/app";
 import cookies from "../config/cookie";
 
 export const setSession = (session: string) => {

@@ -1,8 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import apiRoutes from "../config/apiRoutes";
 import axios from "../config/axios";
-import { showErrorMessage } from "../utils/messages";
+import apiRoutes from "../constants/apiRoutes";
 import { clearSession, setSession } from "../utils/session";
+import Toast from "../utils/toast";
+import { Status } from "../types/ApiRequest";
 
 type Payload = {
   name: string;
@@ -11,13 +12,11 @@ type Payload = {
 };
 
 interface AuthState {
-  isLoading: boolean;
-  isSuccess: boolean;
+  status: Status;
 }
 
 const initialState: AuthState = {
-  isLoading: false,
-  isSuccess: false,
+  status: "idle",
 };
 
 export const login = createAsyncThunk(
@@ -73,50 +72,41 @@ export const authSlice = createSlice({
     builder
       // login
       .addCase(login.pending, (state) => {
-        state.isLoading = true;
-        state.isSuccess = false;
+        state.status = "pending";
       })
       .addCase(login.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
+        state.status = "fulfilled";
         setSession(action.payload?.data?.token ?? "");
       })
       .addCase(login.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = false;
+        state.status = "rejected";
 
-        showErrorMessage(action.payload as string);
+        Toast.error(action.payload as string);
       })
 
       // register
       .addCase(register.pending, (state) => {
-        state.isLoading = true;
-        state.isSuccess = false;
+        state.status = "pending";
       })
       .addCase(register.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-
+        state.status = "fulfilled";
         setSession(action.payload?.data?.token ?? "");
       })
       .addCase(register.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = false;
-
-        showErrorMessage(action.payload as string);
+        state.status = "rejected";
+        Toast.error(action.payload as string);
       })
 
       // logout
       .addCase(logout.pending, (state) => {
-        state.isLoading = true;
-        state.isSuccess = false;
+        state.status = "pending";
       })
       .addCase(logout.fulfilled, (state) => {
-        state.isLoading = false;
+        state.status = "fulfilled";
         clearSession();
       })
       .addCase(logout.rejected, (state) => {
-        state.isLoading = false;
+        state.status = "rejected";
         clearSession();
       });
   },

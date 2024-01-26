@@ -1,5 +1,5 @@
 import instance, { HttpStatusCode } from "axios";
-import appConfig from "./app";
+import appConfig from "../constants/app";
 import { clearSession, getSession } from "../utils/session";
 
 const axios = instance.create({

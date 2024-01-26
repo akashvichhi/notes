@@ -1,10 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import apiRoutes from "../config/apiRoutes";
 import axios from "../config/axios";
+import apiRoutes from "../constants/apiRoutes";
 import User from "../types/User";
-import { showErrorMessage, showSuccessMessage } from "../utils/messages";
+import Toast from "../utils/toast";
 import { clearSession } from "../utils/session";
 import { camelToSnake } from "../utils/utils";
+import { Status } from "../types/ApiRequest";
 
 type ChangePasswordPayload = {
   currentPassword: string;
@@ -12,16 +13,12 @@ type ChangePasswordPayload = {
 };
 
 interface ProfileState {
-  isLoading: boolean;
-  isSuccess: boolean;
-  isError: boolean;
+  status: Status;
   user: User | null;
 }
 
 const initialState: ProfileState = {
-  isLoading: true,
-  isSuccess: false,
-  isError: false,
+  status: "idle",
   user: null,
 };
 
@@ -81,59 +78,49 @@ export const profileSlice = createSlice({
     builder
       // fetch profile
       .addCase(fetchProfile.pending, (state) => {
-        state.isLoading = true;
-        state.isSuccess = false;
-        state.isError = false;
+        state.status = "pending";
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.isError = false;
+        state.status = "fulfilled";
         state.user = action.payload?.data?.user ?? null;
       })
       .addCase(fetchProfile.rejected, (state) => {
-        state.isLoading = false;
-        state.isSuccess = false;
-        state.isError = true;
+        state.status = "rejected";
         clearSession();
       })
 
       // update profile
       .addCase(updateProfile.pending, (state) => {
-        state.isLoading = true;
-        state.isSuccess = false;
-        state.isError = false;
+        state.status = "pending";
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.status = "fulfilled";
         if (action.payload?.data?.user) {
           state.user = action.payload.data.user;
         }
-        showSuccessMessage(
+        Toast.success(
           action.payload?.message ?? "Profile updated successfully",
         );
       })
       .addCase(updateProfile.rejected, (state, action) => {
-        state.isLoading = false;
+        state.status = "rejected";
 
-        showErrorMessage(action.payload as string);
+        Toast.error(action.payload as string);
       })
 
       // change password
       .addCase(changePassword.pending, (state) => {
-        state.isLoading = true;
-        state.isSuccess = false;
-        state.isError = false;
+        state.status = "pending";
       })
       .addCase(changePassword.fulfilled, (state, action) => {
-        state.isLoading = false;
-        showSuccessMessage(
+        state.status = "fulfilled";
+        Toast.success(
           action.payload?.message ?? "Password changed successfully",
         );
       })
       .addCase(changePassword.rejected, (state, action) => {
-        state.isLoading = false;
-        showErrorMessage(action.payload as string);
+        state.status = "rejected";
+        Toast.error(action.payload as string);
       });
   },
 });

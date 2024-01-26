@@ -10,11 +10,7 @@ export const camelCase = (str: string) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const snakeToCamel = (input: any): any => {
-  if (!input) return input;
-
-  if (typeof input === "string") {
-    return camelCase(input);
-  }
+  if (!input || typeof input === "string") return input;
 
   if (Array.isArray(input)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,19 +19,15 @@ export const snakeToCamel = (input: any): any => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const obj: any = {};
-  for (const value in input) {
-    obj[camelCase(value)] = input[value];
+  for (const key in input) {
+    obj[camelCase(key)] = snakeToCamel(input[key]);
   }
   return obj;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const camelToSnake = (input: any): any => {
-  if (!input) return input;
-
-  if (typeof input === "string") {
-    return snakeCase(input);
-  }
+  if (!input || typeof input === "string") return input;
 
   if (Array.isArray(input)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,8 +36,8 @@ export const camelToSnake = (input: any): any => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const obj: any = {};
-  for (const value in input) {
-    obj[snakeCase(value)] = input[value];
+  for (const key in input) {
+    obj[snakeCase(key)] = camelToSnake(input[key]);
   }
   return obj;
 };

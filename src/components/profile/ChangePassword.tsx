@@ -3,9 +3,9 @@ import { useFormik } from "formik";
 import { createRef, useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import * as Yup from "yup";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { RootState } from "../../app/store";
-import { changePassword } from "../../features/profileSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { RootState } from "../../store/store";
+import { changePassword } from "../../reducers/profileSlice";
 import Input from "../form/Input";
 
 type FormData = {
@@ -29,7 +29,7 @@ interface ChangePasswordProps {
 
 const ChangePassword = ({ show, onClose }: ChangePasswordProps) => {
   const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector((state: RootState) => state.profile);
+  const { status } = useAppSelector((state: RootState) => state.profile);
   const passwordRef = createRef<HTMLInputElement>();
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
@@ -130,8 +130,8 @@ const ChangePassword = ({ show, onClose }: ChangePasswordProps) => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading}
-              isProcessing={isLoading}
+              disabled={status === "pending"}
+              isProcessing={status === "pending"}
             >
               Update
             </Button>

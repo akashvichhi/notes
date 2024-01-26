@@ -4,11 +4,11 @@ import { createRef, useEffect, useState } from "react";
 import { FiEye, FiEyeOff, FiLock, FiMail, FiUser } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import { useAppDispatch, useAppSelector, useAuth } from "../../app/hooks";
-import { RootState } from "../../app/store";
+import { useAppDispatch, useAppSelector, useAuth } from "../../store/hooks";
+import { RootState } from "../../store/store";
 import Input from "../../components/form/Input";
-import { register } from "../../features/authSlice";
-import { fetchProfile } from "../../features/profileSlice";
+import { register } from "../../reducers/authSlice";
+import { fetchProfile } from "../../reducers/profileSlice";
 
 type FormData = {
   name: string;
@@ -30,9 +30,7 @@ const RegisterPage = () => {
   const auth = useAuth();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isLoading, isSuccess } = useAppSelector(
-    (state: RootState) => state.auth,
-  );
+  const { status } = useAppSelector((state: RootState) => state.auth);
 
   const passwordRef = createRef<HTMLInputElement>();
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -57,13 +55,13 @@ const RegisterPage = () => {
   };
 
   useEffect(() => {
-    if (isSuccess) {
+    if (status === "fulfilled") {
       dispatch(fetchProfile());
       auth.signin(() => {
         navigate("/");
       });
     }
-  }, [isSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePassordVisibility = () => {
     if (passwordRef.current) {
@@ -180,8 +178,8 @@ const RegisterPage = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading}
-              isProcessing={isLoading}
+              disabled={status === "pending"}
+              isProcessing={status === "pending"}
             >
               Sign up
             </Button>

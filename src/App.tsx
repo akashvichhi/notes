@@ -1,23 +1,22 @@
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { useAppDispatch, useAppSelector, useAuth } from "./app/hooks";
-import { RootState } from "./app/store";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { fetchProfile } from "./features/profileSlice";
-import AppLayout from "./layout/AppLayout";
-import HomePage from "./pages/Home";
-import Splash from "./pages/Splash";
-import LoginPage from "./pages/auth/LoginPage";
-import RegisterPage from "./pages/auth/RegisterPage";
-import NotFoundPage from "./pages/errors/404";
+import { fetchProfile } from "./reducers/profileSlice";
+import { useAppDispatch, useAppSelector, useAuth } from "./store/hooks";
+import { RootState } from "./store/store";
 import { getSession } from "./utils/session";
+
+const ProtectedRoute = lazy(() => import("./components/routes/ProtectedRoute"));
+const AppLayout = lazy(() => import("./layout/AppLayout"));
+const HomePage = lazy(() => import("./pages/Home"));
+const SplashScreen = lazy(() => import("./pages/Splash"));
+const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
+const NotFoundPage = lazy(() => import("./pages/errors/404"));
 
 function App() {
   const auth = useAuth();
   const dispatch = useAppDispatch();
-  const { isSuccess, isError } = useAppSelector(
-    (state: RootState) => state.profile
-  );
+  const { status } = useAppSelector((state: RootState) => state.profile);
   const [loading, setLoading] = useState<boolean>(true);
 
   const checkAuth = async () => {
@@ -35,21 +34,17 @@ function App() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (isSuccess) {
+    if (status === "fulfilled") {
       auth.signin(() => {
         setLoading(false);
       });
-    }
-  }, [isSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (isError) {
+    } else if (status === "rejected") {
       setLoading(false);
     }
-  }, [isError]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
-    return <Splash />;
+    return <SplashScreen />;
   }
 
   return (

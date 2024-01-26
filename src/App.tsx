@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { useAppDispatch, useAuth } from "./app/hooks";
+import { useAppDispatch, useAppSelector, useAuth } from "./app/hooks";
+import { RootState } from "./app/store";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { fetchProfile } from "./features/profileSlice";
 import AppLayout from "./layout/AppLayout";
@@ -14,11 +15,15 @@ import { getSession } from "./utils/session";
 function App() {
   const auth = useAuth();
   const dispatch = useAppDispatch();
+  const { isSuccess, isError } = useAppSelector(
+    (state: RootState) => state.profile
+  );
+  const [loading, setLoading] = useState<boolean>(true);
 
   const checkAuth = async () => {
     const token = getSession();
     if (!token) {
-      auth.setIsLoading(false);
+      setLoading(false);
       return;
     }
 
@@ -29,7 +34,21 @@ function App() {
     checkAuth();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (auth.isLoading) {
+  useEffect(() => {
+    if (isSuccess) {
+      auth.signin(() => {
+        setLoading(false);
+      });
+    }
+  }, [isSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isError) {
+      setLoading(false);
+    }
+  }, [isError]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (loading) {
     return <Splash />;
   }
 

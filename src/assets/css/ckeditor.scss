@@ -1,0 +1,11 @@
+.ck-editor {
+  @apply h-full #{!important};
+
+  .ck-editor__main {
+    height: calc(100% - 40px) !important;
+  }
+
+  .ck-editor__editable {
+    @apply h-full outline-none #{!important};
+  }
+}

@@ -3,7 +3,7 @@ import { useFormik } from "formik";
 import { createRef, useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import * as Yup from "yup";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { RootState } from "../../store/store";
 import { changePassword } from "../../reducers/profileSlice";
 import Input from "../form/Input";

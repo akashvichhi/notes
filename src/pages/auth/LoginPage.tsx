@@ -4,11 +4,12 @@ import { createRef, useEffect, useState } from "react";
 import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import { useAppDispatch, useAppSelector, useAuth } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { RootState } from "../../store/store";
 import Input from "../../components/form/Input";
 import { login } from "../../reducers/authSlice";
 import { fetchProfile } from "../../reducers/profileSlice";
+import { useAuth } from "../../hooks/useAuth";
 
 type FormData = {
   email: string;
@@ -45,12 +46,16 @@ const LoginPage = () => {
     dispatch(login(data));
   };
 
+  const signin = async () => {
+    await dispatch(fetchProfile());
+    auth.signin(() => {
+      navigate("/");
+    });
+  };
+
   useEffect(() => {
     if (status === "fulfilled") {
-      dispatch(fetchProfile());
-      auth.signin(() => {
-        navigate("/");
-      });
+      signin();
     }
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 

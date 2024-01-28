@@ -1,13 +1,14 @@
 import { lazy, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import { fetchProfile } from "./reducers/profileSlice";
-import { useAppDispatch, useAppSelector, useAuth } from "./store/hooks";
+import { useAppDispatch, useAppSelector } from "./hooks/redux";
 import { RootState } from "./store/store";
 import { getSession } from "./utils/session";
+import { useAuth } from "./hooks/useAuth";
 
 const ProtectedRoute = lazy(() => import("./components/routes/ProtectedRoute"));
 const AppLayout = lazy(() => import("./layout/AppLayout"));
-const HomePage = lazy(() => import("./pages/Home"));
+const Notes = lazy(() => import("./pages/Notes"));
 const SplashScreen = lazy(() => import("./pages/Splash"));
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
@@ -53,7 +54,7 @@ function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<Notes />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />

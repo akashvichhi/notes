@@ -4,7 +4,7 @@ import apiRoutes from "../constants/apiRoutes";
 import User from "../types/User";
 import Toast from "../utils/toast";
 import { clearSession } from "../utils/session";
-import { camelToSnake } from "../utils/utils";
+import { camelToSnake, snakeToCamel } from "../utils/utils";
 import { Status } from "../types/ApiRequest";
 
 type ChangePasswordPayload = {
@@ -82,7 +82,7 @@ export const profileSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.status = "fulfilled";
-        state.user = action.payload?.data?.user ?? null;
+        state.user = snakeToCamel(action.payload?.data?.user) ?? null;
       })
       .addCase(fetchProfile.rejected, (state) => {
         state.status = "rejected";
@@ -96,7 +96,7 @@ export const profileSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.status = "fulfilled";
         if (action.payload?.data?.user) {
-          state.user = action.payload.data.user;
+          state.user = snakeToCamel(action.payload.data.user);
         }
         Toast.success(
           action.payload?.message ?? "Profile updated successfully",

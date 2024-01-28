@@ -1,54 +1,49 @@
 import { Button, Label, Modal } from "flowbite-react";
 import { useFormik } from "formik";
-import { useEffect } from "react";
-import { FiMail, FiUser } from "react-icons/fi";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
+import { createNote, renameNote } from "../../reducers/notesSlice";
 import { RootState } from "../../store/store";
-import { updateProfile } from "../../reducers/profileSlice";
+import Note from "../../types/Note";
 import Input from "../form/Input";
 
 type FormData = {
   name: string;
-  email: string;
 };
 
 const validator = Yup.object({
   name: Yup.string().required("Name is required"),
 });
 
-interface EditProfileProps {
+interface CreateNoteProps {
   show: boolean;
   onClose: () => void;
+  note?: Note;
 }
 
-const EditProfile = ({ show, onClose }: EditProfileProps) => {
+const CreateNote = ({ show, onClose, note }: CreateNoteProps) => {
   const dispatch = useAppDispatch();
-  const { status, user } = useAppSelector((state: RootState) => state.profile);
-
+  const { status } = useAppSelector((state: RootState) => state.notes);
   const { values, handleChange, errors, handleSubmit } = useFormik({
     initialValues: {
-      name: user?.name ?? "",
-      email: user?.email ?? "",
+      name: note?.name ?? "",
     },
-    onSubmit: (values: FormData) => {
-      dispatch(updateProfile(values));
+    onSubmit: async (values: FormData) => {
+      if (note?.id) {
+        await dispatch(renameNote({ id: note.id, name: values.name }));
+      } else {
+        await dispatch(createNote(values));
+      }
+      onClose();
     },
     validationSchema: validator,
     validateOnBlur: false,
     validateOnChange: false,
   });
 
-  useEffect(() => {
-    if (user) {
-      values.name = user?.name ?? "";
-      values.email = user?.email ?? "";
-    }
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <Modal show={show} onClose={onClose} size={"md"}>
-      <Modal.Header>Update Profile</Modal.Header>
+      <Modal.Header>{note?.id ? "Rename Note" : "Create Note"}</Modal.Header>
       <Modal.Body>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
@@ -64,23 +59,6 @@ const EditProfile = ({ show, onClose }: EditProfileProps) => {
                 }}
                 helperText={errors.name ?? ""}
                 color={"error"}
-                leftIcon={<FiUser />}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <div className="mt-1">
-              <Input
-                inputProps={{
-                  id: "email",
-                  type: "email",
-                  name: "email",
-                  value: values.email,
-                  disabled: true,
-                }}
-                leftIcon={<FiMail />}
               />
             </div>
           </div>
@@ -92,7 +70,7 @@ const EditProfile = ({ show, onClose }: EditProfileProps) => {
               disabled={status === "pending"}
               isProcessing={status === "pending"}
             >
-              Update
+              {note?.id ? "Update" : "Create"}
             </Button>
           </div>
         </form>
@@ -101,4 +79,4 @@ const EditProfile = ({ show, onClose }: EditProfileProps) => {
   );
 };
 
-export default EditProfile;
+export default CreateNote;

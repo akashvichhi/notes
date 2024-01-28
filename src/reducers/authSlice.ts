@@ -99,15 +99,13 @@ export const authSlice = createSlice({
 
       // logout
       .addCase(logout.pending, (state) => {
-        state.status = "pending";
+        state.status = "idle";
       })
-      .addCase(logout.fulfilled, (state) => {
-        state.status = "fulfilled";
+      .addCase(logout.fulfilled, () => {
         clearSession();
       })
-      .addCase(logout.rejected, (state) => {
-        state.status = "rejected";
-        clearSession();
+      .addCase(logout.rejected, (_, action) => {
+        Toast.error(action.payload as string);
       });
   },
 });

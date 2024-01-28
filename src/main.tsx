@@ -18,7 +18,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Suspense fallback={<SplashScreen />}>
             <App />
           </Suspense>
-          <ToastContainer />
+          <ToastContainer position="top-center" />
         </AuthProvider>
       </Provider>
     </BrowserRouter>

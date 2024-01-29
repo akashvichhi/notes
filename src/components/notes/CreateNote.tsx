@@ -2,7 +2,7 @@ import { Button, Label, Modal } from "flowbite-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import { createNote, renameNote } from "../../reducers/notesSlice";
+import { createNote, renameNote } from "../../reducers/notes/thunks";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
 import Input from "../form/Input";

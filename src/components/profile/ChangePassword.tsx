@@ -5,7 +5,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { RootState } from "../../store/store";
-import { changePassword } from "../../reducers/profileSlice";
+import { changePassword } from "../../reducers/profile/profileSlice";
 import Input from "../form/Input";
 
 type FormData = {

@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "../reducers/authSlice";
-import profileReducer from "../reducers/profileSlice";
-import notesReducer from "../reducers/notesSlice";
+import authReducer from "../reducers/auth/authSlice";
+import profileReducer from "../reducers/profile/profileSlice";
+import notesReducer from "../reducers/notes/notesSlice";
 
 const store = configureStore({
   reducer: {

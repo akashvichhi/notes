@@ -1,6 +1,6 @@
 import { lazy, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { fetchProfile } from "./reducers/profileSlice";
+import { fetchProfile } from "./reducers/profile/profileSlice";
 import { useAppDispatch, useAppSelector } from "./hooks/redux";
 import { RootState } from "./store/store";
 import { getSession } from "./utils/session";

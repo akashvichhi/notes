@@ -1,7 +1,7 @@
 import { Button, Modal } from "flowbite-react";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import { forceDeleteNote } from "../../reducers/notesSlice";
+import { forceDeleteNote } from "../../reducers/notes/thunks";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
 

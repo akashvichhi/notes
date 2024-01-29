@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 import { FiMoreVertical, FiSearch } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import useDebounce from "../../hooks/useDebounce";
+import { setActiveNoteId } from "../../reducers/notes/notesSlice";
 import {
   deleteNote as deleteNoteAction,
   fetchNote,
   fetchNotes,
   fetchTrash,
   restoreNote as restoreNoteAction,
-  setActiveNoteId,
-} from "../../reducers/notesSlice";
+} from "../../reducers/notes/thunks";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
 import Input from "../form/Input";
@@ -33,7 +33,7 @@ const FileList = () => {
     dispatch(
       fetchNotes({
         search: searchValue ?? search,
-      }),
+      })
     );
   };
 
@@ -41,7 +41,7 @@ const FileList = () => {
     dispatch(
       fetchTrash({
         search: searchValue ?? search,
-      }),
+      })
     );
   };
 

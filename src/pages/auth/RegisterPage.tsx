@@ -7,8 +7,8 @@ import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { RootState } from "../../store/store";
 import Input from "../../components/form/Input";
-import { register } from "../../reducers/authSlice";
-import { fetchProfile } from "../../reducers/profileSlice";
+import { register } from "../../reducers/auth/authSlice";
+import { fetchProfile } from "../../reducers/profile/profileSlice";
 import { useAuth } from "../../hooks/useAuth";
 
 type FormData = {

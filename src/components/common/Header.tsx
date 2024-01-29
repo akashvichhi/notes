@@ -2,7 +2,7 @@ import { Avatar, Dropdown } from "flowbite-react";
 import { useState } from "react";
 import { FiLock, FiLogOut, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../reducers/authSlice";
+import { logout } from "../../reducers/auth/authSlice";
 import { useAppDispatch } from "../../hooks/redux";
 import ChangePassword from "../profile/ChangePassword";
 import EditProfile from "../profile/EditProfile";

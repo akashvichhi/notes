@@ -5,7 +5,7 @@ import { FiMail, FiUser } from "react-icons/fi";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { RootState } from "../../store/store";
-import { updateProfile } from "../../reducers/profileSlice";
+import { updateProfile } from "../../reducers/profile/profileSlice";
 import Input from "../form/Input";
 
 type FormData = {

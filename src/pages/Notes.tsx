@@ -8,8 +8,9 @@ import "../assets/css/notes.scss";
 import CreateNote from "../components/notes/CreateNote";
 import FileList from "../components/notes/NoteList";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
-import { updateCurrentNote, updateNote } from "../reducers/notesSlice";
+import { updateCurrentNote } from "../reducers/notes/notesSlice";
 import { RootState } from "../store/store";
+import { updateNote } from "../reducers/notes/thunks";
 
 const Notes = () => {
   const dispatch = useAppDispatch();

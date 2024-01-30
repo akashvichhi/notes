@@ -1,5 +1,5 @@
-import config from "../constants/app";
 import cookies from "../config/cookie";
+import config from "../constants/app";
 
 export const setSession = (session: string) => {
   cookies.set(config.accessTokenKey, session);

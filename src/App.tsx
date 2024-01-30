@@ -1,10 +1,10 @@
 import { lazy, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { fetchProfile } from "./reducers/profile/profileSlice";
+import { fetchProfile } from "./actions/profile/profileActions";
 import { useAppDispatch, useAppSelector } from "./hooks/redux";
+import { useAuth } from "./hooks/useAuth";
 import { RootState } from "./store/store";
 import { getSession } from "./utils/session";
-import { useAuth } from "./hooks/useAuth";
 
 const ProtectedRoute = lazy(() => import("./components/routes/ProtectedRoute"));
 const AppLayout = lazy(() => import("./layout/AppLayout"));

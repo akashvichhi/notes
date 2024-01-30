@@ -1,41 +1,48 @@
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import { Button, Tooltip } from "flowbite-react";
-import { useEffect, useState } from "react";
-import { FiPlus } from "react-icons/fi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { FiPlus, FiSave } from "react-icons/fi";
+import { updateNote } from "../actions/notes/notesActions";
 import "../assets/css/ckeditor.scss";
 import "../assets/css/notes.scss";
 import CreateNote from "../components/notes/CreateNote";
-import FileList from "../components/notes/NoteList";
+import NoteList from "../components/notes/NoteList";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { updateCurrentNote } from "../reducers/notes/notesSlice";
 import { RootState } from "../store/store";
-import { updateNote } from "../reducers/notes/thunks";
 
 const Notes = () => {
   const dispatch = useAppDispatch();
   const { notes, trash, activeNoteId, status } = useAppSelector(
     (state: RootState) => state.notes,
   );
-  const note =
-    notes.find((note) => note.id === activeNoteId) ??
-    trash.find((note) => note.id === activeNoteId);
+  const note = useMemo(() => {
+    return (
+      notes.find((note) => note.id === activeNoteId) ??
+      trash.find((note) => note.id === activeNoteId)
+    );
+  }, [notes, trash, activeNoteId]);
+
   const [showCreateNote, setShowCreateNote] = useState<boolean>(false);
 
-  const saveNote = () => {
+  const saveNote = useCallback(() => {
     if (note) {
       dispatch(updateNote({ id: note.id, notes: note.notes }));
     }
-  };
+  }, [note]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleKeyPress = (event: KeyboardEvent) => {
-    if (event.ctrlKey || event.metaKey) {
-      if (event.key === "s" || event.key === "S") {
-        event.preventDefault();
-        saveNote();
+  const handleKeyPress = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === "s" || event.key === "S") {
+          event.preventDefault();
+          saveNote();
+        }
       }
-    }
-  };
+    },
+    [note], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyPress);
@@ -43,11 +50,11 @@ const Notes = () => {
     return () => {
       document.removeEventListener("keydown", handleKeyPress);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [note]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex notes-container">
-      <FileList />
+      <NoteList />
       <div className="notes flex-1">
         <div className="notes-header">
           <div className="flex items-center">
@@ -57,7 +64,7 @@ const Notes = () => {
                 {note?.isSaved === false && <sup className="text-sm">*</sup>}
               </span>
             ) : null}
-            <Tooltip content="Create new note">
+            <Tooltip content="Create new note" className="z-[9999]">
               <Button
                 size={"xs"}
                 className="btn-create-note"
@@ -68,16 +75,18 @@ const Notes = () => {
             </Tooltip>
           </div>
           <div>
-            <Button
-              size={"xs"}
-              color="success"
-              className="btn-save-note"
-              onClick={saveNote}
-              isProcessing={status === "pending"}
-              disabled={status === "pending" || !note || note.isDeleted}
-            >
-              Save
-            </Button>
+            <Tooltip content="Save" className="z-[9999]">
+              <Button
+                size={"xs"}
+                color="success"
+                className="btn-save-note"
+                onClick={saveNote}
+                isProcessing={status === "pending"}
+                disabled={status === "pending" || !note || note.isDeleted}
+              >
+                <FiSave size={20} />
+              </Button>
+            </Tooltip>
           </div>
         </div>
         <CKEditor

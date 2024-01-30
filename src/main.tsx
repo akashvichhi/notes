@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
+import { Slide, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import App from "./App.tsx";
 import "./index.scss";
@@ -18,7 +18,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Suspense fallback={<SplashScreen />}>
             <App />
           </Suspense>
-          <ToastContainer position="top-center" />
+          <ToastContainer position="top-center" transition={Slide} />
         </AuthProvider>
       </Provider>
     </BrowserRouter>

@@ -1,15 +1,15 @@
 import { Button, Label } from "flowbite-react";
 import { useFormik } from "formik";
-import { createRef, useEffect, useState } from "react";
+import { createRef, useCallback, useEffect, useState } from "react";
 import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import { RootState } from "../../store/store";
+import { login } from "../../actions/auth/authActions";
+import { fetchProfile } from "../../actions/profile/profileActions";
 import Input from "../../components/form/Input";
-import { login } from "../../reducers/auth/authSlice";
-import { fetchProfile } from "../../reducers/profile/profileSlice";
+import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { useAuth } from "../../hooks/useAuth";
+import { RootState } from "../../store/store";
 
 type FormData = {
   email: string;
@@ -42,24 +42,18 @@ const LoginPage = () => {
     validateOnChange: false,
   });
 
-  const submit = (data: FormData) => {
+  const submit = useCallback((data: FormData) => {
     dispatch(login(data));
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const signin = async () => {
+  const signin = useCallback(async () => {
     await dispatch(fetchProfile());
     auth.signin(() => {
       navigate("/");
     });
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (status === "fulfilled") {
-      signin();
-    }
-  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const togglePassordVisibility = () => {
+  const togglePassordVisibility = useCallback(() => {
     if (passwordRef.current) {
       setShowPassword(!showPassword);
       if (passwordRef.current.type === "password") {
@@ -68,7 +62,13 @@ const LoginPage = () => {
         passwordRef.current.type = "password";
       }
     }
-  };
+  }, [passwordRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (status === "fulfilled") {
+      signin();
+    }
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (auth.isAuthenticated) {
     return <Navigate to="/" replace />;

@@ -1,7 +1,8 @@
 import { Button, Modal } from "flowbite-react";
+import { useCallback } from "react";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { forceDeleteNote } from "../../actions/notes/notesActions";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import { forceDeleteNote } from "../../reducers/notes/thunks";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
 
@@ -15,10 +16,10 @@ const DeleteNote = ({ show, note, onClose }: DeleteNoteProps) => {
   const dispatch = useAppDispatch();
   const { status } = useAppSelector((state: RootState) => state.notes);
 
-  const deleteNote = async () => {
+  const deleteNote = useCallback(async () => {
     await dispatch(forceDeleteNote({ id: note.id! }));
     onClose();
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Modal show={show} size="md" onClose={onClose} popup>

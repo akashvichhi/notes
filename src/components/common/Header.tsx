@@ -1,12 +1,12 @@
 import { Avatar, Dropdown } from "flowbite-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { FiLock, FiLogOut, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../reducers/auth/authSlice";
+import { logout } from "../../actions/auth/authActions";
 import { useAppDispatch } from "../../hooks/redux";
+import { useAuth } from "../../hooks/useAuth";
 import ChangePassword from "../profile/ChangePassword";
 import EditProfile from "../profile/EditProfile";
-import { useAuth } from "../../hooks/useAuth";
 
 const Header = () => {
   const auth = useAuth();
@@ -15,28 +15,28 @@ const Header = () => {
   const [showEditProfile, setShowEditProfile] = useState<boolean>(false);
   const [showChangePassword, setShowChangePassword] = useState<boolean>(false);
 
-  const signout = async () => {
+  const signout = useCallback(async () => {
     await dispatch(logout());
     auth.signout(() => {
       navigate("/login");
     });
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const editProfile = () => {
+  const editProfile = useCallback(() => {
     setShowEditProfile(true);
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const closeEditProfile = () => {
+  const closeEditProfile = useCallback(() => {
     setShowEditProfile(false);
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const editPassword = () => {
+  const editPassword = useCallback(() => {
     setShowChangePassword(true);
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const closeChangePassword = () => {
+  const closeChangePassword = useCallback(() => {
     setShowChangePassword(false);
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <header className="px-4 py-3 shadow relative z-50">

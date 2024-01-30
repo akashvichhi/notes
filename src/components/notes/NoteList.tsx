@@ -1,16 +1,16 @@
 import { Button, Dropdown, Spinner } from "flowbite-react";
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { FiMoreVertical, FiSearch } from "react-icons/fi";
-import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import useDebounce from "../../hooks/useDebounce";
-import { setActiveNoteId } from "../../reducers/notes/notesSlice";
 import {
   deleteNote as deleteNoteAction,
   fetchNote,
   fetchNotes,
   fetchTrash,
   restoreNote as restoreNoteAction,
-} from "../../reducers/notes/thunks";
+} from "../../actions/notes/notesActions";
+import { useAppDispatch, useAppSelector } from "../../hooks/redux";
+import useDebounce from "../../hooks/useDebounce";
+import { setActiveNoteId } from "../../reducers/notes/notesSlice";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
 import Input from "../form/Input";
@@ -19,7 +19,7 @@ import DeleteNote from "./DeleteNote";
 
 type ActiveNoteList = "notes" | "trash";
 
-const FileList = () => {
+const NoteList = memo(() => {
   const dispatch = useAppDispatch();
   const { notes, trash, searchStatus, activeNoteId, notesLoading } =
     useAppSelector((state: RootState) => state.notes);
@@ -29,23 +29,29 @@ const FileList = () => {
   const [noteModal, setNoteModal] = useState<Note | null>(null);
   const [activeNoteList, setActiveNoteList] = useState<ActiveNoteList>("notes");
 
-  const getNotes = (searchValue?: string) => {
-    dispatch(
-      fetchNotes({
-        search: searchValue ?? search,
-      })
-    );
-  };
+  const getNotes = useCallback(
+    (searchValue?: string) => {
+      dispatch(
+        fetchNotes({
+          search: searchValue ?? search,
+        }),
+      );
+    },
+    [search], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-  const getTrashNotes = (searchValue?: string) => {
-    dispatch(
-      fetchTrash({
-        search: searchValue ?? search,
-      })
-    );
-  };
+  const getTrashNotes = useCallback(
+    (searchValue?: string) => {
+      dispatch(
+        fetchTrash({
+          search: searchValue ?? search,
+        }),
+      );
+    },
+    [search], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-  const setDefaultActiveNoteId = () => {
+  const setDefaultActiveNoteId = useCallback(() => {
     let id: string = "";
     if (activeNoteList === "trash" && trash.length > 0) {
       id = trash[0].id ?? "";
@@ -53,7 +59,7 @@ const FileList = () => {
       id = notes[0].id ?? "";
     }
     dispatch(setActiveNoteId(id));
-  };
+  }, [activeNoteList, trash, notes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (notes.length === 0) {
@@ -94,42 +100,45 @@ const FileList = () => {
     }
   }, 800);
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
-    debouncedSearch(event.target.value);
-  };
+  const handleSearch = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearch(event.target.value);
+      debouncedSearch(event.target.value);
+    },
+    [activeNoteList], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-  const setActiveNote = (note: Note) => {
+  const setActiveNote = useCallback((note: Note) => {
     dispatch(setActiveNoteId(note.id));
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const renameNote = (note: Note) => {
+  const renameNote = useCallback((note: Note) => {
     setShowRenameNote(true);
     setNoteModal({ ...note });
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const closeRenameNote = () => {
+  const closeRenameNote = useCallback(() => {
     setShowRenameNote(false);
     setNoteModal(null);
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const deleteNote = async (note: Note) => {
+  const deleteNote = useCallback(async (note: Note) => {
     await dispatch(deleteNoteAction({ id: note.id }));
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const restoreNote = async (note: Note) => {
+  const restoreNote = useCallback(async (note: Note) => {
     await dispatch(restoreNoteAction({ id: note.id }));
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const permanentDeleteNote = (note: Note) => {
+  const permanentDeleteNote = useCallback((note: Note) => {
     setShowDeleteNote(true);
     setNoteModal({ ...note });
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const closeDeleteNote = () => {
+  const closeDeleteNote = useCallback(() => {
     setShowDeleteNote(false);
     setNoteModal(null);
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const noteList: Note[] = activeNoteList === "notes" ? notes : trash;
 
@@ -238,6 +247,6 @@ const FileList = () => {
       ) : null}
     </div>
   );
-};
+});
 
-export default FileList;
+export default NoteList;

@@ -23,3 +23,12 @@ body {
 * {
   @apply outline-none;
 }
+
+.Toastify__toast-container {
+  padding: 0;
+  top: 0;
+
+  .Toastify__toast {
+    border-radius: 0;
+  }
+}

@@ -1,11 +1,11 @@
 import { Button, Label, Modal } from "flowbite-react";
 import { useFormik } from "formik";
-import { createRef, useState } from "react";
+import { createRef, useCallback, useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import * as Yup from "yup";
+import { changePassword } from "../../actions/profile/profileActions";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { RootState } from "../../store/store";
-import { changePassword } from "../../reducers/profile/profileSlice";
 import Input from "../form/Input";
 
 type FormData = {
@@ -47,7 +47,7 @@ const ChangePassword = ({ show, onClose }: ChangePasswordProps) => {
     validateOnChange: false,
   });
 
-  const togglePassordVisibility = () => {
+  const togglePassordVisibility = useCallback(() => {
     if (passwordRef.current) {
       setShowPassword(!showPassword);
       if (passwordRef.current.type === "password") {
@@ -56,7 +56,7 @@ const ChangePassword = ({ show, onClose }: ChangePasswordProps) => {
         passwordRef.current.type = "password";
       }
     }
-  };
+  }, [passwordRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Modal show={show} onClose={onClose} size={"md"}>

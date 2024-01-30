@@ -1,15 +1,15 @@
 import { Button, Label } from "flowbite-react";
 import { useFormik } from "formik";
-import { createRef, useEffect, useState } from "react";
+import { createRef, useCallback, useEffect, useState } from "react";
 import { FiEye, FiEyeOff, FiLock, FiMail, FiUser } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import { RootState } from "../../store/store";
+import { register } from "../../actions/auth/authActions";
+import { fetchProfile } from "../../actions/profile/profileActions";
 import Input from "../../components/form/Input";
-import { register } from "../../reducers/auth/authSlice";
-import { fetchProfile } from "../../reducers/profile/profileSlice";
+import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { useAuth } from "../../hooks/useAuth";
+import { RootState } from "../../store/store";
 
 type FormData = {
   name: string;
@@ -51,24 +51,18 @@ const RegisterPage = () => {
     validateOnChange: false,
   });
 
-  const submit = (data: FormData) => {
+  const submit = useCallback((data: FormData) => {
     dispatch(register(data));
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const signin = async () => {
+  const signin = useCallback(async () => {
     await dispatch(fetchProfile());
     auth.signin(() => {
       navigate("/");
     });
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (status === "fulfilled") {
-      signin();
-    }
-  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const togglePassordVisibility = () => {
+  const togglePassordVisibility = useCallback(() => {
     if (passwordRef.current) {
       setShowPassword(!showPassword);
       if (passwordRef.current.type === "password") {
@@ -77,7 +71,13 @@ const RegisterPage = () => {
         passwordRef.current.type = "password";
       }
     }
-  };
+  }, [passwordRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (status === "fulfilled") {
+      signin();
+    }
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
@@ -167,7 +167,7 @@ const RegisterPage = () => {
               <Input
                 inputProps={{
                   id: "confirm_password",
-                  type: showPassword ? "text" : "password",
+                  type: "password",
                   name: "confirmPassword",
                   value: values.confirmPassword,
                   onChange: handleChange,

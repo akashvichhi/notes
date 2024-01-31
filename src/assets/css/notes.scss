@@ -2,8 +2,8 @@
 @import "./components/_notes-list.scss";
 
 .notes-container {
+  @apply overflow-hidden relative flex;
   height: calc(100vh - 56px);
-  overflow: auto;
 
   .notes {
     background-color: $notes-color;
@@ -15,12 +15,14 @@
 
       .notes-header-item {
         @apply inline-block px-4;
-        border-right: solid 1px var(--ck-color-base-border);
       }
       .btn-create-note,
       .btn-save-note {
         @apply rounded-none;
       }
     }
+  }
+  .btn-notes-list-close {
+    @apply absolute left-72 z-50 shadow-md;
   }
 }

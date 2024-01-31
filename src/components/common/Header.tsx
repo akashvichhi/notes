@@ -1,5 +1,6 @@
 import { Avatar, Dropdown } from "flowbite-react";
 import { useCallback, useState } from "react";
+import { FaUserCircle } from "react-icons/fa";
 import { FiLock, FiLogOut, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../actions/auth/authActions";
@@ -44,13 +45,16 @@ const Header = () => {
         <h1 className="text-2xl">Notes</h1>
         <div>
           <Dropdown
-            label={""}
+            label={
+              <Avatar
+                rounded
+                img={(props) => <FaUserCircle {...props} color="gray" />}
+                size={"sm"}
+                className="cursor-pointer"
+              />
+            }
             inline
-            renderTrigger={() => (
-              <div>
-                <Avatar rounded size={"sm"} className="cursor-pointer" />
-              </div>
-            )}
+            arrowIcon={false}
             placement="bottom-end"
           >
             <Dropdown.Item icon={FiUser} onClick={editProfile}>

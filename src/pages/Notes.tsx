@@ -2,9 +2,9 @@ import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import { Button, Tooltip } from "flowbite-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiPlus, FiSave } from "react-icons/fi";
+import { FiMenu, FiPlus, FiSave, FiX } from "react-icons/fi";
 import { updateNote } from "../actions/notes/notesActions";
-import "../assets/css/ckeditor.scss";
+import "../assets/css//components/_ckeditor.scss";
 import "../assets/css/notes.scss";
 import CreateNote from "../components/notes/CreateNote";
 import NoteList from "../components/notes/NoteList";
@@ -25,6 +25,7 @@ const Notes = () => {
   }, [notes, trash, activeNoteId]);
 
   const [showCreateNote, setShowCreateNote] = useState<boolean>(false);
+  const [showNoteList, setShowNoteList] = useState<boolean>(false);
 
   const saveNote = useCallback(() => {
     if (note) {
@@ -53,11 +54,31 @@ const Notes = () => {
   }, [note]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="flex notes-container">
-      <NoteList />
+    <div className="notes-container">
+      <NoteList show={showNoteList} />
       <div className="notes flex-1">
         <div className="notes-header">
           <div className="flex items-center">
+            {!showNoteList && (
+              <Button
+                color="dark"
+                size={"xs"}
+                className="md:hidden btn-save-note"
+                onClick={() => setShowNoteList(!showNoteList)}
+              >
+                <FiMenu size={20} />
+              </Button>
+            )}
+            {showNoteList && (
+              <Button
+                color="dark"
+                size={"xs"}
+                className="md:hidden btn-save-note btn-notes-list-close"
+                onClick={() => setShowNoteList(false)}
+              >
+                <FiX size={20} />
+              </Button>
+            )}
             {note?.name ? (
               <span className="notes-header-item">
                 {note?.name ?? ""}

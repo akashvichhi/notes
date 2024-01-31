@@ -19,7 +19,11 @@ import DeleteNote from "./DeleteNote";
 
 type ActiveNoteList = "notes" | "trash";
 
-const NoteList = memo(() => {
+interface NoteListProps {
+  show: boolean;
+}
+
+const NoteList = memo(({ show }: NoteListProps) => {
   const dispatch = useAppDispatch();
   const { notes, trash, searchStatus, activeNoteId, notesLoading } =
     useAppSelector((state: RootState) => state.notes);
@@ -143,7 +147,7 @@ const NoteList = memo(() => {
   const noteList: Note[] = activeNoteList === "notes" ? notes : trash;
 
   return (
-    <div className="notes-list">
+    <div className={`notes-list ${show ? "show-notes-list" : ""}`}>
       <Input
         inputProps={{
           type: "search",

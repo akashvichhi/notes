@@ -30,7 +30,7 @@ const CreateNote = ({ show, onClose, note }: CreateNoteProps) => {
     },
     onSubmit: async (values: FormData) => {
       if (note?.id) {
-        await dispatch(renameNote({ id: note.id, name: values.name }));
+        await dispatch(renameNote({ id: note.id!, name: values.name }));
       } else {
         await dispatch(createNote(values));
       }

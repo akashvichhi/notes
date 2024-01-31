@@ -23,7 +23,7 @@ const Input = forwardRef(
         <input
           ref={ref}
           {...props.inputProps}
-          className={`block w-full bg-gray-50 border-2 border-gray-300 rounded-md border-1 px-3 py-1.5 text-gray-900 outline-none placeholder:text-gray-400 focus:border-indigo-600 sm:text-sm sm:leading-6 ${props.className} ${props.leftIcon ? "pl-9" : ""} ${props.rightIcon ? "pr-9" : ""}`}
+          className={`block w-full bg-gray-50 border-2 border-gray-300 rounded-md border-1 px-3 py-1.5 text-gray-900 outline-none placeholder:text-gray-400 focus:border-yellow-400 sm:text-sm sm:leading-6 ${props.className} ${props.leftIcon ? "pl-9" : ""} ${props.rightIcon ? "pr-9" : ""}`}
         />
         {props.leftIcon && (
           <div

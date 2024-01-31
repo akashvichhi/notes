@@ -16,7 +16,7 @@
 
       &.active,
       &:hover {
-        background-color: $sidebar-color-dark;
+        @apply bg-yellow-400 text-white;
 
         .note-actions {
           @apply block;

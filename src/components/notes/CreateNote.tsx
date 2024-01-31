@@ -65,6 +65,7 @@ const CreateNote = ({ show, onClose, note }: CreateNoteProps) => {
 
           <div className="pt-2">
             <Button
+              color="warning"
               type="submit"
               className="w-full"
               disabled={status === "pending"}

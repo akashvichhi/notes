@@ -42,7 +42,10 @@ const Header = () => {
   return (
     <header className="px-4 py-3 shadow relative z-50">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl">Notes</h1>
+        <h1 className="text-2xl flex items-center gap-3">
+          <img src="/logo.png" alt="Notes" className="w-6" />
+          Notes
+        </h1>
         <div>
           <Dropdown
             label={

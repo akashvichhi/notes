@@ -181,6 +181,7 @@ const RegisterPage = () => {
 
           <div className="pt-2">
             <Button
+              color="warning"
               type="submit"
               className="w-full"
               disabled={status === "pending"}

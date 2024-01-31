@@ -87,6 +87,7 @@ const Notes = () => {
             ) : null}
             <Tooltip content="Create new note" className="z-[9999]">
               <Button
+                color="warning"
                 size={"xs"}
                 className="btn-create-note"
                 onClick={() => setShowCreateNote(true)}

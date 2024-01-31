@@ -12,7 +12,7 @@
     @apply space-y-2;
 
     .note {
-      @apply px-4 py-2 rounded cursor-pointer relative truncate;
+      @apply px-4 py-2 rounded cursor-pointer relative;
 
       &.active,
       &:hover {

@@ -159,20 +159,20 @@ const NoteList = memo(({ show }: NoteListProps) => {
         leftIcon={<FiSearch />}
         rightIcon={
           searchStatus && !!search ? (
-            <Spinner size="sm" className="-mt-3" />
+            <Spinner color="warning" size="sm" className="-mt-3" />
           ) : undefined
         }
       />
       <div>
         <Button.Group>
           <Button
-            color={activeNoteList === "notes" ? "info" : "gray"}
+            color={activeNoteList === "notes" ? "warning" : "gray"}
             onClick={() => setActiveNoteList("notes")}
           >
             Notes
           </Button>
           <Button
-            color={activeNoteList === "trash" ? "info" : "gray"}
+            color={activeNoteList === "trash" ? "warning" : "gray"}
             onClick={() => setActiveNoteList("trash")}
           >
             Trash
@@ -182,7 +182,7 @@ const NoteList = memo(({ show }: NoteListProps) => {
       <div className="flex-1 overflow-auto">
         {notesLoading ? (
           <div className="text-center">
-            <Spinner />
+            <Spinner color="warning" />
           </div>
         ) : (
           <div className="notes-list-list">

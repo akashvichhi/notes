@@ -3,7 +3,7 @@ import {
   changePassword,
   fetchProfile,
   updateProfile,
-} from "../../actions/profile/profileActions";
+} from "../../services/profile/profileServices";
 import { Status } from "../../types/ApiRequest";
 import User from "../../types/User";
 import { clearSession } from "../../utils/session";

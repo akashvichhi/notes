@@ -3,13 +3,13 @@ import { CKEditor } from "@ckeditor/ckeditor5-react";
 import { Button, Tooltip } from "flowbite-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiMenu, FiPlus, FiSave, FiX } from "react-icons/fi";
-import { updateNote } from "../actions/notes/notesActions";
 import "../assets/css//components/_ckeditor.scss";
 import "../assets/css/notes.scss";
 import CreateNote from "../components/notes/CreateNote";
 import NoteList from "../components/notes/NoteList";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { updateCurrentNote } from "../reducers/notes/notesSlice";
+import { updateNote } from "../services/notes/notesServices";
 import { RootState } from "../store/store";
 
 const Notes = () => {

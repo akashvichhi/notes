@@ -3,8 +3,8 @@ import { useFormik } from "formik";
 import { useEffect } from "react";
 import { FiMail, FiUser } from "react-icons/fi";
 import * as Yup from "yup";
-import { updateProfile } from "../../actions/profile/profileActions";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
+import { updateProfile } from "../../services/profile/profileServices";
 import { RootState } from "../../store/store";
 import Input from "../form/Input";
 

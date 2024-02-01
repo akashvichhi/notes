@@ -1,8 +1,8 @@
 import { lazy, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { fetchProfile } from "./actions/profile/profileActions";
 import { useAppDispatch, useAppSelector } from "./hooks/redux";
 import { useAuth } from "./hooks/useAuth";
+import { fetchProfile } from "./services/profile/profileServices";
 import { RootState } from "./store/store";
 import { getSession } from "./utils/session";
 

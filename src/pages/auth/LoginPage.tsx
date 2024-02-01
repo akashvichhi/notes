@@ -4,11 +4,11 @@ import { createRef, useCallback, useEffect, useState } from "react";
 import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import { login } from "../../actions/auth/authActions";
-import { fetchProfile } from "../../actions/profile/profileActions";
 import Input from "../../components/form/Input";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { useAuth } from "../../hooks/useAuth";
+import { login } from "../../services/auth/authServices";
+import { fetchProfile } from "../../services/profile/profileServices";
 import { RootState } from "../../store/store";
 
 type FormData = {

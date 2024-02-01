@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { login, logout, register } from "../../actions/auth/authActions";
+import { login, logout, register } from "../../services/auth/authServices";
 import { Status } from "../../types/ApiRequest";
 import { clearSession, setSession } from "../../utils/session";
 import Toast from "../../utils/toast";

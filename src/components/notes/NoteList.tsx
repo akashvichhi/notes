@@ -1,16 +1,16 @@
 import { Button, Dropdown, Spinner } from "flowbite-react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { FiMoreVertical, FiSearch } from "react-icons/fi";
+import { useAppDispatch, useAppSelector } from "../../hooks/redux";
+import useDebounce from "../../hooks/useDebounce";
+import { setActiveNoteId } from "../../reducers/notes/notesSlice";
 import {
   deleteNote as deleteNoteAction,
   fetchNote,
   fetchNotes,
   fetchTrash,
   restoreNote as restoreNoteAction,
-} from "../../actions/notes/notesActions";
-import { useAppDispatch, useAppSelector } from "../../hooks/redux";
-import useDebounce from "../../hooks/useDebounce";
-import { setActiveNoteId } from "../../reducers/notes/notesSlice";
+} from "../../services/notes/notesServices";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
 import Input from "../form/Input";

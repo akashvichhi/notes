@@ -6,6 +6,7 @@
   height: calc(100vh - 56px);
 
   .notes {
+    @apply w-2/3;
     background-color: $notes-color;
 
     .notes-header {

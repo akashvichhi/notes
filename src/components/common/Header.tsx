@@ -3,9 +3,9 @@ import { useCallback, useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FiLock, FiLogOut, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../actions/auth/authActions";
 import { useAppDispatch } from "../../hooks/redux";
 import { useAuth } from "../../hooks/useAuth";
+import { logout } from "../../services/auth/authServices";
 import ChangePassword from "../profile/ChangePassword";
 import EditProfile from "../profile/EditProfile";
 

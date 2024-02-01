@@ -9,7 +9,7 @@ import {
   renameNote,
   restoreNote,
   updateNote,
-} from "../../actions/notes/notesActions";
+} from "../../services/notes/notesServices";
 import { Status } from "../../types/ApiRequest";
 import Note from "../../types/Note";
 import Toast from "../../utils/toast";

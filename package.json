@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "lint": "eslint . --fix --ignore-path .gitignore-prettier",
     "preview": "vite preview",
-    "pretty": "prettier --write . --ignore-path .gitignore-prettier"
+    "pretty": "prettier --write . --ignore-path .gitignore-prettier",
+    "dev:pretty": "npm run lint && npm run pretty"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^41.0.0",

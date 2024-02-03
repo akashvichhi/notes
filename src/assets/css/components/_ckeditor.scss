@@ -1,6 +1,41 @@
 .ck-editor {
   @apply h-full #{!important};
 
+  ul,
+  ol {
+    @apply ps-4 ms-4;
+  }
+
+  a {
+    @apply text-blue-600 cursor-pointer;
+  }
+
+  code {
+    color: #d63384;
+  }
+
+  pre code {
+    color: #353535;
+  }
+
+  h2 {
+    @apply text-2xl font-bold;
+  }
+
+  h3 {
+    @apply text-xl font-bold;
+  }
+
+  h4 {
+    @apply text-lg font-bold;
+  }
+
+  blockquote {
+    @apply py-[5px];
+    background-color: #efefef;
+    font-style: normal !important;
+  }
+
   .ck-editor__main {
     height: calc(100% - 75px) !important;
   }

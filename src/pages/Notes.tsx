@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiMenu, FiPlus, FiSave, FiX } from "react-icons/fi";
 import "../assets/css//components/_ckeditor.scss";
 import "../assets/css/notes.scss";
+import Loader from "../components/common/Loader";
 import CreateNote from "../components/notes/CreateNote";
 import NoteList from "../components/notes/NoteList";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
@@ -39,6 +40,9 @@ const Notes = () => {
         if (event.key === "s" || event.key === "S") {
           event.preventDefault();
           saveNote();
+        } else if (event.key === "n" || event.key === "N") {
+          event.preventDefault();
+          setShowCreateNote(true);
         }
       }
     },
@@ -104,6 +108,7 @@ const Notes = () => {
                 className="btn-save-note"
                 onClick={saveNote}
                 isProcessing={status === "pending"}
+                processingSpinner={<Loader size={"sm"} />}
                 disabled={status === "pending" || !note || note.isDeleted}
               >
                 <FiSave size={20} />

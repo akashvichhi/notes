@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { createNote, renameNote } from "../../services/notes/notesServices";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
+import Loader from "../common/Loader";
 import Input from "../form/Input";
 
 type FormData = {
@@ -70,6 +71,7 @@ const CreateNote = ({ show, onClose, note }: CreateNoteProps) => {
               className="w-full"
               disabled={status === "pending"}
               isProcessing={status === "pending"}
+              processingSpinner={<Loader size={"sm"} />}
             >
               {note?.id ? "Update" : "Create"}
             </Button>

@@ -1,4 +1,4 @@
-import { Button, Dropdown, Spinner } from "flowbite-react";
+import { Button, Dropdown } from "flowbite-react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { FiMoreVertical, FiSearch } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
@@ -13,6 +13,7 @@ import {
 } from "../../services/notes/notesServices";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
+import Loader from "../common/Loader";
 import Input from "../form/Input";
 import CreateNote from "./CreateNote";
 import DeleteNote from "./DeleteNote";
@@ -159,7 +160,9 @@ const NoteList = memo(({ show }: NoteListProps) => {
         leftIcon={<FiSearch />}
         rightIcon={
           searchStatus && !!search ? (
-            <Spinner color="warning" size="sm" className="-mt-3" />
+            <div className="-mt-1.5">
+              <Loader size={"sm"} />
+            </div>
           ) : undefined
         }
       />
@@ -182,7 +185,7 @@ const NoteList = memo(({ show }: NoteListProps) => {
       <div className="flex-1 overflow-auto">
         {notesLoading ? (
           <div className="text-center">
-            <Spinner color="warning" />
+            <Loader />
           </div>
         ) : (
           <div className="notes-list-list">

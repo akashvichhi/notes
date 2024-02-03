@@ -6,6 +6,7 @@ import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { changePassword } from "../../services/profile/profileServices";
 import { RootState } from "../../store/store";
+import Loader from "../common/Loader";
 import Input from "../form/Input";
 
 type FormData = {
@@ -133,6 +134,7 @@ const ChangePassword = ({ show, onClose }: ChangePasswordProps) => {
               className="w-full"
               disabled={status === "pending"}
               isProcessing={status === "pending"}
+              processingSpinner={<Loader size={"sm"} />}
             >
               Update
             </Button>

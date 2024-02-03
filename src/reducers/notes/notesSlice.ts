@@ -108,6 +108,7 @@ export const notesSlice = createSlice({
       .addCase(createNote.fulfilled, (state, action) => {
         const note: Note = snakeToCamel(action.payload.data.note);
         state.status = "fulfilled";
+        if (note.id) state.activeNoteId = note.id;
         state.notes = [note, ...state.notes];
         Toast.success(action.payload?.message ?? "Note created successfully");
       })

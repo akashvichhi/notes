@@ -4,6 +4,7 @@ import { createRef, useCallback, useEffect, useState } from "react";
 import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
+import Loader from "../../components/common/Loader";
 import Input from "../../components/form/Input";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { useAuth } from "../../hooks/useAuth";
@@ -141,6 +142,7 @@ const LoginPage = () => {
               className="w-full"
               disabled={status === "pending"}
               isProcessing={status === "pending"}
+              processingSpinner={<Loader size={"sm"} />}
             >
               Sign in
             </Button>

@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { forceDeleteNote } from "../../services/notes/notesServices";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
+import Loader from "../common/Loader";
 
 interface DeleteNoteProps {
   show: boolean;
@@ -36,6 +37,7 @@ const DeleteNote = ({ show, note, onClose }: DeleteNoteProps) => {
               onClick={deleteNote}
               disabled={status === "pending"}
               isProcessing={status === "pending"}
+              processingSpinner={<Loader size={"sm"} />}
             >
               Delete
             </Button>

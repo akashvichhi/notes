@@ -1,9 +1,9 @@
-import { Spinner } from "flowbite-react";
+import Loader from "../components/common/Loader";
 
 const Splash = () => {
   return (
-    <div className="flex justify-center items-center h-screen w-screen bg-neutral-50">
-      <Spinner color="warning" size={"lg"} />
+    <div className="flex justify-center items-center h-screen w-screen">
+      <Loader size={"lg"} />
     </div>
   );
 };

@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc && vite build",
-    "lint": "eslint . --fix",
+    "lint": "eslint . --fix --ignore-path .gitignore-prettier",
     "preview": "vite preview",
-    "pretty": "prettier --write . --ignore-path .gitignore"
+    "pretty": "prettier --write . --ignore-path .gitignore-prettier"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^41.0.0",

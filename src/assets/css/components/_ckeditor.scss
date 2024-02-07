@@ -18,6 +18,10 @@
     color: #353535;
   }
 
+  h1 {
+    @apply text-3xl font-bold;
+  }
+
   h2 {
     @apply text-2xl font-bold;
   }
@@ -37,6 +41,7 @@
   }
 
   .ck-editor__main {
+    @apply overflow-auto;
     height: calc(100% - 75px) !important;
   }
 

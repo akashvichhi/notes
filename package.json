@@ -9,7 +9,7 @@
     "lint": "eslint . --fix --ignore-path .gitignore-prettier",
     "preview": "vite preview",
     "pretty": "prettier --write . --ignore-path .gitignore-prettier",
-    "dev:pretty": "npm run lint && npm run pretty"
+    "dev:pretty": "npm run pretty && npm run lint"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^41.0.0",

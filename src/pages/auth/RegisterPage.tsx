@@ -100,6 +100,7 @@ const RegisterPage = () => {
                   name: "name",
                   value: values.name,
                   onChange: handleChange,
+                  autoFocus: true,
                 }}
                 helperText={errors.name ?? ""}
                 color={"error"}

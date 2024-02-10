@@ -1,5 +1,6 @@
 import { Button, Label, Modal } from "flowbite-react";
 import { useFormik } from "formik";
+import { createRef, useEffect } from "react";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import { createNote, renameNote } from "../../services/notes/notesServices";
@@ -25,6 +26,8 @@ interface CreateNoteProps {
 const CreateNote = ({ show, onClose, note }: CreateNoteProps) => {
   const dispatch = useAppDispatch();
   const { status } = useAppSelector((state: RootState) => state.notes);
+  const nameRef = createRef<HTMLInputElement>();
+
   const { values, handleChange, errors, handleSubmit } = useFormik({
     initialValues: {
       name: note?.name ?? "",
@@ -42,6 +45,14 @@ const CreateNote = ({ show, onClose, note }: CreateNoteProps) => {
     validateOnChange: false,
   });
 
+  useEffect(() => {
+    setTimeout(() => {
+      if (nameRef.current) {
+        nameRef.current.focus();
+      }
+    });
+  }, [nameRef]);
+
   return (
     <Modal show={show} onClose={onClose} size={"md"}>
       <Modal.Header>{note?.id ? "Rename Note" : "Create Note"}</Modal.Header>
@@ -51,6 +62,7 @@ const CreateNote = ({ show, onClose, note }: CreateNoteProps) => {
             <Label htmlFor="name">Name</Label>
             <div className="mt-1">
               <Input
+                ref={nameRef}
                 inputProps={{
                   id: "name",
                   type: "text",

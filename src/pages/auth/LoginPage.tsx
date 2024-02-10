@@ -95,6 +95,7 @@ const LoginPage = () => {
                   name: "email",
                   value: values.email,
                   onChange: handleChange,
+                  autoFocus: true,
                 }}
                 helperText={errors.email ?? ""}
                 color={"error"}

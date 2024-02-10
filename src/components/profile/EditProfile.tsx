@@ -1,6 +1,6 @@
 import { Button, Label, Modal } from "flowbite-react";
 import { useFormik } from "formik";
-import { useEffect } from "react";
+import { createRef, useEffect } from "react";
 import { FiMail, FiUser } from "react-icons/fi";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
@@ -26,6 +26,7 @@ interface EditProfileProps {
 const EditProfile = ({ show, onClose }: EditProfileProps) => {
   const dispatch = useAppDispatch();
   const { status, user } = useAppSelector((state: RootState) => state.profile);
+  const nameRef = createRef<HTMLInputElement>();
 
   const { values, handleChange, errors, handleSubmit } = useFormik({
     initialValues: {
@@ -47,6 +48,14 @@ const EditProfile = ({ show, onClose }: EditProfileProps) => {
     }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    setTimeout(() => {
+      if (nameRef.current) {
+        nameRef.current.focus();
+      }
+    });
+  }, [nameRef]);
+
   return (
     <Modal show={show} onClose={onClose} size={"md"}>
       <Modal.Header>Update Profile</Modal.Header>
@@ -56,12 +65,14 @@ const EditProfile = ({ show, onClose }: EditProfileProps) => {
             <Label htmlFor="name">Name</Label>
             <div className="mt-1">
               <Input
+                ref={nameRef}
                 inputProps={{
                   id: "name",
                   type: "text",
                   name: "name",
                   value: values.name,
                   onChange: handleChange,
+                  autoFocus: true,
                 }}
                 helperText={errors.name ?? ""}
                 color={"error"}

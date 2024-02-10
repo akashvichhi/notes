@@ -57,6 +57,12 @@ const Notes = () => {
     };
   }, [note]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (activeNoteId) {
+      setShowNoteList(false);
+    }
+  }, [activeNoteId]);
+
   return (
     <div className="notes-container">
       <NoteList show={showNoteList} />

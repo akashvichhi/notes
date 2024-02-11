@@ -10,7 +10,7 @@ export const camelCase = (str: string) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const snakeToCamel = (input: any): any => {
-  if (!input || typeof input === "string") return input;
+  if (!input || typeof input !== "object") return input;
 
   if (Array.isArray(input)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +27,7 @@ export const snakeToCamel = (input: any): any => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const camelToSnake = (input: any): any => {
-  if (!input || typeof input === "string") return input;
+  if (!input || typeof input !== "object") return input;
 
   if (Array.isArray(input)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

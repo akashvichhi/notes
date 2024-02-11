@@ -1,18 +1,24 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "../../config/axios";
 import apiRoutes from "../../constants/apiRoutes";
+import { camelToSnake } from "../../utils/utils";
 
 type Payload = {
   name: string;
   email: string;
   password: string;
+  isDesktop?: boolean;
 };
 
 export const login = createAsyncThunk(
   "auth/login",
   async (payload: Omit<Payload, "name">, { rejectWithValue }) => {
     try {
-      const response = await axios.post(apiRoutes.login, payload);
+      // @ts-expect-error "notes" will be specified in desktop app
+      if (window.notes) {
+        payload.isDesktop = true;
+      }
+      const response = await axios.post(apiRoutes.login, camelToSnake(payload));
       return response.data;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

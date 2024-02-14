@@ -11,14 +11,13 @@ import {
   updateNote,
 } from "../../services/notes/notesServices";
 import { Status } from "../../types/ApiRequest";
-import Note from "../../types/Note";
+import Note, { NoteAction } from "../../types/Note";
 import Toast from "../../utils/toast";
 import { snakeToCamel } from "../../utils/utils";
 
 interface NoteState {
   status: Status;
-  notesLoading: boolean;
-  searchStatus: boolean;
+  action: NoteAction;
   notes: Note[];
   trash: Note[];
   activeNoteId: string;
@@ -26,8 +25,7 @@ interface NoteState {
 
 const initialState: NoteState = {
   status: "idle",
-  notesLoading: false,
-  searchStatus: false,
+  action: null,
   notes: [],
   trash: [],
   activeNoteId: "",
@@ -60,38 +58,37 @@ export const notesSlice = createSlice({
       // fetch notes
       .addCase(fetchNotes.pending, (state) => {
         state.status = "pending";
-        state.notesLoading = true;
-        state.searchStatus = true;
+        state.action = "fetchAll";
       })
       .addCase(fetchNotes.fulfilled, (state, action) => {
+        const notes: Note[] = snakeToCamel(action.payload.data.notes);
         state.status = "fulfilled";
-        state.notesLoading = false;
-        state.searchStatus = false;
-        state.notes = snakeToCamel(action.payload.data.notes);
+        state.notes = notes.map(note => {
+          const oldNote = state.notes.find(n => n.id === note.id);
+          return { ...note, ...oldNote };
+        });
       })
       .addCase(fetchNotes.rejected, (state) => {
         state.status = "rejected";
-        state.notesLoading = false;
-        state.searchStatus = false;
       })
 
       // fetch note
       .addCase(fetchNote.pending, (state) => {
         state.status = "pending";
-        state.notesLoading = false;
-        state.searchStatus = false;
+        state.action = "fetch";
       })
       .addCase(fetchNote.fulfilled, (state, action) => {
         const note: Note = snakeToCamel(action.payload.data.note);
+        note.isSaved = true;
         state.status = "fulfilled";
         if (note.isDeleted) {
           state.trash = state.trash.map((n: Note) =>
             n.id === note.id ? note : n,
           );
         } else {
-          state.notes = state.notes.map((n: Note) =>
+          state.notes = [ ...state.notes.map((n: Note) =>
             n.id === note.id ? note : n,
-          );
+          )];
         }
       })
       .addCase(fetchNote.rejected, (state, action) => {
@@ -102,8 +99,7 @@ export const notesSlice = createSlice({
       // create note
       .addCase(createNote.pending, (state) => {
         state.status = "pending";
-        state.notesLoading = false;
-        state.searchStatus = false;
+        state.action = "save";
       })
       .addCase(createNote.fulfilled, (state, action) => {
         const note: Note = snakeToCamel(action.payload.data.note);
@@ -120,8 +116,7 @@ export const notesSlice = createSlice({
       // rename note
       .addCase(renameNote.pending, (state) => {
         state.status = "pending";
-        state.notesLoading = false;
-        state.searchStatus = false;
+        state.action = "rename";
       })
       .addCase(renameNote.fulfilled, (state, action) => {
         const { id, name } = action.meta.arg;
@@ -137,25 +132,24 @@ export const notesSlice = createSlice({
       })
 
       // update note
-      .addCase(updateNote.pending, (state, action) => {
+      .addCase(updateNote.pending, (state) => {
+        state.status = "pending";
+        state.action = "save";
+      })
+      .addCase(updateNote.fulfilled, (state, action) => {
         const noteId = action.meta.arg.id;
         const note: Note =
           state.notes.find((n: Note) => n.id === noteId) ??
           state.trash.find((n: Note) => n.id === noteId)!;
         note.isSaved = true;
-
-        state.status = "pending";
-        state.notesLoading = false;
-        state.searchStatus = false;
+        
+        state.status = "fulfilled";
         state.notes = state.notes.map((n: Note) =>
           n.id === noteId ? note : n,
         );
         state.trash = state.trash.map((n: Note) =>
           n.id === noteId ? note : n,
         );
-      })
-      .addCase(updateNote.fulfilled, (state, action) => {
-        state.status = "fulfilled";
         Toast.success(action.payload?.message ?? "Note updated successfully");
       })
       .addCase(updateNote.rejected, (state, action) => {
@@ -166,8 +160,7 @@ export const notesSlice = createSlice({
       // delete note
       .addCase(deleteNote.pending, (state) => {
         state.status = "pending";
-        state.notesLoading = false;
-        state.searchStatus = false;
+        state.action = "delete";
       })
       .addCase(deleteNote.fulfilled, (state, action) => {
         const id: string = action.meta.arg.id!;
@@ -191,8 +184,7 @@ export const notesSlice = createSlice({
       // force delete note
       .addCase(forceDeleteNote.pending, (state) => {
         state.status = "pending";
-        state.notesLoading = false;
-        state.searchStatus = false;
+        state.action = "forceDelete";
       })
       .addCase(forceDeleteNote.fulfilled, (state, action) => {
         const id: string = action.meta.arg.id!;
@@ -212,12 +204,10 @@ export const notesSlice = createSlice({
       // fetch trash
       .addCase(fetchTrash.pending, (state) => {
         state.status = "pending";
-        state.notesLoading = true;
-        state.searchStatus = false;
+        state.action = "fetchTrash";
       })
       .addCase(fetchTrash.fulfilled, (state, action) => {
         state.status = "fulfilled";
-        state.notesLoading = false;
         state.trash = snakeToCamel(
           action.payload.data.notes.map((note: Note) => ({
             ...note,
@@ -227,15 +217,13 @@ export const notesSlice = createSlice({
       })
       .addCase(fetchTrash.rejected, (state, action) => {
         state.status = "rejected";
-        state.notesLoading = false;
         Toast.error(action.payload as string);
       })
 
       // restore note
       .addCase(restoreNote.pending, (state) => {
         state.status = "pending";
-        state.notesLoading = false;
-        state.searchStatus = false;
+        state.action = "restore";
       })
       .addCase(restoreNote.fulfilled, (state, action) => {
         const id: string = action.meta.arg.id!;

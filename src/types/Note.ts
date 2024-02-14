@@ -6,4 +6,15 @@ interface Note {
   isSaved?: boolean;
 }
 
+export type NoteAction =
+  | "fetch"
+  | "fetchAll"
+  | "fetchTrash"
+  | "save"
+  | "delete"
+  | "forceDelete"
+  | "restore"
+  | "rename"
+  | null;
+
 export default Note;

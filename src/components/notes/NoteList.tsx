@@ -1,6 +1,6 @@
-import { Button, Dropdown } from "flowbite-react";
+import { Button, Dropdown, Tooltip } from "flowbite-react";
 import { memo, useCallback, useEffect, useState } from "react";
-import { FiMoreVertical, FiSearch } from "react-icons/fi";
+import { FiMoreVertical, FiRotateCw, FiSearch } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import useDebounce from "../../hooks/useDebounce";
 import { setActiveNoteId } from "../../reducers/notes/notesSlice";
@@ -26,7 +26,7 @@ interface NoteListProps {
 
 const NoteList = memo(({ show }: NoteListProps) => {
   const dispatch = useAppDispatch();
-  const { notes, trash, searchStatus, activeNoteId, notesLoading } =
+  const { notes, trash, action, activeNoteId, status } =
     useAppSelector((state: RootState) => state.notes);
   const [search, setSearch] = useState("");
   const [showRenameNote, setShowRenameNote] = useState<boolean>(false);
@@ -113,6 +113,14 @@ const NoteList = memo(({ show }: NoteListProps) => {
     [activeNoteList], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const reloadNoteList = () => {
+    if (activeNoteList === "trash") {
+      getTrashNotes();
+    } else {
+      getNotes();
+    }
+  }
+
   const setActiveNote = useCallback((note: Note) => {
     dispatch(setActiveNoteId(note.id));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -159,14 +167,14 @@ const NoteList = memo(({ show }: NoteListProps) => {
         className="notes-search"
         leftIcon={<FiSearch />}
         rightIcon={
-          searchStatus && !!search ? (
+          (action === "fetchAll" || action === "fetchTrash") && !!search ? (
             <div className="-mt-1.5">
               <Loader size={"sm"} />
             </div>
           ) : undefined
         }
       />
-      <div>
+      <div className="flex items-center justify-between gap-2">
         <Button.Group>
           <Button
             color={activeNoteList === "notes" ? "warning" : "gray"}
@@ -181,9 +189,24 @@ const NoteList = memo(({ show }: NoteListProps) => {
             Trash
           </Button>
         </Button.Group>
+        <div>
+          <Tooltip content="Reload" className="z-[9999]">
+            <Button
+              size={"xs"}
+              color="warning"
+              className="btn-save-note"
+              onClick={reloadNoteList}
+              isProcessing={status === "pending" && (action === "fetchAll" || action === "fetchTrash")}
+              processingSpinner={<Loader size={"sm"} />}
+              disabled={status === "pending" && (action === "fetchAll" || action === "fetchTrash")}
+            >
+              <FiRotateCw size={20} />
+            </Button>
+          </Tooltip>
+        </div>
       </div>
       <div className="flex-1 overflow-auto">
-        {notesLoading ? (
+        {(action === "fetchAll" || action === "fetchTrash") && status === "pending" ? (
           <div className="text-center">
             <Loader />
           </div>

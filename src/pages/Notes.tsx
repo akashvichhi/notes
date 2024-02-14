@@ -2,7 +2,7 @@ import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import { Button, Tooltip } from "flowbite-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiMenu, FiPlus, FiSave, FiX } from "react-icons/fi";
+import { FiMenu, FiPlus, FiRotateCw, FiSave, FiX } from "react-icons/fi";
 import "../assets/css//components/_ckeditor.scss";
 import "../assets/css/notes.scss";
 import Loader from "../components/common/Loader";
@@ -10,12 +10,12 @@ import CreateNote from "../components/notes/CreateNote";
 import NoteList from "../components/notes/NoteList";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { updateCurrentNote } from "../reducers/notes/notesSlice";
-import { updateNote } from "../services/notes/notesServices";
+import { fetchNote, updateNote } from "../services/notes/notesServices";
 import { RootState } from "../store/store";
 
 const Notes = () => {
   const dispatch = useAppDispatch();
-  const { notes, trash, activeNoteId, status } = useAppSelector(
+  const { notes, trash, activeNoteId, status, action } = useAppSelector(
     (state: RootState) => state.notes,
   );
   const note = useMemo(() => {
@@ -27,6 +27,7 @@ const Notes = () => {
 
   const [showCreateNote, setShowCreateNote] = useState<boolean>(false);
   const [showNoteList, setShowNoteList] = useState<boolean>(false);
+  const [isNoteReloaded, setIsNoteReloaded] = useState<boolean>(false);
 
   const saveNote = useCallback(() => {
     if (note) {
@@ -48,6 +49,12 @@ const Notes = () => {
     },
     [note], // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  const reloadNote = async () => {
+    setIsNoteReloaded(true);
+    await dispatch(fetchNote({ id: activeNoteId }));
+    setIsNoteReloaded(false);
+  }
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyPress);
@@ -106,16 +113,29 @@ const Notes = () => {
               </Button>
             </Tooltip>
           </div>
-          <div>
+          <div className="flex gap-1">
+            <Tooltip content="Reload" className="z-[9999]">
+              <Button
+                size={"xs"}
+                color="warning"
+                className="btn-save-note"
+                onClick={reloadNote}
+                isProcessing={status === "pending" && action === "fetch"}
+                processingSpinner={<Loader size={"sm"} />}
+                disabled={(status === "pending" && action === "fetch") || !note || note.isDeleted}
+              >
+                <FiRotateCw size={20} />
+              </Button>
+            </Tooltip>
             <Tooltip content="Save" className="z-[9999]">
               <Button
                 size={"xs"}
                 color="success"
                 className="btn-save-note"
                 onClick={saveNote}
-                isProcessing={status === "pending"}
+                isProcessing={status === "pending" && action === "save"}
                 processingSpinner={<Loader size={"sm"} />}
-                disabled={status === "pending" || !note || note.isDeleted}
+                disabled={(status === "pending" && action === "save") || !note || note.isDeleted}
               >
                 <FiSave size={20} />
               </Button>
@@ -129,7 +149,7 @@ const Notes = () => {
           data={note?.notes ?? ""}
           onChange={(_, editor: ClassicEditor) => {
             const newNote = editor.getData();
-            if (note?.notes !== undefined) {
+            if (note?.notes !== undefined && !isNoteReloaded) {
               dispatch(updateCurrentNote({ id: note.id, notes: newNote }));
             }
           }}

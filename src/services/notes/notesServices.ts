@@ -160,3 +160,21 @@ export const restoreNote = createAsyncThunk(
     }
   },
 );
+
+export const starNote = createAsyncThunk(
+  "notes/starNote",
+  async (payload: Pick<Note, "id" | "isStarred">, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(
+        apiRoutes.notes.star.replace("{id}", payload.id!),
+        { is_starred: payload.isStarred!.toString() },
+      );
+      return response.data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ?? "Something went wrong",
+      );
+    }
+  },
+);

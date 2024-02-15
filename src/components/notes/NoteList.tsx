@@ -1,15 +1,13 @@
-import { Button, Dropdown, Tooltip } from "flowbite-react";
-import { memo, useCallback, useEffect, useState } from "react";
-import { FiMoreVertical, FiRotateCw, FiSearch } from "react-icons/fi";
+import { Button, Tooltip } from "flowbite-react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { FiRotateCw, FiSearch } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import useDebounce from "../../hooks/useDebounce";
 import { setActiveNoteId } from "../../reducers/notes/notesSlice";
 import {
-  deleteNote as deleteNoteAction,
   fetchNote,
   fetchNotes,
-  fetchTrash,
-  restoreNote as restoreNoteAction,
+  fetchTrash
 } from "../../services/notes/notesServices";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
@@ -17,8 +15,9 @@ import Loader from "../common/Loader";
 import Input from "../form/Input";
 import CreateNote from "./CreateNote";
 import DeleteNote from "./DeleteNote";
+import NoteListItems from "./NoteListItems";
 
-type ActiveNoteList = "notes" | "trash";
+type ActiveNoteList = "notes" | "starred" | "trash";
 
 interface NoteListProps {
   show: boolean;
@@ -62,6 +61,8 @@ const NoteList = memo(({ show }: NoteListProps) => {
       id = trash[0].id ?? "";
     } else if (activeNoteList === "notes" && notes.length > 0) {
       id = notes[0].id ?? "";
+    } else if (activeNoteList === "starred" && notes.length > 0) {
+      id = notes.filter(note => note.isStarred)[0]?.id ?? "";
     }
     dispatch(setActiveNoteId(id));
   }, [activeNoteList, trash, notes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -76,7 +77,7 @@ const NoteList = memo(({ show }: NoteListProps) => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!activeNoteId) {
+    if (!activeNoteId || activeNoteList === "starred") {
       setDefaultActiveNoteId();
     }
   }, [notes, trash]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -97,12 +98,16 @@ const NoteList = memo(({ show }: NoteListProps) => {
     }
   }, [activeNoteId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const debouncedSearch = useDebounce((searchValue: string) => {
+  const loadNotes = useCallback((searchValue?: string) => {
     if (activeNoteList === "trash") {
       getTrashNotes(searchValue);
     } else {
       getNotes(searchValue);
     }
+  }, [activeNoteList]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const debouncedSearch = useDebounce((searchValue: string) => {
+    loadNotes(searchValue);
   }, 800);
 
   const handleSearch = useCallback(
@@ -112,14 +117,6 @@ const NoteList = memo(({ show }: NoteListProps) => {
     },
     [activeNoteList], // eslint-disable-line react-hooks/exhaustive-deps
   );
-
-  const reloadNoteList = () => {
-    if (activeNoteList === "trash") {
-      getTrashNotes();
-    } else {
-      getNotes();
-    }
-  }
 
   const setActiveNote = useCallback((note: Note) => {
     dispatch(setActiveNoteId(note.id));
@@ -135,14 +132,6 @@ const NoteList = memo(({ show }: NoteListProps) => {
     setNoteModal(null);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const deleteNote = useCallback(async (note: Note) => {
-    await dispatch(deleteNoteAction({ id: note.id }));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const restoreNote = useCallback(async (note: Note) => {
-    await dispatch(restoreNoteAction({ id: note.id }));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   const permanentDeleteNote = useCallback((note: Note) => {
     setShowDeleteNote(true);
     setNoteModal({ ...note });
@@ -153,7 +142,15 @@ const NoteList = memo(({ show }: NoteListProps) => {
     setNoteModal(null);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const noteList: Note[] = activeNoteList === "notes" ? notes : trash;
+  const noteList: Note[] = useMemo(() => {
+    if (activeNoteList === "notes") {
+      return notes;
+    } else if (activeNoteList === "starred") {
+      return notes.filter((note) => note.isStarred);
+    } else {
+      return trash;
+    }
+  }, [activeNoteList, notes, trash]);
 
   return (
     <div className={`notes-list ${show ? "show-notes-list" : ""}`}>
@@ -183,6 +180,12 @@ const NoteList = memo(({ show }: NoteListProps) => {
             Notes
           </Button>
           <Button
+            color={activeNoteList === "starred" ? "warning" : "gray"}
+            onClick={() => setActiveNoteList("starred")}
+          >
+            Starred
+          </Button>
+          <Button
             color={activeNoteList === "trash" ? "warning" : "gray"}
             onClick={() => setActiveNoteList("trash")}
           >
@@ -195,7 +198,7 @@ const NoteList = memo(({ show }: NoteListProps) => {
               size={"xs"}
               color="warning"
               className="btn-save-note"
-              onClick={reloadNoteList}
+              onClick={() => loadNotes(search)}
               isProcessing={status === "pending" && (action === "fetchAll" || action === "fetchTrash")}
               processingSpinner={<Loader size={"sm"} />}
               disabled={status === "pending" && (action === "fetchAll" || action === "fetchTrash")}
@@ -205,62 +208,12 @@ const NoteList = memo(({ show }: NoteListProps) => {
           </Tooltip>
         </div>
       </div>
-      <div className="flex-1 overflow-auto">
-        {(action === "fetchAll" || action === "fetchTrash") && status === "pending" ? (
-          <div className="text-center">
-            <Loader />
-          </div>
-        ) : (
-          <div className="notes-list-list">
-            {noteList.length === 0 && <p>No notes found</p>}
-            {noteList.map((note: Note) => (
-              <div
-                className={`note ${activeNoteId === note.id ? "active" : ""}`}
-                onClick={() => setActiveNote(note)}
-                key={note.id}
-              >
-                {note.name}
-                {note.isSaved === false && <sup className="text-sm">*</sup>}
-                <div className="note-actions">
-                  <Dropdown
-                    label={""}
-                    inline
-                    renderTrigger={() => (
-                      <div>
-                        <FiMoreVertical className="cursor-pointer" />
-                      </div>
-                    )}
-                    placement="bottom-end"
-                    className="z-20"
-                  >
-                    {note.isDeleted ? (
-                      <>
-                        <Dropdown.Item onClick={() => restoreNote(note)}>
-                          Restore
-                        </Dropdown.Item>
-                        <Dropdown.Item
-                          onClick={() => permanentDeleteNote(note)}
-                        >
-                          Delete
-                        </Dropdown.Item>
-                      </>
-                    ) : (
-                      <>
-                        <Dropdown.Item onClick={() => renameNote(note)}>
-                          Rename
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => deleteNote(note)}>
-                          Delete
-                        </Dropdown.Item>
-                      </>
-                    )}
-                  </Dropdown>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <NoteListItems
+        noteList={noteList}
+        setActiveNote={note => setActiveNote(note)}
+        renameNote={renameNote}
+        permanentDeleteNote={permanentDeleteNote}
+      />
       {showRenameNote && noteModal ? (
         <CreateNote
           show={showRenameNote}

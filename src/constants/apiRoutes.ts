@@ -17,6 +17,7 @@ const apiRoutes = {
     delete: "/notes/{id}",
     forceDelete: "/notes/{id}/force",
     restore: "/notes/{id}/restore",
+    star: "/notes/{id}/star",
   },
 };
 

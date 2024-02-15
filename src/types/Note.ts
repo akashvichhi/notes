@@ -4,6 +4,7 @@ interface Note {
   notes?: string;
   isDeleted?: boolean;
   isSaved?: boolean;
+  isStarred?: boolean;
 }
 
 export type NoteAction =
@@ -15,6 +16,7 @@ export type NoteAction =
   | "forceDelete"
   | "restore"
   | "rename"
+  | "star"
   | null;
 
 export default Note;

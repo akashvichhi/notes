@@ -8,6 +8,7 @@ import {
   forceDeleteNote,
   renameNote,
   restoreNote,
+  starNote,
   updateNote,
 } from "../../services/notes/notesServices";
 import { Status } from "../../types/ApiRequest";
@@ -240,6 +241,26 @@ export const notesSlice = createSlice({
         Toast.success(action.payload?.message ?? "Note restored successfully");
       })
       .addCase(restoreNote.rejected, (state, action) => {
+        state.status = "rejected";
+        Toast.error(action.payload as string);
+      })
+      
+      // star note
+      .addCase(starNote.pending, (state) => {
+        state.status = "pending";
+        state.action = "star";
+      })
+      .addCase(starNote.fulfilled, (state, action) => {
+        const note: Note = snakeToCamel(action.payload.data.note);
+        note.isSaved = true;
+        
+        state.status = "fulfilled";
+        state.notes = [ ...state.notes.map((n: Note) =>
+          n.id === note.id ? note : n,
+        )];
+        Toast.success(action.payload?.message ?? "Note updated successfully");
+      })
+      .addCase(starNote.rejected, (state, action) => {
         state.status = "rejected";
         Toast.error(action.payload as string);
       });

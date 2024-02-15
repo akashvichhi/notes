@@ -64,8 +64,8 @@ export const notesSlice = createSlice({
       .addCase(fetchNotes.fulfilled, (state, action) => {
         const notes: Note[] = snakeToCamel(action.payload.data.notes);
         state.status = "fulfilled";
-        state.notes = notes.map(note => {
-          const oldNote = state.notes.find(n => n.id === note.id);
+        state.notes = notes.map((note) => {
+          const oldNote = state.notes.find((n) => n.id === note.id);
           return { ...note, ...oldNote };
         });
       })
@@ -87,9 +87,9 @@ export const notesSlice = createSlice({
             n.id === note.id ? note : n,
           );
         } else {
-          state.notes = [ ...state.notes.map((n: Note) =>
-            n.id === note.id ? note : n,
-          )];
+          state.notes = [
+            ...state.notes.map((n: Note) => (n.id === note.id ? note : n)),
+          ];
         }
       })
       .addCase(fetchNote.rejected, (state, action) => {
@@ -143,7 +143,7 @@ export const notesSlice = createSlice({
           state.notes.find((n: Note) => n.id === noteId) ??
           state.trash.find((n: Note) => n.id === noteId)!;
         note.isSaved = true;
-        
+
         state.status = "fulfilled";
         state.notes = state.notes.map((n: Note) =>
           n.id === noteId ? note : n,
@@ -244,7 +244,7 @@ export const notesSlice = createSlice({
         state.status = "rejected";
         Toast.error(action.payload as string);
       })
-      
+
       // star note
       .addCase(starNote.pending, (state) => {
         state.status = "pending";
@@ -253,11 +253,11 @@ export const notesSlice = createSlice({
       .addCase(starNote.fulfilled, (state, action) => {
         const note: Note = snakeToCamel(action.payload.data.note);
         note.isSaved = true;
-        
+
         state.status = "fulfilled";
-        state.notes = [ ...state.notes.map((n: Note) =>
-          n.id === note.id ? note : n,
-        )];
+        state.notes = [
+          ...state.notes.map((n: Note) => (n.id === note.id ? note : n)),
+        ];
         Toast.success(action.payload?.message ?? "Note updated successfully");
       })
       .addCase(starNote.rejected, (state, action) => {

@@ -7,24 +7,22 @@ import Loader from "../common/Loader";
 
 interface NotesHeaderProps {
   showNoteList: boolean;
-	toggleNoteList: (show: boolean) => void;
-	note?: Note;
-	createNote: () => void;
-	reloadNote: () => void;
-	saveNote: () => void;
+  toggleNoteList: (show: boolean) => void;
+  note?: Note;
+  createNote: () => void;
+  reloadNote: () => void;
+  saveNote: () => void;
 }
 
 const NotesHeader = ({
-	showNoteList,
-	toggleNoteList,
-	note,
-	createNote,
-	reloadNote,
-	saveNote,
+  showNoteList,
+  toggleNoteList,
+  note,
+  createNote,
+  reloadNote,
+  saveNote,
 }: NotesHeaderProps) => {
-	const { status, action } = useAppSelector(
-    (state: RootState) => state.notes,
-  );
+  const { status, action } = useAppSelector((state: RootState) => state.notes);
 
   return (
     <div className="notes-header">

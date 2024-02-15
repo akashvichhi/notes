@@ -52,7 +52,7 @@ const Notes = () => {
     setIsNoteReloaded(true);
     await dispatch(fetchNote({ id: activeNoteId }));
     setIsNoteReloaded(false);
-  }
+  };
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyPress);

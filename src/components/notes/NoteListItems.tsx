@@ -26,7 +26,7 @@ const NoteListItems = ({
 }: NoteListItemsProps) => {
   const dispatch = useAppDispatch();
   const { action, activeNoteId, status } = useAppSelector(
-    (state: RootState) => state.notes
+    (state: RootState) => state.notes,
   );
 
   const starNote = useCallback(async (note: Note) => {

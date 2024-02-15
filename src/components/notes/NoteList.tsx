@@ -7,7 +7,7 @@ import { setActiveNoteId } from "../../reducers/notes/notesSlice";
 import {
   fetchNote,
   fetchNotes,
-  fetchTrash
+  fetchTrash,
 } from "../../services/notes/notesServices";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
@@ -25,8 +25,9 @@ interface NoteListProps {
 
 const NoteList = memo(({ show }: NoteListProps) => {
   const dispatch = useAppDispatch();
-  const { notes, trash, action, activeNoteId, status } =
-    useAppSelector((state: RootState) => state.notes);
+  const { notes, trash, action, activeNoteId, status } = useAppSelector(
+    (state: RootState) => state.notes,
+  );
   const [search, setSearch] = useState("");
   const [showRenameNote, setShowRenameNote] = useState<boolean>(false);
   const [showDeleteNote, setShowDeleteNote] = useState<boolean>(false);
@@ -62,7 +63,7 @@ const NoteList = memo(({ show }: NoteListProps) => {
     } else if (activeNoteList === "notes" && notes.length > 0) {
       id = notes[0].id ?? "";
     } else if (activeNoteList === "starred" && notes.length > 0) {
-      id = notes.filter(note => note.isStarred)[0]?.id ?? "";
+      id = notes.filter((note) => note.isStarred)[0]?.id ?? "";
     }
     dispatch(setActiveNoteId(id));
   }, [activeNoteList, trash, notes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -98,13 +99,16 @@ const NoteList = memo(({ show }: NoteListProps) => {
     }
   }, [activeNoteId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadNotes = useCallback((searchValue?: string) => {
-    if (activeNoteList === "trash") {
-      getTrashNotes(searchValue);
-    } else {
-      getNotes(searchValue);
-    }
-  }, [activeNoteList]); // eslint-disable-line react-hooks/exhaustive-deps
+  const loadNotes = useCallback(
+    (searchValue?: string) => {
+      if (activeNoteList === "trash") {
+        getTrashNotes(searchValue);
+      } else {
+        getNotes(searchValue);
+      }
+    },
+    [activeNoteList], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const debouncedSearch = useDebounce((searchValue: string) => {
     loadNotes(searchValue);
@@ -199,9 +203,15 @@ const NoteList = memo(({ show }: NoteListProps) => {
               color="warning"
               className="btn-save-note"
               onClick={() => loadNotes(search)}
-              isProcessing={status === "pending" && (action === "fetchAll" || action === "fetchTrash")}
+              isProcessing={
+                status === "pending" &&
+                (action === "fetchAll" || action === "fetchTrash")
+              }
               processingSpinner={<Loader size={"sm"} />}
-              disabled={status === "pending" && (action === "fetchAll" || action === "fetchTrash")}
+              disabled={
+                status === "pending" &&
+                (action === "fetchAll" || action === "fetchTrash")
+              }
             >
               <FiRotateCw size={20} />
             </Button>
@@ -210,7 +220,7 @@ const NoteList = memo(({ show }: NoteListProps) => {
       </div>
       <NoteListItems
         noteList={noteList}
-        setActiveNote={note => setActiveNote(note)}
+        setActiveNote={(note) => setActiveNote(note)}
         renameNote={renameNote}
         permanentDeleteNote={permanentDeleteNote}
       />

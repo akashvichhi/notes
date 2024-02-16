@@ -2,7 +2,6 @@ import { createSlice } from "@reduxjs/toolkit";
 import { login, logout, register } from "../../services/auth/authServices";
 import { Status } from "../../types/ApiRequest";
 import { clearSession, setSession } from "../../utils/session";
-import Toast from "../../utils/toast";
 
 interface AuthState {
   status: Status;
@@ -26,10 +25,8 @@ export const authSlice = createSlice({
         state.status = "fulfilled";
         setSession(action.payload?.data?.token ?? "");
       })
-      .addCase(login.rejected, (state, action) => {
+      .addCase(login.rejected, (state) => {
         state.status = "rejected";
-
-        Toast.error(action.payload as string);
       })
 
       // register
@@ -40,9 +37,8 @@ export const authSlice = createSlice({
         state.status = "fulfilled";
         setSession(action.payload?.data?.token ?? "");
       })
-      .addCase(register.rejected, (state, action) => {
+      .addCase(register.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // logout
@@ -52,8 +48,8 @@ export const authSlice = createSlice({
       .addCase(logout.fulfilled, () => {
         clearSession();
       })
-      .addCase(logout.rejected, (_, action) => {
-        Toast.error(action.payload as string);
+      .addCase(logout.rejected, () => {
+        //
       });
   },
 });

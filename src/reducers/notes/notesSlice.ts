@@ -14,7 +14,6 @@ import {
 import { Status } from "../../types/ApiRequest";
 import Note, { NoteAction } from "../../types/Note";
 import Toast from "../../utils/toast";
-import { snakeToCamel } from "../../utils/utils";
 
 interface NoteState {
   status: Status;
@@ -62,7 +61,7 @@ export const notesSlice = createSlice({
         state.action = "fetchAll";
       })
       .addCase(fetchNotes.fulfilled, (state, action) => {
-        const notes: Note[] = snakeToCamel(action.payload.data.notes);
+        const notes: Note[] = action.payload.data.notes;
         state.status = "fulfilled";
         state.notes = notes.map((note) => {
           const oldNote = state.notes.find((n) => n.id === note.id);
@@ -79,7 +78,7 @@ export const notesSlice = createSlice({
         state.action = "fetch";
       })
       .addCase(fetchNote.fulfilled, (state, action) => {
-        const note: Note = snakeToCamel(action.payload.data.note);
+        const note: Note = action.payload.data.note;
         note.isSaved = true;
         state.status = "fulfilled";
         if (note.isDeleted) {
@@ -92,9 +91,8 @@ export const notesSlice = createSlice({
           ];
         }
       })
-      .addCase(fetchNote.rejected, (state, action) => {
+      .addCase(fetchNote.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // create note
@@ -103,15 +101,14 @@ export const notesSlice = createSlice({
         state.action = "save";
       })
       .addCase(createNote.fulfilled, (state, action) => {
-        const note: Note = snakeToCamel(action.payload.data.note);
+        const note: Note = action.payload.data.note;
         state.status = "fulfilled";
         if (note.id) state.activeNoteId = note.id;
         state.notes = [note, ...state.notes];
         Toast.success(action.payload?.message ?? "Note created successfully");
       })
-      .addCase(createNote.rejected, (state, action) => {
+      .addCase(createNote.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // rename note
@@ -127,9 +124,8 @@ export const notesSlice = createSlice({
         );
         Toast.success(action.payload?.message ?? "Note renamed successfully");
       })
-      .addCase(renameNote.rejected, (state, action) => {
+      .addCase(renameNote.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // update note
@@ -151,11 +147,9 @@ export const notesSlice = createSlice({
         state.trash = state.trash.map((n: Note) =>
           n.id === noteId ? note : n,
         );
-        Toast.success(action.payload?.message ?? "Note updated successfully");
       })
-      .addCase(updateNote.rejected, (state, action) => {
+      .addCase(updateNote.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // delete note
@@ -177,9 +171,8 @@ export const notesSlice = createSlice({
         state.trash = [note, ...state.trash];
         Toast.success(action.payload?.message ?? "Note deleted successfully");
       })
-      .addCase(deleteNote.rejected, (state, action) => {
+      .addCase(deleteNote.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // force delete note
@@ -197,9 +190,8 @@ export const notesSlice = createSlice({
         state.trash = trash;
         Toast.success(action.payload?.message ?? "Note deleted successfully");
       })
-      .addCase(forceDeleteNote.rejected, (state, action) => {
+      .addCase(forceDeleteNote.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // fetch trash
@@ -209,16 +201,13 @@ export const notesSlice = createSlice({
       })
       .addCase(fetchTrash.fulfilled, (state, action) => {
         state.status = "fulfilled";
-        state.trash = snakeToCamel(
-          action.payload.data.notes.map((note: Note) => ({
-            ...note,
-            isSaved: true,
-          })),
-        );
+        state.trash = action.payload.data.notes.map((note: Note) => ({
+          ...note,
+          isSaved: true,
+        }));
       })
-      .addCase(fetchTrash.rejected, (state, action) => {
+      .addCase(fetchTrash.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // restore note
@@ -240,9 +229,8 @@ export const notesSlice = createSlice({
         state.notes = [note, ...state.notes];
         Toast.success(action.payload?.message ?? "Note restored successfully");
       })
-      .addCase(restoreNote.rejected, (state, action) => {
+      .addCase(restoreNote.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       })
 
       // star note
@@ -251,7 +239,7 @@ export const notesSlice = createSlice({
         state.action = "star";
       })
       .addCase(starNote.fulfilled, (state, action) => {
-        const note: Note = snakeToCamel(action.payload.data.note);
+        const note: Note = action.payload.data.note;
         note.isSaved = true;
 
         state.status = "fulfilled";
@@ -260,9 +248,8 @@ export const notesSlice = createSlice({
         ];
         Toast.success(action.payload?.message ?? "Note updated successfully");
       })
-      .addCase(starNote.rejected, (state, action) => {
+      .addCase(starNote.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       });
   },
 });

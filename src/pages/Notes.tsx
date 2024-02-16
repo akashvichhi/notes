@@ -11,6 +11,8 @@ import { updateCurrentNote } from "../reducers/notes/notesSlice";
 import { fetchNote, updateNote } from "../services/notes/notesServices";
 import { RootState } from "../store/store";
 
+let saveTimer: NodeJS.Timeout | null = null;
+
 const Notes = () => {
   const dispatch = useAppDispatch();
   const { notes, trash, activeNoteId } = useAppSelector(
@@ -42,6 +44,9 @@ const Notes = () => {
         } else if (event.key === "n" || event.key === "N") {
           event.preventDefault();
           setShowCreateNote(true);
+        } else if (event.key === "r" || event.key === "R") {
+          event.preventDefault();
+          window.location.reload();
         }
       }
     },
@@ -89,7 +94,16 @@ const Notes = () => {
             const newNote = editor.getData();
             if (note?.notes !== undefined && !isNoteReloaded) {
               dispatch(updateCurrentNote({ id: note.id, notes: newNote }));
+              if (saveTimer) {
+                clearTimeout(saveTimer);
+              }
+              saveTimer = setTimeout(() => {
+                saveNote();
+              }, 5000);
             }
+          }}
+          onFocus={() => {
+            setShowNoteList(false);
           }}
         />
       </div>

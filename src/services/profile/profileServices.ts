@@ -2,7 +2,6 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "../../config/axios";
 import apiRoutes from "../../constants/apiRoutes";
 import User from "../../types/User";
-import { camelToSnake } from "../../utils/utils";
 
 type ChangePasswordPayload = {
   currentPassword: string;
@@ -45,7 +44,7 @@ export const changePassword = createAsyncThunk(
     try {
       const response = await axios.post(
         apiRoutes.profile.changePassword,
-        camelToSnake(payload),
+        payload,
       );
       return response.data;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

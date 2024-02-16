@@ -1,7 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "../../config/axios";
 import apiRoutes from "../../constants/apiRoutes";
-import { camelToSnake } from "../../utils/utils";
 
 type Payload = {
   name: string;
@@ -18,7 +17,7 @@ export const login = createAsyncThunk(
       if (window.notes) {
         payload.isDesktop = true;
       }
-      const response = await axios.post(apiRoutes.login, camelToSnake(payload));
+      const response = await axios.post(apiRoutes.login, payload);
       return response.data;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

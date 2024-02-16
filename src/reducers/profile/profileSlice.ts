@@ -8,7 +8,6 @@ import { Status } from "../../types/ApiRequest";
 import User from "../../types/User";
 import { clearSession } from "../../utils/session";
 import Toast from "../../utils/toast";
-import { snakeToCamel } from "../../utils/utils";
 
 interface ProfileState {
   status: Status;
@@ -32,7 +31,7 @@ export const profileSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.status = "fulfilled";
-        state.user = snakeToCamel(action.payload?.data?.user) ?? null;
+        state.user = action.payload?.data?.user ?? null;
       })
       .addCase(fetchProfile.rejected, (state) => {
         state.status = "rejected";
@@ -46,16 +45,14 @@ export const profileSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.status = "fulfilled";
         if (action.payload?.data?.user) {
-          state.user = snakeToCamel(action.payload.data.user);
+          state.user = action.payload.data.user;
         }
         Toast.success(
           action.payload?.message ?? "Profile updated successfully",
         );
       })
-      .addCase(updateProfile.rejected, (state, action) => {
+      .addCase(updateProfile.rejected, (state) => {
         state.status = "rejected";
-
-        Toast.error(action.payload as string);
       })
 
       // change password
@@ -68,9 +65,8 @@ export const profileSlice = createSlice({
           action.payload?.message ?? "Password changed successfully",
         );
       })
-      .addCase(changePassword.rejected, (state, action) => {
+      .addCase(changePassword.rejected, (state) => {
         state.status = "rejected";
-        Toast.error(action.payload as string);
       });
   },
 });

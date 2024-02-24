@@ -30,6 +30,9 @@ const Notes = () => {
   const [isNoteReloaded, setIsNoteReloaded] = useState<boolean>(false);
 
   const saveNote = useCallback(() => {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+    }
     if (note) {
       dispatch(updateNote({ id: note.id, notes: note.notes }));
     }

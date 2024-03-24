@@ -15,7 +15,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Provider store={store}>
         <AuthProvider>
           <App />
-          <ToastContainer position="top-center" transition={Slide} />
+          <ToastContainer
+            position="top-center"
+            autoClose={5000}
+            closeButton={false}
+            transition={Slide}
+          />
         </AuthProvider>
       </Provider>
     </BrowserRouter>

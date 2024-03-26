@@ -13,6 +13,7 @@ const toastOptions: ToastOptions = {
   progressStyle: { background: "none" },
 };
 
+const toastClass: string = "max-w-lg";
 const iconWrapperClass: string =
   "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg";
 const iconClass: string = "h-5 w-5";
@@ -21,7 +22,7 @@ const Toast = {
   success: (message: string, id?: string) => {
     toast(
       <div>
-        <FBToast>
+        <FBToast className={toastClass}>
           <div
             className={`${iconWrapperClass} bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200`}
           >
@@ -41,7 +42,7 @@ const Toast = {
   error: (message: string, id?: string) => {
     toast(
       <div>
-        <FBToast>
+        <FBToast className={toastClass}>
           <div
             className={`${iconWrapperClass} bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200`}
           >
@@ -61,7 +62,7 @@ const Toast = {
   warning: (message: string, id?: string) => {
     toast(
       <div>
-        <FBToast>
+        <FBToast className={toastClass}>
           <div
             className={`${iconWrapperClass} bg-orange-100 text-orange-500 dark:bg-orange-800 dark:text-orange-200`}
           >
@@ -81,7 +82,7 @@ const Toast = {
   info: (message: string, id?: string) => {
     toast(
       <div>
-        <FBToast>
+        <FBToast className={toastClass}>
           <div
             className={`${iconWrapperClass} bg-cyan-100 text-cyan-500 dark:bg-cyan-800 dark:text-cyan-200`}
           >

@@ -64,5 +64,5 @@ export const getSelectedText = (): string => {
     // @ts-ignore
     selectedText = document.selection.createRange().text.toString();
   }
-  return selectedText.replace(/\s+/g, " ");
+  return selectedText.replace(/\s+/g, " ").trim();
 };

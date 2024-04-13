@@ -1,8 +1,10 @@
 import { Button, Tooltip } from "flowbite-react";
+import { useMemo } from "react";
 import { FiMenu, FiPlus, FiRotateCw, FiSave, FiX } from "react-icons/fi";
 import { useAppSelector } from "../../hooks/redux";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
+import { getWordsLength, trimHTML } from "../../utils/utils";
 import Loader from "../common/Loader";
 
 interface NotesHeaderProps {
@@ -22,7 +24,24 @@ const NotesHeader = ({
   reloadNote,
   saveNote,
 }: NotesHeaderProps) => {
-  const { status, action } = useAppSelector((state: RootState) => state.notes);
+  const { status, action, selectedText } = useAppSelector(
+    (state: RootState) => state.notes,
+  );
+  const trimmedNotes = useMemo(() => trimHTML(note?.notes ?? ""), [note]);
+  const totalCharacters = useMemo(() => trimmedNotes.length, [trimmedNotes]);
+  const totalWords = useMemo(
+    () => getWordsLength(trimmedNotes),
+    [trimmedNotes],
+  );
+
+  const totalSelectedCharacters = useMemo(
+    () => selectedText?.length ?? 0,
+    [selectedText],
+  );
+  const totalSelectedWords = useMemo(
+    () => getWordsLength(selectedText ?? ""),
+    [selectedText],
+  );
 
   return (
     <div className="notes-header">
@@ -64,7 +83,29 @@ const NotesHeader = ({
           </Button>
         </Tooltip>
       </div>
-      <div className="flex gap-1">
+      <div className="flex items-center gap-1">
+        {selectedText && (
+          <div className="flex mr-2">
+            (<span className="mr-2">Selected:</span>
+            <div className="flex gap-2">
+              <Tooltip
+                content={`Selected characters: ${totalSelectedCharacters}`}
+              >
+                <span>C: {totalSelectedCharacters}</span>
+              </Tooltip>
+              <Tooltip content={`Selected words: ${totalSelectedWords}`}>
+                <span>W: {totalSelectedWords}</span>
+              </Tooltip>
+            </div>
+            )
+          </div>
+        )}
+        <Tooltip content={`Total characters: ${totalCharacters}`}>
+          <span className="mr-2">C: {totalCharacters}</span>
+        </Tooltip>
+        <Tooltip content={`Total words: ${totalWords}`}>
+          <span className="mr-4">W: {totalWords}</span>
+        </Tooltip>
         <Tooltip content="Reload" className="z-[9999]">
           <Button
             size={"xs"}

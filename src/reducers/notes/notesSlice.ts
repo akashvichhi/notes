@@ -21,6 +21,7 @@ interface NoteState {
   notes: Note[];
   trash: Note[];
   activeNoteId: string;
+  selectedText: string;
 }
 
 const initialState: NoteState = {
@@ -29,6 +30,7 @@ const initialState: NoteState = {
   notes: [],
   trash: [],
   activeNoteId: "",
+  selectedText: "",
 };
 
 export const notesSlice = createSlice({
@@ -37,6 +39,7 @@ export const notesSlice = createSlice({
   reducers: {
     setActiveNoteId: (state, action) => {
       state.activeNoteId = action.payload;
+      state.selectedText = "";
     },
     updateCurrentNote: (state, action) => {
       state.notes = state.notes.map((note) => {
@@ -51,6 +54,9 @@ export const notesSlice = createSlice({
         }
         return note;
       });
+    },
+    setSelectedText: (state, action) => {
+      state.selectedText = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -254,6 +260,7 @@ export const notesSlice = createSlice({
   },
 });
 
-export const { setActiveNoteId, updateCurrentNote } = notesSlice.actions;
+export const { setActiveNoteId, updateCurrentNote, setSelectedText } =
+  notesSlice.actions;
 
 export default notesSlice.reducer;

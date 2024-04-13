@@ -1,36 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function useDebounce<T extends any[]>(
   callback: (...args: T) => void,
-  delay: number,
+  delay: number = 1000,
 ): (...args: T) => void {
-  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+  let timer: NodeJS.Timeout | null = null;
 
-  const debouncedCallback = useCallback(
-    (...args: T) => {
-      if (timer) {
-        clearTimeout(timer);
-      }
+  return function (...args: T) {
+    if (timer) {
+      clearTimeout(timer);
+    }
 
-      const newTimer = setTimeout(() => {
-        callback(...args);
-      }, delay);
-
-      setTimer(newTimer);
-    },
-    [callback, delay, timer],
-  );
-
-  useEffect(() => {
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
-  }, [timer]);
-
-  return debouncedCallback;
+    timer = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  };
 }
 
 export default useDebounce;

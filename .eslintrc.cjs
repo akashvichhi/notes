@@ -16,5 +16,6 @@ module.exports = {
     ],
     quotes: ["error", "double"],
     "import/order": ["error", { alphabetize: { order: "asc" } }],
+    "@typescript-eslint/ban-ts-comment": "off",
   },
 };

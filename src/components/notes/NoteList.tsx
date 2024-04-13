@@ -168,7 +168,9 @@ const NoteList = memo(({ show }: NoteListProps) => {
         className="notes-search"
         leftIcon={<FiSearch />}
         rightIcon={
-          (action === "fetchAll" || action === "fetchTrash") && !!search ? (
+          (action === "fetchAll" || action === "fetchTrash") &&
+          status === "pending" &&
+          !!search ? (
             <div className="-mt-1.5">
               <Loader size={"sm"} />
             </div>

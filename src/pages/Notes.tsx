@@ -7,9 +7,14 @@ import CreateNote from "../components/notes/CreateNote";
 import NoteList from "../components/notes/NoteList";
 import NotesHeader from "../components/notes/NotesHeader";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
-import { updateCurrentNote } from "../reducers/notes/notesSlice";
+import useDebounce from "../hooks/useDebounce";
+import {
+  setSelectedText,
+  updateCurrentNote,
+} from "../reducers/notes/notesSlice";
 import { fetchNote, updateNote } from "../services/notes/notesServices";
 import { RootState } from "../store/store";
+import { getSelectedText } from "../utils/utils";
 
 let saveTimer: NodeJS.Timeout | null = null;
 
@@ -76,6 +81,10 @@ const Notes = () => {
     }
   }, [activeNoteId]);
 
+  const handleSelectionChange = useDebounce(() => {
+    dispatch(setSelectedText(getSelectedText()));
+  }, 100);
+
   return (
     <div className="notes-container">
       <NoteList show={showNoteList} />
@@ -93,6 +102,16 @@ const Notes = () => {
           editor={ClassicEditor}
           disabled={(note?.isDeleted || !activeNoteId) ?? false}
           data={note?.notes ?? ""}
+          onReady={(editor: ClassicEditor) => {
+            const selectionChangeEvents: string[] = [
+              "mouseup",
+              "keyup",
+              "touchend",
+            ];
+            selectionChangeEvents.forEach((event: string) => {
+              editor.editing.view.document.on(event, handleSelectionChange);
+            });
+          }}
           onChange={(_, editor: ClassicEditor) => {
             const newNote = editor.getData();
             if (note?.notes !== undefined && !isNoteReloaded) {

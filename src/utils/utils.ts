@@ -41,3 +41,28 @@ export const camelToSnake = (input: any): any => {
   }
   return obj;
 };
+
+export const trimHTML = (str: string): string => {
+  return str
+    .replace(/<[^>]*>?(\s*)/g, (_, space) => ` ${space || ""}`)
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+export const getWordsLength = (str: string): number => {
+  return str.split(" ").length;
+};
+
+export const getSelectedText = (): string => {
+  let selectedText = "";
+  if (window.getSelection) {
+    // @ts-ignore
+    selectedText = window.getSelection().toString();
+    // @ts-ignore
+  } else if (document.selection && document.selection.type != "Control") {
+    // @ts-ignore
+    selectedText = document.selection.createRange().text.toString();
+  }
+  return selectedText.replace(/\s+/g, " ");
+};

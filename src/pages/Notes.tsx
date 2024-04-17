@@ -3,6 +3,7 @@ import { CKEditor } from "@ckeditor/ckeditor5-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "../assets/css//components/_ckeditor.scss";
 import "../assets/css/notes.scss";
+import CountWords from "../components/notes/CountWords";
 import CreateNote from "../components/notes/CreateNote";
 import NoteList from "../components/notes/NoteList";
 import NotesHeader from "../components/notes/NotesHeader";
@@ -20,7 +21,7 @@ let saveTimer: NodeJS.Timeout | null = null;
 
 const Notes = () => {
   const dispatch = useAppDispatch();
-  const { notes, trash, activeNoteId } = useAppSelector(
+  const { notes, trash, activeNoteId, selectedText } = useAppSelector(
     (state: RootState) => state.notes,
   );
   const note = useMemo(() => {
@@ -128,6 +129,9 @@ const Notes = () => {
             setShowNoteList(false);
           }}
         />
+      </div>
+      <div className="notes-words-count">
+        <CountWords selectedText={selectedText} notes={note?.notes ?? ""} />
       </div>
       {showCreateNote && (
         <CreateNote

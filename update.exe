@@ -1,0 +1,7 @@
+git push origin master
+git push origin_private master
+git checkout local
+git merge master
+git push origin_private local
+npm run build
+git checkout master

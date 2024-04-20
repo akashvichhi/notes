@@ -24,6 +24,28 @@ body {
   @apply outline-none;
 }
 
+
+/* CSS for scrollbar */
+::-webkit-scrollbar {
+  @apply h-2 w-2;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  @apply bg-white shadow-lg;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  @apply rounded;
+  background: #888;
+
+  &:hover {
+    background: #555;
+  }
+}
+
+
 .Toastify__toast-container {
   padding: 0;
   top: 0;

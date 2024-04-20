@@ -1,6 +1,6 @@
-import { Button, Tooltip } from "flowbite-react";
+import { Button } from "flowbite-react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { FiRotateCw, FiSearch } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import useDebounce from "../../hooks/useDebounce";
 import { setActiveNoteId } from "../../reducers/notes/notesSlice";
@@ -177,48 +177,33 @@ const NoteList = memo(({ show }: NoteListProps) => {
           ) : undefined
         }
       />
-      <div className="flex items-center justify-between gap-2">
-        <Button.Group>
+      <div>
+        <Button.Group className="w-full">
           <Button
             color={activeNoteList === "notes" ? "warning" : "gray"}
             onClick={() => setActiveNoteList("notes")}
+            fullSized
           >
             Notes
+            <span className="ml-1">({notes.length})</span>
           </Button>
           <Button
             color={activeNoteList === "starred" ? "warning" : "gray"}
             onClick={() => setActiveNoteList("starred")}
+            fullSized
           >
             Starred
+            <span className="ml-1">({notes.filter((note) => note.isStarred).length})</span>
           </Button>
           <Button
             color={activeNoteList === "trash" ? "warning" : "gray"}
             onClick={() => setActiveNoteList("trash")}
+            fullSized
           >
             Trash
+            <span className="ml-1">({trash.length})</span>
           </Button>
         </Button.Group>
-        <div>
-          <Tooltip content="Reload" className="z-[9999]">
-            <Button
-              size={"xs"}
-              color="warning"
-              className="btn-save-note"
-              onClick={() => loadNotes(search)}
-              isProcessing={
-                status === "pending" &&
-                (action === "fetchAll" || action === "fetchTrash")
-              }
-              processingSpinner={<Loader size={"sm"} />}
-              disabled={
-                status === "pending" &&
-                (action === "fetchAll" || action === "fetchTrash")
-              }
-            >
-              <FiRotateCw size={20} />
-            </Button>
-          </Tooltip>
-        </div>
       </div>
       <NoteListItems
         noteList={noteList}

@@ -20,7 +20,7 @@ export default defineConfig({
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
         name: "Notes",
-        short_name: "Create Notes",
+        short_name: "Notes",
         theme_color: "#ffffff",
         icons: [
           {

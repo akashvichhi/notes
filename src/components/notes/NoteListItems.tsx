@@ -1,11 +1,10 @@
 import { Dropdown } from "flowbite-react";
 import { useCallback } from "react";
-import { FiMoreVertical, FiStar } from "react-icons/fi";
+import { FiMoreVertical } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import {
   deleteNote as deleteNoteAction,
-  restoreNote as restoreNoteAction,
-  starNote as starNoteAction,
+  restoreNote as restoreNoteAction
 } from "../../services/notes/notesServices";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
@@ -29,9 +28,9 @@ const NoteListItems = ({
     (state: RootState) => state.notes,
   );
 
-  const starNote = useCallback(async (note: Note) => {
-    dispatch(starNoteAction({ id: note.id, isStarred: !note.isStarred }));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // const starNote = useCallback(async (note: Note) => {
+  //   dispatch(starNoteAction({ id: note.id, isStarred: !note.isStarred }));
+  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteNote = useCallback(async (note: Note) => {
     dispatch(deleteNoteAction({ id: note.id }));
@@ -59,11 +58,11 @@ const NoteListItems = ({
             >
               {note.name}
               {note.isSaved === false && <sup className="text-sm">*</sup>}
-              {note.isStarred && (
+              {/* {note.isStarred && (
                 <div className="absolute right-8 top-[50%] -translate-y-[50%]">
                   <FiStar />
                 </div>
-              )}
+              )} */}
               <div className="note-actions">
                 <Dropdown
                   label={""}
@@ -90,9 +89,9 @@ const NoteListItems = ({
                       <Dropdown.Item onClick={() => renameNote(note)}>
                         Rename
                       </Dropdown.Item>
-                      <Dropdown.Item onClick={() => starNote(note)}>
+                      {/* <Dropdown.Item onClick={() => starNote(note)}>
                         {note.isStarred ? "Unstar" : "Star"}
-                      </Dropdown.Item>
+                      </Dropdown.Item> */}
                       <Dropdown.Item onClick={() => deleteNote(note)}>
                         Delete
                       </Dropdown.Item>

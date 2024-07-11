@@ -187,14 +187,14 @@ const NoteList = memo(({ show }: NoteListProps) => {
             Notes
             <span className="ml-1">({notes.length})</span>
           </Button>
-          <Button
+          {/* <Button
             color={activeNoteList === "starred" ? "warning" : "gray"}
             onClick={() => setActiveNoteList("starred")}
             fullSized
           >
             Starred
             <span className="ml-1">({notes.filter((note) => note.isStarred).length})</span>
-          </Button>
+          </Button> */}
           <Button
             color={activeNoteList === "trash" ? "warning" : "gray"}
             onClick={() => setActiveNoteList("trash")}

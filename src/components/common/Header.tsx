@@ -45,7 +45,6 @@ const Header = () => {
         <h1 className="text-2xl flex items-center gap-3">
           <img src="/logo.png" alt="Notes" className="w-6" />
           Notes
-          <span className="text-sm mt-2">v2.0.2</span>
         </h1>
         <div>
           <Dropdown

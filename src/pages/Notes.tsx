@@ -76,12 +76,6 @@ const Notes = () => {
     };
   }, [note]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (activeNoteId) {
-      setShowNoteList(false);
-    }
-  }, [activeNoteId]);
-
   const handleSelectionChange = useDebounce(() => {
     dispatch(setSelectedText(getSelectedText()));
   }, 100);
@@ -127,9 +121,6 @@ const Notes = () => {
                 saveNote();
               }, 5000);
             }
-          }}
-          onFocus={() => {
-            setShowNoteList(false);
           }}
         />
       </div>

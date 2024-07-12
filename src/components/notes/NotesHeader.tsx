@@ -24,22 +24,20 @@ const NotesHeader = ({
   saveNote,
 }: NotesHeaderProps) => {
   const { status, action, selectedText } = useAppSelector(
-    (state: RootState) => state.notes,
+    (state: RootState) => state.notes
   );
 
   return (
     <div className="notes-header">
       <div className="flex items-center">
-        {!showNoteList && (
-          <Button
-            color="dark"
-            size={"xs"}
-            className="md:hidden btn-save-note"
-            onClick={() => toggleNoteList(!showNoteList)}
-          >
-            <FiMenu size={20} />
-          </Button>
-        )}
+        <Button
+          color="dark"
+          size={"xs"}
+          className="md:hidden btn-save-note"
+          onClick={() => toggleNoteList(!showNoteList)}
+        >
+          <FiMenu size={20} />
+        </Button>
         {note?.name ? (
           <span className="notes-header-item">
             {note?.name ?? ""}

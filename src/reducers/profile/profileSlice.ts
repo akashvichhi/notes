@@ -22,7 +22,11 @@ const initialState: ProfileState = {
 export const profileSlice = createSlice({
   name: "profile",
   initialState,
-  reducers: {},
+  reducers: {
+    clearState: () => {
+      return initialState;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // fetch profile
@@ -48,7 +52,7 @@ export const profileSlice = createSlice({
           state.user = action.payload.data.user;
         }
         Toast.success(
-          action.payload?.message ?? "Profile updated successfully",
+          action.payload?.message ?? "Profile updated successfully"
         );
       })
       .addCase(updateProfile.rejected, (state) => {
@@ -62,7 +66,7 @@ export const profileSlice = createSlice({
       .addCase(changePassword.fulfilled, (state, action) => {
         state.status = "fulfilled";
         Toast.success(
-          action.payload?.message ?? "Password changed successfully",
+          action.payload?.message ?? "Password changed successfully"
         );
       })
       .addCase(changePassword.rejected, (state) => {
@@ -70,5 +74,7 @@ export const profileSlice = createSlice({
       });
   },
 });
+
+export const { clearState } = profileSlice.actions;
 
 export default profileSlice.reducer;

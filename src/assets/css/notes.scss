@@ -5,6 +5,9 @@
   @apply overflow-hidden relative flex;
   height: calc(100vh - 56px);
 
+  #overlay {
+    @apply fixed inset-0 bg-black/40 z-30;
+  }
   .notes {
     @apply w-2/3;
     background-color: $notes-color;
@@ -26,8 +29,5 @@
   .notes-words-count {
     @apply lg:hidden fixed bottom-0 right-0 px-2 py-1 drop-shadow-lg;
     background-color: $sidebar-color;
-  }
-  .btn-notes-list-close {
-    @apply absolute left-72 z-50 shadow-md;
   }
 }

@@ -5,6 +5,8 @@ import { FiLock, FiLogOut, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../hooks/redux";
 import { useAuth } from "../../hooks/useAuth";
+import { clearState as clerNotes } from "../../reducers/notes/notesSlice";
+import { clearState as clerProfile } from "../../reducers/profile/profileSlice";
 import { logout } from "../../services/auth/authServices";
 import ChangePassword from "../profile/ChangePassword";
 import EditProfile from "../profile/EditProfile";
@@ -16,9 +18,11 @@ const Header = () => {
   const [showEditProfile, setShowEditProfile] = useState<boolean>(false);
   const [showChangePassword, setShowChangePassword] = useState<boolean>(false);
 
-  const signout = useCallback(async () => {
-    await dispatch(logout());
+  const signout = useCallback(() => {
+    dispatch(logout());
     auth.signout(() => {
+      dispatch(clerNotes());
+      dispatch(clerProfile());
       navigate("/login");
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -40,7 +44,7 @@ const Header = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <header className="px-4 py-3 shadow relative z-50">
+    <header className="header px-4 py-3 shadow relative z-50">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl flex items-center gap-3">
           <img src="/logo.png" alt="Notes" className="w-6" />

@@ -1,9 +1,11 @@
-import replace from "@rollup/plugin-replace";
+import replace, { RollupReplaceOptions } from "@rollup/plugin-replace";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
 
 const pwaOptions: Partial<VitePWAOptions> = {
+  registerType: "autoUpdate",
+  selfDestroying: true,
   includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
   manifest: {
     name: "Notes",
@@ -36,12 +38,11 @@ const pwaOptions: Partial<VitePWAOptions> = {
   },
 };
 
-const replaceOptions = { __DATE__: new Date().toISOString() };
-
-pwaOptions.registerType = "autoUpdate";
-// @ts-expect-error just ignore
-replaceOptions.__RELOAD_SW__ = "true";
-pwaOptions.selfDestroying = true;
+const replaceOptions: Partial<RollupReplaceOptions> = {
+  __DATE__: new Date().toISOString(),
+  preventAssignment: true,
+  __RELOAD_SW__: true,
+};
 
 // https://vitejs.dev/config/
 export default defineConfig({

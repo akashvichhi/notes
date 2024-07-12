@@ -1,5 +1,5 @@
 import { Button, Tooltip } from "flowbite-react";
-import { FiMenu, FiPlus, FiRotateCw, FiSave, FiX } from "react-icons/fi";
+import { FiMenu, FiPlus, FiRotateCw, FiSave } from "react-icons/fi";
 import { useAppSelector } from "../../hooks/redux";
 import { RootState } from "../../store/store";
 import Note from "../../types/Note";
@@ -38,16 +38,6 @@ const NotesHeader = ({
             onClick={() => toggleNoteList(!showNoteList)}
           >
             <FiMenu size={20} />
-          </Button>
-        )}
-        {showNoteList && (
-          <Button
-            color="dark"
-            size={"xs"}
-            className="md:hidden btn-save-note btn-notes-list-close"
-            onClick={() => toggleNoteList(false)}
-          >
-            <FiX size={20} />
           </Button>
         )}
         {note?.name ? (

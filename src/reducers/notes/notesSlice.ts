@@ -13,7 +13,6 @@ import {
 } from "../../services/notes/notesServices";
 import { Status } from "../../types/ApiRequest";
 import Note, { NoteAction } from "../../types/Note";
-import Toast from "../../utils/toast";
 
 interface NoteState {
   status: Status;
@@ -58,6 +57,9 @@ export const notesSlice = createSlice({
     setSelectedText: (state, action) => {
       state.selectedText = action.payload;
     },
+    clearState: () => {
+      return initialState;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -89,7 +91,7 @@ export const notesSlice = createSlice({
         state.status = "fulfilled";
         if (note.isDeleted) {
           state.trash = state.trash.map((n: Note) =>
-            n.id === note.id ? note : n,
+            n.id === note.id ? note : n
           );
         } else {
           state.notes = [
@@ -111,7 +113,6 @@ export const notesSlice = createSlice({
         state.status = "fulfilled";
         if (note.id) state.activeNoteId = note.id;
         state.notes = [note, ...state.notes];
-        Toast.success(action.payload?.message ?? "Note created successfully");
       })
       .addCase(createNote.rejected, (state) => {
         state.status = "rejected";
@@ -126,9 +127,8 @@ export const notesSlice = createSlice({
         const { id, name } = action.meta.arg;
         state.status = "fulfilled";
         state.notes = state.notes.map((n: Note) =>
-          n.id === id ? { ...n, name } : n,
+          n.id === id ? { ...n, name } : n
         );
-        Toast.success(action.payload?.message ?? "Note renamed successfully");
       })
       .addCase(renameNote.rejected, (state) => {
         state.status = "rejected";
@@ -148,10 +148,10 @@ export const notesSlice = createSlice({
 
         state.status = "fulfilled";
         state.notes = state.notes.map((n: Note) =>
-          n.id === noteId ? note : n,
+          n.id === noteId ? note : n
         );
         state.trash = state.trash.map((n: Note) =>
-          n.id === noteId ? note : n,
+          n.id === noteId ? note : n
         );
       })
       .addCase(updateNote.rejected, (state) => {
@@ -175,7 +175,6 @@ export const notesSlice = createSlice({
         state.activeNoteId = activeId;
         state.notes = notes;
         state.trash = [note, ...state.trash];
-        Toast.success(action.payload?.message ?? "Note deleted successfully");
       })
       .addCase(deleteNote.rejected, (state) => {
         state.status = "rejected";
@@ -194,7 +193,6 @@ export const notesSlice = createSlice({
         state.status = "fulfilled";
         state.activeNoteId = activeId;
         state.trash = trash;
-        Toast.success(action.payload?.message ?? "Note deleted successfully");
       })
       .addCase(forceDeleteNote.rejected, (state) => {
         state.status = "rejected";
@@ -233,7 +231,6 @@ export const notesSlice = createSlice({
         state.activeNoteId = activeId;
         state.trash = trash;
         state.notes = [note, ...state.notes];
-        Toast.success(action.payload?.message ?? "Note restored successfully");
       })
       .addCase(restoreNote.rejected, (state) => {
         state.status = "rejected";
@@ -252,7 +249,6 @@ export const notesSlice = createSlice({
         state.notes = [
           ...state.notes.map((n: Note) => (n.id === note.id ? note : n)),
         ];
-        Toast.success(action.payload?.message ?? "Note updated successfully");
       })
       .addCase(starNote.rejected, (state) => {
         state.status = "rejected";
@@ -260,7 +256,11 @@ export const notesSlice = createSlice({
   },
 });
 
-export const { setActiveNoteId, updateCurrentNote, setSelectedText } =
-  notesSlice.actions;
+export const {
+  setActiveNoteId,
+  updateCurrentNote,
+  setSelectedText,
+  clearState,
+} = notesSlice.actions;
 
 export default notesSlice.reducer;

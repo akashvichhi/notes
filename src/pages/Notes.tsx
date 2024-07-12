@@ -22,7 +22,7 @@ let saveTimer: NodeJS.Timeout | null = null;
 const Notes = () => {
   const dispatch = useAppDispatch();
   const { notes, trash, activeNoteId, selectedText } = useAppSelector(
-    (state: RootState) => state.notes,
+    (state: RootState) => state.notes
   );
   const note = useMemo(() => {
     return (
@@ -59,7 +59,7 @@ const Notes = () => {
         }
       }
     },
-    [note], // eslint-disable-line react-hooks/exhaustive-deps
+    [note] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const reloadNote = async () => {
@@ -88,6 +88,9 @@ const Notes = () => {
 
   return (
     <div className="notes-container">
+      {showNoteList && (
+        <div id="overlay" onClick={() => setShowNoteList(false)}></div>
+      )}
       <NoteList show={showNoteList} />
       <div className="notes flex-1">
         <NotesHeader

@@ -11,11 +11,12 @@
   }
 
   code {
-    color: #d63384;
+    @apply text-sm;
+    padding: 2px 6px !important;
   }
 
   pre code {
-    color: #353535;
+    padding: 0 !important;
   }
 
   h1 {

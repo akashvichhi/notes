@@ -223,6 +223,14 @@ work on `master` only — **no branches, no worktrees, no stashing** — stop ra
 improvise, never weaken a test to make it pass, verify before you claim, and report
 failures plainly.
 
+**Pause at 🧠 REASONING-HEAVY tasks.** Nine tasks in the plan carry a
+`🧠 REASONING-HEAVY TASK` banner. **Before starting one, stop and say so**, then wait.
+You cannot change your own model — the developer may want to switch to a stronger one
+first, and they can only do that between turns. One line is enough:
+
+> *"The next task is D7, which is marked reasoning-heavy. Say continue when you're
+> ready."*
+
 **Work through the tasks strictly in order.** Do not skip ahead or reorder.
 
 **⛔ STOP AFTER TASK F15.** This delivery is the backend plus the web application —
@@ -289,6 +297,10 @@ before you claim anything works, and stop and tell me rather than improvising
 when something is wrong.
 
 Execute docs/PLAN.md task by task, in order, starting with Task B1.
+
+Nine tasks carry a "REASONING-HEAVY TASK" banner. Before starting one of
+those, stop, tell me which task it is, and wait for me to say continue — I may
+want to switch model first, which only I can do.
 
 STOP AFTER TASK F15. That is the end of this delivery: the backend and the
 web application. Do not start Task D1. When F15 is committed, run the full

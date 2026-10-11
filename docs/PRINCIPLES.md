@@ -47,6 +47,9 @@ Every task runs this loop. No exceptions, no shortcuts, no "this one is simple".
 - [ ] `git status` is clean. If it is not, the previous task was not committed —
       stop and report.
 - [ ] You can name what the task produces and how you will prove it.
+- [ ] **If the task carries a `🧠 REASONING-HEAVY TASK` banner, stop and tell the
+      developer before starting it.** You cannot change your own model; they can, and
+      only between turns.
 
 ### While you work
 

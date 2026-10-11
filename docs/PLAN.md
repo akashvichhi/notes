@@ -2833,6 +2833,10 @@ git add -A && git commit -m "feat(backend): note index with filters and cursor p
 
 ### Task B8: Note update, version conflict and size limits
 
+> 🧠 **REASONING-HEAVY TASK.** The 409 contract the whole sync model rests on. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
+
 **Files:**
 - Modify: `backend/app/Http/Controllers/Api/V1/NoteController.php`,
   `backend/routes/api.php`
@@ -4698,6 +4702,10 @@ git add -A && git commit -m "feat(backend): Bearer token auth for native clients
 
 ### Task B17: Revision counter and tombstones
 
+> 🧠 **REASONING-HEAVY TASK.** Sync ordering and deletion discovery; subtle failure modes. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
+
 **Files:**
 - Create: `backend/database/migrations/*_add_sync_revisions.php`,
   `backend/app/Models/Tombstone.php`,
@@ -4928,6 +4936,10 @@ git add -A && git commit -m "feat(backend): per-account revision counter and tom
 ---
 
 ### Task B18: The sync pull endpoint
+
+> 🧠 **REASONING-HEAVY TASK.** Pagination, high-water marks and the full-resync guard. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
 
 **Files:**
 - Create: `backend/app/Http/Controllers/Api/V1/SyncController.php`,
@@ -9342,6 +9354,10 @@ git add -A && git commit -m "feat(desktop): platform detection and Bearer transp
 
 ### Task D3: Token authentication and the OS keychain
 
+> 🧠 **REASONING-HEAVY TASK.** Hand-written Rust and a long-lived credential. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
+
 **Files:**
 - Create: `frontend/src/platform/secureStore.ts`,
   `frontend/src-tauri/src/keychain.rs`
@@ -9561,6 +9577,10 @@ git add -A && git commit -m "feat(desktop): token auth stored in the OS keychain
 ---
 
 ### Task D4: The local SQLite database
+
+> 🧠 **REASONING-HEAVY TASK.** Schema, migrations and the container isolation everything depends on. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
 
 **Files:**
 - Create: `frontend/src/db/schema.ts`, `frontend/src/db/connection.ts`,
@@ -10121,6 +10141,10 @@ git add -A && git commit -m "feat(desktop): two containers in the sidebar and mo
 
 ### Task D7: The outbox and push
 
+> 🧠 **REASONING-HEAVY TASK.** Coalescing, ordering and locking. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
+
 **Files:**
 - Create: `frontend/src/sync/outbox.ts`, `frontend/src/sync/push.ts`
 - Modify: `frontend/src/hooks/useAutosave.ts`,
@@ -10315,6 +10339,10 @@ git add -A && git commit -m "feat(desktop): coalescing outbox and ordered push"
 
 ### Task D8: Pull and the sync engine
 
+> 🧠 **REASONING-HEAVY TASK.** Convergence across devices. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
+
 **Files:**
 - Create: `frontend/src/sync/pull.ts`, `frontend/src/sync/engine.ts`,
   `frontend/src/hooks/useSyncStatus.ts`
@@ -10494,6 +10522,10 @@ git add -A && git commit -m "feat(desktop): sync engine — push then pull, with
 ---
 
 ### Task D9: The conflict queue
+
+> 🧠 **REASONING-HEAVY TASK.** The only place in the app where data can be lost. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
 
 **Files:**
 - Create: `frontend/src/sync/conflicts.ts`,
@@ -11120,6 +11152,10 @@ git add -A && git commit -m "feat(mobile): iOS target building and running in th
 ---
 
 ### Task M3: Secure token storage on mobile
+
+> 🧠 **REASONING-HEAVY TASK.** Platform research, not transcription. Before starting it, **pause and tell
+> the developer** that the next task is marked reasoning-heavy, so they can choose a
+> model. Wait for them to say continue.
 
 **Files:**
 - Modify: `frontend/src-tauri/src/keychain.rs`, `frontend/src-tauri/Cargo.toml`

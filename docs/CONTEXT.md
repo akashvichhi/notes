@@ -217,13 +217,28 @@ Failure is loud, success is quiet.
 | `START.md` | Ready — entry point, ground rules, folder map, the agent prompt |
 | `docs/ARCHITECTURE.md` | Current |
 | `docs/SPEC.md` | Rewritten for containers, dual auth, SQLite and sync · 25 acceptance criteria |
-| `docs/PLAN.md` | **46 tasks** — B1–B18 backend, F1–F15 shared UI, D1–D12 native |
+| `docs/PLAN.md` | **54 tasks** — B1–B18 backend · F1–F15 shared UI · D1–D12 desktop · M1–M8 mobile |
+| `docs/PRINCIPLES.md` | How the agent must work — absolutes, task loop, self-audit |
+| `docs/WHEN-IT-GOES-WRONG.md` | Recovery playbook for the developer |
 | `mockup/index.html` | Current |
 
 Hand the folder to the IDE and point it at `START.md`.
 
-Phase two (Android, iOS) is **not** in the plan. It reuses the same Tauri project and
-the responsive layout from F4 and F14.
+**Delivery is gated in three stages**, each stopping for the developer to test:
+
+| Stage | Tasks | Gate |
+|---|---|---|
+| 1 · Backend + web | B1–B18, F1–F15 | ⛔ after F15 |
+| 2 · Desktop | D1–D12 | ⛔ after D12 |
+| 3 · Mobile | M1–M8 | ⛔ after M8 |
+
+**Model guidance** (`GETTING-STARTED.md` step 6b): Gemini and Claude have separate
+quotas in Antigravity, so run the transcription tasks on Gemini 3.1 Pro and save
+Claude Opus 5.5 for B8, B17, B18, D3, D4, D7–D9. Avoid Sonnet/Opus 4.6 and GPT-OSS —
+removed 2 November 2026.
+
+**iOS requires a Mac.** M2, M3 (iOS half) and M8 (iOS half) cannot be done on
+Windows.
 
 ## 10 · Constraints that will get optimised away if nobody writes them down
 

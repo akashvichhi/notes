@@ -22,7 +22,10 @@ list filter · editor tabs on desktop · light/dark · full responsive behaviour
 
 ### Phase 2
 
-Android and iOS, on the same Tauri project, reusing the responsive layout.
+Android and iOS (`M1`–`M8`), on the same Tauri project, reusing the responsive
+layout. New work: the Android and iOS toolchains, secure token storage on each
+platform, Android's hardware back button, suspension-safe sync, and device testing.
+**iOS cannot be built without a Mac.**
 
 ### Explicitly deferred
 

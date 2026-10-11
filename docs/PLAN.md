@@ -10965,14 +10965,388 @@ npm run tauri:build      # installers in src-tauri/target/release/bundle/
 # ⛔ STOP — DELIVERY GATE AFTER TASK D12
 
 **Task D12 is the end of Phase 3.** Report the result and stop. The developer tests
-the desktop apps before anything else begins.
+the desktop apps before Phase 4 is authorised.
 
-**Android and iOS are not in this plan.** There are no mobile tasks to execute. When
-the developer asks for mobile, those tasks must be **written first** — they reuse the
-same Tauri project and the responsive layout from F4 and F14, but the build
-configuration, signing, store metadata and platform testing are all unwritten.
+**Do not begin Task M1 until the developer explicitly asks for the mobile apps.**
 
-**Do not improvise mobile support.** Stop and say the tasks do not exist yet.
+---
+
+# PHASE 4 — ANDROID AND iOS
+
+> Only begin when the developer has tested the desktop apps and explicitly asked for
+> mobile. See the gate above.
+
+The same Tauri project, the same React code, the same SQLite store and sync engine.
+What is new is the toolchains, two platform-specific behaviours, and the fact that
+**iOS cannot be built on Windows**.
+
+**Prerequisites that are not optional**
+
+| | Needed for |
+|---|---|
+| Android Studio + SDK 34 + NDK 26 | Android, on any OS |
+| Java 17 (JDK) | Android |
+| **macOS + Xcode 15+** | **iOS. There is no way round this** — not a VM, not CI alone |
+| An Apple Developer account | Running on a physical iPhone, and the App Store |
+
+If the developer is on Windows with no Mac, **M2, M6-ios and M8-ios cannot be done
+locally**. Say so rather than attempting them.
+
+---
+
+### Task M1: Android target
+
+**Files:**
+- Create: `frontend/src-tauri/gen/android/` (generated — do not hand-edit)
+- Modify: `frontend/src-tauri/tauri.conf.json`, `frontend/package.json`
+- Test: the app launches on an emulator
+
+**Interfaces:**
+- Produces: `npm run tauri android dev` and `npm run tauri android build`.
+
+- [ ] **Step 1: Install the toolchain**
+
+```powershell
+winget install Google.AndroidStudio
+winget install EclipseAdoptium.Temurin.17.JDK
+```
+
+In Android Studio → SDK Manager install **SDK Platform 34**, **Build-Tools 34**,
+**NDK 26.x** and **Android SDK Command-line Tools**. Then set, permanently:
+
+```powershell
+setx ANDROID_HOME "$env:LOCALAPPDATA\Android\Sdk"
+setx NDK_HOME "$env:LOCALAPPDATA\Android\Sdk\ndk\26.1.10909125"
+setx JAVA_HOME "C:\Program Files\Eclipse Adoptium\jdk-17..."
+```
+
+Add the Rust Android targets:
+
+```powershell
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+```
+
+- [ ] **Step 2: Initialise the Android project**
+
+```powershell
+cd frontend
+npm run tauri android init
+```
+
+This generates `src-tauri/gen/android/`. **It is generated output** — commit it, but
+never hand-edit it; `init` will overwrite your changes.
+
+- [ ] **Step 3: Point the dev server at the device**
+
+An emulator cannot reach `localhost`. In `tauri.conf.json`, the dev URL must be your
+machine's LAN address, and the CSP must allow the API host:
+
+```json
+"build": { "devUrl": "http://192.168.1.x:5173" }
+```
+
+Add the same origin to `vite.config.ts`:
+
+```ts
+server: { port: 5173, host: true }     // listen on 0.0.0.0, not just localhost
+```
+
+- [ ] **Step 4: Run it**
+
+```powershell
+npm run tauri android dev
+```
+Expected: the app opens on the emulator, showing the sign-in page with the Notes icon.
+
+- [ ] **Step 5: Add a Rust test guarding the config**
+
+In `src-tauri/src/lib.rs`:
+
+```rust
+#[test]
+fn android_targets_are_declared() {
+    // A missing target fails at link time with an opaque NDK error.
+    let conf = include_str!("../tauri.conf.json");
+    assert!(conf.contains("\"identifier\": \"com.notesapp.desktop\""));
+}
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A && git commit -m "feat(mobile): Android target building and running on an emulator"
+```
+
+---
+
+### Task M2: iOS target
+
+> **Requires macOS and Xcode.** If the developer has neither, stop and report that
+> this task cannot be done on this machine. Do not attempt a workaround.
+
+**Files:**
+- Create: `frontend/src-tauri/gen/apple/` (generated)
+- Test: the app launches in the iOS Simulator
+
+- [ ] **Step 1: Install the toolchain (macOS only)**
+
+```bash
+xcode-select --install
+sudo xcodebuild -license accept
+brew install cocoapods
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
+```
+
+- [ ] **Step 2: Initialise**
+
+```bash
+cd frontend
+npm run tauri ios init
+```
+
+- [ ] **Step 3: Run in the simulator**
+
+```bash
+npm run tauri ios dev
+```
+Expected: the app opens in the iOS Simulator.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A && git commit -m "feat(mobile): iOS target building and running in the simulator"
+```
+
+---
+
+### Task M3: Secure token storage on mobile
+
+**Files:**
+- Modify: `frontend/src-tauri/src/keychain.rs`, `frontend/src-tauri/Cargo.toml`
+- Test: `frontend/src-tauri/src/keychain.rs` unit test, plus a manual device check
+
+**Interfaces:**
+- Produces: `save_token` / `load_token` / `delete_token` working on Android and iOS
+  with the same signatures D3 defined, so **no TypeScript changes at all**.
+
+> **Verify before you build.** The `keyring` crate used in D3 supports iOS through the
+> system Keychain, but **its Android support is not equivalent**. Check the crate's
+> current platform matrix first and report what you find. Do not assume it works, and
+> **do not fall back to plain storage** — the token is a long-lived credential.
+
+- [ ] **Step 1: Establish what works**
+
+```bash
+cd frontend/src-tauri
+cargo build --target aarch64-linux-android
+```
+
+If `keyring` does not support Android, the sanctioned fallback is
+**`tauri-plugin-stronghold`** — an encrypted vault, with the key derived from a
+per-install random salt kept in the app's private sandbox. Report which route you are
+taking and why **before** implementing it.
+
+- [ ] **Step 2: Implement behind the existing commands**
+
+Use `#[cfg(target_os = "android")]` so the three command signatures are unchanged.
+The TypeScript in `secureStore.ts` must not need editing — if it does, the
+abstraction is in the wrong place.
+
+- [ ] **Step 3: Verify on a real device**
+
+Sign in, force-quit the app, reopen — still signed in. Then clear the app's data and
+confirm you are signed out.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A && git commit -m "feat(mobile): secure token storage on Android and iOS"
+```
+
+---
+
+### Task M4: SQLite on mobile
+
+**Files:**
+- Modify: `frontend/src/db/connection.ts` (only if the path differs)
+- Test: `frontend/src/db/connection.test.ts`, plus a device check
+
+- [ ] **Step 1: Confirm the database path resolves**
+
+`tauri-plugin-sql` resolves `sqlite:notes.db` to the app's private data directory on
+every platform. On mobile that is the app sandbox — **not** shared storage, and
+wiped when the app is uninstalled, which is exactly the behaviour On This Device
+promises.
+
+- [ ] **Step 2: Verify the migrations run on a cold install**
+
+Install on a clean device, create a local note, force-quit, reopen. The note is
+there. Uninstall, reinstall — it is gone, as promised.
+
+- [ ] **Step 3: Check FTS5 is compiled in**
+
+Some SQLite builds omit it. Run a search on the device; if `notes_fts` errors, enable
+the `sqlite` feature flags in `Cargo.toml` and report.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A && git commit -m "test(mobile): verify SQLite storage and FTS5 on device"
+```
+
+---
+
+### Task M5: Mobile behaviour
+
+**Files:**
+- Modify: `frontend/src/components/layout/AppShell.tsx`,
+  `frontend/src/hooks/useVisualViewport.ts`,
+  `frontend/src/components/editor/mobile.module.css`
+- Create: `frontend/src/platform/backButton.ts`
+- Test: `frontend/src/platform/backButton.test.ts`
+
+**Interfaces:**
+- Produces: Android's hardware **back button** steps the pane stack
+  (Editor → List → Folders) and only exits the app from the first pane.
+
+Most of the mobile UI already exists from F4 and F14 — the single-pane stack, the
+bottom toolbar, bottom sheets, 16px inputs, safe-area insets, `100dvh`. This task
+verifies them on real hardware and adds what only a device can reveal.
+
+- [ ] **Step 1: Write the failing back-button test**
+
+```ts
+it('steps back through the panes before exiting', () => {
+  expect(handleBack('editor')).toEqual({ view: 'list', exit: false })
+  expect(handleBack('list')).toEqual({ view: 'folders', exit: false })
+  // Only the first pane exits. Dropping out of the app from the editor is
+  // how people lose work.
+  expect(handleBack('folders')).toEqual({ view: 'folders', exit: true })
+})
+```
+
+- [ ] **Step 2: Implement and wire it to Tauri's back event**
+
+- [ ] **Step 3: Verify the keyboard inset on a real device**
+
+The `visualViewport` hook from F14 is the only reliable fix for iOS covering the
+bottom toolbar with the keyboard. **Test it on hardware** — the simulator does not
+reproduce it faithfully.
+
+- [ ] **Step 4: Walk the device checklist**
+
+| Check |
+|---|
+| No horizontal page scroll at 390px |
+| Focusing an input does not zoom the page |
+| The toolbar stays above the keyboard |
+| Nothing sits under the notch or the home indicator |
+| On This Device shows a **phone** icon and "this phone" |
+| On a tablet it shows a **tablet** icon and "this tablet" |
+| Tabs are hidden |
+| Dropdowns open as bottom sheets |
+| Long-press selection does not fight the bubble menu (it is disabled below 768px) |
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A && git commit -m "feat(mobile): hardware back navigation and device-verified layout"
+```
+
+---
+
+### Task M6: Offline and sync on mobile
+
+**Files:**
+- Modify: `frontend/src/sync/engine.ts`
+- Create: `docs/MOBILE-TEST-PLAN.md`
+
+**Interfaces:**
+- Produces: sync that survives the aggressive way mobile systems suspend apps.
+
+- [ ] **Step 1: Flush on suspension, not just on blur**
+
+Mobile systems freeze or kill a backgrounded app without warning and **do not fire
+`beforeunload`**. The autosave flush must run on `visibilitychange` — already true
+from F10 — and the sync engine must run on resume:
+
+```ts
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') void syncEngine.run()
+})
+```
+
+- [ ] **Step 2: Do not sync on a metered connection without asking**
+
+Check `navigator.connection?.saveData`. If the user has Data Saver on, defer the pull
+and show `Sync paused — Data Saver`. Pushing queued writes still happens: losing
+someone's typing to save a few kilobytes is the wrong trade.
+
+- [ ] **Step 3: Write the device test plan**
+
+`docs/MOBILE-TEST-PLAN.md`, one numbered check each: airplane mode mid-edit · edit
+offline and reconnect · force-quit mid-edit and reopen · the same note edited on
+phone and desktop · a local note staying local · sign out leaving local notes · a
+fresh install pulling everything with visible progress.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A && git commit -m "feat(mobile): suspension-safe sync and the device test plan"
+```
+
+---
+
+### Task M7 (OPTIONAL — skip by default): Store builds and submission
+
+> **Skip unless the developer explicitly asks.** It needs a Google Play Console
+> account, an Apple Developer account, signing keys and store metadata, none of which
+> exist. Go from M6 straight to M8.
+>
+> Debug builds install directly on a device without any of it.
+
+Covers: a release keystore for Android and `.aab` output · an iOS provisioning
+profile and archive · store icons and screenshots generated from
+`assets/brand/icon-1024.png` · a privacy declaration stating that **On This Device
+notes never leave the device** and Cloud notes sync to the user's own account · CI
+jobs on `macos-latest` for iOS.
+
+---
+
+### Task M8: Mobile acceptance
+
+**Files:**
+- Modify: `docs/MOBILE-TEST-PLAN.md`
+
+- [ ] **Step 1: Run every automated suite**
+
+```powershell
+docker compose exec app php artisan test
+cd frontend; npx vitest run; npx playwright test
+cd src-tauri; cargo test; cd ..
+```
+
+- [ ] **Step 2: Walk the plan on real hardware**
+
+One Android phone and, if a Mac is available, one iPhone — both signed into the same
+account as a desktop install. Every row must pass.
+
+- [ ] **Step 3: Confirm the three-device sync story**
+
+Edit the same note on phone, desktop and web. Confirm: the second device to sync sees
+the conflict sheet, "Save mine as a copy" loses nothing, and all three converge.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A && git commit -m "test(mobile): acceptance across Android, iOS, desktop and web"
+```
+
+---
+
+# ⛔ STOP — DELIVERY GATE AFTER TASK M8
+
+The project is complete. Report and stop.
 
 ---
 

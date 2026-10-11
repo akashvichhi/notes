@@ -256,6 +256,21 @@ Start with Task B1.
 
 ---
 
+## Step 8b — Tag a safety point 🖥️
+
+```powershell
+git tag stage-0-start
+```
+
+Tag again after each phase (`stage-1-backend` after B18, `stage-1-web` after F15). A
+tag is a named point you can reset to without hunting for a commit hash.
+
+**If anything goes wrong — and it will — see `docs/WHEN-IT-GOES-WRONG.md`.** It has
+the detection commands, the undo for each level of damage, and copy-paste correction
+prompts.
+
+---
+
 ## Step 9 — While it works 🖥️
 
 Check progress from your own terminal at any time:

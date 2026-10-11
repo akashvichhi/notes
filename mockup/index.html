@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notes Desktop Mockup</title>
+<style>
+/* ============ tokens: Mantine 9 palette ============ */
+:root{
+  --blue-6:#228be6; --blue-7:#1c7ed6; --blue-light:#e7f5ff; --blue-border:#a5d8ff;
+  --amber:#f08c00; --amber-light:#fff4e6; --green:#40c057; --red:#fa5252; --violet:#7950f2;
+  --bg:#ffffff; --bg-sunken:#f8f9fa; --bg-raised:#ffffff; --bg-code:#f1f3f5;
+  --hover:rgba(0,0,0,.045); --border:#e9ecef; --border-strong:#dee2e6;
+  --text:#212529; --text-dim:#495057; --text-faint:#868e96;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 12px rgba(0,0,0,.10);
+  --shadow-lg:0 14px 36px rgba(0,0,0,.18);
+  --r-sm:4px; --r-md:8px; --r-lg:12px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --h-header:48px; --h-status:28px; --w-nav:248px; --w-list:300px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --blue-6:#4dabf7; --blue-7:#339af0; --blue-light:#1b3a56; --blue-border:#2b5f8a;
+    --amber-light:#2b2010;
+    --bg:#1a1b1e; --bg-sunken:#141517; --bg-raised:#25262b; --bg-code:#2c2e33;
+    --hover:rgba(255,255,255,.06); --border:#2c2e33; --border-strong:#373a40;
+    --text:#c1c2c5; --text-dim:#a6a7ab; --text-faint:#757880;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.5); --shadow-md:0 4px 14px rgba(0,0,0,.55);
+    --shadow-lg:0 16px 44px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --blue-6:#4dabf7; --blue-7:#339af0; --blue-light:#1b3a56; --blue-border:#2b5f8a;
+  --amber-light:#2b2010;
+  --bg:#1a1b1e; --bg-sunken:#141517; --bg-raised:#25262b; --bg-code:#2c2e33;
+  --hover:rgba(255,255,255,.06); --border:#2c2e33; --border-strong:#373a40;
+  --text:#c1c2c5; --text-dim:#a6a7ab; --text-faint:#757880;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.5); --shadow-md:0 4px 14px rgba(0,0,0,.55);
+  --shadow-lg:0 16px 44px rgba(0,0,0,.7);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);
+  font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg{display:block}
+.icon{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.sm{width:14px;height:14px}
+kbd{font-family:var(--font);font-size:11px;padding:1px 5px;border-radius:var(--r-sm);
+  border:1px solid var(--border-strong);background:var(--bg-sunken);color:var(--text-faint)}
+
+/* ============ shell ============ */
+.app{height:100dvh;display:grid;grid-template-rows:var(--h-header) 1fr var(--h-status)}
+.panes{display:grid;grid-template-columns:var(--w-nav) var(--w-list) 1fr;min-height:0}
+
+.header{display:flex;align-items:center;gap:10px;padding:0 10px;
+  background:var(--bg-raised);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:8px;width:calc(var(--w-nav) - 10px);flex:none}
+.mark{width:24px;height:24px;border-radius:6px;background:var(--blue-6);flex:none;
+  display:grid;place-items:center;color:#fff}
+.brand-name{font-weight:600;font-size:14px}
+.pill{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  padding:2px 6px;border-radius:999px;color:var(--text-faint);
+  border:1px solid var(--border-strong);background:var(--bg-sunken)}
+.search{flex:1;max-width:440px;display:flex;align-items:center;gap:8px;height:30px;
+  padding:0 10px;border-radius:var(--r-md);border:1px solid var(--border-strong);
+  background:var(--bg-sunken);color:var(--text-faint);font-size:13px}
+.search:hover{border-color:var(--blue-border)}
+.hright{margin-left:auto;display:flex;align-items:center;gap:4px}
+.ibtn{width:30px;height:30px;border-radius:var(--r-md);display:grid;place-items:center;color:var(--text-dim)}
+.ibtn:hover{background:var(--hover);color:var(--text)}
+.avatar{width:26px;height:26px;border-radius:999px;background:var(--blue-light);
+  color:var(--blue-7);display:grid;place-items:center;font-size:11px;font-weight:700;
+  border:1px solid var(--blue-border);margin-left:4px}
+
+/* ============ sidebar: two containers ============ */
+.nav{background:var(--bg-sunken);border-right:1px solid var(--border);overflow-y:auto;padding:10px 8px}
+.btn-primary{width:100%;height:32px;border-radius:var(--r-md);background:var(--blue-6);color:#fff;
+  display:flex;align-items:center;justify-content:center;gap:7px;font-size:13.5px;font-weight:500}
+.btn-primary:hover{background:var(--blue-7)}
+
+.acct{margin-top:16px}
+.acct-head{display:flex;align-items:center;gap:7px;padding:0 8px 4px}
+.acct-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint)}
+.acct-state{margin-left:auto;font-size:10.5px;display:flex;align-items:center;gap:4px}
+.acct-state.ok{color:var(--green)}
+.acct-state.warn{color:var(--amber)}
+.dot{width:7px;height:7px;border-radius:999px;flex:none}
+.dot.ok{background:var(--green)} .dot.warn{background:var(--amber)} .dot.off{background:var(--text-faint)}
+.acct-note{font-size:11px;color:var(--text-faint);padding:0 8px 6px;line-height:1.35}
+
+.item{display:flex;align-items:center;gap:9px;width:100%;padding:6px 8px;
+  border-radius:var(--r-sm);color:var(--text-dim);font-size:13.5px;text-align:left}
+.item:hover{background:var(--hover);color:var(--text)}
+.item.on{background:var(--blue-light);color:var(--blue-7);font-weight:500}
+.item.child{padding-left:28px}
+.item .n{margin-left:auto;font-size:11.5px;color:var(--text-faint);font-variant-numeric:tabular-nums}
+.item.on .n{color:var(--blue-7)}
+.cdot{width:8px;height:8px;border-radius:999px;flex:none}
+.tags{display:flex;flex-wrap:wrap;gap:5px;padding:4px 8px}
+.tag{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--bg-raised);
+  border:1px solid var(--border-strong);color:var(--text-dim)}
+.tag:hover{border-color:var(--blue-border);color:var(--blue-7)}
+
+/* ============ note list ============ */
+.list{border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.lhead{display:flex;align-items:center;gap:8px;padding:10px 12px 6px}
+.ltitle{font-weight:600;font-size:13.5px}
+.lcount{font-size:11.5px;color:var(--text-faint)}
+.lhead .ibtn{margin-left:auto;width:26px;height:26px}
+.lfilter{padding:0 12px 10px;position:relative}
+.input{width:100%;height:30px;border-radius:var(--r-md);padding:0 9px 0 30px;
+  border:1px solid var(--border-strong);background:var(--bg-sunken);color:var(--text);
+  font-size:13px;font-family:inherit}
+.input::placeholder{color:var(--text-faint)}
+.lfilter .icon{position:absolute;left:21px;top:7px;color:var(--text-faint)}
+.lscroll{overflow-y:auto;padding:0 8px 12px;min-height:0}
+.group{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--text-faint);padding:10px 12px 4px}
+.row{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--r-md);
+  border-left:3px solid transparent;margin-bottom:2px}
+.row:hover{background:var(--hover)}
+.row.on{background:var(--blue-light);border-left-color:var(--blue-6)}
+.rtop{display:flex;align-items:center;gap:6px}
+.rtitle{font-size:13.5px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsnip{font-size:12px;color:var(--text-faint);margin-top:2px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.rmeta{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:11px;color:var(--text-faint)}
+.chip{padding:1px 6px;border-radius:var(--r-sm);background:var(--bg-code);font-size:10.5px}
+.chip.cloud{background:var(--blue-light);color:var(--blue-7)}
+.chip.local{background:var(--bg-code);color:var(--text-dim)}
+.pend{color:var(--amber)}
+
+/* ============ editor ============ */
+.editor{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg-sunken);
+  overflow-x:auto;scrollbar-width:none;flex:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:7px;padding:0 10px 0 12px;height:34px;
+  border-right:1px solid var(--border);color:var(--text-faint);font-size:13px;max-width:220px;flex:none}
+.tab.on{background:var(--bg);color:var(--text);font-weight:500;box-shadow:inset 0 2px 0 var(--blue-6)}
+.tab .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab .d{width:6px;height:6px;border-radius:999px;background:var(--amber);flex:none}
+.tbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:6px 10px;flex:none;
+  border-bottom:1px solid var(--border);background:var(--bg-raised)}
+.grp{display:flex}
+.ctrl{min-width:28px;height:28px;padding:0 6px;display:grid;place-items:center;
+  border:1px solid var(--border-strong);margin-left:-1px;color:var(--text-dim);
+  font-size:12.5px;background:var(--bg-raised)}
+.ctrl:first-child{margin-left:0;border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.ctrl:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0}
+.ctrl:hover{background:var(--hover);color:var(--text);z-index:1}
+.ctrl.on{background:var(--blue-light);border-color:var(--blue-border);color:var(--blue-7);z-index:2}
+.ctrl b{font-weight:800} .ctrl i{font-family:Georgia,serif}
+
+.canvas{overflow-y:auto;min-height:0;padding:14px 40px 70px}
+.callout{display:flex;gap:11px;padding:11px 13px;border-radius:var(--r-md);
+  background:var(--amber-light);border:1px solid var(--amber);margin:0 0 20px;align-items:flex-start}
+.callout .ic{color:var(--amber);flex:none;margin-top:1px}
+.callout .tx{flex:1;font-size:12.5px;line-height:1.5;color:var(--text)}
+.callout .tx b{font-weight:650}
+.callout .acts{display:flex;gap:8px;margin-top:9px}
+.btn-xs{padding:0 11px;height:28px;border-radius:var(--r-sm);background:var(--blue-6);
+  color:#fff;font-size:12.5px;font-weight:500}
+.btn-xs.ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border-strong)}
+.doc h1{font-size:26px;line-height:1.25;font-weight:700;letter-spacing:-.02em;margin:0 0 12px}
+.doc h2{font-size:18px;font-weight:650;margin:26px 0 9px}
+.doc p{margin:0 0 12px;font-size:14.5px;line-height:1.7}
+.doc ul{margin:0 0 13px;padding-left:4px;list-style:none}
+.doc li{display:flex;gap:9px;margin:5px 0;font-size:14.5px}
+.cbox{width:16px;height:16px;border-radius:var(--r-sm);border:1.6px solid var(--border-strong);
+  flex:none;margin-top:3px;display:grid;place-items:center;background:var(--bg)}
+li.done .cbox{background:var(--blue-6);border-color:var(--blue-6);color:#fff}
+li.done .tx{color:var(--text-faint);text-decoration:line-through}
+.doc code{font-family:var(--mono);font-size:12.5px;padding:1.5px 5px;border-radius:var(--r-sm);
+  background:var(--bg-code);border:1px solid var(--border)}
+.dtags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+
+/* ============ status bar ============ */
+.status{display:flex;align-items:center;gap:16px;padding:0 12px;font-size:11.5px;
+  background:var(--bg-sunken);border-top:1px solid var(--border);color:var(--text-faint)}
+.sync{display:flex;align-items:center;gap:6px;color:var(--text-dim)}
+.sync.warn{color:var(--amber)} .sync.err{color:var(--red)}
+.status .sp{margin-left:auto}
+
+/* ============ menus, modal, toast ============ */
+.menu{position:fixed;display:none;width:250px;padding:4px;background:var(--bg-raised);
+  border:1px solid var(--border-strong);border-radius:var(--r-md);box-shadow:var(--shadow-md);z-index:60}
+.menu.open{display:block}
+.mlabel{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--text-faint);padding:7px 10px 3px}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;
+  border-radius:var(--r-sm);font-size:13.5px;color:var(--text-dim);text-align:left}
+.mi:hover{background:var(--hover);color:var(--text)}
+.mi .k{margin-left:auto;font-size:11px;color:var(--text-faint)}
+.msep{height:1px;background:var(--border);margin:4px 0}
+.mnote{padding:3px 11px 8px;font-size:11px;color:var(--text-faint);line-height:1.4}
+
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;
+  align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.ovl.open{display:flex}
+.modal{width:100%;max-width:620px;background:var(--bg-raised);border:1px solid var(--border-strong);
+  border-radius:var(--r-lg);box-shadow:var(--shadow-lg);overflow:hidden}
+.mhead{padding:16px 18px 12px;border-bottom:1px solid var(--border)}
+.mhead h3{margin:0 0 5px;font-size:16px;font-weight:650}
+.mhead p{margin:0;font-size:13px;color:var(--text-dim)}
+.mbody{padding:16px 18px}
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.side{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden}
+.side h4{margin:0;padding:8px 11px;font-size:11px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;background:var(--bg-sunken);border-bottom:1px solid var(--border);color:var(--text-faint)}
+.side .c{padding:11px;font-size:13px;line-height:1.55;max-height:170px;overflow-y:auto}
+.side.mine{border-color:var(--blue-border)}
+.side.mine h4{background:var(--blue-light);color:var(--blue-7)}
+.mfoot{display:flex;gap:9px;padding:14px 18px;border-top:1px solid var(--border);
+  background:var(--bg-sunken);align-items:center}
+.mfoot .sp{margin-left:auto}
+.btn{padding:0 14px;height:34px;border-radius:var(--r-md);font-size:13.5px;font-weight:500;
+  background:transparent;color:var(--text-dim);border:1px solid var(--border-strong)}
+.btn:hover{background:var(--hover);color:var(--text)}
+.btn.primary{background:var(--blue-6);color:#fff;border-color:var(--blue-6)}
+.btn.primary:hover{background:var(--blue-7)}
+.hint{font-size:11.5px;color:var(--text-faint)}
+
+.states{position:fixed;right:14px;bottom:40px;z-index:50;display:flex;gap:6px;
+  padding:5px;border-radius:999px;background:var(--bg-raised);
+  border:1px solid var(--border-strong);box-shadow:var(--shadow-md)}
+.states button{padding:5px 11px;border-radius:999px;font-size:12px;color:var(--text-dim)}
+.states button.on{background:var(--blue-light);color:var(--blue-7);font-weight:500}
+
+@media (max-width:1099px){
+  .panes{grid-template-columns:0 minmax(250px,34%) 1fr}
+  .nav{position:fixed;left:0;top:var(--h-header);bottom:var(--h-status);width:var(--w-nav);
+    z-index:30;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow-lg)}
+  .app.navopen .nav{transform:none}
+  .brand{width:auto}
+  .canvas{padding:14px 24px 70px}
+}
+@media (max-width:767px){
+  .panes{grid-template-columns:1fr}
+  .nav,.list,.editor{display:none}
+  .nav{position:static;transform:none;box-shadow:none}
+  .app[data-view="nav"] .nav{display:block}
+  .app[data-view="list"] .list{display:flex}
+  .app[data-view="editor"] .editor{display:flex}
+  .brand-name,.pill{display:none}
+  .canvas{padding:14px 16px 70px}
+  .diff{grid-template-columns:1fr}
+  .states{display:none}
+}
+</style>
+</head>
+<body>
+
+<svg style="display:none">
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 8V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3"/><path d="M8 12h8M8 16h5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.7-4.7"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6-1.4A3.8 3.8 0 0 1 18 18z"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 20h20"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke-width="2.6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19 15a7 7 0 0 1-9.8-9.8A7.5 7.5 0 1 0 19 15z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M4 7h11M4 12h8M4 17h5M17 9l3-3 3 3M20 6v12"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4.5L4 9"/><path d="M4 13a8 8 0 0 0 14 4.5L20 15"/><path d="M4 5v4h4M20 19v-4h-4"/></symbol>
+  <symbol id="i-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M7 18a4 4 0 0 1-.9-7.9"/><path d="M10.5 6.2A5.5 5.5 0 0 1 17.6 8.6 3.8 3.8 0 0 1 19.8 15"/></symbol>
+</svg>
+
+<div class="app" id="app" data-view="list">
+
+  <header class="header">
+    <div class="brand">
+      <button class="ibtn" id="nav-toggle" title="Toggle sidebar">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+      </button>
+      <div class="mark"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg></div>
+      <span class="brand-name">Notes</span>
+      <span class="pill">Mockup</span>
+    </div>
+    <button class="search">
+      <svg class="icon sm" viewBox="0 0 24 24"><use href="#i-search"/></svg>
+      <span style="flex:1;text-align:left">Search all notes…</span><kbd>⌘K</kbd>
+    </button>
+    <div class="hright">
+      <button class="ibtn" id="theme" title="Colour scheme">
+        <svg class="icon" id="theme-i" viewBox="0 0 24 24"><use href="#i-moon"/></svg>
+      </button>
+      <div class="avatar">AV</div>
+    </div>
+  </header>
+
+  <div class="panes">
+
+    <!-- ===================== SIDEBAR: two containers ===================== -->
+    <aside class="nav">
+      <button class="btn-primary">
+        <svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg> New note
+      </button>
+
+      <!-- CLOUD -->
+      <div class="acct">
+        <div class="acct-head">
+          <svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-cloud"/></svg>
+          <span class="acct-title">Cloud</span>
+          <span class="acct-state ok" id="cloud-state">
+            <span class="dot ok"></span> Synced
+          </span>
+        </div>
+        <button class="item on" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">24</span></button>
+        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-star"/></svg> Starred <span class="n">3</span></button>
+        <button class="item" data-scope="cloud"><span class="cdot" style="background:var(--blue-6)"></span> Work <span class="n">11</span></button>
+        <button class="item child" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-folder"/></svg> Releases <span class="n">4</span></button>
+        <button class="item" data-scope="cloud"><span class="cdot" style="background:var(--green)"></span> Personal <span class="n">7</span></button>
+        <div class="tags">
+          <button class="tag">#todo</button><button class="tag">#draft</button>
+        </div>
+        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">2</span></button>
+      </div>
+
+      <!-- ON THIS DEVICE -->
+      <div class="acct">
+        <div class="acct-head">
+          <svg class="icon sm" viewBox="0 0 24 24" style="color:var(--text-faint)"><use href="#i-laptop"/></svg>
+          <span class="acct-title">On This Device</span>
+        </div>
+        <!-- the permanent, quiet warning -->
+        <div class="acct-note">Not backed up · stays on this computer</div>
+        <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">5</span></button>
+        <button class="item" data-scope="local"><span class="cdot" style="background:var(--violet)"></span> Scratch <span class="n">2</span></button>
+        <div class="tags"><button class="tag">#private</button></div>
+        <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">0</span></button>
+      </div>
+    </aside>
+
+    <!-- ===================== NOTE LIST ===================== -->
+    <section class="list">
+      <div class="lhead">
+        <span class="ltitle" id="list-title">All notes</span>
+        <span class="lcount" id="list-count">24</span>
+        <button class="ibtn"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-sort"/></svg></button>
+      </div>
+      <div class="lfilter">
+        <svg class="icon sm" viewBox="0 0 24 24"><path d="M4 5h16l-6.3 7.4v5.3L10.3 20v-7.6z"/></svg>
+        <input class="input" id="filter" placeholder="Filter in Cloud">
+      </div>
+      <div class="lscroll" id="rows"></div>
+    </section>
+
+    <!-- ===================== EDITOR ===================== -->
+    <section class="editor">
+      <div class="tabs">
+        <button class="tab on"><span class="d"></span><span class="nm" id="tab-name">Release plan — r34</span></button>
+        <button class="tab"><span class="nm">Meeting notes</span></button>
+        <button class="tab" style="width:34px;justify-content:center;padding:0">
+          <svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg>
+        </button>
+      </div>
+
+      <div class="tbar">
+        <div class="grp">
+          <button class="ctrl on"><b>B</b></button><button class="ctrl"><i>I</i></button>
+          <button class="ctrl"><u>U</u></button><button class="ctrl"><s>S</s></button>
+        </div>
+        <div class="grp">
+          <button class="ctrl">H1</button><button class="ctrl">H2</button><button class="ctrl">H3</button>
+        </div>
+        <div class="grp">
+          <button class="ctrl">• —</button><button class="ctrl">1.</button>
+          <button class="ctrl"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-check"/></svg></button>
+          <button class="ctrl">❝</button><button class="ctrl">{ }</button>
+        </div>
+        <div class="grp">
+          <button class="ctrl">🔗</button><button class="ctrl">▦</button><button class="ctrl">—</button>
+        </div>
+        <button class="btn-xs ghost" style="margin-left:auto" id="move-btn">Move to…</button>
+      </div>
+
+      <div class="canvas">
+        <!-- shown once, the first time a note lands on this device -->
+        <div class="callout" id="callout" style="display:none">
+          <svg class="icon ic" viewBox="0 0 24 24"><use href="#i-warn"/></svg>
+          <div class="tx">
+            <b>This note is only on this computer.</b><br>
+            Notes in <b>On This Device</b> are not backed up and never leave this machine.
+            They are <b>deleted if you uninstall the app</b>.
+            <div class="acts">
+              <button class="btn-xs" id="to-cloud">Move to Cloud</button>
+              <button class="btn-xs ghost" id="keep-local">Keep it here</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc">
+          <div class="dtags">
+            <button class="tag">#todo</button><button class="tag">#release</button>
+            <button class="tag" style="border-style:dashed;color:var(--text-faint)">＋ Add tag</button>
+          </div>
+          <h1 id="doc-title">Release plan — r34</h1>
+          <p>Ship <strong>r34</strong> on Thursday. The freeze window is enforced by the
+             Jenkins cron, not by anyone watching the clock.</p>
+          <h2>Checklist</h2>
+          <ul>
+            <li class="done"><span class="cbox"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="tx">Cut the release branch</span></li>
+            <li class="done"><span class="cbox"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-check"/></svg></span><span class="tx">Notify QA</span></li>
+            <li><span class="cbox"></span><span class="tx">Verify migrations on staging — watch the <code>db:migrate</code> ceiling</span></li>
+            <li><span class="cbox"></span><span class="tx">Draft the release notes</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== STATUS BAR ===================== -->
+  <footer class="status">
+    <span class="sync" id="sync"><span class="dot ok"></span> Synced just now</span>
+    <span id="words">148 words</span>
+    <span class="sp"></span>
+    <span id="where">Cloud · Work / Releases</span>
+  </footer>
+</div>
+
+<!-- ===================== MOVE TO MENU ===================== -->
+<div class="menu" id="move-menu">
+  <div class="mlabel">Cloud</div>
+  <button class="mi"><span class="cdot" style="background:var(--blue-6)"></span> Work</button>
+  <button class="mi" style="padding-left:30px">Releases
+    <span class="k"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-7)"><use href="#i-check"/></svg></span></button>
+  <button class="mi"><span class="cdot" style="background:var(--green)"></span> Personal</button>
+  <div class="msep"></div>
+  <div class="mlabel">On This Device</div>
+  <button class="mi" id="mi-local"><span class="cdot" style="background:var(--violet)"></span> Scratch</button>
+  <div class="mnote">Moving here stops syncing. The note disappears from your other devices.</div>
+</div>
+
+<!-- ===================== CONFLICT SHEET ===================== -->
+<div class="ovl" id="conflict">
+  <div class="modal">
+    <div class="mhead">
+      <h3>This note changed on another device</h3>
+      <p>Your MacBook saved a newer version while this device was offline.
+         Nothing has been lost — choose what to keep.</p>
+    </div>
+    <div class="mbody">
+      <div class="diff">
+        <div class="side mine">
+          <h4>Yours · this device · 2 min ago</h4>
+          <div class="c">Ship <strong>r34</strong> on Thursday.<br><br>
+            — Verify migrations on staging<br>— Draft the release notes</div>
+        </div>
+        <div class="side">
+          <h4>MacBook · 11 min ago</h4>
+          <div class="c">Ship <strong>r34</strong> on <strong>Friday</strong>.<br><br>
+            — Verify migrations on staging<br>— Ask Priya about the QA sign-off</div>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <span class="hint">A copy of the replaced version is always kept in history.</span>
+      <span class="sp"></span>
+      <button class="btn" id="c-theirs">Keep theirs</button>
+      <button class="btn" id="c-mine">Keep mine</button>
+      <!-- the only option that cannot lose anything, so it is the default -->
+      <button class="btn primary" id="c-copy">Save mine as a copy</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== STATE SWITCHER (mockup only) ===================== -->
+<div class="states">
+  <button class="on" data-state="synced">Synced</button>
+  <button data-state="syncing">Syncing</button>
+  <button data-state="offline">Offline</button>
+  <button data-state="local">Local note</button>
+  <button data-state="conflict">Conflict</button>
+</div>
+
+<script>
+(function(){
+  var app=document.getElementById('app'), root=document.documentElement;
+
+  /* theme */
+  function dark(){var t=root.getAttribute('data-theme');
+    return t? t==='dark' : matchMedia('(prefers-color-scheme: dark)').matches}
+  function paint(){document.getElementById('theme-i').firstElementChild
+    .setAttribute('href', dark()?'#i-sun':'#i-moon')}
+  document.getElementById('theme').onclick=function(){
+    root.setAttribute('data-theme', dark()?'light':'dark'); paint()}
+  paint();
+  document.getElementById('nav-toggle').onclick=function(){app.classList.toggle('navopen')}
+
+  /* note data per container */
+  var DATA={
+    cloud:{title:'All notes',count:24,filter:'Filter in Cloud',rows:[
+      ['Release plan — r34','Ship r34 on Thursday. Blockers in ENG-4471.','2 min ago','Work / Releases',true,''],
+      ['Meeting notes — 7 Oct','Discussed the migration backlog.','1 hr ago','Work',false,''],
+      ['API scratchpad','curl snippets for the notes endpoints.','3 hr ago','Ideas',false,''],
+      ['Reading list','ProseMirror internals, Postgres ranking.','Yesterday','Personal',false,''],
+      ['Onboarding checklist','Laptop, VPN, repo access, first ticket.','Last week','Work',false,'']
+    ]},
+    local:{title:'On This Device',count:5,filter:'Filter in On This Device',rows:[
+      ['Scratch — interview prep','Rails n+1, ActiveJob retries, React memo traps.','5 min ago','Scratch',true,'local'],
+      ['Wifi codes','Guest network and the printer PIN.','Yesterday','Scratch',false,'local'],
+      ['Draft resignation','Not ready to send. Definitely not syncing this one.','3 days ago','',false,'local'],
+      ['Car service history','Last oil change 94,200 km.','Last month','',false,'local'],
+      ['Book notes','Thinking in Systems — stocks and flows.','Last month','',false,'local']
+    ]}
+  };
+
+  var scope='cloud';
+  function render(){
+    var d=DATA[scope];
+    document.getElementById('list-title').textContent=d.title;
+    document.getElementById('list-count').textContent=d.count;
+    document.getElementById('filter').placeholder=d.filter;
+    document.getElementById('rows').innerHTML=
+      '<div class="group">Recent</div>'+
+      d.rows.map(function(r,i){
+        return '<button class="row'+(i===0?' on':'')+'">'+
+          '<div class="rtop"><span class="rtitle">'+r[0]+'</span></div>'+
+          '<div class="rsnip">'+r[1]+'</div>'+
+          '<div class="rmeta">'+r[2]+
+            (r[3]?' <span class="chip">'+r[3]+'</span>':'')+
+            (r[5]==='local'?' <span class="chip local">On this device</span>':'')+
+          '</div></button>'}).join('');
+    // keep the editor header consistent with the chosen container
+    var first=d.rows[0];
+    document.getElementById('doc-title').textContent=first[0];
+    document.getElementById('tab-name').textContent=first[0];
+    setState(scope==='local'?'local':'synced');
+    document.getElementById('callout').style.display = scope==='local' ? 'flex' : 'none';
+  }
+  document.querySelectorAll('.item').forEach(function(b){
+    b.onclick=function(){
+      document.querySelectorAll('.item').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      scope=b.getAttribute('data-scope');
+      render();
+    }});
+
+  /* status-bar states */
+  var sync=document.getElementById('sync'), where=document.getElementById('where'),
+      cloudState=document.getElementById('cloud-state');
+  function setState(s){
+    document.querySelectorAll('.states button').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-state')===s)});
+
+    if(s==='synced'){
+      sync.className='sync'; sync.innerHTML='<span class="dot ok"></span> Synced just now';
+      where.textContent='Cloud · Work / Releases';
+      cloudState.className='acct-state ok'; cloudState.innerHTML='<span class="dot ok"></span> Synced';
+    }
+    if(s==='syncing'){
+      sync.className='sync'; sync.innerHTML=
+        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-sync"/></svg> Syncing… 12 of 30';
+      where.textContent='Cloud · Work / Releases';
+      cloudState.className='acct-state'; cloudState.innerHTML='<span class="dot off"></span> Syncing';
+    }
+    if(s==='offline'){
+      sync.className='sync warn'; sync.innerHTML=
+        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-off"/></svg> Offline — 3 changes pending';
+      where.textContent='Cloud · Work / Releases';
+      cloudState.className='acct-state warn'; cloudState.innerHTML='<span class="dot warn"></span> Offline';
+    }
+    if(s==='local'){
+      // local notes never sync, so they never show sync state
+      sync.className='sync'; sync.innerHTML=
+        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-laptop"/></svg> On this device — not backed up';
+      where.textContent='On This Device · Scratch';
+    }
+    if(s==='conflict'){
+      sync.className='sync err'; sync.innerHTML=
+        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-warn"/></svg> 1 note needs your attention';
+      document.getElementById('conflict').classList.add('open');
+    }
+  }
+  document.querySelectorAll('.states button').forEach(function(b){
+    b.onclick=function(){setState(b.getAttribute('data-state'))}});
+
+  /* move-to menu */
+  var mm=document.getElementById('move-menu');
+  document.getElementById('move-btn').onclick=function(e){
+    e.stopPropagation();
+    var r=this.getBoundingClientRect();
+    mm.classList.add('open');
+    mm.style.left=Math.max(8, r.right-mm.offsetWidth)+'px';
+    mm.style.top=(r.bottom+6)+'px';
+  };
+  document.addEventListener('click',function(){mm.classList.remove('open')});
+
+  /* conflict + callout */
+  var ovl=document.getElementById('conflict');
+  ['c-mine','c-theirs','c-copy'].forEach(function(id){
+    document.getElementById(id).onclick=function(){ovl.classList.remove('open'); setState('synced')}});
+  ovl.onclick=function(e){if(e.target===ovl){ovl.classList.remove('open'); setState('synced')}};
+  document.getElementById('keep-local').onclick=function(){
+    document.getElementById('callout').style.display='none'};
+  document.getElementById('to-cloud').onclick=function(){
+    document.getElementById('callout').style.display='none';
+    document.querySelector('.item[data-scope="cloud"]').click()};
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){ovl.classList.remove('open'); mm.classList.remove('open')}});
+
+  render();
+})();
+</script>
+</body>
+</html>

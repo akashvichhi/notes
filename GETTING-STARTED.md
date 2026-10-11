@@ -1,7 +1,7 @@
 # Getting started — from scratch
 
 > **For the developer, not the agent.** If you are the coding agent, this file is
-> not for you — read `START.md` and follow its read order.
+> not for you — read `docs/START.md` and follow its read order.
 
 Everything you run yourself, in order, and exactly what to give the IDE.
 **Local terminal = PowerShell on Windows.** Commands are marked 🖥️ (terminal) or
@@ -263,10 +263,10 @@ Paste this as your first message. It restates the rules that matter most — rul
 the message carry more weight than rules in a file the agent read once.
 
 ```
-Read START.md in full, then docs/PRINCIPLES.md, docs/CONTEXT.md,
+Read docs/START.md in full, then docs/PRINCIPLES.md, docs/CONTEXT.md,
 docs/ARCHITECTURE.md, docs/SPEC.md and docs/PLAN.md before writing any code.
 
-Follow every ground rule in START.md section 4, and work according to
+Follow every ground rule in docs/START.md section 4, and work according to
 docs/PRINCIPLES.md throughout — in particular: work on master only, never
 create a branch or a worktree, never weaken a test to make it pass, verify
 before you claim anything works, and stop and tell me rather than improvising
@@ -295,7 +295,7 @@ DB_HOST is `mysql`.
 
 The backend/ and frontend/ applications already exist. Do not scaffold them.
 
-Before Task B1, follow START.md section 2c: make sure a git repository exists,
+Before Task B1, follow docs/START.md section 2c: make sure a git repository exists,
 creating one if it does not, and set the repository-scoped git identity given
 there. You commit after every task, so this must be in place first.
 
@@ -340,7 +340,7 @@ git tag stage-3-mobile      # after M8
 
 A tag is a named point you can reset to without hunting for a commit hash.
 
-**If anything goes wrong — and it will — see `docs/WHEN-IT-GOES-WRONG.md`.** It has
+**If anything goes wrong — and it will — see `WHEN-IT-GOES-WRONG.md`.** It has
 the detection commands, the undo for each level of damage, and copy-paste correction
 prompts.
 

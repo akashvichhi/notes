@@ -28,6 +28,8 @@ Notes live in one of two containers:
 
 ## 2 · Read these, in this order
 
+All paths are relative to the repository root.
+
 | Order | File | Why |
 |---|---|---|
 | 1 | `docs/PRINCIPLES.md` | **How to work on this project** — branching, when to stop, how to test, what never to do |
@@ -48,13 +50,17 @@ list** — if the plan seems to need one, stop and say so.
 
 ```
 notes-app/
-├── START.md                      provided
+├── GETTING-STARTED.md            the developer's runbook — not for you
+├── WHEN-IT-GOES-WRONG.md         the developer's recovery guide — not for you
 ├── docker-compose.yml            provided
 ├── docker/php/Dockerfile         provided
 ├── assets/brand/                 provided — 14 files, never regenerate
-├── docs/                         provided
-│   ├── NATIVE-TEST-PLAN.md       ← D12
-│   └── MOBILE-TEST-PLAN.md       ← M6
+├── mockup/index.html             UI reference — open it if a layout is unclear
+├── docs/                         everything here is for you
+│   ├── START.md  PRINCIPLES.md  CONTEXT.md
+│   ├── ARCHITECTURE.md  SPEC.md  PLAN.md  SETUP-WINDOWS.md
+│   ├── NATIVE-TEST-PLAN.md       ← you create in D12
+│   └── MOBILE-TEST-PLAN.md       ← you create in M6
 ├── .github/workflows/
 │   └── desktop.yml               ← D11 (optional)
 │
@@ -285,8 +291,10 @@ is wrong or impossible, **stop and say so** rather than improvising.
 
 ## 5 · Not for you
 
-The developer's own guides — `docs/GETTING-STARTED.md` and
-`docs/WHEN-IT-GOES-WRONG.md` — are **not for you**. They cover model selection, git
+**Everything inside `docs/` is for you. Everything at the repository root is not.**
+
+The developer's own guides — `GETTING-STARTED.md` and
+`WHEN-IT-GOES-WRONG.md` — are **not for you**. They cover model selection, git
 recovery and the prompts the developer sends, none of which are yours to act on.
 
 When you have read this file and the five in §2, begin at **Task B1**.

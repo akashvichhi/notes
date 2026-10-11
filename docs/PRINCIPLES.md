@@ -179,7 +179,7 @@ Otherwise pick the sensible default, **state the assumption plainly**, and conti
 - **No feature branches, no worktrees, no stashing.** If you think you need one, you
   have misread the task.
 - **No remote is required.** Everything is local; `git log` is the record.
-- Before Task B1, follow `START.md` §2c to make sure a repository exists and the
+- Before Task B1, follow `docs/START.md` §2c to make sure a repository exists and the
   repository-scoped identity is set. **Never `git config --global`.**
 
 ---

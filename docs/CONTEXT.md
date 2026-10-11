@@ -23,13 +23,19 @@ Linux, Android and iOS. A **Laravel API on MySQL** is the cloud backend.
 **All work stays inside `~/Downloads/notes-app`.** The developer asked for this
 explicitly; do not create files anywhere else.
 
+**Everything in `docs/` is for the agent. Everything at the repository root is for
+the developer.**
+
 | Path | What it is |
 |---|---|
+| `GETTING-STARTED.md` | **Developer runbook** — setup, the prompts to paste, model choice |
+| `WHEN-IT-GOES-WRONG.md` | **Developer recovery guide** |
+| `docs/START.md` | The agent's entry point |
 | `docs/CONTEXT.md` | This file |
 | `docs/ARCHITECTURE.md` | **Current** design: containers, local/cloud storage, sync, stack |
 | `docs/SPEC.md` | Product spec — **predates the cross-platform pivot, needs rewriting** |
 | `docs/PLAN.md` | 34-task implementation plan — **predates the pivot, needs rewriting** |
-| `docs/GETTING-STARTED.md` | Step-by-step runbook and the agent prompt |
+| `GETTING-STARTED.md` | Step-by-step runbook and the agent prompt |
 | `docs/SETUP-WINDOWS.md` | Docker environment reference |
 | `mockup/index.html` | Interactive UI mockup — open in a browser |
 | `assets/brand/` | 14 icon and logo files, all generated, plus a README |
@@ -215,7 +221,7 @@ Failure is loud, success is quiet.
 | Document | State |
 |---|---|
 | | **For the agent** | |
-| `START.md` | Entry point — read order, folder map, git bootstrap, delivery gates, ground rules |
+| `docs/START.md` | Entry point — read order, folder map, git bootstrap, delivery gates, ground rules |
 | `docs/PRINCIPLES.md` | How to work — 11 absolutes, the task loop, the self-audit |
 | `docs/CONTEXT.md` | This file — decisions, reversals, status |
 | `docs/ARCHITECTURE.md` | Containers, local and cloud storage, sync, the stack |
@@ -223,11 +229,11 @@ Failure is loud, success is quiet.
 | `docs/PLAN.md` | **54 tasks** — B1–B18 backend · F1–F15 shared UI · D1–D12 desktop · M1–M8 mobile |
 | `docs/SETUP-WINDOWS.md` | The Docker environment |
 | | **For the developer only** | |
-| `docs/GETTING-STARTED.md` | Runbook — setup, **the prompts to paste**, model choice, tagging |
-| `docs/WHEN-IT-GOES-WRONG.md` | Recovery — detection, undo by severity, correction prompts |
+| `GETTING-STARTED.md` | Runbook — setup, **the prompts to paste**, model choice, tagging |
+| `WHEN-IT-GOES-WRONG.md` | Recovery — detection, undo by severity, correction prompts |
 | `mockup/index.html` | Interactive UI reference |
 
-Hand the folder to the IDE and point it at `START.md`.
+Hand the folder to the IDE and point it at `docs/START.md`.
 
 **Delivery is gated in three stages**, each stopping for the developer to test:
 

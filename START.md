@@ -129,6 +129,55 @@ notes-app/
 
 ---
 
+## 2c · Before Task B1 — make sure there is a git repository
+
+You commit after every task, so a repository must exist. **Check first, and create one
+if it is missing** — do not assume, and do not skip the commits because there is no repo.
+
+```powershell
+cd C:\dev\notes-app          # or wherever the project lives
+git rev-parse --is-inside-work-tree
+```
+
+**If that errors** with *"not a git repository"*, create one:
+
+```powershell
+git init
+git config user.email "akashvichhi@zohomail.in"
+git config user.name  "Akash Vichhi"
+git add -A
+git commit -m "docs: specification, plan, brand assets and docker environment"
+```
+
+**If the repository already exists**, still set the identity — it is repository-scoped,
+so it will not disturb any other project on the machine:
+
+```powershell
+git config user.email "akashvichhi@zohomail.in"
+git config user.name  "Akash Vichhi"
+```
+
+Use `git config`, **never `git config --global`**. Changing the machine-wide identity
+is not yours to do.
+
+**If `.gitignore` is missing**, create it before the first commit — `vendor/` and
+`node_modules/` must never be committed:
+
+```gitignore
+.DS_Store
+node_modules/
+vendor/
+/backend/.env
+/backend/storage/*.key
+/frontend/dist/
+/frontend/src-tauri/target/
+```
+
+No remote is required. Everything is local; `git log` is how the developer tracks
+progress.
+
+---
+
 ## 3 · The environment
 
 **Windows with Docker.** PHP and MySQL run in containers; only Node runs on the host.
@@ -213,6 +262,10 @@ Environment: Windows with Docker. Run every PHP and Composer command as
 DB_HOST is `mysql`.
 
 The backend/ and frontend/ applications already exist. Do not scaffold them.
+
+Before Task B1, follow START.md section 2c: make sure a git repository exists,
+creating one if it does not, and set the repository-scoped git identity given
+there. You commit after every task, so this must be in place first.
 
 If anything in the plan is wrong, impossible, or contradicts
 docs/ARCHITECTURE.md, stop and tell me instead of improvising.

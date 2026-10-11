@@ -168,6 +168,10 @@ packages. Never add `@tiptap-pro/*` or CKEditor.
 is documented in its README. Copy those files; never generate, redraw or substitute an
 image asset, and never invent a wordmark, tagline or brand colour.
 
+**Task D11 is optional and skipped by default.** It covers code signing, release
+hosting and auto-update, none of which are set up. Go from D10 straight to D12.
+Unsigned local builds work fine.
+
 **Do not invent files or endpoints** that are not in the plan. If something in the plan
 is wrong or impossible, **stop and say so** rather than improvising.
 

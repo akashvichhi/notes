@@ -10672,7 +10672,18 @@ git add -A && git commit -m "feat(desktop): sign-out purge of cloud data and the
 
 ---
 
-### Task D11: Auto-update and CI builds
+### Task D11 (OPTIONAL — skip by default): Auto-update and CI builds
+
+> **Skip this task unless the developer explicitly asks for it.** It needs a code
+> signing certificate, an Apple Developer account, a release host and GitHub secrets,
+> none of which exist yet. Go straight from D10 to D12.
+>
+> **Unsigned local builds work without any of it.** `npm run tauri:build` produces
+> `.msi`, `.dmg` and `.AppImage` installers you can run yourself; Windows SmartScreen
+> and macOS Gatekeeper will warn on a machine that did not build them, which is
+> expected and harmless during development.
+>
+> When distribution matters, come back and do the steps below.
 
 **Files:**
 - Create: `.github/workflows/desktop.yml`
@@ -10823,6 +10834,8 @@ git add -A && git commit -m "ci(desktop): signed matrix builds and in-app auto-u
 
 **Interfaces:**
 - Consumes: everything. This is the acceptance gate for Phase 3.
+- D11 may have been skipped; row 16 of the manual plan (signed install on a clean
+  machine) is then **not applicable** and should be recorded as skipped, not failed.
 
 - [ ] **Step 1: Automate what Playwright can reach**
 
@@ -10861,7 +10874,8 @@ result:
 | 13 | Quit mid-edit, reopen — the draft is restored |
 | 14 | Resize to 390px wide: all three panes reachable, no horizontal scroll |
 | 15 | Ubuntu LTS: the editor, tables and the bubble menu render correctly |
-| 16 | Install the signed build on a clean machine — no SmartScreen or Gatekeeper block |
+| 16 | *(only if D11 was done)* Install the signed build on a clean machine — no SmartScreen or Gatekeeper block |
+| 17 | `npm run tauri:build` produces installers for this platform and the app launches from one |
 
 - [ ] **Step 3: Run everything**
 

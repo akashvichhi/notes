@@ -200,6 +200,33 @@ procedural but produce famously opaque toolchain errors — NDK paths, Gradle, X
 signing. A stronger model is better at reading those than at writing the code around
 them.
 
+### In practice, with three starting prompts
+
+You give three prompts to *start* each stage, but **8–20 resume prompts** along the
+way, because context and rate limits stop the agent repeatedly inside a stage. Every
+resume is a free chance to pick a model — you are already in the selector.
+
+**Start the very first prompt on `Claude Opus 5.5 (thinking)`.** Stage 1 contains
+three of the nine hard tasks, and the early tasks are where the agent sets its
+habits: if it follows the task loop at B1–B5 it tends to keep following it; if it
+learns to batch commits at B3, it will batch at B40.
+
+**Then, before each resume, spend ten seconds:**
+
+> Which task is next?
+> One of the nine → **Opus 5.5 (thinking)**.
+> Anything else → whichever budget has room, **Gemini 3.1 Pro (High)** by preference.
+
+**When the Claude weekly limit runs out**, resume on Gemini and carry on — that is
+what the separate quotas are for. The one thing to protect: **do not start one of the
+nine on a weaker model just because Claude is exhausted.** Wait, or do the
+surrounding tasks and come back. `D7` and `D8` built on a wrong assumption cost more
+than a few days of waiting.
+
+**If you want zero decisions:** use Opus 5.5 (thinking) throughout and fall back to
+Gemini only when the limit stops you. Longer in calendar time, nothing to think
+about.
+
 ### Judge it on the first three tasks
 
 Whichever model you start with, run `B1`, `B1b` and `B2`, then check:

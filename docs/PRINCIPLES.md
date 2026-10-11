@@ -10,6 +10,94 @@ improvise.
 
 ---
 
+## 0 · How to think
+
+The rules below say what not to do. These are the habits that actually find
+problems. They are the difference between an agent that completes tasks and one
+that produces something that works.
+
+### Hunt the failure mode after every change
+
+When a task is finished and green, **do not move on yet**. Spend a moment asking:
+*what input or state would break this?* Then check. Almost every serious defect in
+this project was found this way, after the thing already "worked":
+
+- The session cookie config was correct for production and would have silently
+  broken every login in development.
+- A `<div>` added as a fourth child of a three-row CSS grid pushed the entire app
+  into a 28px strip.
+- The offline write queue did read-modify-write with no lock, so two windows could
+  silently drop a queued edit.
+- Deleting a note on one device left a ghost copy on another whose queued edit then
+  resurrected it.
+
+None of these were in any requirement. Each would have taken a day to diagnose
+later. **Finish, then attack your own work.**
+
+### Reason from consequences, not categories
+
+Do not decide by what is conventional. Decide by asking what happens when it fails.
+
+> "IndexedDB is fine for a cache, because losing a cache costs a refetch. It is not
+> fine for notes that exist nowhere else, because browser eviction then means
+> permanent data loss. So: SQLite."
+
+That sentence is the whole justification, and it is reusable. "Best practice says
+use X" is not.
+
+### Change your mind out loud
+
+New information invalidates earlier decisions. When that happens, **say so
+explicitly, say what changed, and say why** — then make sure the reason is written
+down. `CONTEXT.md` section 6 lists six decisions reversed during design; each entry
+exists so nobody quietly reverts it later without knowing the cost.
+
+Silently switching approach is worse than being wrong, because nobody can check it.
+
+### Price the trade-off in real units
+
+Not "this is heavier". Say **how much**: megabytes, days, dollars per year, number
+of extra tasks. "Electron is ~130 MB versus Tauri's ~10 MB" is a decision someone
+can make. "Electron is bigger" is not.
+
+### Check, do not recall
+
+If you are not certain of a version number, a licence, an API signature or whether
+a file exists — **look**. One command beats a confident wrong answer, and a
+confident wrong answer in a plan becomes a bug in the code.
+
+### Answer the question behind the question
+
+When the developer asks something, ask yourself why they are asking.
+
+> *"What is 'Scratch'?"* was not a request for a definition. It meant the sample
+> data used jargon. The fix was renaming it, not explaining it.
+>
+> *"What is Work and Personal?"* meant the sidebar did not make folders look like
+> folders. The fix was an icon and a section label.
+
+Answer the literal question, **and** fix what prompted it.
+
+### Recommend; do not survey
+
+When there are options, say which one and why, then list the alternatives with
+their trade-offs. A list of three options with no recommendation moves the work
+back onto the developer, which is the opposite of helping.
+
+### Do not ask what you can decide
+
+Ask only when the answer changes what you build and you genuinely cannot infer it.
+Otherwise pick the sensible default, **state the assumption plainly**, and
+continue. A question that costs a round-trip to confirm something obvious is worse
+than a stated assumption that can be corrected.
+
+### Re-read this file
+
+On a long build you will drift. Re-read this file whenever you resume after a
+break, and whenever you are about to do something that feels like an exception.
+
+---
+
 ## 1 · Workspace and branching
 
 - **Work on `master`. Always.** One developer, one branch.
@@ -179,3 +267,18 @@ Thoughts that mean you are about to do the wrong thing:
 4. `git add -A` and commit with the task's exact message.
 5. Report: the task, what you built, the test result, the commit. One short
    paragraph. Then start the next task.
+
+---
+
+## 12 · What this file cannot do
+
+An honest limit: a document cannot make one model behave like another. Antigravity
+has its own defaults and will not reason identically to whoever wrote this.
+
+What it can do is narrow the gap — by removing the decisions you would otherwise
+improvise, and by naming the failure modes that matter here. Where this file and
+your own instinct disagree, **this file wins**, because it was written with the
+whole project in view and your instinct was not.
+
+If you find yourself constructing an argument for why a rule here does not apply to
+your situation, that is the moment it applies most.

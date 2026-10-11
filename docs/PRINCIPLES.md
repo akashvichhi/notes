@@ -28,6 +28,9 @@ Never, under any argument, however reasonable the argument feels:
 10. **Never delete or overwrite data you have not looked at**, and never run
     `migrate:fresh` on a database that has real notes in it.
 
+11. **Never cross a delivery gate.** The plan contains `⛔ STOP` markers. When you
+    reach one, report and wait. "The next task exists" is not authorisation.
+
 If a task appears to require breaking one of these, **the task is wrong or you have
 misread it**. Stop and report. That is always the correct move, and it is never
 treated as a failure.

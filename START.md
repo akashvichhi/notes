@@ -179,6 +179,20 @@ progress.
 
 ---
 
+## 2d · Delivery in three stages
+
+This project ships in three authorised stages. **Each one stops and waits.**
+
+| Stage | Tasks | Ends when |
+|---|---|---|
+| **1 · Backend + web app** ← *this one* | `B1`–`B18`, `F1`–`F15` | **Stop after F15.** The developer tests the web app end to end |
+| 2 · Desktop apps | `D1`–`D12` | Only after the developer asks. Stop after D12 |
+| 3 · Mobile apps | **not written** | Tasks must be authored first. Never improvise them |
+
+You are executing **stage 1**. Treat the plan as ending at F15.
+
+---
+
 ## 3 · The environment
 
 **Windows with Docker.** PHP and MySQL run in containers; only Node runs on the host.
@@ -203,6 +217,13 @@ improvise, never weaken a test to make it pass, verify before you claim, and rep
 failures plainly.
 
 **Work through the tasks strictly in order.** Do not skip ahead or reorder.
+
+**⛔ STOP AFTER TASK F15.** This delivery is the backend plus the web application —
+tasks **B1 through F15 only**. When F15 is committed, run the full suite, report, and
+**wait**. Do **not** start Task D1. The developer tests the web app end to end before
+the desktop work is authorised. Phase 3 (`D1`–`D12`) begins only when they explicitly
+ask for it, and mobile tasks **do not exist yet** — they must be written before any
+mobile work starts.
 
 **Each task is a TDD cycle.** Write the failing test, run it and confirm it fails,
 implement, run it and confirm it passes, commit. Never write implementation before its
@@ -259,7 +280,11 @@ create a branch or a worktree, never weaken a test to make it pass, verify
 before you claim anything works, and stop and tell me rather than improvising
 when something is wrong.
 
-Execute docs/PLAN.md task by task, in order, starting with the first task.
+Execute docs/PLAN.md task by task, in order, starting with Task B1.
+
+STOP AFTER TASK F15. That is the end of this delivery: the backend and the
+web application. Do not start Task D1. When F15 is committed, run the full
+test suite, report what was built and how it tested, and wait for me.
 Each task's steps are a TDD cycle — follow them literally.
 
 Commit after EVERY task, without exception: one task, one commit, using the

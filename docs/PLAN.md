@@ -8955,7 +8955,35 @@ git add -A && git commit -m "test(frontend): end-to-end acceptance suite across 
 
 ---
 
+# ⛔ STOP — DELIVERY GATE AFTER TASK F15
+
+**Task F15 is the end of this delivery. Do not start Task D1.**
+
+When F15 is committed:
+
+1. Run the full suite and report the result:
+   ```powershell
+   docker compose exec app php artisan test
+   cd frontend; npx vitest run; npx playwright test
+   ```
+2. Confirm the app runs: `docker compose up -d`, then `npm run dev` in `frontend/`,
+   and sign in at `http://localhost:5173` as `demo@example.com` / `password`.
+3. Report: every task completed, the commit count, the test results, and anything you
+   had to stop on along the way.
+4. **Then stop and wait.** The developer is going to test the web application end to
+   end before the desktop work begins.
+
+**Do not begin Phase 3 until the developer explicitly asks for it.** Not "the plan
+continues", not "the next task is D1" — the plan deliberately stops here. Starting
+D1 unasked means building a desktop shell around a web app that has not been
+accepted yet.
+
+---
+
 # PHASE 3 — NATIVE SHELL, LOCAL DATABASE AND SYNC
+
+> **Only begin this phase when the developer has tested the web application and
+> explicitly asked for the desktop app.** See the delivery gate above.
 
 Windows, macOS and Linux. Android and iOS are phase two and are not in this plan.
 
@@ -10931,6 +10959,20 @@ cd frontend
 npm run tauri:dev        # a desktop window, hot-reloading
 npm run tauri:build      # installers in src-tauri/target/release/bundle/
 ```
+
+---
+
+# ⛔ STOP — DELIVERY GATE AFTER TASK D12
+
+**Task D12 is the end of Phase 3.** Report the result and stop. The developer tests
+the desktop apps before anything else begins.
+
+**Android and iOS are not in this plan.** There are no mobile tasks to execute. When
+the developer asks for mobile, those tasks must be **written first** — they reuse the
+same Tauri project and the responsive layout from F4 and F14, but the build
+configuration, signing, store metadata and platform testing are all unwritten.
+
+**Do not improvise mobile support.** Stop and say the tasks do not exist yet.
 
 ---
 

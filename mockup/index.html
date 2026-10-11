@@ -102,6 +102,19 @@ kbd{font-family:var(--font);font-size:11px;padding:1px 5px;border-radius:var(--r
 .cdot{width:8px;height:8px;border-radius:999px;flex:none}
 .sec{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
   color:var(--text-faint);padding:9px 8px 3px}
+.sec{display:flex;align-items:center}
+.sec .add{margin-left:auto;width:19px;height:19px;border-radius:var(--r-sm);
+  display:grid;place-items:center;color:var(--text-faint);opacity:0}
+.sec:hover .add{opacity:1}
+.sec .add:hover{background:var(--hover);color:var(--text)}
+.more,.star{width:20px;height:20px;border-radius:var(--r-sm);display:grid;place-items:center;
+  color:var(--text-faint);opacity:0;flex:none;cursor:pointer}
+.item:hover .more,.row:hover .more,.row:hover .star{opacity:1}
+.item:hover .n{display:none}
+.star.on{opacity:1;color:var(--amber)}
+.more:hover,.star:hover{background:var(--border-strong);color:var(--text)}
+.inline{width:100%;height:28px;border-radius:var(--r-sm);padding:0 8px;font:inherit;font-size:13px;
+  border:1px solid var(--blue-6);background:var(--bg-raised);color:var(--text);margin:2px 0}
 .tags{display:flex;flex-wrap:wrap;gap:5px;padding:4px 8px}
 .tag{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--bg-raised);
   border:1px solid var(--border-strong);color:var(--text-dim)}
@@ -267,6 +280,9 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.7-4.7"/></symbol>
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6-1.4A3.8 3.8 0 0 1 18 18z"/></symbol>
   <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 20h20"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2"/><path d="M10 12h10M17 9l3 3-3 3"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></symbol>
   <symbol id="i-tablet" viewBox="0 0 24 24"><rect x="4.5" y="2.5" width="15" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></symbol>
@@ -293,7 +309,7 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       <span class="brand-name">Notes</span>
       <span class="pill">Mockup</span>
     </div>
-    <button class="search">
+    <button class="search" id="open-spot">
       <svg class="icon sm" viewBox="0 0 24 24"><use href="#i-search"/></svg>
       <span style="flex:1;text-align:left">Search all notes…</span><kbd>⌘K</kbd>
     </button>
@@ -301,7 +317,7 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       <button class="ibtn" id="theme" title="Colour scheme">
         <svg class="icon" id="theme-i" viewBox="0 0 24 24"><use href="#i-moon"/></svg>
       </button>
-      <div class="avatar">AV</div>
+      <button class="avatar" id="avatar-btn" title="Account">AV</button>
     </div>
   </header>
 
@@ -325,12 +341,12 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
         <button class="item on" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">24</span></button>
         <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-star"/></svg> Starred <span class="n">3</span></button>
 
-        <div class="sec">Folders</div>
-        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Work <span class="n">11</span></button>
-        <button class="item child" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Releases <span class="n">4</span></button>
-        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--green)"><use href="#i-folder"/></svg> Personal <span class="n">7</span></button>
+        <div class="sec">Folders<span class="add" data-new="folder" title="New folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></div>
+        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Work <span class="n">11</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
+        <button class="item child" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Releases <span class="n">4</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
+        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--green)"><use href="#i-folder"/></svg> Personal <span class="n">7</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
 
-        <div class="sec">Tags</div>
+        <div class="sec">Tags<span class="add" data-new="tag" title="New tag"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></div>
         <div class="tags">
           <button class="tag">#todo</button><button class="tag">#draft</button>
         </div>
@@ -348,10 +364,10 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
         <div class="acct-note">Not backed up · stays on <span id="dev-noun">this computer</span></div>
         <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">5</span></button>
 
-        <div class="sec">Folders</div>
-        <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--violet)"><use href="#i-folder"/></svg> Quick notes <span class="n">2</span></button>
+        <div class="sec">Folders<span class="add" data-new="folder" title="New folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></div>
+        <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--violet)"><use href="#i-folder"/></svg> Quick notes <span class="n">2</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
 
-        <div class="sec">Tags</div>
+        <div class="sec">Tags<span class="add" data-new="tag" title="New tag"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></div>
         <div class="tags"><button class="tag">#private</button></div>
 
         <button class="item" data-scope="local" style="margin-top:6px"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">0</span></button>
@@ -493,6 +509,45 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   </div>
 </div>
 
+<div class="menu" id="ctx"></div>
+
+<div class="menu" id="acct-menu" style="width:230px">
+  <div style="padding:8px 10px 10px;border-bottom:1px solid var(--border);margin-bottom:4px">
+    <div style="font-size:13.5px;font-weight:600;color:var(--text)">Akash Vichhi</div>
+    <div style="font-size:11.5px;color:var(--text-faint)">akash@example.com</div>
+  </div>
+  <button class="mi"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-user"/></svg> Profile</button>
+  <div class="msep"></div>
+  <button class="mi" style="color:var(--red)"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-logout"/></svg> Sign out</button>
+</div>
+
+<!-- ⌘K spotlight: searches BOTH containers -->
+<div class="ovl" id="spot" style="align-items:flex-start;padding-top:12vh">
+  <div class="modal" style="max-width:560px">
+    <div style="display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border)">
+      <svg class="icon" viewBox="0 0 24 24" style="color:var(--text-faint)"><use href="#i-search"/></svg>
+      <input id="spot-q" style="flex:1;border:0;background:none;color:var(--text);font-size:16px;font-family:inherit;outline:none"
+             placeholder="Search notes and actions…" value="not">
+    </div>
+    <div style="padding:6px;max-height:50vh;overflow-y:auto">
+      <div class="mlabel">Notes</div>
+      <button class="mi"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg>
+        <span style="flex:1">Meeting <mark style="background:transparent;color:var(--blue-7);font-weight:700">not</mark>es — 7 Oct</span>
+        <span class="chip cloud">Cloud</span></button>
+      <button class="mi"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg>
+        <span style="flex:1">Book <mark style="background:transparent;color:var(--blue-7);font-weight:700">not</mark>es</span>
+        <span class="chip local">On this device</span></button>
+      <div class="mlabel">Actions</div>
+      <button class="mi"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg>
+        <span style="flex:1">New note</span><span class="k">⌘N</span></button>
+    </div>
+    <div class="mfoot" style="font-size:11.5px">
+      <span class="hint">Search spans both containers · each result shows where it lives</span>
+      <span class="sp"></span><kbd>esc</kbd>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== STATE SWITCHER (mockup only) ===================== -->
 <div class="states">
   <button class="on" data-state="synced">Synced</button>
@@ -544,7 +599,12 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       '<div class="group">Recent</div>'+
       d.rows.map(function(r,i){
         return '<button class="row'+(i===0?' on':'')+'">'+
-          '<div class="rtop"><span class="rtitle">'+r[0]+'</span></div>'+
+          '<div class="rtop"><span class="rtitle">'+r[0]+'</span>'+
+            '<span class="star'+(r[4]?' on':'')+'" title="Star">'+
+              '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-star"/></svg></span>'+
+            '<span class="more" data-ctx="note" title="Note actions">'+
+              '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span>'+
+          '</div>'+
           '<div class="rsnip">'+r[1]+'</div>'+
           '<div class="rmeta">'+r[2]+
             (r[3]?' <span class="chip">'+r[3]+'</span>':'')+
@@ -629,6 +689,76 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
 
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){ovl.classList.remove('open'); mm.classList.remove('open')}});
+
+  /* ---- context menus: folders, tags and notes, in BOTH containers ---- */
+  var MENUS = {
+    folder:[['Rename','F2'],['New subfolder',''],['Change colour…',''],['-',''],
+            ['Delete folder','','danger'],
+            ['!','Notes inside move to All notes — nothing is deleted.']],
+    tag:   [['Rename','F2'],['-',''],['Delete tag','','danger'],
+            ['!','Removed from your notes. The notes stay.']],
+    note:  [['Open in new tab',''],['Star','⌘D'],['Rename','F2'],
+            ['Move to…','›'],['Duplicate',''],['-',''],
+            ['Move to trash','⌫','danger']]
+  };
+  var ctx=document.getElementById('ctx');
+  function openCtx(type, el){
+    ctx.innerHTML = MENUS[type].map(function(it){
+      if(it[0]==='-') return '<div class="msep"></div>';
+      if(it[0]==='!') return '<div class="mnote">'+it[1]+'</div>';
+      return '<button class="mi'+(it[2]?' danger':'')+'" style="'+(it[2]?'color:var(--red)':'')+'">'+
+             '<span>'+it[0]+'</span>'+(it[1]?'<span class="k">'+it[1]+'</span>':'')+'</button>';
+    }).join('');
+    var r=el.getBoundingClientRect();
+    ctx.classList.add('open');
+    var w=ctx.offsetWidth,h=ctx.offsetHeight;
+    ctx.style.left=Math.max(8,Math.min(r.left-w+26, innerWidth-w-8))+'px';
+    ctx.style.top=(r.bottom+h+8>innerHeight ? r.top-h-6 : r.bottom+6)+'px';
+  }
+  document.addEventListener('click', function(e){
+    var more=e.target.closest? e.target.closest('.more'):null;
+    if(more){ e.stopPropagation(); e.preventDefault(); openCtx(more.getAttribute('data-ctx'), more); return }
+    var star=e.target.closest? e.target.closest('.star'):null;
+    if(star){ e.stopPropagation(); e.preventDefault(); star.classList.toggle('on'); return }
+    ctx.classList.remove('open');
+    document.getElementById('acct-menu').classList.remove('open');
+  });
+  document.querySelectorAll('.tag').forEach(function(t){
+    t.addEventListener('contextmenu', function(e){ e.preventDefault(); openCtx('tag', t) })});
+
+  /* ---- inline create for folders and tags, in either container ---- */
+  document.querySelectorAll('.sec .add').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      var head=b.closest('.sec');
+      if(head.nextElementSibling && head.nextElementSibling.classList.contains('inline')) return;
+      var inp=document.createElement('input');
+      inp.className='inline';
+      inp.placeholder = b.getAttribute('data-new')==='folder' ? 'Folder name' : 'Tag name';
+      head.insertAdjacentElement('afterend', inp);
+      inp.focus();
+      inp.onblur=function(){inp.remove()};
+      inp.onkeydown=function(ev){ if(ev.key==='Enter'||ev.key==='Escape') inp.remove() };
+    })});
+
+  /* ---- account menu + spotlight ---- */
+  var acct=document.getElementById('acct-menu');
+  document.getElementById('avatar-btn').onclick=function(e){
+    e.stopPropagation();
+    var r=this.getBoundingClientRect();
+    acct.classList.add('open');
+    acct.style.left=(r.right-acct.offsetWidth)+'px';
+    acct.style.top=(r.bottom+6)+'px';
+  };
+  var spot=document.getElementById('spot');
+  document.getElementById('open-spot').onclick=function(){spot.classList.add('open');
+    document.getElementById('spot-q').select()};
+  spot.onclick=function(e){if(e.target===spot) spot.classList.remove('open')};
+  document.addEventListener('keydown',function(e){
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();
+      spot.classList.toggle('open'); if(spot.classList.contains('open')) document.getElementById('spot-q').select()}
+    if(e.key==='Escape'){spot.classList.remove('open'); ctx.classList.remove('open'); acct.classList.remove('open')}
+  });
 
   /* ---- the On This Device icon and noun follow the hardware ----
      Real app: Tauri's platform() returns windows|macos|linux|android|ios.

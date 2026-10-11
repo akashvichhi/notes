@@ -2,11 +2,15 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\FolderController;
+use App\Http\Controllers\Api\V1\NoteController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\TagController;
+use App\Models\Note;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+Route::bind('note', fn ($value) => Note::withTrashed()->where('uuid', $value)->firstOrFail());
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -34,5 +38,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/tags', [TagController::class, 'store']);
         Route::patch('/tags/{tag}', [TagController::class, 'update']);
         Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
+
+        Route::get('/notes', [NoteController::class, 'index']);
+        Route::post('/notes', [NoteController::class, 'store']);
+        Route::get('/notes/{note}', [NoteController::class, 'show']);
     });
 });

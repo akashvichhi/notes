@@ -1,6 +1,6 @@
 # Notes — brand assets
 
-Ready to use. Copy them into the frontend once `frontend/` exists.
+Ready to use. Copy them into the web once `web/` exists.
 
 ```powershell
 Copy-Item assets\brand\favicon.svg,
@@ -9,16 +9,16 @@ Copy-Item assets\brand\favicon.svg,
           assets\brand\icon-192.png,
           assets\brand\icon-512.png,
           assets\brand\icon-512-maskable.png,
-          assets\brand\og-image.png  frontend\public\
+          assets\brand\og-image.png  web\public\
 
-Remove-Item frontend\public\vite.svg -ErrorAction SilentlyContinue
+Remove-Item web\public\vite.svg -ErrorAction SilentlyContinue
 ```
 
 ```bash
 # macOS / Linux
 cp assets/brand/{favicon.svg,favicon.ico,apple-touch-icon.png,icon-192.png,\
-icon-512.png,icon-512-maskable.png,og-image.png} frontend/public/
-rm -f frontend/public/vite.svg
+icon-512.png,icon-512-maskable.png,og-image.png} web/public/
+rm -f web/public/vite.svg
 ```
 
 The `logo*.svg` files are **not** copied to `public/` — import them in components
@@ -83,7 +83,7 @@ export function Logo({ height = 28 }: { height?: number }) {
 }
 ```
 
-Copy `logo.svg` and `logo-dark.svg` into `frontend/src/assets/` for this.
+Copy `logo.svg` and `logo-dark.svg` into `web/src/assets/` for this.
 
 The **header brand mark is not an image** — Task F4 draws it with the Tabler
 `IconNotes` glyph inside a blue square, so it scales and themes without a round trip.

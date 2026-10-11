@@ -4,7 +4,7 @@
 **Supersedes:** the PWA specification of 2026-10-09
 
 A cross-platform notes application in the spirit of Apple Notes. One React codebase
-ships as a web app and as native apps; a Laravel API on MySQL is the cloud backend.
+ships as a web app and as native apps; a Laravel API on MySQL is the cloud api.
 Notes live in one of two containers — **Cloud**, synced across every device, or
 **On This Device**, which never leaves the machine.
 
@@ -48,7 +48,7 @@ A Progressive Web App. React Native or Flutter. Markdown as the typing surface.
 
 ## 2 · Platforms and builds
 
-One `frontend/` source tree, built three ways.
+One `web/` source tree, built three ways.
 
 | Build | Targets | Containers | Offline | Auth |
 |---|---|---|---|---|

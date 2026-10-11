@@ -10,8 +10,8 @@ Laravel 12 API on MySQL 8. Notes live in one of two containers: **Cloud**, synce
 across every device and editable offline, or **On This Device**, which never leaves
 the machine.
 
-**Architecture:** One repository, three build outputs. `backend/` is a Laravel 12
-**API-only** app holding Cloud notes in MySQL 8. `frontend/` is a Vite SPA that builds
+**Architecture:** One repository, three build outputs. `api/` is a Laravel 12
+**API-only** app holding Cloud notes in MySQL 8. `web/` is a Vite SPA that builds
 for the browser and, through `src-tauri/`, for each desktop platform. The browser
 build authenticates with **Sanctum stateful session cookies**; native builds use
 **Sanctum Bearer tokens** held in the OS secure store — both on the same
@@ -28,7 +28,7 @@ React Router 8 · axios 1.20 — **Tauri 2 · Rust · SQLite (tauri-plugin-sql)*
 three before Task B1. This plan argues from the spec; anything underspecified here is
 answered there.
 
-**Phases:** `B1`–`B18` backend · `F1`–`F15` the shared UI · `D1`–`D12` the desktop
+**Phases:** `B1`–`B18` api · `F1`–`F15` the shared UI · `D1`–`D12` the desktop
 shell, local database and sync engine · `M1`–`M8` Android and iOS. **Each phase ends
 at a `⛔ STOP` gate**, and the next begins only when the developer asks for it.
 
@@ -38,7 +38,7 @@ at a `⛔ STOP` gate**, and the next begins only when the developer asks for it.
 
 Both applications are **already scaffolded** before Task B1 begins. The agent must
 **never** run `laravel new`, `composer create-project`, or `npm create vite`. If
-`backend/` or `frontend/` is missing or does not match what follows, stop and say so
+`api/` or `web/` is missing or does not match what follows, stop and say so
 rather than creating it.
 
 ```
@@ -46,16 +46,16 @@ notes-app/
 ├── docker-compose.yml          # PHP 8.3 + MySQL 8.4 — provided
 ├── docker/php/Dockerfile       # PHP image with pdo_mysql, zip, bcmath, intl, Composer
 ├── docs/  SPEC.md · PLAN.md · SETUP-WINDOWS.md
-├── backend/                    # fresh Laravel 12 app — PROVIDED
-└── frontend/                   # fresh Vite + React + TypeScript app — PROVIDED
+├── api/                    # fresh Laravel 12 app — PROVIDED
+└── web/                   # fresh Vite + React + TypeScript app — PROVIDED
 ```
 
-**`backend/`** is an untouched Laravel 12 install: `artisan`, `composer.json`,
+**`api/`** is an untouched Laravel 12 install: `artisan`, `composer.json`,
 `app/`, `routes/web.php`, the default migrations, and `vendor/` installed. It may or
 may not already have Pest and `install:api` applied — Task B1 checks and applies
 whatever is missing, and is safe to run either way.
 
-**`frontend/`** is an untouched `npm create vite@latest -- --template react-ts`
+**`web/`** is an untouched `npm create vite@latest -- --template react-ts`
 project: `package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`,
 `src/main.tsx`, `src/App.tsx`. No extra packages installed yet — Task F1 installs
 them all at pinned versions.
@@ -249,7 +249,7 @@ notes-app/
 │   ├── SPEC.md
 │   ├── PLAN.md
 │   └── SETUP-WINDOWS.md
-├── backend/                               # PROVIDED, then configured in B1
+├── api/                               # PROVIDED, then configured in B1
 │   ├── app/
 │   │   ├── Http/
 │   │   │   ├── Controllers/Api/V1/        # one controller per resource
@@ -277,7 +277,7 @@ notes-app/
 │   ├── database/migrations/
 │   ├── routes/api.php
 │   └── tests/Feature/                     # Pest
-└── frontend/                              # PROVIDED, then configured in F1
+└── web/                              # PROVIDED, then configured in F1
     └── src/
         ├── api/        client.ts, auth.ts, notes.ts, folders.ts, tags.ts, search.ts
         ├── hooks/      queries/*.ts (TanStack), useAutosave.ts, useVisualViewport.ts
@@ -304,9 +304,9 @@ notes-app/
 > of the plan depends on. Every step is safe to re-run.
 
 **Files:**
-- Modify: `backend/bootstrap/app.php`, `backend/config/cors.php`,
-  `backend/config/database.php`, `backend/.env`, `backend/routes/api.php`
-- Test: `backend/tests/Feature/HealthTest.php`
+- Modify: `api/bootstrap/app.php`, `api/config/cors.php`,
+  `api/config/database.php`, `api/.env`, `api/routes/api.php`
+- Test: `api/tests/Feature/HealthTest.php`
 
 **Interfaces:**
 - Produces: a booting Laravel app on MySQL with `statefulApi()` middleware, Sanctum
@@ -326,10 +326,10 @@ upgrade or reinstall.
 Then apply only the pieces that are absent. Each command is a no-op if already done:
 
 ```powershell
-# Sanctum + routes/api.php. Skip if backend/routes/api.php already exists.
+# Sanctum + routes/api.php. Skip if api/routes/api.php already exists.
 docker compose exec app php artisan install:api
 
-# Pest. Skip if backend/tests/Pest.php already exists.
+# Pest. Skip if api/tests/Pest.php already exists.
 docker compose exec app composer require pestphp/pest --dev --with-all-dependencies
 docker compose exec app ./vendor/bin/pest --init
 ```
@@ -371,7 +371,7 @@ FRONTEND_URL=http://localhost:5173
 
 - [ ] **Step 3: Enable stateful API requests**
 
-In `backend/bootstrap/app.php`:
+In `api/bootstrap/app.php`:
 
 ```php
 use Illuminate\Foundation\Configuration\Middleware;
@@ -383,7 +383,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 
 - [ ] **Step 4: Configure CORS**
 
-`backend/config/cors.php`:
+`api/config/cors.php`:
 
 ```php
 return [
@@ -397,7 +397,7 @@ return [
 
 - [ ] **Step 5: Force utf8mb4 collation**
 
-`backend/config/database.php`, in the `mysql` connection:
+`api/config/database.php`, in the `mysql` connection:
 
 ```php
 'charset' => 'utf8mb4',
@@ -406,7 +406,7 @@ return [
 
 - [ ] **Step 6: Write the failing test**
 
-`backend/tests/Feature/HealthTest.php`:
+`api/tests/Feature/HealthTest.php`:
 
 ```php
 <?php
@@ -426,7 +426,7 @@ Expected: FAIL — 404.
 
 - [ ] **Step 8: Add the route**
 
-`backend/routes/api.php`:
+`api/routes/api.php`:
 
 ```php
 <?php
@@ -448,7 +448,7 @@ Expected: PASS.
 - [ ] **Step 10: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): scaffold Laravel API-only app with Sanctum stateful middleware"
+git add -A && git commit -m "feat(api): scaffold Laravel API-only app with Sanctum stateful middleware"
 ```
 
 ---
@@ -456,19 +456,19 @@ git add -A && git commit -m "feat(backend): scaffold Laravel API-only app with S
 ### Task B1b: Service layer skeleton and the architecture guard
 
 **Files:**
-- Create: `backend/app/Exceptions/NoteConflictException.php`,
-  `backend/app/Services/.gitkeep`, `backend/app/Queries/.gitkeep`
-- Test: `backend/tests/Feature/ArchitectureTest.php`
+- Create: `api/app/Exceptions/NoteConflictException.php`,
+  `api/app/Services/.gitkeep`, `api/app/Queries/.gitkeep`
+- Test: `api/tests/Feature/ArchitectureTest.php`
 
 **Interfaces:**
 - Produces: `NoteConflictException` — thrown by `Services\Notes\UpdateNote`, renders
   itself as the 409 contract, so no controller ever branches on a conflict.
 - Produces the architecture test that fails the build if logic creeps back into a
-  controller. Every later backend task must keep it green.
+  controller. Every later api task must keep it green.
 
 - [ ] **Step 1: Write the failing architecture test**
 
-`backend/tests/Feature/ArchitectureTest.php`:
+`api/tests/Feature/ArchitectureTest.php`:
 
 ```php
 <?php
@@ -555,7 +555,7 @@ Expected: FAIL — `expect($files)->not->toBeEmpty()` fails, no controllers yet.
 
 - [ ] **Step 3: Write the conflict exception**
 
-`backend/app/Exceptions/NoteConflictException.php`:
+`api/app/Exceptions/NoteConflictException.php`:
 
 ```php
 <?php
@@ -604,10 +604,10 @@ touch app/Services/.gitkeep app/Queries/.gitkeep
 - [ ] **Step 5: Commit**
 
 ```bash
-git add -A && git commit -m "chore(backend): service layer conventions and architecture guard"
+git add -A && git commit -m "chore(api): service layer conventions and architecture guard"
 ```
 
-> From here on, **every backend task must leave `ArchitectureTest` green.** Run
+> From here on, **every api task must leave `ArchitectureTest` green.** Run
 > `php artisan test --filter=ArchitectureTest` before each commit.
 
 ---
@@ -615,13 +615,13 @@ git add -A && git commit -m "chore(backend): service layer conventions and archi
 ### Task B2: Authentication endpoints
 
 **Files:**
-- Create: `backend/app/Http/Controllers/Api/V1/AuthController.php`,
-  `backend/app/Http/Requests/RegisterRequest.php`,
-  `backend/app/Http/Requests/LoginRequest.php`,
-  `backend/app/Http/Resources/UserResource.php`
-- Modify: `backend/routes/api.php`, `backend/app/Models/User.php`,
-  `backend/database/migrations/*_create_users_table.php`
-- Test: `backend/tests/Feature/AuthTest.php`
+- Create: `api/app/Http/Controllers/Api/V1/AuthController.php`,
+  `api/app/Http/Requests/RegisterRequest.php`,
+  `api/app/Http/Requests/LoginRequest.php`,
+  `api/app/Http/Resources/UserResource.php`
+- Modify: `api/routes/api.php`, `api/app/Models/User.php`,
+  `api/database/migrations/*_create_users_table.php`
+- Test: `api/tests/Feature/AuthTest.php`
 
 **Interfaces:**
 - Produces: `POST /api/v1/register|login|logout`, `GET /api/v1/me`.
@@ -636,7 +636,7 @@ $table->json('preferences')->nullable()->after('password');
 
 - [ ] **Step 2: Give User a UUID**
 
-`backend/app/Models/User.php`:
+`api/app/Models/User.php`:
 
 ```php
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -659,7 +659,7 @@ class User extends Authenticatable
 
 - [ ] **Step 3: Write the failing tests**
 
-`backend/tests/Feature/AuthTest.php`:
+`api/tests/Feature/AuthTest.php`:
 
 ```php
 <?php
@@ -702,7 +702,7 @@ Expected: FAIL — 404 on every route.
 
 - [ ] **Step 5: Write the requests**
 
-`backend/app/Http/Requests/RegisterRequest.php`:
+`api/app/Http/Requests/RegisterRequest.php`:
 
 ```php
 <?php
@@ -726,7 +726,7 @@ class RegisterRequest extends FormRequest
 }
 ```
 
-`backend/app/Http/Requests/LoginRequest.php`:
+`api/app/Http/Requests/LoginRequest.php`:
 
 ```php
 <?php
@@ -750,7 +750,7 @@ class LoginRequest extends FormRequest
 
 - [ ] **Step 6: Write the resource**
 
-`backend/app/Http/Resources/UserResource.php`:
+`api/app/Http/Resources/UserResource.php`:
 
 ```php
 <?php
@@ -775,7 +775,7 @@ class UserResource extends JsonResource
 
 - [ ] **Step 7: Write the services**
 
-`backend/app/Services/Auth/RegisterUser.php`:
+`api/app/Services/Auth/RegisterUser.php`:
 
 ```php
 <?php
@@ -799,7 +799,7 @@ class RegisterUser
 }
 ```
 
-`backend/app/Services/Auth/AuthenticateUser.php`:
+`api/app/Services/Auth/AuthenticateUser.php`:
 
 ```php
 <?php
@@ -826,7 +826,7 @@ class AuthenticateUser
 }
 ```
 
-`backend/app/Services/Auth/LogoutUser.php`:
+`api/app/Services/Auth/LogoutUser.php`:
 
 ```php
 <?php
@@ -848,7 +848,7 @@ class LogoutUser
 
 - [ ] **Step 8: Write the controller — delegation only**
 
-`backend/app/Http/Controllers/Api/V1/AuthController.php`:
+`api/app/Http/Controllers/Api/V1/AuthController.php`:
 
 ```php
 <?php
@@ -893,7 +893,7 @@ class AuthController extends Controller
 
 - [ ] **Step 9: Register the routes**
 
-`backend/routes/api.php`:
+`api/routes/api.php`:
 
 ```php
 use App\Http\Controllers\Api\V1\AuthController;
@@ -921,7 +921,7 @@ Expected: PASS (4 tests).
 - [ ] **Step 11: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): register, login, logout and me endpoints"
+git add -A && git commit -m "feat(api): register, login, logout and me endpoints"
 ```
 
 ---
@@ -929,12 +929,12 @@ git add -A && git commit -m "feat(backend): register, login, logout and me endpo
 ### Task B3: Profile, password change and password reset
 
 **Files:**
-- Create: `backend/app/Http/Controllers/Api/V1/ProfileController.php`,
-  `backend/app/Http/Controllers/Api/V1/PasswordResetController.php`,
-  `backend/app/Http/Requests/UpdateProfileRequest.php`,
-  `backend/app/Http/Requests/UpdatePasswordRequest.php`
-- Modify: `backend/routes/api.php`
-- Test: `backend/tests/Feature/ProfileTest.php`
+- Create: `api/app/Http/Controllers/Api/V1/ProfileController.php`,
+  `api/app/Http/Controllers/Api/V1/PasswordResetController.php`,
+  `api/app/Http/Requests/UpdateProfileRequest.php`,
+  `api/app/Http/Requests/UpdatePasswordRequest.php`
+- Modify: `api/routes/api.php`
+- Test: `api/tests/Feature/ProfileTest.php`
 
 **Interfaces:**
 - Produces: `PATCH /api/v1/me`, `PUT /api/v1/me/password`,
@@ -942,7 +942,7 @@ git add -A && git commit -m "feat(backend): register, login, logout and me endpo
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/ProfileTest.php`:
+`api/tests/Feature/ProfileTest.php`:
 
 ```php
 <?php
@@ -989,7 +989,7 @@ Expected: FAIL — 404.
 
 - [ ] **Step 3: Write the requests**
 
-`backend/app/Http/Requests/UpdateProfileRequest.php`:
+`api/app/Http/Requests/UpdateProfileRequest.php`:
 
 ```php
 <?php
@@ -1013,7 +1013,7 @@ class UpdateProfileRequest extends FormRequest
 }
 ```
 
-`backend/app/Http/Requests/UpdatePasswordRequest.php`:
+`api/app/Http/Requests/UpdatePasswordRequest.php`:
 
 ```php
 <?php
@@ -1038,7 +1038,7 @@ class UpdatePasswordRequest extends FormRequest
 
 - [ ] **Step 4: Write the services**
 
-`backend/app/Services/Users/UpdateProfile.php`:
+`api/app/Services/Users/UpdateProfile.php`:
 
 ```php
 <?php
@@ -1057,7 +1057,7 @@ class UpdateProfile
 }
 ```
 
-`backend/app/Services/Users/ChangePassword.php`:
+`api/app/Services/Users/ChangePassword.php`:
 
 ```php
 <?php
@@ -1077,7 +1077,7 @@ class ChangePassword
 }
 ```
 
-`backend/app/Services/Users/UpdatePreferences.php`:
+`api/app/Services/Users/UpdatePreferences.php`:
 
 ```php
 <?php
@@ -1099,7 +1099,7 @@ class UpdatePreferences
 
 - [ ] **Step 5: Write the preferences request**
 
-`backend/app/Http/Requests/UpdatePreferencesRequest.php`:
+`api/app/Http/Requests/UpdatePreferencesRequest.php`:
 
 ```php
 <?php
@@ -1125,7 +1125,7 @@ class UpdatePreferencesRequest extends FormRequest
 
 - [ ] **Step 6: Write the controllers — delegation only**
 
-`backend/app/Http/Controllers/Api/V1/ProfileController.php`:
+`api/app/Http/Controllers/Api/V1/ProfileController.php`:
 
 ```php
 <?php
@@ -1161,7 +1161,7 @@ class ProfileController extends Controller
 }
 ```
 
-`backend/app/Services/Auth/SendPasswordResetLink.php`:
+`api/app/Services/Auth/SendPasswordResetLink.php`:
 
 ```php
 <?php
@@ -1180,7 +1180,7 @@ class SendPasswordResetLink
 }
 ```
 
-`backend/app/Services/Auth/ResetPassword.php`:
+`api/app/Services/Auth/ResetPassword.php`:
 
 ```php
 <?php
@@ -1212,13 +1212,13 @@ class ResetPassword
 }
 ```
 
-`backend/app/Http/Requests/ForgotPasswordRequest.php` validates
+`api/app/Http/Requests/ForgotPasswordRequest.php` validates
 `['email' => ['required', 'email']]`, and
-`backend/app/Http/Requests/ResetPasswordRequest.php` validates
+`api/app/Http/Requests/ResetPasswordRequest.php` validates
 `['token' => ['required'], 'email' => ['required','email'], 'password' => ['required','confirmed','min:8']]`.
 Both `authorize()` return `true`.
 
-`backend/app/Http/Controllers/Api/V1/PasswordResetController.php`:
+`api/app/Http/Controllers/Api/V1/PasswordResetController.php`:
 
 ```php
 <?php
@@ -1274,7 +1274,7 @@ Expected: PASS (3 tests), and the architecture guard stays green.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): profile, password change, password reset and preferences"
+git add -A && git commit -m "feat(api): profile, password change, password reset and preferences"
 ```
 
 ---
@@ -1282,15 +1282,15 @@ git add -A && git commit -m "feat(backend): profile, password change, password r
 ### Task B4: Folders
 
 **Files:**
-- Create: `backend/database/migrations/*_create_folders_table.php`,
-  `backend/app/Models/Folder.php`, `backend/app/Policies/FolderPolicy.php`,
-  `backend/app/Http/Requests/StoreFolderRequest.php`,
-  `backend/app/Http/Requests/UpdateFolderRequest.php`,
-  `backend/app/Http/Resources/FolderResource.php`,
-  `backend/app/Http/Controllers/Api/V1/FolderController.php`,
-  `backend/database/factories/FolderFactory.php`
-- Modify: `backend/routes/api.php`
-- Test: `backend/tests/Feature/FolderTest.php`
+- Create: `api/database/migrations/*_create_folders_table.php`,
+  `api/app/Models/Folder.php`, `api/app/Policies/FolderPolicy.php`,
+  `api/app/Http/Requests/StoreFolderRequest.php`,
+  `api/app/Http/Requests/UpdateFolderRequest.php`,
+  `api/app/Http/Resources/FolderResource.php`,
+  `api/app/Http/Controllers/Api/V1/FolderController.php`,
+  `api/database/factories/FolderFactory.php`
+- Modify: `api/routes/api.php`
+- Test: `api/tests/Feature/FolderTest.php`
 
 **Interfaces:**
 - Consumes: `User` from B2.
@@ -1325,7 +1325,7 @@ Schema::create('folders', function (Blueprint $table) {
 
 - [ ] **Step 2: Write the failing tests**
 
-`backend/tests/Feature/FolderTest.php`:
+`api/tests/Feature/FolderTest.php`:
 
 ```php
 <?php
@@ -1384,7 +1384,7 @@ Expected: FAIL — `Folder` class not found.
 
 - [ ] **Step 4: Write the model and factory**
 
-`backend/app/Models/Folder.php`:
+`api/app/Models/Folder.php`:
 
 ```php
 <?php
@@ -1413,7 +1413,7 @@ class Folder extends Model
 }
 ```
 
-`backend/database/factories/FolderFactory.php`:
+`api/database/factories/FolderFactory.php`:
 
 ```php
 <?php
@@ -1436,7 +1436,7 @@ class FolderFactory extends Factory
 
 - [ ] **Step 5: Write the policy**
 
-`backend/app/Policies/FolderPolicy.php`:
+`api/app/Policies/FolderPolicy.php`:
 
 ```php
 <?php
@@ -1461,7 +1461,7 @@ class FolderPolicy
 
 - [ ] **Step 6: Write the requests and resource**
 
-`backend/app/Http/Requests/StoreFolderRequest.php`:
+`api/app/Http/Requests/StoreFolderRequest.php`:
 
 ```php
 <?php
@@ -1497,7 +1497,7 @@ class StoreFolderRequest extends FormRequest
 }
 ```
 
-`backend/app/Queries/FolderQuery.php` — the single place a folder UUID becomes an id:
+`api/app/Queries/FolderQuery.php` — the single place a folder UUID becomes an id:
 
 ```php
 <?php
@@ -1528,7 +1528,7 @@ class FolderQuery
 }
 ```
 
-`backend/app/Http/Requests/UpdateFolderRequest.php` — same rules, all `sometimes`:
+`api/app/Http/Requests/UpdateFolderRequest.php` — same rules, all `sometimes`:
 
 ```php
 <?php
@@ -1559,7 +1559,7 @@ class UpdateFolderRequest extends FormRequest
 }
 ```
 
-`backend/app/Http/Resources/FolderResource.php`:
+`api/app/Http/Resources/FolderResource.php`:
 
 ```php
 <?php
@@ -1586,7 +1586,7 @@ class FolderResource extends JsonResource
 
 - [ ] **Step 7: Write the services, then the controller**
 
-`backend/app/Services/Folders/CreateFolder.php`:
+`api/app/Services/Folders/CreateFolder.php`:
 
 ```php
 <?php
@@ -1608,7 +1608,7 @@ class CreateFolder
 }
 ```
 
-`backend/app/Services/Folders/RenameFolder.php`:
+`api/app/Services/Folders/RenameFolder.php`:
 
 ```php
 <?php
@@ -1627,7 +1627,7 @@ class RenameFolder
 }
 ```
 
-`backend/app/Services/Folders/DeleteFolder.php`:
+`api/app/Services/Folders/DeleteFolder.php`:
 
 ```php
 <?php
@@ -1654,7 +1654,7 @@ class DeleteFolder
 }
 ```
 
-`backend/app/Http/Controllers/Api/V1/FolderController.php`:
+`api/app/Http/Controllers/Api/V1/FolderController.php`:
 
 ```php
 <?php
@@ -1703,7 +1703,7 @@ class FolderController extends Controller
 
 - [ ] **Step 8: Add the `folders` relation to User**
 
-In `backend/app/Models/User.php`:
+In `api/app/Models/User.php`:
 
 ```php
 public function folders(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -1734,7 +1734,7 @@ test 2 is item 3.
 - [ ] **Step 11: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): folders with root sentinel and non-destructive delete"
+git add -A && git commit -m "feat(api): folders with root sentinel and non-destructive delete"
 ```
 
 ---
@@ -1742,14 +1742,14 @@ git add -A && git commit -m "feat(backend): folders with root sentinel and non-d
 ### Task B5: Tags
 
 **Files:**
-- Create: `backend/database/migrations/*_create_tags_table.php`,
-  `backend/database/migrations/*_create_note_tag_table.php`,
-  `backend/app/Models/Tag.php`, `backend/app/Policies/TagPolicy.php`,
-  `backend/app/Http/Resources/TagResource.php`,
-  `backend/app/Http/Controllers/Api/V1/TagController.php`,
-  `backend/database/factories/TagFactory.php`
-- Modify: `backend/routes/api.php`, `backend/app/Models/User.php`
-- Test: `backend/tests/Feature/TagTest.php`
+- Create: `api/database/migrations/*_create_tags_table.php`,
+  `api/database/migrations/*_create_note_tag_table.php`,
+  `api/app/Models/Tag.php`, `api/app/Policies/TagPolicy.php`,
+  `api/app/Http/Resources/TagResource.php`,
+  `api/app/Http/Controllers/Api/V1/TagController.php`,
+  `api/database/factories/TagFactory.php`
+- Modify: `api/routes/api.php`, `api/app/Models/User.php`
+- Test: `api/tests/Feature/TagTest.php`
 
 **Interfaces:**
 - Produces: `Tag` model with `user_id`, `name`, `slug`. `note_tag` pivot.
@@ -1783,7 +1783,7 @@ Schema::create('note_tag', function (Blueprint $table) {
 
 - [ ] **Step 2: Write the failing tests**
 
-`backend/tests/Feature/TagTest.php`:
+`api/tests/Feature/TagTest.php`:
 
 ```php
 <?php
@@ -1833,7 +1833,7 @@ Expected: FAIL — `Tag` class not found.
 
 - [ ] **Step 4: Write the model and factory**
 
-`backend/app/Models/Tag.php`:
+`api/app/Models/Tag.php`:
 
 ```php
 <?php
@@ -1860,7 +1860,7 @@ class Tag extends Model
 The model carries relations and nothing else. Resolving names to tags is an action, so
 it lives in a service:
 
-`backend/app/Services/Tags/UpsertTags.php`:
+`api/app/Services/Tags/UpsertTags.php`:
 
 ```php
 <?php
@@ -1893,7 +1893,7 @@ class UpsertTags
 }
 ```
 
-`backend/database/factories/TagFactory.php`:
+`api/database/factories/TagFactory.php`:
 
 ```php
 <?php
@@ -1915,7 +1915,7 @@ class TagFactory extends Factory
 
 - [ ] **Step 5: Write the resource, policy and controller**
 
-`backend/app/Http/Resources/TagResource.php`:
+`api/app/Http/Resources/TagResource.php`:
 
 ```php
 <?php
@@ -1933,7 +1933,7 @@ class TagResource extends JsonResource
 }
 ```
 
-`backend/app/Policies/TagPolicy.php`:
+`api/app/Policies/TagPolicy.php`:
 
 ```php
 <?php
@@ -1949,7 +1949,7 @@ class TagPolicy
 }
 ```
 
-`backend/app/Http/Requests/StoreTagRequest.php` — uniqueness is validation, so the slug
+`api/app/Http/Requests/StoreTagRequest.php` — uniqueness is validation, so the slug
 rule belongs here, not in a controller:
 
 ```php
@@ -1978,10 +1978,10 @@ class StoreTagRequest extends FormRequest
 }
 ```
 
-`backend/app/Http/Requests/UpdateTagRequest.php` is the same with the current tag
+`api/app/Http/Requests/UpdateTagRequest.php` is the same with the current tag
 ignored via `->ignore($this->route('tag')->id)`.
 
-`backend/app/Services/Tags/CreateTag.php`:
+`api/app/Services/Tags/CreateTag.php`:
 
 ```php
 <?php
@@ -2000,7 +2000,7 @@ class CreateTag
 }
 ```
 
-`backend/app/Services/Tags/RenameTag.php`:
+`api/app/Services/Tags/RenameTag.php`:
 
 ```php
 <?php
@@ -2020,7 +2020,7 @@ class RenameTag
 }
 ```
 
-`backend/app/Services/Tags/DeleteTag.php`:
+`api/app/Services/Tags/DeleteTag.php`:
 
 ```php
 <?php
@@ -2038,7 +2038,7 @@ class DeleteTag
 }
 ```
 
-`backend/app/Http/Controllers/Api/V1/TagController.php`:
+`api/app/Http/Controllers/Api/V1/TagController.php`:
 
 ```php
 <?php
@@ -2105,7 +2105,7 @@ Expected: PASS (4 tests).
 - [ ] **Step 8: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): tags with name-based upsert"
+git add -A && git commit -m "feat(api): tags with name-based upsert"
 ```
 
 ---
@@ -2113,14 +2113,14 @@ git add -A && git commit -m "feat(backend): tags with name-based upsert"
 ### Task B6: Notes table, model and plain-text extraction
 
 **Files:**
-- Create: `backend/database/migrations/*_create_notes_table.php`,
-  `backend/database/migrations/*_create_note_versions_table.php`,
-  `backend/app/Models/Note.php`, `backend/app/Policies/NotePolicy.php`,
-  `backend/app/Support/PlainTextExtractor.php`,
-  `backend/app/Services/Notes/DeriveNoteFields.php`,
-  `backend/database/factories/NoteFactory.php`
-- Modify: `backend/app/Models/User.php`
-- Test: `backend/tests/Unit/PlainTextExtractorTest.php`
+- Create: `api/database/migrations/*_create_notes_table.php`,
+  `api/database/migrations/*_create_note_versions_table.php`,
+  `api/app/Models/Note.php`, `api/app/Policies/NotePolicy.php`,
+  `api/app/Support/PlainTextExtractor.php`,
+  `api/app/Services/Notes/DeriveNoteFields.php`,
+  `api/database/factories/NoteFactory.php`
+- Modify: `api/app/Models/User.php`
+- Test: `api/tests/Unit/PlainTextExtractorTest.php`
 
 **Interfaces:**
 - Produces:
@@ -2185,7 +2185,7 @@ Schema::create('note_versions', function (Blueprint $table) {
 
 - [ ] **Step 2: Write the failing unit test**
 
-`backend/tests/Unit/PlainTextExtractorTest.php`:
+`api/tests/Unit/PlainTextExtractorTest.php`:
 
 ```php
 <?php
@@ -2246,7 +2246,7 @@ Expected: FAIL — class not found.
 
 - [ ] **Step 4: Write the extractor**
 
-`backend/app/Support/PlainTextExtractor.php`:
+`api/app/Support/PlainTextExtractor.php`:
 
 ```php
 <?php
@@ -2319,7 +2319,7 @@ Expected: PASS (5 tests).
 
 - [ ] **Step 6: Write the model, policy and factory**
 
-`backend/app/Models/Note.php`:
+`api/app/Models/Note.php`:
 
 ```php
 <?php
@@ -2369,7 +2369,7 @@ class Note extends Model
 The model carries relations, casts and one scope. Deriving columns is an action, so it
 is a service:
 
-`backend/app/Services/Notes/DeriveNoteFields.php`:
+`api/app/Services/Notes/DeriveNoteFields.php`:
 
 ```php
 <?php
@@ -2401,7 +2401,7 @@ class DeriveNoteFields
 }
 ```
 
-`backend/app/Policies/NotePolicy.php`:
+`api/app/Policies/NotePolicy.php`:
 
 ```php
 <?php
@@ -2418,7 +2418,7 @@ class NotePolicy
 }
 ```
 
-`backend/database/factories/NoteFactory.php`:
+`api/database/factories/NoteFactory.php`:
 
 ```php
 <?php
@@ -2476,7 +2476,7 @@ Expected: PASS, all tasks so far.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): notes schema, model and ProseMirror text extraction"
+git add -A && git commit -m "feat(api): notes schema, model and ProseMirror text extraction"
 ```
 
 ---
@@ -2484,15 +2484,15 @@ git add -A && git commit -m "feat(backend): notes schema, model and ProseMirror 
 ### Task B7: Notes index, show and store
 
 **Files:**
-- Create: `backend/app/Http/Controllers/Api/V1/NoteController.php`,
-  `backend/app/Http/Resources/NoteResource.php`,
-  `backend/app/Http/Resources/NoteListResource.php`,
-  `backend/app/Queries/NotesQuery.php`,
-  `backend/app/Services/Notes/CreateNote.php`,
-  `backend/app/Http/Requests/IndexNotesRequest.php`,
-  `backend/app/Http/Requests/StoreNoteRequest.php`
-- Modify: `backend/routes/api.php`
-- Test: `backend/tests/Feature/NoteIndexTest.php`
+- Create: `api/app/Http/Controllers/Api/V1/NoteController.php`,
+  `api/app/Http/Resources/NoteResource.php`,
+  `api/app/Http/Resources/NoteListResource.php`,
+  `api/app/Queries/NotesQuery.php`,
+  `api/app/Services/Notes/CreateNote.php`,
+  `api/app/Http/Requests/IndexNotesRequest.php`,
+  `api/app/Http/Requests/StoreNoteRequest.php`
+- Modify: `api/routes/api.php`
+- Test: `api/tests/Feature/NoteIndexTest.php`
 
 **Interfaces:**
 - Produces:
@@ -2506,7 +2506,7 @@ git add -A && git commit -m "feat(backend): notes schema, model and ProseMirror 
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/NoteIndexTest.php`:
+`api/tests/Feature/NoteIndexTest.php`:
 
 ```php
 <?php
@@ -2582,7 +2582,7 @@ Expected: FAIL — 404.
 
 - [ ] **Step 3: Write the resources**
 
-`backend/app/Http/Resources/NoteListResource.php`:
+`api/app/Http/Resources/NoteListResource.php`:
 
 ```php
 <?php
@@ -2612,7 +2612,7 @@ class NoteListResource extends JsonResource
 }
 ```
 
-`backend/app/Http/Resources/NoteResource.php`:
+`api/app/Http/Resources/NoteResource.php`:
 
 ```php
 <?php
@@ -2636,7 +2636,7 @@ class NoteResource extends NoteListResource
 
 - [ ] **Step 4: Write the requests, the query class and the create service**
 
-`backend/app/Http/Requests/IndexNotesRequest.php`:
+`api/app/Http/Requests/IndexNotesRequest.php`:
 
 ```php
 <?php
@@ -2674,10 +2674,10 @@ class IndexNotesRequest extends FormRequest
 }
 ```
 
-`backend/app/Http/Requests/StoreNoteRequest.php` validates
+`api/app/Http/Requests/StoreNoteRequest.php` validates
 `['folder_id' => ['nullable', 'uuid']]` and returns `true` from `authorize()`.
 
-`backend/app/Queries/NotesQuery.php`:
+`api/app/Queries/NotesQuery.php`:
 
 ```php
 <?php
@@ -2724,7 +2724,7 @@ class NotesQuery
 }
 ```
 
-`backend/app/Services/Notes/CreateNote.php`:
+`api/app/Services/Notes/CreateNote.php`:
 
 ```php
 <?php
@@ -2760,7 +2760,7 @@ class CreateNote
 
 - [ ] **Step 5: Write the controller — delegation only**
 
-`backend/app/Http/Controllers/Api/V1/NoteController.php`:
+`api/app/Http/Controllers/Api/V1/NoteController.php`:
 
 ```php
 <?php
@@ -2826,7 +2826,7 @@ Expected: PASS (7 tests).
 - [ ] **Step 8: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): note index with filters and cursor pagination, show and store"
+git add -A && git commit -m "feat(api): note index with filters and cursor pagination, show and store"
 ```
 
 ---
@@ -2838,10 +2838,10 @@ git add -A && git commit -m "feat(backend): note index with filters and cursor p
 > model. Wait for them to say continue.
 
 **Files:**
-- Modify: `backend/app/Http/Controllers/Api/V1/NoteController.php`,
-  `backend/routes/api.php`
-- Create: `backend/app/Http/Requests/UpdateNoteRequest.php`
-- Test: `backend/tests/Feature/NoteUpdateTest.php`
+- Modify: `api/app/Http/Controllers/Api/V1/NoteController.php`,
+  `api/routes/api.php`
+- Create: `api/app/Http/Requests/UpdateNoteRequest.php`
+- Test: `api/tests/Feature/NoteUpdateTest.php`
 
 **Interfaces:**
 - Produces: `PATCH /notes/{uuid}`.
@@ -2854,7 +2854,7 @@ git add -A && git commit -m "feat(backend): note index with filters and cursor p
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/NoteUpdateTest.php`:
+`api/tests/Feature/NoteUpdateTest.php`:
 
 ```php
 <?php
@@ -2963,7 +2963,7 @@ Expected: FAIL — route not defined.
 
 - [ ] **Step 3: Write the request**
 
-`backend/app/Http/Requests/UpdateNoteRequest.php`:
+`api/app/Http/Requests/UpdateNoteRequest.php`:
 
 ```php
 <?php
@@ -3042,7 +3042,7 @@ class UpdateNoteRequest extends FormRequest
 
 - [ ] **Step 4: Write the update service**
 
-`backend/app/Services/Notes/UpdateNote.php`:
+`api/app/Services/Notes/UpdateNote.php`:
 
 ```php
 <?php
@@ -3132,7 +3132,7 @@ Expected: PASS (8 tests), including Review Focus items 1 and 2, guard green.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): note update with body-only version conflict and size limits"
+git add -A && git commit -m "feat(api): note update with body-only version conflict and size limits"
 ```
 
 ---
@@ -3140,8 +3140,8 @@ git add -A && git commit -m "feat(backend): note update with body-only version c
 ### Task B9: Tag assignment by name
 
 **Files:**
-- Modify: `backend/app/Http/Controllers/Api/V1/NoteController.php`, `backend/routes/api.php`
-- Test: `backend/tests/Feature/NoteTagTest.php`
+- Modify: `api/app/Http/Controllers/Api/V1/NoteController.php`, `api/routes/api.php`
+- Test: `api/tests/Feature/NoteTagTest.php`
 
 **Interfaces:**
 - Consumes: `Services\Tags\UpsertTags` from B5.
@@ -3151,7 +3151,7 @@ git add -A && git commit -m "feat(backend): note update with body-only version c
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/NoteTagTest.php`:
+`api/tests/Feature/NoteTagTest.php`:
 
 ```php
 <?php
@@ -3202,10 +3202,10 @@ Expected: FAIL — 404.
 
 - [ ] **Step 3: Write the request and the service**
 
-`backend/app/Http/Requests/SyncNoteTagsRequest.php` validates
+`api/app/Http/Requests/SyncNoteTagsRequest.php` validates
 `['names' => ['present','array','max:50'], 'names.*' => ['string','max:60']]`.
 
-`backend/app/Services/Notes/SyncNoteTags.php`:
+`api/app/Services/Notes/SyncNoteTags.php`:
 
 ```php
 <?php
@@ -3261,7 +3261,7 @@ Expected: PASS (4 tests), guard green.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): assign note tags by name in a single request"
+git add -A && git commit -m "feat(api): assign note tags by name in a single request"
 ```
 
 ---
@@ -3269,8 +3269,8 @@ git add -A && git commit -m "feat(backend): assign note tags by name in a single
 ### Task B10: Trash, restore, hard delete and duplicate
 
 **Files:**
-- Modify: `backend/app/Http/Controllers/Api/V1/NoteController.php`, `backend/routes/api.php`
-- Test: `backend/tests/Feature/TrashTest.php`
+- Modify: `api/app/Http/Controllers/Api/V1/NoteController.php`, `api/routes/api.php`
+- Test: `api/tests/Feature/TrashTest.php`
 
 **Interfaces:**
 - Produces: `DELETE /notes/{uuid}` (soft), `POST /notes/{uuid}/restore` (optional
@@ -3279,7 +3279,7 @@ git add -A && git commit -m "feat(backend): assign note tags by name in a single
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/TrashTest.php`:
+`api/tests/Feature/TrashTest.php`:
 
 ```php
 <?php
@@ -3359,7 +3359,7 @@ Expected: FAIL — 404.
 
 - [ ] **Step 3: Write the services**
 
-`backend/app/Services/Notes/DeleteNote.php`:
+`api/app/Services/Notes/DeleteNote.php`:
 
 ```php
 <?php
@@ -3381,7 +3381,7 @@ class DeleteNote
 }
 ```
 
-`backend/app/Services/Notes/RestoreNote.php`:
+`api/app/Services/Notes/RestoreNote.php`:
 
 ```php
 <?php
@@ -3408,7 +3408,7 @@ class RestoreNote
 }
 ```
 
-`backend/app/Services/Notes/EmptyTrash.php`:
+`api/app/Services/Notes/EmptyTrash.php`:
 
 ```php
 <?php
@@ -3426,7 +3426,7 @@ class EmptyTrash
 }
 ```
 
-`backend/app/Services/Notes/DuplicateNote.php`:
+`api/app/Services/Notes/DuplicateNote.php`:
 
 ```php
 <?php
@@ -3456,7 +3456,7 @@ class DuplicateNote
 
 - [ ] **Step 4: Add the controller methods**
 
-`backend/app/Http/Requests/DestroyNoteRequest.php` validates
+`api/app/Http/Requests/DestroyNoteRequest.php` validates
 `['force' => ['nullable','boolean']]`; `RestoreNoteRequest` validates
 `['folder_id' => ['nullable','uuid']]`.
 
@@ -3521,7 +3521,7 @@ Expected: PASS (6 tests), guard green.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): trash, restore, hard delete, empty trash and duplicate"
+git add -A && git commit -m "feat(api): trash, restore, hard delete, empty trash and duplicate"
 ```
 
 ---
@@ -3529,13 +3529,13 @@ git add -A && git commit -m "feat(backend): trash, restore, hard delete, empty t
 ### Task B11: Search
 
 **Files:**
-- Create: `backend/app/Support/SearchTerms.php`,
-  `backend/app/Support/SnippetBuilder.php`,
-  `backend/app/Services/Search/SearchNotes.php`,
-  `backend/app/Http/Controllers/Api/V1/SearchController.php`,
-  `backend/app/Http/Requests/SearchRequest.php`
-- Modify: `backend/routes/api.php`
-- Test: `backend/tests/Feature/SearchTest.php`, `backend/tests/Unit/SnippetBuilderTest.php`
+- Create: `api/app/Support/SearchTerms.php`,
+  `api/app/Support/SnippetBuilder.php`,
+  `api/app/Services/Search/SearchNotes.php`,
+  `api/app/Http/Controllers/Api/V1/SearchController.php`,
+  `api/app/Http/Requests/SearchRequest.php`
+- Modify: `api/routes/api.php`
+- Test: `api/tests/Feature/SearchTest.php`, `api/tests/Unit/SnippetBuilderTest.php`
 
 **Interfaces:**
 - Produces: `GET /search?q=` returning
@@ -3551,7 +3551,7 @@ git add -A && git commit -m "feat(backend): trash, restore, hard delete, empty t
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Unit/SnippetBuilderTest.php`:
+`api/tests/Unit/SnippetBuilderTest.php`:
 
 ```php
 <?php
@@ -3575,7 +3575,7 @@ it('returns HTML-free output', function () {
 });
 ```
 
-`backend/tests/Feature/SearchTest.php`:
+`api/tests/Feature/SearchTest.php`:
 
 ```php
 <?php
@@ -3634,7 +3634,7 @@ Expected: FAIL — classes and route missing.
 
 - [ ] **Step 3: Write the snippet builder**
 
-`backend/app/Support/SnippetBuilder.php`:
+`api/app/Support/SnippetBuilder.php`:
 
 ```php
 <?php
@@ -3678,7 +3678,7 @@ class SnippetBuilder
 
 - [ ] **Step 4: Write the term parser and the search service**
 
-`backend/app/Support/SearchTerms.php`:
+`api/app/Support/SearchTerms.php`:
 
 ```php
 <?php
@@ -3708,7 +3708,7 @@ class SearchTerms
 }
 ```
 
-`backend/app/Services/Search/SearchNotes.php`:
+`api/app/Services/Search/SearchNotes.php`:
 
 ```php
 <?php
@@ -3761,7 +3761,7 @@ class SearchNotes
 
 - [ ] **Step 5: Write the request and controller**
 
-`backend/app/Http/Requests/SearchRequest.php`:
+`api/app/Http/Requests/SearchRequest.php`:
 
 ```php
 <?php
@@ -3785,7 +3785,7 @@ class SearchRequest extends FormRequest
 }
 ```
 
-`backend/app/Http/Controllers/Api/V1/SearchController.php`:
+`api/app/Http/Controllers/Api/V1/SearchController.php`:
 
 ```php
 <?php
@@ -3821,7 +3821,7 @@ Expected: PASS (5 + 3 tests), including Review Focus item 5.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): MySQL FULLTEXT search with plain-text snippets"
+git add -A && git commit -m "feat(api): MySQL FULLTEXT search with plain-text snippets"
 ```
 
 ---
@@ -3829,10 +3829,10 @@ git add -A && git commit -m "feat(backend): MySQL FULLTEXT search with plain-tex
 ### Task B12: Bootstrap endpoint
 
 **Files:**
-- Create: `backend/app/Services/Bootstrap/BuildBootstrapPayload.php`,
-  `backend/app/Http/Controllers/Api/V1/BootstrapController.php`
-- Modify: `backend/routes/api.php`
-- Test: `backend/tests/Feature/BootstrapTest.php`
+- Create: `api/app/Services/Bootstrap/BuildBootstrapPayload.php`,
+  `api/app/Http/Controllers/Api/V1/BootstrapController.php`
+- Modify: `api/routes/api.php`
+- Test: `api/tests/Feature/BootstrapTest.php`
 
 **Interfaces:**
 - Produces: `GET /bootstrap` → `{user, folders[], tags[], counts: {all, starred,
@@ -3843,7 +3843,7 @@ git add -A && git commit -m "feat(backend): MySQL FULLTEXT search with plain-tex
 
 - [ ] **Step 1: Write the failing test**
 
-`backend/tests/Feature/BootstrapTest.php`:
+`api/tests/Feature/BootstrapTest.php`:
 
 ```php
 <?php
@@ -3903,7 +3903,7 @@ Expected: FAIL — 404.
 
 - [ ] **Step 3: Write the service**
 
-`backend/app/Services/Bootstrap/BuildBootstrapPayload.php`:
+`api/app/Services/Bootstrap/BuildBootstrapPayload.php`:
 
 ```php
 <?php
@@ -3963,7 +3963,7 @@ class BuildBootstrapPayload
 
 - [ ] **Step 4: Write the controller — one line**
 
-`backend/app/Http/Controllers/Api/V1/BootstrapController.php`:
+`api/app/Http/Controllers/Api/V1/BootstrapController.php`:
 
 ```php
 <?php
@@ -3997,7 +3997,7 @@ Expected: PASS (3 tests), guard green.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): single bootstrap endpoint with grouped sidebar counts"
+git add -A && git commit -m "feat(api): single bootstrap endpoint with grouped sidebar counts"
 ```
 
 ---
@@ -4005,10 +4005,10 @@ git add -A && git commit -m "feat(backend): single bootstrap endpoint with group
 ### Task B13: Scheduled cleanup
 
 **Files:**
-- Create: `backend/app/Console/Commands/PruneEmptyNotes.php`,
-  `backend/app/Console/Commands/PurgeTrash.php`
-- Modify: `backend/routes/console.php`
-- Test: `backend/tests/Feature/CleanupTest.php`
+- Create: `api/app/Console/Commands/PruneEmptyNotes.php`,
+  `api/app/Console/Commands/PurgeTrash.php`
+- Modify: `api/routes/console.php`
+- Test: `api/tests/Feature/CleanupTest.php`
 
 **Interfaces:**
 - Produces: `notes:prune-empty` (hard-deletes untouched empty notes older than 24 h) and
@@ -4017,7 +4017,7 @@ git add -A && git commit -m "feat(backend): single bootstrap endpoint with group
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/CleanupTest.php`:
+`api/tests/Feature/CleanupTest.php`:
 
 ```php
 <?php
@@ -4079,7 +4079,7 @@ Expected: FAIL — commands not found.
 
 - [ ] **Step 3: Write the commands**
 
-`backend/app/Console/Commands/PruneEmptyNotes.php`:
+`api/app/Console/Commands/PruneEmptyNotes.php`:
 
 ```php
 <?php
@@ -4113,7 +4113,7 @@ class PruneEmptyNotes extends Command
 }
 ```
 
-`backend/app/Console/Commands/PurgeTrash.php`:
+`api/app/Console/Commands/PurgeTrash.php`:
 
 ```php
 <?php
@@ -4142,7 +4142,7 @@ class PurgeTrash extends Command
 
 - [ ] **Step 4: Schedule them**
 
-`backend/routes/console.php`:
+`api/routes/console.php`:
 
 ```php
 use Illuminate\Support\Facades\Schedule;
@@ -4162,7 +4162,7 @@ Expected: PASS, everything green.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): scheduled pruning of empty notes and trash purge"
+git add -A && git commit -m "feat(api): scheduled pruning of empty notes and trash purge"
 ```
 
 ---
@@ -4170,16 +4170,16 @@ git add -A && git commit -m "feat(backend): scheduled pruning of empty notes and
 ### Task B14: Backend hardening and seeding
 
 **Files:**
-- Modify: `backend/routes/api.php`, `backend/database/seeders/DatabaseSeeder.php`
-- Create: `backend/tests/Feature/AuthorizationTest.php`
+- Modify: `api/routes/api.php`, `api/database/seeders/DatabaseSeeder.php`
+- Create: `api/tests/Feature/AuthorizationTest.php`
 
 **Interfaces:**
 - Produces: a `demo@example.com` / `password` seed account with folders, tags and notes,
-  so the frontend has something to render from Task F5 onward.
+  so the web has something to render from Task F5 onward.
 
 - [ ] **Step 1: Write the cross-tenant test**
 
-`backend/tests/Feature/AuthorizationTest.php`:
+`api/tests/Feature/AuthorizationTest.php`:
 
 ```php
 <?php
@@ -4224,7 +4224,7 @@ Expected: PASS. If any assertion fails, the missing `$this->authorize()` call is
 
 - [ ] **Step 3: Write the seeder**
 
-`backend/database/seeders/DatabaseSeeder.php`:
+`api/database/seeders/DatabaseSeeder.php`:
 
 ```php
 <?php
@@ -4276,7 +4276,7 @@ Expected: `{"status":"ok"}`, and the database holds the demo account.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add -A && git commit -m "test(backend): cross-tenant authorization coverage; chore: demo seeder"
+git add -A && git commit -m "test(api): cross-tenant authorization coverage; chore: demo seeder"
 ```
 
 ---
@@ -4284,9 +4284,9 @@ git add -A && git commit -m "test(backend): cross-tenant authorization coverage;
 ### Task B15: Accept a client-minted UUID on note create
 
 **Files:**
-- Modify: `backend/app/Http/Requests/StoreNoteRequest.php`,
-  `backend/app/Services/Notes/CreateNote.php`
-- Test: `backend/tests/Feature/NoteCreateIdempotencyTest.php`
+- Modify: `api/app/Http/Requests/StoreNoteRequest.php`,
+  `api/app/Services/Notes/CreateNote.php`
+- Test: `api/tests/Feature/NoteCreateIdempotencyTest.php`
 
 **Interfaces:**
 - Produces: `POST /notes` accepting an optional `uuid`. **Idempotent** — a create with
@@ -4296,7 +4296,7 @@ git add -A && git commit -m "test(backend): cross-tenant authorization coverage;
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/NoteCreateIdempotencyTest.php`:
+`api/tests/Feature/NoteCreateIdempotencyTest.php`:
 
 ```php
 <?php
@@ -4348,7 +4348,7 @@ Expected: FAIL — `uuid` is ignored, so the second create makes a second note.
 
 - [ ] **Step 3: Accept the uuid in the request**
 
-`backend/app/Http/Requests/StoreNoteRequest.php`:
+`api/app/Http/Requests/StoreNoteRequest.php`:
 
 ```php
 <?php
@@ -4396,7 +4396,7 @@ class StoreNoteRequest extends FormRequest
 
 - [ ] **Step 4: Make the service idempotent**
 
-`backend/app/Services/Notes/CreateNote.php` — replace `__invoke`:
+`api/app/Services/Notes/CreateNote.php` — replace `__invoke`:
 
 ```php
     /**
@@ -4460,7 +4460,7 @@ Expected: PASS throughout. Task B7's "creates an empty note" test still passes, 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): idempotent note create with client-supplied uuid"
+git add -A && git commit -m "feat(api): idempotent note create with client-supplied uuid"
 ```
 
 ---
@@ -4468,12 +4468,12 @@ git add -A && git commit -m "feat(backend): idempotent note create with client-s
 ### Task B16: Token authentication for native clients
 
 **Files:**
-- Create: `backend/app/Http/Controllers/Api/V1/TokenController.php`,
-  `backend/app/Http/Requests/IssueTokenRequest.php`,
-  `backend/app/Services/Auth/IssueToken.php`,
-  `backend/app/Services/Auth/RevokeCurrentToken.php`
-- Modify: `backend/routes/api.php`, `backend/config/sanctum.php`
-- Test: `backend/tests/Feature/TokenAuthTest.php`
+- Create: `api/app/Http/Controllers/Api/V1/TokenController.php`,
+  `api/app/Http/Requests/IssueTokenRequest.php`,
+  `api/app/Services/Auth/IssueToken.php`,
+  `api/app/Services/Auth/RevokeCurrentToken.php`
+- Modify: `api/routes/api.php`, `api/config/sanctum.php`
+- Test: `api/tests/Feature/TokenAuthTest.php`
 
 **Interfaces:**
 - Produces: `POST /api/v1/tokens` `{email, password, device_name}` → `{token}` shown
@@ -4482,7 +4482,7 @@ git add -A && git commit -m "feat(backend): idempotent note create with client-s
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/TokenAuthTest.php`:
+`api/tests/Feature/TokenAuthTest.php`:
 
 ```php
 <?php
@@ -4557,7 +4557,7 @@ Expected: FAIL — 404 on `/tokens`.
 
 - [ ] **Step 3: Write the request**
 
-`backend/app/Http/Requests/IssueTokenRequest.php`:
+`api/app/Http/Requests/IssueTokenRequest.php`:
 
 ```php
 <?php
@@ -4583,7 +4583,7 @@ class IssueTokenRequest extends FormRequest
 
 - [ ] **Step 4: Write the services**
 
-`backend/app/Services/Auth/IssueToken.php`:
+`api/app/Services/Auth/IssueToken.php`:
 
 ```php
 <?php
@@ -4614,7 +4614,7 @@ class IssueToken
 }
 ```
 
-`backend/app/Services/Auth/RevokeCurrentToken.php`:
+`api/app/Services/Auth/RevokeCurrentToken.php`:
 
 ```php
 <?php
@@ -4634,7 +4634,7 @@ class RevokeCurrentToken
 
 - [ ] **Step 5: Write the controller and routes**
 
-`backend/app/Http/Controllers/Api/V1/TokenController.php`:
+`api/app/Http/Controllers/Api/V1/TokenController.php`:
 
 ```php
 <?php
@@ -4676,7 +4676,7 @@ Route::middleware('auth:sanctum')->delete('/tokens/current', [TokenController::c
 
 - [ ] **Step 6: Set a token expiry**
 
-`backend/config/sanctum.php`:
+`api/config/sanctum.php`:
 
 ```php
 // 90 days. Tokens are revocable server-side, so this is a backstop, not the
@@ -4695,7 +4695,7 @@ Expected: PASS (6 tests), guard green.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): Bearer token auth for native clients alongside cookie sessions"
+git add -A && git commit -m "feat(api): Bearer token auth for native clients alongside cookie sessions"
 ```
 
 ---
@@ -4707,14 +4707,14 @@ git add -A && git commit -m "feat(backend): Bearer token auth for native clients
 > model. Wait for them to say continue.
 
 **Files:**
-- Create: `backend/database/migrations/*_add_sync_revisions.php`,
-  `backend/app/Models/Tombstone.php`,
-  `backend/app/Services/Sync/BumpRevision.php`,
-  `backend/app/Services/Sync/RecordTombstone.php`
-- Modify: `backend/app/Models/Note.php`, `Folder.php`, `Tag.php` (a `booted` hook),
-  `backend/app/Services/Notes/DeleteNote.php`, `EmptyTrash.php`,
-  `backend/app/Console/Commands/PruneEmptyNotes.php`, `PurgeTrash.php`
-- Test: `backend/tests/Feature/SyncRevisionTest.php`
+- Create: `api/database/migrations/*_add_sync_revisions.php`,
+  `api/app/Models/Tombstone.php`,
+  `api/app/Services/Sync/BumpRevision.php`,
+  `api/app/Services/Sync/RecordTombstone.php`
+- Modify: `api/app/Models/Note.php`, `Folder.php`, `Tag.php` (a `booted` hook),
+  `api/app/Services/Notes/DeleteNote.php`, `EmptyTrash.php`,
+  `api/app/Console/Commands/PruneEmptyNotes.php`, `PurgeTrash.php`
+- Test: `api/tests/Feature/SyncRevisionTest.php`
 
 **Interfaces:**
 - Produces: a monotonic `revision` per account, stamped on every syncable write, and
@@ -4750,7 +4750,7 @@ foreach (['notes', 'folders', 'tags'] as $table) {
 
 - [ ] **Step 2: Write the failing tests**
 
-`backend/tests/Feature/SyncRevisionTest.php`:
+`api/tests/Feature/SyncRevisionTest.php`:
 
 ```php
 <?php
@@ -4829,7 +4829,7 @@ Expected: FAIL — no `revision` column, no `Tombstone`.
 
 - [ ] **Step 4: Write the services**
 
-`backend/app/Services/Sync/BumpRevision.php`:
+`api/app/Services/Sync/BumpRevision.php`:
 
 ```php
 <?php
@@ -4862,7 +4862,7 @@ class BumpRevision
 }
 ```
 
-`backend/app/Services/Sync/RecordTombstone.php`:
+`api/app/Services/Sync/RecordTombstone.php`:
 
 ```php
 <?php
@@ -4930,7 +4930,7 @@ Expected: PASS (6 tests) and the full suite green.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): per-account revision counter and tombstones for sync"
+git add -A && git commit -m "feat(api): per-account revision counter and tombstones for sync"
 ```
 
 ---
@@ -4942,11 +4942,11 @@ git add -A && git commit -m "feat(backend): per-account revision counter and tom
 > model. Wait for them to say continue.
 
 **Files:**
-- Create: `backend/app/Http/Controllers/Api/V1/SyncController.php`,
-  `backend/app/Http/Requests/SyncRequest.php`,
-  `backend/app/Services/Sync/BuildSyncDelta.php`
-- Modify: `backend/routes/api.php`
-- Test: `backend/tests/Feature/SyncPullTest.php`
+- Create: `api/app/Http/Controllers/Api/V1/SyncController.php`,
+  `api/app/Http/Requests/SyncRequest.php`,
+  `api/app/Services/Sync/BuildSyncDelta.php`
+- Modify: `api/routes/api.php`
+- Test: `api/tests/Feature/SyncPullTest.php`
 
 **Interfaces:**
 - Produces: `GET /api/v1/sync?since=<revision>&limit=200` →
@@ -4956,7 +4956,7 @@ git add -A && git commit -m "feat(backend): per-account revision counter and tom
 
 - [ ] **Step 1: Write the failing tests**
 
-`backend/tests/Feature/SyncPullTest.php`:
+`api/tests/Feature/SyncPullTest.php`:
 
 ```php
 <?php
@@ -5045,10 +5045,10 @@ Expected: FAIL — 404.
 
 - [ ] **Step 3: Write the request and the service**
 
-`backend/app/Http/Requests/SyncRequest.php` validates
+`api/app/Http/Requests/SyncRequest.php` validates
 `['since' => ['required','integer','min:0'], 'limit' => ['nullable','integer','min:1','max:500']]`.
 
-`backend/app/Services/Sync/BuildSyncDelta.php`:
+`api/app/Services/Sync/BuildSyncDelta.php`:
 
 ```php
 <?php
@@ -5149,7 +5149,7 @@ Expected: PASS (7 tests), including Review Focus item 10.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat(backend): sync pull endpoint with tombstones and full-resync guard"
+git add -A && git commit -m "feat(api): sync pull endpoint with tombstones and full-resync guard"
 ```
 
 ---
@@ -5162,14 +5162,14 @@ git add -A && git commit -m "feat(backend): sync pull endpoint with tombstones a
 > pinned dependencies and replaces the starter files with the project's own.
 
 **Files:**
-- Create: `frontend/src/theme.ts`, `frontend/.env.development`
+- Create: `web/src/theme.ts`, `web/.env.development`
 - Copy in: the contents of `assets/brand/` (see Step 7) — **already generated**
-- Modify: `frontend/vite.config.ts`, `frontend/tsconfig.json`,
-  `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/index.css`,
-  `frontend/index.html`, `frontend/package.json`
-- Delete: `frontend/src/assets/react.svg`, `frontend/src/App.css`,
-  `frontend/public/vite.svg`
-- Test: `frontend/src/theme.test.ts`
+- Modify: `web/vite.config.ts`, `web/tsconfig.json`,
+  `web/src/main.tsx`, `web/src/App.tsx`, `web/src/index.css`,
+  `web/index.html`, `web/package.json`
+- Delete: `web/src/assets/react.svg`, `web/src/App.css`,
+  `web/public/vite.svg`
+- Test: `web/src/theme.test.ts`
 
 **Interfaces:**
 - Produces: a running Vite dev server on port 5173 with `MantineProvider`,
@@ -5180,7 +5180,7 @@ git add -A && git commit -m "feat(backend): sync pull endpoint with tombstones a
 Node runs on the Windows host, not in Docker:
 
 ```powershell
-cd frontend
+cd web
 node --version        # v20 or newer
 npm --version
 ```
@@ -5210,7 +5210,7 @@ Remove-Item -Force src/App.css, src/assets/react.svg -ErrorAction SilentlyContin
 
 - [ ] **Step 2: Configure Vite**
 
-`frontend/vite.config.ts`:
+`web/vite.config.ts`:
 
 ```ts
 import { defineConfig } from 'vite'
@@ -5232,7 +5232,7 @@ export default defineConfig({
 })
 ```
 
-`frontend/tsconfig.json` — add to `compilerOptions`:
+`web/tsconfig.json` — add to `compilerOptions`:
 
 ```json
 {
@@ -5243,7 +5243,7 @@ export default defineConfig({
 }
 ```
 
-`frontend/.env.development`:
+`web/.env.development`:
 
 ```dotenv
 VITE_API_URL=/api/v1
@@ -5251,7 +5251,7 @@ VITE_API_URL=/api/v1
 
 - [ ] **Step 3: Write the failing theme test**
 
-`frontend/src/theme.test.ts`:
+`web/src/theme.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -5277,7 +5277,7 @@ Expected: FAIL — cannot resolve `./theme`.
 
 - [ ] **Step 5: Write the theme**
 
-`frontend/src/theme.ts`:
+`web/src/theme.ts`:
 
 ```ts
 import { createTheme } from '@mantine/core'
@@ -5299,7 +5299,7 @@ export const theme = createTheme({
 
 - [ ] **Step 6: Mount the providers**
 
-`frontend/src/main.tsx`:
+`web/src/main.tsx`:
 
 ```tsx
 import '@mantine/core/styles.css'
@@ -5330,7 +5330,7 @@ createRoot(document.getElementById('root')!).render(
 )
 ```
 
-`frontend/src/App.tsx` — a placeholder until Task F3:
+`web/src/App.tsx` — a placeholder until Task F3:
 
 ```tsx
 import { Text } from '@mantine/core'
@@ -5340,7 +5340,7 @@ export function App() {
 }
 ```
 
-`frontend/src/index.css`:
+`web/src/index.css`:
 
 ```css
 html, body, #root { height: 100dvh; margin: 0; }
@@ -5355,15 +5355,15 @@ delete Vite's own logo, or every browser tab will say "Vite + React":
 Copy-Item assets\brand\favicon.svg, assets\brand\favicon.ico,
           assets\brand\apple-touch-icon.png, assets\brand\icon-192.png,
           assets\brand\icon-512.png, assets\brand\icon-512-maskable.png,
-          assets\brand\og-image.png  frontend\public\
+          assets\brand\og-image.png  web\public\
 
-New-Item -ItemType Directory -Force frontend\src\assets | Out-Null
-Copy-Item assets\brand\logo.svg, assets\brand\logo-dark.svg  frontend\src\assets\
+New-Item -ItemType Directory -Force web\src\assets | Out-Null
+Copy-Item assets\brand\logo.svg, assets\brand\logo-dark.svg  web\src\assets\
 
-Remove-Item frontend\public\vite.svg -ErrorAction SilentlyContinue
+Remove-Item web\public\vite.svg -ErrorAction SilentlyContinue
 ```
 
-Replace the `<head>` of `frontend/index.html` with:
+Replace the `<head>` of `web/index.html` with:
 
 ```html
 <meta charset="UTF-8" />
@@ -5384,7 +5384,7 @@ Replace the `<head>` of `frontend/index.html` with:
 <title>Notes</title>
 ```
 
-Set the package name in `frontend/package.json`:
+Set the package name in `web/package.json`:
 
 ```json
 { "name": "notes-app", "private": true }
@@ -5410,7 +5410,7 @@ Check the browser tab shows the new icon and the title "Notes", not "Vite + Reac
 - [ ] **Step 9: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): scaffold Vite + React 19 + Mantine with strict TypeScript"
+git add -A && git commit -m "feat(web): scaffold Vite + React 19 + Mantine with strict TypeScript"
 ```
 
 ---
@@ -5418,9 +5418,9 @@ git add -A && git commit -m "feat(frontend): scaffold Vite + React 19 + Mantine 
 ### Task F2: API client and query layer
 
 **Files:**
-- Create: `frontend/src/api/client.ts`, `frontend/src/types/api.ts`,
-  `frontend/src/lib/queryClient.ts`
-- Test: `frontend/src/api/client.test.ts`
+- Create: `web/src/api/client.ts`, `web/src/types/api.ts`,
+  `web/src/lib/queryClient.ts`
+- Test: `web/src/api/client.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -5433,7 +5433,7 @@ git add -A && git commit -m "feat(frontend): scaffold Vite + React 19 + Mantine 
 
 - [ ] **Step 1: Write the failing tests**
 
-`frontend/src/api/client.test.ts`:
+`web/src/api/client.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -5479,7 +5479,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the types**
 
-`frontend/src/types/api.ts`:
+`web/src/types/api.ts`:
 
 ```ts
 export type UUID = string
@@ -5570,7 +5570,7 @@ export interface SearchResults {
 
 - [ ] **Step 4: Write the client**
 
-`frontend/src/api/client.ts`:
+`web/src/api/client.ts`:
 
 ```ts
 import axios, { type AxiosInstance } from 'axios'
@@ -5636,7 +5636,7 @@ api.interceptors.response.use(undefined, async (error) => {
 
 - [ ] **Step 5: Write the query client**
 
-`frontend/src/lib/queryClient.ts`:
+`web/src/lib/queryClient.ts`:
 
 ```ts
 import { QueryClient } from '@tanstack/react-query'
@@ -5668,7 +5668,7 @@ Expected: PASS (4 tests).
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): axios client with CSRF handling and typed API contracts"
+git add -A && git commit -m "feat(web): axios client with CSRF handling and typed API contracts"
 ```
 
 ---
@@ -5676,11 +5676,11 @@ git add -A && git commit -m "feat(frontend): axios client with CSRF handling and
 ### Task F3: Auth pages and route guard
 
 **Files:**
-- Create: `frontend/src/api/auth.ts`, `frontend/src/hooks/queries/useAuth.ts`,
-  `frontend/src/pages/LoginPage.tsx`, `frontend/src/pages/RegisterPage.tsx`,
-  `frontend/src/components/RequireAuth.tsx`, `frontend/src/routes.tsx`
-- Modify: `frontend/src/App.tsx`
-- Test: `frontend/src/hooks/queries/useAuth.test.tsx`
+- Create: `web/src/api/auth.ts`, `web/src/hooks/queries/useAuth.ts`,
+  `web/src/pages/LoginPage.tsx`, `web/src/pages/RegisterPage.tsx`,
+  `web/src/components/RequireAuth.tsx`, `web/src/routes.tsx`
+- Modify: `web/src/App.tsx`
+- Test: `web/src/hooks/queries/useAuth.test.tsx`
 
 **Interfaces:**
 - Produces:
@@ -5691,7 +5691,7 @@ git add -A && git commit -m "feat(frontend): axios client with CSRF handling and
 
 - [ ] **Step 1: Write the API functions**
 
-`frontend/src/api/auth.ts`:
+`web/src/api/auth.ts`:
 
 ```ts
 import { api, ensureCsrf } from './client'
@@ -5726,7 +5726,7 @@ export async function logout(): Promise<void> {
 
 - [ ] **Step 2: Write the failing hook test**
 
-`frontend/src/hooks/queries/useAuth.test.tsx`:
+`web/src/hooks/queries/useAuth.test.tsx`:
 
 ```tsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -5773,7 +5773,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 4: Write the hooks**
 
-`frontend/src/hooks/queries/useAuth.ts`:
+`web/src/hooks/queries/useAuth.ts`:
 
 ```ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -5828,7 +5828,7 @@ export function useLogout() {
 
 - [ ] **Step 5: Write the login page**
 
-`frontend/src/pages/LoginPage.tsx`:
+`web/src/pages/LoginPage.tsx`:
 
 ```tsx
 import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
@@ -5888,13 +5888,13 @@ export function LoginPage() {
 }
 ```
 
-`frontend/src/pages/RegisterPage.tsx` — the same structure with `name`, `email`,
+`web/src/pages/RegisterPage.tsx` — the same structure with `name`, `email`,
 `password`, `password_confirmation`, calling `useRegister()`, validating that the two
 passwords match and that the password is at least 8 characters.
 
 - [ ] **Step 6: Write the guard and routes**
 
-`frontend/src/components/RequireAuth.tsx`:
+`web/src/components/RequireAuth.tsx`:
 
 ```tsx
 import type { ReactNode } from 'react'
@@ -5914,7 +5914,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 }
 ```
 
-`frontend/src/routes.tsx`:
+`web/src/routes.tsx`:
 
 ```tsx
 import { createBrowserRouter } from 'react-router'
@@ -5932,7 +5932,7 @@ export const router = createBrowserRouter([
 ])
 ```
 
-`frontend/src/App.tsx`:
+`web/src/App.tsx`:
 
 ```tsx
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -5957,7 +5957,7 @@ npx vitest run src/hooks/queries/useAuth.test.tsx
 ```
 Expected: PASS (2 tests).
 
-- [ ] **Step 8: Verify against the real backend**
+- [ ] **Step 8: Verify against the real api**
 
 With `php artisan serve` running and the database seeded, sign in at
 `http://localhost:5173/login` as `demo@example.com` / `password`, then reload the page
@@ -5966,7 +5966,7 @@ and confirm you are still signed in.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): auth pages, session hooks and route guard"
+git add -A && git commit -m "feat(web): auth pages, session hooks and route guard"
 ```
 
 ---
@@ -5974,12 +5974,12 @@ git add -A && git commit -m "feat(frontend): auth pages, session hooks and route
 ### Task F4: App shell and responsive layout
 
 **Files:**
-- Create: `frontend/src/components/layout/AppShell.tsx`,
-  `frontend/src/components/layout/Header.tsx`,
-  `frontend/src/components/layout/StatusBar.tsx`,
-  `frontend/src/stores/uiStore.ts`, `frontend/src/components/layout/shell.module.css`
-- Create: `frontend/src/pages/AppPage.tsx`
-- Test: `frontend/src/stores/uiStore.test.ts`
+- Create: `web/src/components/layout/AppShell.tsx`,
+  `web/src/components/layout/Header.tsx`,
+  `web/src/components/layout/StatusBar.tsx`,
+  `web/src/stores/uiStore.ts`, `web/src/components/layout/shell.module.css`
+- Create: `web/src/pages/AppPage.tsx`
+- Test: `web/src/stores/uiStore.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -5991,7 +5991,7 @@ git add -A && git commit -m "feat(frontend): auth pages, session hooks and route
 
 - [ ] **Step 1: Write the failing store test**
 
-`frontend/src/stores/uiStore.test.ts`:
+`web/src/stores/uiStore.test.ts`:
 
 ```ts
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -6033,7 +6033,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the store**
 
-`frontend/src/stores/uiStore.ts`:
+`web/src/stores/uiStore.ts`:
 
 ```ts
 import { create } from 'zustand'
@@ -6082,7 +6082,7 @@ export const useUiStore = create<UiState>((set) => ({
 
 - [ ] **Step 4: Write the layout CSS**
 
-`frontend/src/components/layout/shell.module.css`:
+`web/src/components/layout/shell.module.css`:
 
 ```css
 .app {
@@ -6149,7 +6149,7 @@ export const useUiStore = create<UiState>((set) => ({
 
 - [ ] **Step 5: Write the shell**
 
-`frontend/src/components/layout/AppShell.tsx`:
+`web/src/components/layout/AppShell.tsx`:
 
 ```tsx
 import { useMediaQuery } from '@mantine/hooks'
@@ -6192,7 +6192,7 @@ export function useIsPhone(): boolean {
 
 - [ ] **Step 6: Write the header**
 
-`frontend/src/components/layout/Header.tsx`:
+`web/src/components/layout/Header.tsx`:
 
 ```tsx
 import { ActionIcon, Center, Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core'
@@ -6280,7 +6280,7 @@ Expected: PASS (4 tests).
 - [ ] **Step 8: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): responsive three-pane shell with phone stack and tablet drawer"
+git add -A && git commit -m "feat(web): responsive three-pane shell with phone stack and tablet drawer"
 ```
 
 ---
@@ -6288,10 +6288,10 @@ git add -A && git commit -m "feat(frontend): responsive three-pane shell with ph
 ### Task F5: Bootstrap query, skeletons and delayed loading
 
 **Files:**
-- Create: `frontend/src/api/bootstrap.ts`, `frontend/src/hooks/queries/useBootstrap.ts`,
-  `frontend/src/lib/useDelayedLoading.ts`, `frontend/src/components/common/Skeletons.tsx`,
-  `frontend/src/components/common/TopProgress.tsx`
-- Test: `frontend/src/lib/useDelayedLoading.test.tsx`
+- Create: `web/src/api/bootstrap.ts`, `web/src/hooks/queries/useBootstrap.ts`,
+  `web/src/lib/useDelayedLoading.ts`, `web/src/components/common/Skeletons.tsx`,
+  `web/src/components/common/TopProgress.tsx`
+- Test: `web/src/lib/useDelayedLoading.test.tsx`
 
 **Interfaces:**
 - Produces:
@@ -6302,7 +6302,7 @@ git add -A && git commit -m "feat(frontend): responsive three-pane shell with ph
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/lib/useDelayedLoading.test.tsx`:
+`web/src/lib/useDelayedLoading.test.tsx`:
 
 ```tsx
 import { act, renderHook } from '@testing-library/react'
@@ -6344,7 +6344,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the hook**
 
-`frontend/src/lib/useDelayedLoading.ts`:
+`web/src/lib/useDelayedLoading.ts`:
 
 ```ts
 import { useEffect, useState } from 'react'
@@ -6372,7 +6372,7 @@ export function useDelayedLoading(isLoading: boolean, delayMs = 250): boolean {
 
 - [ ] **Step 4: Write the bootstrap API and hook**
 
-`frontend/src/api/bootstrap.ts`:
+`web/src/api/bootstrap.ts`:
 
 ```ts
 import { api } from './client'
@@ -6384,7 +6384,7 @@ export async function fetchBootstrap(): Promise<Bootstrap> {
 }
 ```
 
-`frontend/src/hooks/queries/useBootstrap.ts`:
+`web/src/hooks/queries/useBootstrap.ts`:
 
 ```ts
 import { useQuery } from '@tanstack/react-query'
@@ -6408,7 +6408,7 @@ export function useBootstrap() {
 
 - [ ] **Step 5: Write the skeletons**
 
-`frontend/src/components/common/Skeletons.tsx`:
+`web/src/components/common/Skeletons.tsx`:
 
 ```tsx
 import { Box, Group, Skeleton, Stack } from '@mantine/core'
@@ -6453,7 +6453,7 @@ export function EditorSkeleton() {
 }
 ```
 
-`frontend/src/components/common/TopProgress.tsx`:
+`web/src/components/common/TopProgress.tsx`:
 
 ```tsx
 import { Box } from '@mantine/core'
@@ -6484,7 +6484,7 @@ Expected: PASS (2 tests).
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): bootstrap query, layout skeletons and delayed loading"
+git add -A && git commit -m "feat(web): bootstrap query, layout skeletons and delayed loading"
 ```
 
 ---
@@ -6492,10 +6492,10 @@ git add -A && git commit -m "feat(frontend): bootstrap query, layout skeletons a
 ### Task F6: Sidebar
 
 **Files:**
-- Create: `frontend/src/components/layout/Sidebar.tsx`,
-  `frontend/src/api/folders.ts`, `frontend/src/api/tags.ts`,
-  `frontend/src/hooks/queries/useFolders.ts`, `frontend/src/hooks/queries/useTags.ts`
-- Test: `frontend/src/hooks/queries/useFolders.test.tsx`
+- Create: `web/src/components/layout/Sidebar.tsx`,
+  `web/src/api/folders.ts`, `web/src/api/tags.ts`,
+  `web/src/hooks/queries/useFolders.ts`, `web/src/hooks/queries/useTags.ts`
+- Test: `web/src/hooks/queries/useFolders.test.tsx`
 
 **Interfaces:**
 - Produces: the sidebar — New note, All notes / Recent / Starred with counts, a folder
@@ -6506,7 +6506,7 @@ git add -A && git commit -m "feat(frontend): bootstrap query, layout skeletons a
 
 - [ ] **Step 1: Write the API functions**
 
-`frontend/src/api/folders.ts`:
+`web/src/api/folders.ts`:
 
 ```ts
 import { api } from './client'
@@ -6527,11 +6527,11 @@ export async function deleteFolder(uuid: UUID): Promise<void> {
 }
 ```
 
-`frontend/src/api/tags.ts` — the same three functions against `/tags`.
+`web/src/api/tags.ts` — the same three functions against `/tags`.
 
 - [ ] **Step 2: Write the failing test**
 
-`frontend/src/hooks/queries/useFolders.test.tsx`:
+`web/src/hooks/queries/useFolders.test.tsx`:
 
 ```tsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -6570,7 +6570,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 4: Write the hooks**
 
-`frontend/src/hooks/queries/useFolders.ts`:
+`web/src/hooks/queries/useFolders.ts`:
 
 ```ts
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -6613,12 +6613,12 @@ export function useDeleteFolder() {
 }
 ```
 
-`frontend/src/hooks/queries/useTags.ts` — the same three hooks for tags, whose delete
+`web/src/hooks/queries/useTags.ts` — the same three hooks for tags, whose delete
 notification reads `Tag deleted. It was removed from your notes — the notes stay.`
 
 - [ ] **Step 5: Write the sidebar**
 
-`frontend/src/components/layout/Sidebar.tsx`:
+`web/src/components/layout/Sidebar.tsx`:
 
 ```tsx
 import { ActionIcon, Badge, Button, Group, Menu, NavLink, Stack, Text, TextInput } from '@mantine/core'
@@ -6806,7 +6806,7 @@ Expected: PASS.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): sidebar with folder tree, tags, counts and inline create"
+git add -A && git commit -m "feat(web): sidebar with folder tree, tags, counts and inline create"
 ```
 
 ---
@@ -6814,12 +6814,12 @@ git add -A && git commit -m "feat(frontend): sidebar with folder tree, tags, cou
 ### Task F7: Note list and the hybrid filter
 
 **Files:**
-- Create: `frontend/src/api/notes.ts`, `frontend/src/hooks/queries/useNotes.ts`,
-  `frontend/src/components/notes/NoteList.tsx`,
-  `frontend/src/components/notes/NoteRow.tsx`,
-  `frontend/src/components/notes/FilterInput.tsx`,
-  `frontend/src/lib/filterNotes.ts`
-- Test: `frontend/src/lib/filterNotes.test.ts`
+- Create: `web/src/api/notes.ts`, `web/src/hooks/queries/useNotes.ts`,
+  `web/src/components/notes/NoteList.tsx`,
+  `web/src/components/notes/NoteRow.tsx`,
+  `web/src/components/notes/FilterInput.tsx`,
+  `web/src/lib/filterNotes.ts`
+- Test: `web/src/lib/filterNotes.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -6834,7 +6834,7 @@ git add -A && git commit -m "feat(frontend): sidebar with folder tree, tags, cou
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/lib/filterNotes.test.ts`:
+`web/src/lib/filterNotes.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -6876,7 +6876,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the filter**
 
-`frontend/src/lib/filterNotes.ts`:
+`web/src/lib/filterNotes.ts`:
 
 ```ts
 import type { NoteListItem } from '@/types/api'
@@ -6894,7 +6894,7 @@ export function filterNotes(notes: NoteListItem[], q: string): NoteListItem[] {
 
 - [ ] **Step 4: Write the notes API**
 
-`frontend/src/api/notes.ts`:
+`web/src/api/notes.ts`:
 
 ```ts
 import { api } from './client'
@@ -6946,7 +6946,7 @@ export async function duplicateNote(uuid: UUID): Promise<Note> {
 
 - [ ] **Step 5: Write the note hooks**
 
-`frontend/src/hooks/queries/useNotes.ts`:
+`web/src/hooks/queries/useNotes.ts`:
 
 ```ts
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -7059,7 +7059,7 @@ export function useForceDeleteNote() {
 
 - [ ] **Step 6: Write the filter input**
 
-`frontend/src/components/notes/FilterInput.tsx`:
+`web/src/components/notes/FilterInput.tsx`:
 
 ```tsx
 import { Loader, Text, TextInput } from '@mantine/core'
@@ -7113,7 +7113,7 @@ export function FilterInput({
 
 - [ ] **Step 7: Write the row and the list**
 
-`frontend/src/components/notes/NoteRow.tsx`:
+`web/src/components/notes/NoteRow.tsx`:
 
 ```tsx
 import { ActionIcon, Badge, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core'
@@ -7190,7 +7190,7 @@ export function NoteRow({
 }
 ```
 
-`frontend/src/components/notes/NoteList.tsx` composes the header (scope label, count,
+`web/src/components/notes/NoteList.tsx` composes the header (scope label, count,
 sort `Menu` with Date updated / Date created / Title A–Z and the Group-by-date and
 Show-snippets toggles), `<FilterInput>`, and the rows — rendering `<ListSkeleton />`
 while `useNotes` is loading and an empty state offering **New note** when there are none.
@@ -7205,7 +7205,7 @@ Expected: PASS (4 tests).
 - [ ] **Step 9: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): note list with optimistic star and hybrid scoped filter"
+git add -A && git commit -m "feat(web): note list with optimistic star and hybrid scoped filter"
 ```
 
 ---
@@ -7213,9 +7213,9 @@ git add -A && git commit -m "feat(frontend): note list with optimistic star and 
 ### Task F8: Editor tabs
 
 **Files:**
-- Create: `frontend/src/stores/tabsStore.ts`,
-  `frontend/src/components/editor/TabBar.tsx`
-- Test: `frontend/src/stores/tabsStore.test.ts`
+- Create: `web/src/stores/tabsStore.ts`,
+  `web/src/components/editor/TabBar.tsx`
+- Test: `web/src/stores/tabsStore.test.ts`
 
 **Interfaces:**
 - Produces: `useTabsStore` — `{tabs: Tab[], activeUuid, open(uuid, title), close(uuid),
@@ -7226,7 +7226,7 @@ git add -A && git commit -m "feat(frontend): note list with optimistic star and 
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/stores/tabsStore.test.ts`:
+`web/src/stores/tabsStore.test.ts`:
 
 ```ts
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -7286,7 +7286,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the store**
 
-`frontend/src/stores/tabsStore.ts`:
+`web/src/stores/tabsStore.ts`:
 
 ```ts
 import { create } from 'zustand'
@@ -7370,7 +7370,7 @@ export const useTabsStore = create<TabsState>()(
 
 - [ ] **Step 4: Write the tab bar**
 
-`frontend/src/components/editor/TabBar.tsx` renders a horizontally scrollable row of
+`web/src/components/editor/TabBar.tsx` renders a horizontally scrollable row of
 tabs, each with an amber dot when `dirty`, a close `×` on hover, a right-click `Menu`
 (Close ⌘W · Close others · Close all · Reopen closed tab ⌘⇧T), and a trailing `＋`.
 It renders `null` when `useIsPhone()` is true — tabs are a mouse metaphor and eight of
@@ -7386,7 +7386,7 @@ Expected: PASS (5 tests).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): editor tabs persisted per device"
+git add -A && git commit -m "feat(web): editor tabs persisted per device"
 ```
 
 ---
@@ -7394,12 +7394,12 @@ git add -A && git commit -m "feat(frontend): editor tabs persisted per device"
 ### Task F9: The editor — full TipTap control set
 
 **Files:**
-- Create: `frontend/src/components/editor/extensions.ts`,
-  `frontend/src/components/editor/Editor.tsx`,
-  `frontend/src/components/editor/EditorToolbar.tsx`,
-  `frontend/src/components/editor/TableBar.tsx`,
-  `frontend/src/components/editor/TagStrip.tsx`
-- Test: `frontend/src/components/editor/extensions.test.ts`
+- Create: `web/src/components/editor/extensions.ts`,
+  `web/src/components/editor/Editor.tsx`,
+  `web/src/components/editor/EditorToolbar.tsx`,
+  `web/src/components/editor/TableBar.tsx`,
+  `web/src/components/editor/TagStrip.tsx`
+- Test: `web/src/components/editor/extensions.test.ts`
 
 **Interfaces:**
 - Produces: `editorExtensions` — the full MIT extension list; `<Editor note>` rendering
@@ -7409,7 +7409,7 @@ git add -A && git commit -m "feat(frontend): editor tabs persisted per device"
 - [ ] **Step 1: Install the extensions**
 
 ```bash
-cd frontend
+cd web
 npm install @tiptap/react@3.31.4 @tiptap/starter-kit@3.31.4 \
   @tiptap/extension-highlight@3.31.4 @tiptap/extension-text-style@3.31.4 \
   @tiptap/extension-color@3.31.4 @tiptap/extension-subscript@3.31.4 \
@@ -7425,7 +7425,7 @@ npm install @tiptap/react@3.31.4 @tiptap/starter-kit@3.31.4 \
 
 - [ ] **Step 2: Write the failing test**
 
-`frontend/src/components/editor/extensions.test.ts`:
+`web/src/components/editor/extensions.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -7460,7 +7460,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 4: Write the extension list**
 
-`frontend/src/components/editor/extensions.ts`:
+`web/src/components/editor/extensions.ts`:
 
 ```ts
 import CharacterCount from '@tiptap/extension-character-count'
@@ -7521,7 +7521,7 @@ export const editorExtensions = [
 
 - [ ] **Step 5: Write the toolbar**
 
-`frontend/src/components/editor/EditorToolbar.tsx`:
+`web/src/components/editor/EditorToolbar.tsx`:
 
 ```tsx
 import { RichTextEditor, useRichTextEditorContext } from '@mantine/tiptap'
@@ -7595,7 +7595,7 @@ export function EditorToolbar({ mode, onMode }: { mode: 'rich' | 'source'; onMod
 
 - [ ] **Step 6: Write the contextual table bar**
 
-`frontend/src/components/editor/TableBar.tsx`:
+`web/src/components/editor/TableBar.tsx`:
 
 ```tsx
 import { Button, Group, Text } from '@mantine/core'
@@ -7641,7 +7641,7 @@ export function TableBar({ editor }: { editor: Editor | null }) {
 
 - [ ] **Step 7: Write the editor**
 
-`frontend/src/components/editor/Editor.tsx`:
+`web/src/components/editor/Editor.tsx`:
 
 ```tsx
 import { RichTextEditor } from '@mantine/tiptap'
@@ -7707,7 +7707,7 @@ export function Editor({ note }: { note: Note }) {
 }
 ```
 
-`frontend/src/components/editor/TagStrip.tsx` renders the note's tags as `Badge`s plus a
+`web/src/components/editor/TagStrip.tsx` renders the note's tags as `Badge`s plus a
 dashed `＋ Add tag` button opening a `Popover` with a search field, the matching tags
 with ticks, and a `Create #<term>` row; selecting any of them calls
 `syncNoteTags(note.uuid, names)` with the full resulting array.
@@ -7722,7 +7722,7 @@ Expected: PASS (2 tests).
 - [ ] **Step 9: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): TipTap editor with the full Mantine control set and contextual table bar"
+git add -A && git commit -m "feat(web): TipTap editor with the full Mantine control set and contextual table bar"
 ```
 
 ---
@@ -7730,10 +7730,10 @@ git add -A && git commit -m "feat(frontend): TipTap editor with the full Mantine
 ### Task F10: Autosave, drafts and conflict resolution
 
 **Files:**
-- Create: `frontend/src/hooks/useAutosave.ts`, `frontend/src/lib/drafts.ts`,
-  `frontend/src/components/common/ConflictSheet.tsx`,
-  `frontend/src/components/layout/StatusBar.tsx`
-- Test: `frontend/src/hooks/useAutosave.test.tsx`, `frontend/src/lib/drafts.test.ts`
+- Create: `web/src/hooks/useAutosave.ts`, `web/src/lib/drafts.ts`,
+  `web/src/components/common/ConflictSheet.tsx`,
+  `web/src/components/layout/StatusBar.tsx`
+- Test: `web/src/hooks/useAutosave.test.tsx`, `web/src/lib/drafts.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -7745,7 +7745,7 @@ git add -A && git commit -m "feat(frontend): TipTap editor with the full Mantine
 
 - [ ] **Step 1: Write the failing tests**
 
-`frontend/src/hooks/useAutosave.test.tsx`:
+`web/src/hooks/useAutosave.test.tsx`:
 
 ```tsx
 import { act, renderHook, waitFor } from '@testing-library/react'
@@ -7812,7 +7812,7 @@ describe('useAutosave', () => {
 })
 ```
 
-`frontend/src/lib/drafts.test.ts`:
+`web/src/lib/drafts.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -7848,7 +7848,7 @@ Expected: FAIL — modules not found.
 
 - [ ] **Step 3: Write the draft buffer**
 
-`frontend/src/lib/drafts.ts`:
+`web/src/lib/drafts.ts`:
 
 ```ts
 import { del, get, set } from 'idb-keyval'
@@ -7883,7 +7883,7 @@ export async function clearDraft(uuid: UUID): Promise<void> {
 
 - [ ] **Step 4: Write the autosave hook**
 
-`frontend/src/hooks/useAutosave.ts`:
+`web/src/hooks/useAutosave.ts`:
 
 ```ts
 import { useQueryClient } from '@tanstack/react-query'
@@ -8008,7 +8008,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
 
 - [ ] **Step 5: Write the conflict sheet and status bar**
 
-`frontend/src/components/common/ConflictSheet.tsx`:
+`web/src/components/common/ConflictSheet.tsx`:
 
 ```tsx
 import { Button, Group, Modal, Stack, Text } from '@mantine/core'
@@ -8038,7 +8038,7 @@ export function ConflictSheet({
 }
 ```
 
-`frontend/src/components/layout/StatusBar.tsx`:
+`web/src/components/layout/StatusBar.tsx`:
 
 ```tsx
 import { Group, Text } from '@mantine/core'
@@ -8083,7 +8083,7 @@ Expected: PASS (4 + 3 tests).
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): debounced autosave with IndexedDB drafts and conflict resolution"
+git add -A && git commit -m "feat(web): debounced autosave with IndexedDB drafts and conflict resolution"
 ```
 
 ---
@@ -8091,10 +8091,10 @@ git add -A && git commit -m "feat(frontend): debounced autosave with IndexedDB d
 ### Task F11: Spotlight search
 
 **Files:**
-- Create: `frontend/src/api/search.ts`, `frontend/src/hooks/queries/useSearch.ts`,
-  `frontend/src/components/search/SpotlightSearch.tsx`,
-  `frontend/src/components/search/Highlight.tsx`
-- Test: `frontend/src/components/search/Highlight.test.tsx`
+- Create: `web/src/api/search.ts`, `web/src/hooks/queries/useSearch.ts`,
+  `web/src/components/search/SpotlightSearch.tsx`,
+  `web/src/components/search/Highlight.tsx`
+- Test: `web/src/components/search/Highlight.test.tsx`
 
 **Interfaces:**
 - Produces: `<SpotlightSearch />` mounted once in `AppPage`, opened with ⌘K.
@@ -8103,7 +8103,7 @@ git add -A && git commit -m "feat(frontend): debounced autosave with IndexedDB d
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/components/search/Highlight.test.tsx`:
+`web/src/components/search/Highlight.test.tsx`:
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -8140,7 +8140,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the highlighter**
 
-`frontend/src/components/search/Highlight.tsx`:
+`web/src/components/search/Highlight.tsx`:
 
 ```tsx
 import { Fragment } from 'react'
@@ -8169,7 +8169,7 @@ export function HighlightTerms({ text, terms }: { text: string; terms: string[] 
 
 - [ ] **Step 4: Write the search API and hook**
 
-`frontend/src/api/search.ts`:
+`web/src/api/search.ts`:
 
 ```ts
 import { api } from './client'
@@ -8181,7 +8181,7 @@ export async function search(q: string, signal?: AbortSignal): Promise<SearchRes
 }
 ```
 
-`frontend/src/hooks/queries/useSearch.ts`:
+`web/src/hooks/queries/useSearch.ts`:
 
 ```ts
 import { useQuery } from '@tanstack/react-query'
@@ -8207,7 +8207,7 @@ export function useSearch(q: string) {
 
 - [ ] **Step 5: Write the Spotlight component**
 
-`frontend/src/components/search/SpotlightSearch.tsx`:
+`web/src/components/search/SpotlightSearch.tsx`:
 
 ```tsx
 import { Progress, Text } from '@mantine/core'
@@ -8295,7 +8295,7 @@ Expected: PASS (3 tests).
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): spotlight search with client-side highlighting and list handoff"
+git add -A && git commit -m "feat(web): spotlight search with client-side highlighting and list handoff"
 ```
 
 ---
@@ -8303,11 +8303,11 @@ git add -A && git commit -m "feat(frontend): spotlight search with client-side h
 ### Task F12: Trash view, account menu and profile
 
 **Files:**
-- Create: `frontend/src/components/layout/AccountMenu.tsx`,
-  `frontend/src/components/layout/ProfileModal.tsx`
-- Modify: `frontend/src/components/notes/NoteRow.tsx`,
-  `frontend/src/components/notes/NoteList.tsx`
-- Test: `frontend/src/components/notes/NoteRow.test.tsx`
+- Create: `web/src/components/layout/AccountMenu.tsx`,
+  `web/src/components/layout/ProfileModal.tsx`
+- Modify: `web/src/components/notes/NoteRow.tsx`,
+  `web/src/components/notes/NoteList.tsx`
+- Test: `web/src/components/notes/NoteRow.test.tsx`
 
 **Interfaces:**
 - Produces: a Trash scope whose rows offer **Restore · Restore to… · Delete
@@ -8316,7 +8316,7 @@ git add -A && git commit -m "feat(frontend): spotlight search with client-side h
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/components/notes/NoteRow.test.tsx`:
+`web/src/components/notes/NoteRow.test.tsx`:
 
 ```tsx
 import { MantineProvider } from '@mantine/core'
@@ -8402,7 +8402,7 @@ In `NoteRow.tsx`, replace the `Menu.Dropdown` contents with:
 
 - [ ] **Step 4: Write the account menu**
 
-`frontend/src/components/layout/AccountMenu.tsx`:
+`web/src/components/layout/AccountMenu.tsx`:
 
 ```tsx
 import { Avatar, Menu, Stack, Text } from '@mantine/core'
@@ -8455,7 +8455,7 @@ export function AccountMenu() {
 }
 ```
 
-`frontend/src/components/layout/ProfileModal.tsx` is a Mantine `Modal` — not a route, so
+`web/src/components/layout/ProfileModal.tsx` is a Mantine `Modal` — not a route, so
 open tabs and unsaved drafts survive it — with name and email fields saved through
 `PATCH /me`, and a change-password section posting to `PUT /me/password`. Both buttons
 use `loading` while pending.
@@ -8470,7 +8470,7 @@ Expected: PASS (3 tests).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): trash actions, account menu and profile modal"
+git add -A && git commit -m "feat(web): trash actions, account menu and profile modal"
 ```
 
 ---
@@ -8478,9 +8478,9 @@ git add -A && git commit -m "feat(frontend): trash actions, account menu and pro
 ### Task F13: New-note lifecycle and abandoned-note discard
 
 **Files:**
-- Create: `frontend/src/hooks/useAbandonedNote.ts`
-- Modify: `frontend/src/components/editor/Editor.tsx`
-- Test: `frontend/src/hooks/useAbandonedNote.test.tsx`
+- Create: `web/src/hooks/useAbandonedNote.ts`
+- Modify: `web/src/components/editor/Editor.tsx`
+- Test: `web/src/hooks/useAbandonedNote.test.tsx`
 
 **Interfaces:**
 - Produces: `useAbandonedNote(note, editor)` — on unmount or note switch, if the document
@@ -8489,7 +8489,7 @@ git add -A && git commit -m "feat(frontend): trash actions, account menu and pro
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/hooks/useAbandonedNote.test.tsx`:
+`web/src/hooks/useAbandonedNote.test.tsx`:
 
 ```tsx
 import { renderHook } from '@testing-library/react'
@@ -8558,7 +8558,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the hook**
 
-`frontend/src/hooks/useAbandonedNote.ts`:
+`web/src/hooks/useAbandonedNote.ts`:
 
 ```ts
 import { useQueryClient } from '@tanstack/react-query'
@@ -8611,7 +8611,7 @@ export function useAbandonedNote(note: Note, editor: Editor | null) {
 
 - [ ] **Step 4: Wire it into the editor**
 
-In `frontend/src/components/editor/Editor.tsx`, after `useAutosave`:
+In `web/src/components/editor/Editor.tsx`, after `useAutosave`:
 
 ```tsx
 useAbandonedNote(note, editor)
@@ -8627,7 +8627,7 @@ Expected: PASS (4 tests).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): silently discard abandoned empty notes"
+git add -A && git commit -m "feat(web): silently discard abandoned empty notes"
 ```
 
 ---
@@ -8635,11 +8635,11 @@ git add -A && git commit -m "feat(frontend): silently discard abandoned empty no
 ### Task F14: Mobile polish
 
 **Files:**
-- Create: `frontend/src/hooks/useVisualViewport.ts`,
-  `frontend/src/components/editor/mobile.module.css`
-- Modify: `frontend/src/components/editor/Editor.tsx`,
-  `frontend/src/components/layout/shell.module.css`
-- Test: `frontend/src/hooks/useVisualViewport.test.ts`
+- Create: `web/src/hooks/useVisualViewport.ts`,
+  `web/src/components/editor/mobile.module.css`
+- Modify: `web/src/components/editor/Editor.tsx`,
+  `web/src/components/layout/shell.module.css`
+- Test: `web/src/hooks/useVisualViewport.test.ts`
 
 **Interfaces:**
 - Produces: `useKeyboardInset(): number` — pixels the virtual keyboard covers, from the
@@ -8648,7 +8648,7 @@ git add -A && git commit -m "feat(frontend): silently discard abandoned empty no
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/hooks/useVisualViewport.test.ts`:
+`web/src/hooks/useVisualViewport.test.ts`:
 
 ```ts
 import { act, renderHook } from '@testing-library/react'
@@ -8688,7 +8688,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the hook**
 
-`frontend/src/hooks/useVisualViewport.ts`:
+`web/src/hooks/useVisualViewport.ts`:
 
 ```ts
 import { useEffect, useState } from 'react'
@@ -8722,7 +8722,7 @@ export function useKeyboardInset(): number {
 
 - [ ] **Step 4: Move the toolbar to the bottom on phones**
 
-`frontend/src/components/editor/mobile.module.css`:
+`web/src/components/editor/mobile.module.css`:
 
 ```css
 @media (max-width: 767px) {
@@ -8793,7 +8793,7 @@ toolbar scrolls horizontally at the bottom; focusing an input does not zoom the 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat(frontend): mobile toolbar, keyboard inset handling and bottom sheets"
+git add -A && git commit -m "feat(web): mobile toolbar, keyboard inset handling and bottom sheets"
 ```
 
 ---
@@ -8801,17 +8801,17 @@ git add -A && git commit -m "feat(frontend): mobile toolbar, keyboard inset hand
 ### Task F15: End-to-end acceptance
 
 **Files:**
-- Create: `frontend/playwright.config.ts`, `frontend/e2e/notes.spec.ts`
+- Create: `web/playwright.config.ts`, `web/e2e/notes.spec.ts`
 - Test: the spec itself
 
 **Interfaces:**
-- Consumes: the running backend (`php artisan serve`, seeded) and frontend
+- Consumes: the running api (`php artisan serve`, seeded) and web
   (`npm run dev`).
 - Produces: a Playwright suite covering the spec's acceptance criteria.
 
 - [ ] **Step 1: Configure Playwright**
 
-`frontend/playwright.config.ts`:
+`web/playwright.config.ts`:
 
 ```ts
 import { defineConfig, devices } from '@playwright/test'
@@ -8829,7 +8829,7 @@ export default defineConfig({
 
 - [ ] **Step 2: Write the acceptance spec**
 
-`frontend/e2e/notes.spec.ts`:
+`web/e2e/notes.spec.ts`:
 
 ```ts
 import { expect, test } from '@playwright/test'
@@ -8944,11 +8944,11 @@ test('rich formatting survives a reload', async ({ page, isMobile }) => {
 
 ```bash
 # Terminal 1
-cd backend && php artisan migrate:fresh --seed && php artisan serve
+cd api && php artisan migrate:fresh --seed && php artisan serve
 # Terminal 2
-cd frontend && npm run dev
+cd web && npm run dev
 # Terminal 3
-cd frontend && npx playwright test
+cd web && npx playwright test
 ```
 Expected: all projects green.
 
@@ -8963,7 +8963,7 @@ draft survives a reload).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add -A && git commit -m "test(frontend): end-to-end acceptance suite across desktop, tablet and phone"
+git add -A && git commit -m "test(web): end-to-end acceptance suite across desktop, tablet and phone"
 ```
 
 ---
@@ -8977,9 +8977,9 @@ When F15 is committed:
 1. Run the full suite and report the result:
    ```powershell
    docker compose exec app php artisan test
-   cd frontend; npx vitest run; npx playwright test
+   cd web; npx vitest run; npx playwright test
    ```
-2. Confirm the app runs: `docker compose up -d`, then `npm run dev` in `frontend/`,
+2. Confirm the app runs: `docker compose up -d`, then `npm run dev` in `web/`,
    and sign in at `http://localhost:5173` as `demo@example.com` / `password`.
 3. Report: every task completed, the commit count, the test results, and anything you
    had to stop on along the way.
@@ -9016,10 +9016,10 @@ Rust crates: tauri 2 · tauri-plugin-sql (sqlite) · tauri-plugin-os
 ### Task D1: Tauri scaffold and the first window
 
 **Files:**
-- Create: `frontend/src-tauri/` — `Cargo.toml`, `tauri.conf.json`, `build.rs`,
+- Create: `web/src-tauri/` — `Cargo.toml`, `tauri.conf.json`, `build.rs`,
   `src/main.rs`, `src/lib.rs`, `capabilities/default.json`, `icons/`
-- Modify: `frontend/package.json`, `frontend/vite.config.ts`
-- Test: `frontend/src-tauri/src/lib.rs` (one Rust unit test), manual window check
+- Modify: `web/package.json`, `web/vite.config.ts`
+- Test: `web/src-tauri/src/lib.rs` (one Rust unit test), manual window check
 
 **Interfaces:**
 - Produces: `npm run tauri dev` opens a desktop window running the existing SPA, and
@@ -9039,12 +9039,12 @@ with the "Desktop development with C++" workload. Without it, `cargo` cannot lin
 - [ ] **Step 2: Add the Tauri CLI and API**
 
 ```powershell
-cd frontend
+cd web
 npm install -D @tauri-apps/cli@2.12.2
 npm install @tauri-apps/api@2.12.3 @tauri-apps/plugin-os@2.4.0 @tauri-apps/plugin-sql@2.5.0
 ```
 
-Add to `frontend/package.json` scripts:
+Add to `web/package.json` scripts:
 
 ```json
 "tauri": "tauri",
@@ -9198,9 +9198,9 @@ git add -A && git commit -m "feat(desktop): Tauri 2 shell with branded icons and
 ### Task D2: Platform detection and the API transport
 
 **Files:**
-- Create: `frontend/src/platform/isNative.ts`, `frontend/src/platform/deviceKind.ts`
-- Modify: `frontend/src/api/client.ts`, `frontend/.env.development`
-- Test: `frontend/src/platform/deviceKind.test.ts`
+- Create: `web/src/platform/isNative.ts`, `web/src/platform/deviceKind.ts`
+- Modify: `web/src/api/client.ts`, `web/.env.development`
+- Test: `web/src/platform/deviceKind.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -9212,7 +9212,7 @@ git add -A && git commit -m "feat(desktop): Tauri 2 shell with branded icons and
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/platform/deviceKind.test.ts`:
+`web/src/platform/deviceKind.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from 'vitest'
@@ -9250,7 +9250,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the modules**
 
-`frontend/src/platform/isNative.ts`:
+`web/src/platform/isNative.ts`:
 
 ```ts
 /**
@@ -9262,7 +9262,7 @@ export function isNative(): boolean {
 }
 ```
 
-`frontend/src/platform/deviceKind.ts`:
+`web/src/platform/deviceKind.ts`:
 
 ```ts
 import { platform } from '@tauri-apps/plugin-os'
@@ -9290,7 +9290,7 @@ export function deviceKind(): DeviceKind {
 
 - [ ] **Step 4: Teach the API client both transports**
 
-In `frontend/src/api/client.ts`, replace the instance creation:
+In `web/src/api/client.ts`, replace the instance creation:
 
 ```ts
 import { isNative } from '@/platform/isNative'
@@ -9327,13 +9327,13 @@ export async function ensureCsrf(): Promise<void> {
 - [ ] **Step 5: Point the native build at an absolute API URL**
 
 The Vite dev proxy does not exist inside a packaged app. Add
-`frontend/.env.production`:
+`web/.env.production`:
 
 ```dotenv
 VITE_API_URL=https://api.notes.example.com/api/v1
 ```
 
-and for native development, `frontend/.env.development.local`:
+and for native development, `web/.env.development.local`:
 
 ```dotenv
 VITE_API_URL=http://127.0.0.1:8000/api/v1
@@ -9361,13 +9361,13 @@ git add -A && git commit -m "feat(desktop): platform detection and Bearer transp
 > model. Wait for them to say continue.
 
 **Files:**
-- Create: `frontend/src/platform/secureStore.ts`,
-  `frontend/src-tauri/src/keychain.rs`
-- Modify: `frontend/src-tauri/src/lib.rs`,
-  `frontend/src-tauri/capabilities/default.json`,
-  `frontend/src/api/auth.ts`, `frontend/src/hooks/queries/useAuth.ts`,
-  `frontend/src/pages/LoginPage.tsx`
-- Test: `frontend/src/platform/secureStore.test.ts`
+- Create: `web/src/platform/secureStore.ts`,
+  `web/src-tauri/src/keychain.rs`
+- Modify: `web/src-tauri/src/lib.rs`,
+  `web/src-tauri/capabilities/default.json`,
+  `web/src/api/auth.ts`, `web/src/hooks/queries/useAuth.ts`,
+  `web/src/pages/LoginPage.tsx`
+- Test: `web/src/platform/secureStore.test.ts`
 
 **Interfaces:**
 - Produces: `saveToken(t)`, `loadToken()`, `deleteToken()` backed by the **OS
@@ -9381,7 +9381,7 @@ git add -A && git commit -m "feat(desktop): platform detection and Bearer transp
 
 - [ ] **Step 1: Write the Rust commands**
 
-`frontend/src-tauri/src/keychain.rs`:
+`web/src-tauri/src/keychain.rs`:
 
 ```rust
 use keyring::Entry;
@@ -9432,7 +9432,7 @@ mod keychain;
 
 - [ ] **Step 2: Write the failing TypeScript test**
 
-`frontend/src/platform/secureStore.test.ts`:
+`web/src/platform/secureStore.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from 'vitest'
@@ -9463,7 +9463,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 4: Write the TypeScript wrapper**
 
-`frontend/src/platform/secureStore.ts`:
+`web/src/platform/secureStore.ts`:
 
 ```ts
 import { invoke } from '@tauri-apps/api/core'
@@ -9495,7 +9495,7 @@ export async function deleteToken(): Promise<void> {
 
 - [ ] **Step 5: Add the API calls and branch the login**
 
-`frontend/src/api/auth.ts`:
+`web/src/api/auth.ts`:
 
 ```ts
 export async function issueToken(payload: {
@@ -9510,7 +9510,7 @@ export async function revokeToken(): Promise<void> {
 }
 ```
 
-`useLogin()` in `frontend/src/hooks/queries/useAuth.ts`:
+`useLogin()` in `web/src/hooks/queries/useAuth.ts`:
 
 ```ts
 export function useLogin() {
@@ -9541,7 +9541,7 @@ clears local credentials.
 
 - [ ] **Step 6: Allow the commands in the capability file**
 
-`frontend/src-tauri/capabilities/default.json`:
+`web/src-tauri/capabilities/default.json`:
 
 ```json
 {
@@ -9585,10 +9585,10 @@ git add -A && git commit -m "feat(desktop): token auth stored in the OS keychain
 > model. Wait for them to say continue.
 
 **Files:**
-- Create: `frontend/src/db/schema.ts`, `frontend/src/db/connection.ts`,
-  `frontend/src/db/notesRepo.ts`, `frontend/src/db/foldersRepo.ts`,
-  `frontend/src/db/tagsRepo.ts`
-- Test: `frontend/src/db/schema.test.ts`, `frontend/src/db/notesRepo.test.ts`
+- Create: `web/src/db/schema.ts`, `web/src/db/connection.ts`,
+  `web/src/db/notesRepo.ts`, `web/src/db/foldersRepo.ts`,
+  `web/src/db/tagsRepo.ts`
+- Test: `web/src/db/schema.test.ts`, `web/src/db/notesRepo.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -9602,7 +9602,7 @@ git add -A && git commit -m "feat(desktop): token auth stored in the OS keychain
 
 - [ ] **Step 1: Write the failing schema test**
 
-`frontend/src/db/schema.test.ts`:
+`web/src/db/schema.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -9646,7 +9646,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the schema**
 
-`frontend/src/db/schema.ts`:
+`web/src/db/schema.ts`:
 
 ```ts
 export interface Migration { version: number; sql: string }
@@ -9721,7 +9721,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
 
 - [ ] **Step 4: Write the connection**
 
-`frontend/src/db/connection.ts`:
+`web/src/db/connection.ts`:
 
 ```ts
 import Database from '@tauri-apps/plugin-sql'
@@ -9769,7 +9769,7 @@ export async function getDb(): Promise<Database> {
 
 - [ ] **Step 5: Write the notes repository**
 
-`frontend/src/db/notesRepo.ts` — every method takes an explicit container:
+`web/src/db/notesRepo.ts` — every method takes an explicit container:
 
 ```ts
 import { getDb } from './connection'
@@ -9845,7 +9845,7 @@ export const notesRepo = {
 
 - [ ] **Step 6: Write the repository test**
 
-`frontend/src/db/notesRepo.test.ts` mocks `@tauri-apps/plugin-sql` with an in-memory
+`web/src/db/notesRepo.test.ts` mocks `@tauri-apps/plugin-sql` with an in-memory
 fake and asserts: `list('local')` never returns cloud rows; `upsert` writes an FTS
 row and removes it when the note is trashed; `search('rele')` matches a prefix.
 
@@ -9867,10 +9867,10 @@ git add -A && git commit -m "feat(desktop): SQLite schema, migrations and contai
 ### Task D5: Local-first reads
 
 **Files:**
-- Create: `frontend/src/data/notesSource.ts`, `frontend/src/data/foldersSource.ts`
-- Modify: `frontend/src/hooks/queries/useNotes.ts`,
-  `frontend/src/hooks/queries/useBootstrap.ts`
-- Test: `frontend/src/data/notesSource.test.ts`
+- Create: `web/src/data/notesSource.ts`, `web/src/data/foldersSource.ts`
+- Modify: `web/src/hooks/queries/useNotes.ts`,
+  `web/src/hooks/queries/useBootstrap.ts`
+- Test: `web/src/data/notesSource.test.ts`
 
 **Interfaces:**
 - Produces a **single data source** that every hook calls. On native it reads SQLite;
@@ -9879,7 +9879,7 @@ git add -A && git commit -m "feat(desktop): SQLite schema, migrations and contai
 
 - [ ] **Step 1: Write the failing test**
 
-`frontend/src/data/notesSource.test.ts`:
+`web/src/data/notesSource.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from 'vitest'
@@ -9934,7 +9934,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write the source**
 
-`frontend/src/data/notesSource.ts`:
+`web/src/data/notesSource.ts`:
 
 ```ts
 import { fetchNotes } from '@/api/notes'
@@ -9995,14 +9995,14 @@ git add -A && git commit -m "feat(desktop): local-first reads through a single d
 ### Task D6: Containers in the UI
 
 **Files:**
-- Modify: `frontend/src/stores/uiStore.ts`,
-  `frontend/src/components/layout/Sidebar.tsx`,
-  `frontend/src/components/notes/NoteRow.tsx`,
-  `frontend/src/hooks/queries/useNotes.ts`
-- Create: `frontend/src/components/notes/MoveToMenu.tsx`,
-  `frontend/src/components/layout/ContainerSection.tsx`
-- Test: `frontend/src/stores/uiStore.test.ts` (extended),
-  `frontend/src/components/notes/MoveToMenu.test.tsx`
+- Modify: `web/src/stores/uiStore.ts`,
+  `web/src/components/layout/Sidebar.tsx`,
+  `web/src/components/notes/NoteRow.tsx`,
+  `web/src/hooks/queries/useNotes.ts`
+- Create: `web/src/components/notes/MoveToMenu.tsx`,
+  `web/src/components/layout/ContainerSection.tsx`
+- Test: `web/src/stores/uiStore.test.ts` (extended),
+  `web/src/components/notes/MoveToMenu.test.tsx`
 
 **Interfaces:**
 - Produces: `Scope` gains `container: 'cloud' | 'local'`; the sidebar renders **two
@@ -10012,7 +10012,7 @@ git add -A && git commit -m "feat(desktop): local-first reads through a single d
 
 - [ ] **Step 1: Write the failing tests**
 
-Add to `frontend/src/stores/uiStore.test.ts`:
+Add to `web/src/stores/uiStore.test.ts`:
 
 ```ts
 it('carries a container on every scope', () => {
@@ -10027,7 +10027,7 @@ it('clears the filter when the container changes', () => {
 })
 ```
 
-`frontend/src/components/notes/MoveToMenu.test.tsx`:
+`web/src/components/notes/MoveToMenu.test.tsx`:
 
 ```tsx
 import { MantineProvider } from '@mantine/core'
@@ -10148,10 +10148,10 @@ git add -A && git commit -m "feat(desktop): two containers in the sidebar and mo
 > model. Wait for them to say continue.
 
 **Files:**
-- Create: `frontend/src/sync/outbox.ts`, `frontend/src/sync/push.ts`
-- Modify: `frontend/src/hooks/useAutosave.ts`,
-  `frontend/src/hooks/queries/useNotes.ts`
-- Test: `frontend/src/sync/outbox.test.ts`, `frontend/src/sync/push.test.ts`
+- Create: `web/src/sync/outbox.ts`, `web/src/sync/push.ts`
+- Modify: `web/src/hooks/useAutosave.ts`,
+  `web/src/hooks/queries/useNotes.ts`
+- Test: `web/src/sync/outbox.test.ts`, `web/src/sync/push.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -10163,7 +10163,7 @@ git add -A && git commit -m "feat(desktop): two containers in the sidebar and mo
 
 - [ ] **Step 1: Write the failing tests**
 
-`frontend/src/sync/outbox.test.ts`:
+`web/src/sync/outbox.test.ts`:
 
 ```ts
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -10226,7 +10226,7 @@ describe('outbox', () => {
 })
 ```
 
-`frontend/src/sync/push.test.ts` asserts: operations replay **in order**; a 409
+`web/src/sync/push.test.ts` asserts: operations replay **in order**; a 409
 collects the server copy and **stops** (later ops may depend on it); a 4xx that is
 not 409 drops the op rather than wedging the queue; a network error stops without
 dropping anything.
@@ -10346,11 +10346,11 @@ git add -A && git commit -m "feat(desktop): coalescing outbox and ordered push"
 > model. Wait for them to say continue.
 
 **Files:**
-- Create: `frontend/src/sync/pull.ts`, `frontend/src/sync/engine.ts`,
-  `frontend/src/hooks/useSyncStatus.ts`
-- Modify: `frontend/src/components/layout/StatusBar.tsx`,
-  `frontend/src/components/layout/ContainerSection.tsx`
-- Test: `frontend/src/sync/pull.test.ts`, `frontend/src/sync/engine.test.ts`
+- Create: `web/src/sync/pull.ts`, `web/src/sync/engine.ts`,
+  `web/src/hooks/useSyncStatus.ts`
+- Modify: `web/src/components/layout/StatusBar.tsx`,
+  `web/src/components/layout/ContainerSection.tsx`
+- Test: `web/src/sync/pull.test.ts`, `web/src/sync/engine.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -10362,7 +10362,7 @@ git add -A && git commit -m "feat(desktop): coalescing outbox and ordered push"
 
 - [ ] **Step 1: Write the failing tests**
 
-`frontend/src/sync/pull.test.ts`:
+`web/src/sync/pull.test.ts`:
 
 ```ts
 it('applies rows and advances the high-water mark', async () => { /* … */ })
@@ -10381,7 +10381,7 @@ it('wipes cloud rows and resyncs from zero on full_resync_required', async () =>
 it('never writes a pulled row into the local container', async () => { /* … */ })
 ```
 
-`frontend/src/sync/engine.test.ts`:
+`web/src/sync/engine.test.ts`:
 
 ```ts
 it('pushes before pulling', async () => {
@@ -10530,13 +10530,13 @@ git add -A && git commit -m "feat(desktop): sync engine — push then pull, with
 > model. Wait for them to say continue.
 
 **Files:**
-- Create: `frontend/src/sync/conflicts.ts`,
-  `frontend/src/components/sync/ConflictBanner.tsx`,
-  `frontend/src/components/sync/ConflictSheet.tsx`
-- Modify: `backend/app/Services/Notes/UpdateNote.php`,
-  `backend/app/Http/Requests/UpdateNoteRequest.php`
-- Test: `frontend/src/sync/conflicts.test.ts`,
-  `backend/tests/Feature/TrashedNoteConflictTest.php`
+- Create: `web/src/sync/conflicts.ts`,
+  `web/src/components/sync/ConflictBanner.tsx`,
+  `web/src/components/sync/ConflictSheet.tsx`
+- Modify: `api/app/Services/Notes/UpdateNote.php`,
+  `api/app/Http/Requests/UpdateNoteRequest.php`
+- Test: `web/src/sync/conflicts.test.ts`,
+  `api/tests/Feature/TrashedNoteConflictTest.php`
 
 **Interfaces:**
 - Produces: `conflictQueue` — `addAll(notes)`, `next()`, `resolve(uuid, choice)`,
@@ -10544,9 +10544,9 @@ git add -A && git commit -m "feat(desktop): sync engine — push then pull, with
   **both versions side by side** with **Save mine as a copy** as the default button.
 - Backend: a body write to a **trashed** note now returns 409.
 
-- [ ] **Step 1: Write the failing backend test**
+- [ ] **Step 1: Write the failing api test**
 
-`backend/tests/Feature/TrashedNoteConflictTest.php`:
+`api/tests/Feature/TrashedNoteConflictTest.php`:
 
 ```php
 <?php
@@ -10604,7 +10604,7 @@ between the *"changed on another device"* and *"moved to Trash"* wording.
 
 - [ ] **Step 4: Write the conflict queue**
 
-`frontend/src/sync/conflicts.ts` — a Zustand store holding
+`web/src/sync/conflicts.ts` — a Zustand store holding
 `{ uuid, serverCopy, localBody, reason }[]`, persisted to SQLite so a restart does
 not lose an unresolved conflict. `resolve(uuid, choice)`:
 
@@ -10653,12 +10653,12 @@ git add -A && git commit -m "feat: conflict queue, side-by-side resolution and t
 ### Task D10: Sign-out purge and the uninstall warnings
 
 **Files:**
-- Create: `frontend/src/platform/wipeCloudData.ts`,
-  `frontend/src/components/notes/LocalNoteCallout.tsx`
-- Modify: `frontend/src/hooks/queries/useAuth.ts`,
-  `frontend/src/components/layout/StatusBar.tsx`,
-  `frontend/src/components/editor/Editor.tsx`
-- Test: `frontend/src/platform/wipeCloudData.test.ts`
+- Create: `web/src/platform/wipeCloudData.ts`,
+  `web/src/components/notes/LocalNoteCallout.tsx`
+- Modify: `web/src/hooks/queries/useAuth.ts`,
+  `web/src/components/layout/StatusBar.tsx`,
+  `web/src/components/editor/Editor.tsx`
+- Test: `web/src/platform/wipeCloudData.test.ts`
 
 **Interfaces:**
 - Produces: `wipeCloudData()` — deletes every `container = 'cloud'` row, the outbox,
@@ -10749,9 +10749,9 @@ git add -A && git commit -m "feat(desktop): sign-out purge of cloud data and the
 
 **Files:**
 - Create: `.github/workflows/desktop.yml`
-- Modify: `frontend/src-tauri/tauri.conf.json`,
-  `frontend/src-tauri/Cargo.toml`, `frontend/src-tauri/src/lib.rs`
-- Create: `frontend/src/components/common/UpdatePrompt.tsx`
+- Modify: `web/src-tauri/tauri.conf.json`,
+  `web/src-tauri/Cargo.toml`, `web/src-tauri/src/lib.rs`
+- Create: `web/src/components/common/UpdatePrompt.tsx`
 - Test: manual — build on all three platforms
 
 **Interfaces:**
@@ -10761,7 +10761,7 @@ git add -A && git commit -m "feat(desktop): sign-out purge of cloud data and the
 - [ ] **Step 1: Add the updater plugin**
 
 ```powershell
-cd frontend
+cd web
 npm install @tauri-apps/plugin-updater@2.13.3 @tauri-apps/plugin-process@2.4.0
 ```
 
@@ -10847,7 +10847,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: frontend/package-lock.json }
+        with: { node-version: 20, cache: npm, cache-dependency-path: web/package-lock.json }
       - uses: dtolnay/rust-toolchain@stable
       - name: Linux build dependencies
         if: matrix.os == 'ubuntu-22.04'
@@ -10855,14 +10855,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - run: npm ci
-        working-directory: frontend
+        working-directory: web
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          projectPath: frontend
+          projectPath: web
           tagName: v__VERSION__
           releaseName: 'Notes v__VERSION__'
           releaseDraft: true
@@ -10891,7 +10891,7 @@ git add -A && git commit -m "ci(desktop): signed matrix builds and in-app auto-u
 
 **Files:**
 - Create: `docs/NATIVE-TEST-PLAN.md`
-- Modify: `frontend/e2e/sync.spec.ts`
+- Modify: `web/e2e/sync.spec.ts`
 - Test: the suite, plus a scripted manual pass
 
 **Interfaces:**
@@ -10902,7 +10902,7 @@ git add -A && git commit -m "ci(desktop): signed matrix builds and in-app auto-u
 - [ ] **Step 1: Automate what Playwright can reach**
 
 Playwright drives the **web build**, so it covers the API contract rather than the
-Tauri window. `frontend/e2e/sync.spec.ts` asserts, against two browser contexts
+Tauri window. `web/e2e/sync.spec.ts` asserts, against two browser contexts
 sharing one account:
 
 ```ts
@@ -10943,7 +10943,7 @@ result:
 
 ```powershell
 docker compose exec app php artisan test
-cd frontend; npx vitest run; npx playwright test
+cd web; npx vitest run; npx playwright test
 cd src-tauri; cargo test; cd ..
 npm run tauri:build
 ```
@@ -10972,7 +10972,7 @@ docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate:fresh --seed
 
 # Frontend, on the Windows host
-cd frontend
+cd web
 npm run dev                          # http://localhost:5173
 
 # Sign in as demo@example.com / password
@@ -10982,14 +10982,14 @@ Tests (run each from its own directory — PowerShell has no `&&` chaining befor
 
 ```powershell
 docker compose exec app php artisan test
-cd frontend; npx vitest run; npx playwright test
+cd web; npx vitest run; npx playwright test
 cd src-tauri; cargo test; cd ..
 ```
 
 Desktop app:
 
 ```powershell
-cd frontend
+cd web
 npm run tauri:dev        # a desktop window, hot-reloading
 npm run tauri:build      # installers in src-tauri/target/release/bundle/
 ```
@@ -11031,8 +11031,8 @@ locally**. Say so rather than attempting them.
 ### Task M1: Android target
 
 **Files:**
-- Create: `frontend/src-tauri/gen/android/` (generated — do not hand-edit)
-- Modify: `frontend/src-tauri/tauri.conf.json`, `frontend/package.json`
+- Create: `web/src-tauri/gen/android/` (generated — do not hand-edit)
+- Modify: `web/src-tauri/tauri.conf.json`, `web/package.json`
 - Test: the app launches on an emulator
 
 **Interfaces:**
@@ -11063,7 +11063,7 @@ rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-andro
 - [ ] **Step 2: Initialise the Android project**
 
 ```powershell
-cd frontend
+cd web
 npm run tauri android init
 ```
 
@@ -11119,7 +11119,7 @@ git add -A && git commit -m "feat(mobile): Android target building and running o
 > this task cannot be done on this machine. Do not attempt a workaround.
 
 **Files:**
-- Create: `frontend/src-tauri/gen/apple/` (generated)
+- Create: `web/src-tauri/gen/apple/` (generated)
 - Test: the app launches in the iOS Simulator
 
 - [ ] **Step 1: Install the toolchain (macOS only)**
@@ -11134,7 +11134,7 @@ rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
 - [ ] **Step 2: Initialise**
 
 ```bash
-cd frontend
+cd web
 npm run tauri ios init
 ```
 
@@ -11160,8 +11160,8 @@ git add -A && git commit -m "feat(mobile): iOS target building and running in th
 > model. Wait for them to say continue.
 
 **Files:**
-- Modify: `frontend/src-tauri/src/keychain.rs`, `frontend/src-tauri/Cargo.toml`
-- Test: `frontend/src-tauri/src/keychain.rs` unit test, plus a manual device check
+- Modify: `web/src-tauri/src/keychain.rs`, `web/src-tauri/Cargo.toml`
+- Test: `web/src-tauri/src/keychain.rs` unit test, plus a manual device check
 
 **Interfaces:**
 - Produces: `save_token` / `load_token` / `delete_token` working on Android and iOS
@@ -11175,7 +11175,7 @@ git add -A && git commit -m "feat(mobile): iOS target building and running in th
 - [ ] **Step 1: Establish what works**
 
 ```bash
-cd frontend/src-tauri
+cd web/src-tauri
 cargo build --target aarch64-linux-android
 ```
 
@@ -11206,8 +11206,8 @@ git add -A && git commit -m "feat(mobile): secure token storage on Android and i
 ### Task M4: SQLite on mobile
 
 **Files:**
-- Modify: `frontend/src/db/connection.ts` (only if the path differs)
-- Test: `frontend/src/db/connection.test.ts`, plus a device check
+- Modify: `web/src/db/connection.ts` (only if the path differs)
+- Test: `web/src/db/connection.test.ts`, plus a device check
 
 - [ ] **Step 1: Confirm the database path resolves**
 
@@ -11237,11 +11237,11 @@ git add -A && git commit -m "test(mobile): verify SQLite storage and FTS5 on dev
 ### Task M5: Mobile behaviour
 
 **Files:**
-- Modify: `frontend/src/components/layout/AppShell.tsx`,
-  `frontend/src/hooks/useVisualViewport.ts`,
-  `frontend/src/components/editor/mobile.module.css`
-- Create: `frontend/src/platform/backButton.ts`
-- Test: `frontend/src/platform/backButton.test.ts`
+- Modify: `web/src/components/layout/AppShell.tsx`,
+  `web/src/hooks/useVisualViewport.ts`,
+  `web/src/components/editor/mobile.module.css`
+- Create: `web/src/platform/backButton.ts`
+- Test: `web/src/platform/backButton.test.ts`
 
 **Interfaces:**
 - Produces: Android's hardware **back button** steps the pane stack
@@ -11296,7 +11296,7 @@ git add -A && git commit -m "feat(mobile): hardware back navigation and device-v
 ### Task M6: Offline and sync on mobile
 
 **Files:**
-- Modify: `frontend/src/sync/engine.ts`
+- Modify: `web/src/sync/engine.ts`
 - Create: `docs/MOBILE-TEST-PLAN.md`
 
 **Interfaces:**
@@ -11360,7 +11360,7 @@ jobs on `macos-latest` for iOS.
 
 ```powershell
 docker compose exec app php artisan test
-cd frontend; npx vitest run; npx playwright test
+cd web; npx vitest run; npx playwright test
 cd src-tauri; cargo test; cd ..
 ```
 
@@ -11419,7 +11419,7 @@ deleted"; item 5 → B11 "rejects a term shorter than the MySQL minimum token si
 transaction or a `save()`. Each action is a single-method service under
 `app/Services/<Domain>`; read filtering lives in `app/Queries`; stateless helpers live
 in `app/Support`; models carry relations, casts and one scope. `ArchitectureTest` (B1b)
-fails the build if that slips, and every backend task re-runs it before committing.
+fails the build if that slips, and every api task re-runs it before committing.
 
 **Known gap, stated rather than hidden:** the Rich text ⇄ Source toggle appears in the F9
 toolbar but has no implementation task. It is Phase 2 in the spec. Either wire it to

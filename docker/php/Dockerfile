@@ -1,5 +1,5 @@
-# PHP 8.3 CLI with everything Laravel 12 needs, plus Composer.
-FROM php:8.3-cli
+# PHP 8.4 CLI with everything Laravel 12 needs, plus Composer.
+FROM php:8.4-cli
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip libzip-dev libicu-dev default-mysql-client \

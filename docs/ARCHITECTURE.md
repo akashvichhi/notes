@@ -351,7 +351,7 @@ wipes cloud rows first.
 
 ### Testing
 
-Pest (backend) · Vitest + Testing Library (frontend units) · Playwright (end-to-end,
+Pest (api) · Vitest + Testing Library (web units) · Playwright (end-to-end,
 including offline and sync scenarios).
 
 ### Build and distribution
@@ -377,12 +377,12 @@ updater replaces the service-worker update prompt.
 ## 8 · What changes from the current plan
 
 **Unchanged — most of the work.** The whole editor, the responsive layout, the UI
-components, the backend's controller/service/query layering, every existing endpoint,
+components, the api's controller/service/query layering, every existing endpoint,
 the MySQL schema as it stands, and the brand assets.
 
 **Added.** A `container` concept in the sidebar and note model · the SQLite local store
 and its migrations · the sync engine (outbox, pull, conflict queue) · revision counter
-and tombstones on the backend · the pull endpoint · token auth on both sides · the
+and tombstones on the api · the pull endpoint · token auth on both sides · the
 Tauri shell, updater and CI matrix · move-between-containers · the uninstall warnings ·
 merged search across containers.
 

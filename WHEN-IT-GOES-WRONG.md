@@ -18,7 +18,7 @@ git tag stage-0-start
 Tag at each checkpoint as you go:
 
 ```powershell
-git tag stage-1-backend     # after B18
+git tag stage-1-api     # after B18
 git tag stage-1-web         # after F15
 git tag stage-2-desktop     # after D12
 ```
@@ -44,7 +44,7 @@ git log --oneline | head -20
 git status
 git branch                                   # must be master only
 docker compose exec app php artisan test
-cd frontend; npx vitest run; cd ..
+cd web; npx vitest run; cd ..
 ```
 
 | Symptom | What it means |
@@ -61,10 +61,10 @@ The two that matter most:
 
 ```powershell
 # Did any test disappear?
-git diff stage-1-backend --stat -- backend/tests frontend/src/**/*.test.*
+git diff stage-1-api --stat -- api/tests web/src/**/*.test.*
 
 # Did any dependency appear?
-git diff stage-1-backend -- backend/composer.json frontend/package.json
+git diff stage-1-api -- api/composer.json web/package.json
 ```
 
 ---
@@ -101,7 +101,7 @@ and redoing it is faster than surgery.
 ### It drifted for a dozen tasks and you only just noticed
 
 ```powershell
-git reset --hard stage-1-backend   # or whichever tag is before the drift
+git reset --hard stage-1-api   # or whichever tag is before the drift
 ```
 
 Painful, but the alternative is a codebase where you do not know which parts were

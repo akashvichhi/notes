@@ -7,7 +7,7 @@ Entry point for the coding agent. Read this file first, in full.
 ## ✅ STATUS — 2026-10-11 · READY
 
 All documents are current and consistent. `docs/PLAN.md` holds **54 tasks** across
-four phases — backend, shared UI, desktop and mobile — separated by three `⛔ STOP`
+four phases — api, shared UI, desktop and mobile — separated by three `⛔ STOP`
 gates. Begin at Task B1, and stop at the first gate after Task F15.
 
 ---
@@ -44,7 +44,7 @@ All paths are relative to the repository root.
 
 ## 2b · What you will create
 
-The developer provides `backend/` and `frontend/` as bare scaffolds. Everything below
+The developer provides `api/` and `web/` as bare scaffolds. Everything below
 is created by you, task by task. **Do not create a directory that is not on this
 list** — if the plan seems to need one, stop and say so.
 
@@ -64,7 +64,7 @@ notes-app/
 ├── .github/workflows/
 │   └── desktop.yml               ← D11 (optional)
 │
-├── backend/                      provided as a bare Laravel 12 app
+├── api/                      provided as a bare Laravel 12 app
 │   ├── app/
 │   │   ├── Console/Commands/     PruneEmptyNotes, PurgeTrash
 │   │   ├── Exceptions/           NoteConflictException
@@ -101,7 +101,7 @@ notes-app/
 │       │                         SyncRevision, SyncPull, TrashedNoteConflict
 │       └── Unit/                 PlainTextExtractor, SnippetBuilder
 │
-└── frontend/                     provided as a bare Vite React-TS app
+└── web/                     provided as a bare Vite React-TS app
     ├── e2e/                      notes.spec.ts, sync.spec.ts
     ├── public/                   icons copied from assets/brand
     ├── src-tauri/                ← D1
@@ -179,10 +179,10 @@ is not yours to do.
 .DS_Store
 node_modules/
 vendor/
-/backend/.env
-/backend/storage/*.key
-/frontend/dist/
-/frontend/src-tauri/target/
+/api/.env
+/api/storage/*.key
+/web/dist/
+/web/src-tauri/target/
 ```
 
 No remote is required. Everything is local; `git log` is how the developer tracks
@@ -212,7 +212,7 @@ Every gate is marked `⛔ STOP` in `PLAN.md`. Reaching the next task in the file
 **Windows with Docker.** PHP and MySQL run in containers; only Node runs on the host.
 
 - Every PHP and Composer command: `docker compose exec app <command>`
-- Node and npm run on the host, from `frontend/`
+- Node and npm run on the host, from `web/`
 - `DB_HOST` is **`mysql`**, the compose service name — never `127.0.0.1`
 - Start the containers with `docker compose up -d` before Task B1
 
@@ -220,7 +220,7 @@ Every gate is marked `⛔ STOP` in `PLAN.md`. Reaching the next task in the file
 
 ## 4 · Ground rules
 
-**The applications already exist.** `backend/` is a Laravel 12 install and `frontend/`
+**The applications already exist.** `api/` is a Laravel 12 install and `web/`
 is a Vite + React + TypeScript project, both created by the developer. **Never** run
 `laravel new`, `composer create-project` or `npm create vite`. If either folder is
 missing, stop and say so.
@@ -240,7 +240,7 @@ first, and they can only do that between turns. One line is enough:
 
 **Work through the tasks strictly in order.** Do not skip ahead or reorder.
 
-**⛔ STOP AFTER TASK F15.** This delivery is the backend plus the web application —
+**⛔ STOP AFTER TASK F15.** This delivery is the api plus the web application —
 tasks **B1 through F15 only**. When F15 is committed, run the full suite, report, and
 **wait**. Do **not** start Task D1.
 
@@ -267,7 +267,7 @@ no way to recover it afterwards.
 
 **Controllers contain no logic.** Every action is a single-method service under
 `app/Services/<Domain>`; queries live in `app/Queries`; stateless helpers in
-`app/Support`; models hold relations, casts and scopes only. After every backend task
+`app/Support`; models hold relations, casts and scopes only. After every api task
 run `docker compose exec app php artisan test --filter=ArchitectureTest`. If it fails,
 move the logic into a service — never relax the test.
 

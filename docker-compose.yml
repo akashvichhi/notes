@@ -4,13 +4,13 @@ services:
     container_name: notes-app
     working_dir: /var/www/html
     volumes:
-      - ./backend:/var/www/html
+      - ./api:/var/www/html
     ports:
       - "8000:8000"
     depends_on:
       mysql:
         condition: service_healthy
-    # backend/ does not exist until Task B1 creates it, so wait for artisan
+    # api/ does not exist until Task B1 creates it, so wait for artisan
     # to appear and only then start serving.
     command: >
       sh -c "while [ ! -f artisan ]; do sleep 2; done;

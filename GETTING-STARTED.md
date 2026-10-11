@@ -65,7 +65,7 @@ git commit -m "docs: specification, plan and docker environment"
 ## Step 2 — Start PHP and MySQL 🖥️
 
 ```powershell
-New-Item -ItemType Directory -Force backend | Out-Null
+New-Item -ItemType Directory -Force api | Out-Null
 docker compose up -d --build
 ```
 
@@ -76,7 +76,7 @@ docker compose ps
 ```
 
 `notes-mysql` must say **healthy**. `notes-app` says **running** and sits idle,
-waiting for `backend/artisan` to appear. That idling is correct, not a fault.
+waiting for `api/artisan` to appear. That idling is correct, not a fault.
 
 ---
 
@@ -86,7 +86,7 @@ waiting for `backend/artisan` to appear. That idling is correct, not a fault.
 docker compose exec app composer create-project laravel/laravel .
 ```
 
-The `.` is deliberate: `/var/www/html` inside the container **is** your `backend\`
+The `.` is deliberate: `/var/www/html` inside the container **is** your `api\`
 folder. This also creates `.env` and generates the app key for you.
 
 The `app` container notices `artisan` and starts serving within a couple of seconds.
@@ -95,7 +95,7 @@ The `app` container notices `artisan` and starts serving within a couple of seco
 
 ## Step 4 — Point Laravel at MySQL 🖥️
 
-Open `backend\.env` and set these six lines:
+Open `api\.env` and set these six lines:
 
 ```dotenv
 APP_URL=http://127.0.0.1:8000
@@ -127,8 +127,8 @@ Expected: the default Laravel migrations run and report `DONE`. If you see
 
 ```powershell
 cd C:\dev\notes-app
-npm create vite@latest frontend -- --template react-ts
-cd frontend
+npm create vite@latest web -- --template react-ts
+cd web
 npm install
 npm run dev
 ```
@@ -252,7 +252,7 @@ start a fresh conversation when you switch.
 
 ## Step 7 — Open the project in Antigravity 🤖
 
-Open the folder `C:\dev\notes-app` — **the root**, not `backend` or `frontend`. The
+Open the folder `C:\dev\notes-app` — **the root**, not `api` or `web`. The
 agent needs to see both applications and the `docs/` folder.
 
 ---
@@ -280,7 +280,7 @@ want to switch model first, which only I can do.
 
 Each task's steps are a TDD cycle — follow them literally.
 
-STOP AFTER TASK F15. That is the end of this delivery: the backend and the
+STOP AFTER TASK F15. That is the end of this delivery: the api and the
 web application. Do not start Task D1. When F15 is committed, run the full
 test suite, report what was built and how it tested, and wait for me.
 
@@ -290,10 +290,10 @@ Never batch several tasks into one commit, and do not start the next task
 until the previous one is committed.
 
 Environment: Windows with Docker. Run every PHP and Composer command as
-`docker compose exec app <command>`. Node runs on the host from frontend/.
+`docker compose exec app <command>`. Node runs on the host from web/.
 DB_HOST is `mysql`.
 
-The backend/ and frontend/ applications already exist. Do not scaffold them.
+The api/ and web/ applications already exist. Do not scaffold them.
 
 Before Task B1, follow docs/START.md section 2c: make sure a git repository exists,
 creating one if it does not, and set the repository-scoped git identity given
@@ -332,7 +332,7 @@ git tag stage-0-start
 Tag again at each gate:
 
 ```powershell
-git tag stage-1-backend     # after B18
+git tag stage-1-api     # after B18
 git tag stage-1-web         # after F15   ← the agent stops here
 git tag stage-2-desktop     # after D12   ← and here
 git tag stage-3-mobile      # after M8
@@ -362,7 +362,7 @@ Three things worth catching early:
    following the plan. Stop it and point it back at the task list.
 2. **`ArchitectureTest` staying green.** If it starts failing, logic is creeping into
    controllers. Tell it to move the logic into a service rather than change the test.
-3. **Version drift.** `git diff backend/composer.json frontend/package.json` — the
+3. **Version drift.** `git diff api/composer.json web/package.json` — the
    plan pins every version, and silent upgrades are where "works on my machine" starts.
 
 If it stalls or you need to resume in a new session:
@@ -380,7 +380,7 @@ steps exactly. Do not redo earlier tasks.
 docker compose exec app php artisan migrate:fresh --seed
 docker compose exec app php artisan test
 
-cd frontend
+cd web
 npx vitest run
 npx playwright test
 npm run dev
@@ -402,7 +402,7 @@ docker compose up -d           # start PHP + MySQL
 docker compose down            # stop (your data survives)
 docker compose down -v         # stop AND delete the database
 docker compose exec app php artisan <anything>
-cd frontend; npm run dev       # frontend dev server
+cd web; npm run dev       # web dev server
 ```
 
 Add this to your PowerShell profile to save typing:

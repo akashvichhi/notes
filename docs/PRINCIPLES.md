@@ -345,9 +345,9 @@ Stop and check. It takes a minute and catches drift before it compounds.
 ```powershell
 git log --oneline | head -10          # one commit per finished task?
 git status                            # clean?
-git diff HEAD~5 --stat -- backend/composer.json frontend/package.json   # empty?
+git diff HEAD~5 --stat -- api/composer.json web/package.json   # empty?
 docker compose exec app php artisan test
-cd frontend; npx vitest run
+cd web; npx vitest run
 ```
 
 - Commit count matches finished tasks?

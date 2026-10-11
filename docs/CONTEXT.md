@@ -14,7 +14,7 @@ folders, tags, search, trash. Multi-user accounts with notes synced across every
 device, plus a device-only container that never leaves the machine.
 
 **One React codebase** ships as a web app and as native apps for Windows, macOS,
-Linux, Android and iOS. A **Laravel API on MySQL** is the cloud backend.
+Linux, Android and iOS. A **Laravel API on MySQL** is the cloud api.
 
 ---
 
@@ -54,7 +54,7 @@ supersedes them on anything that disagrees. Rewriting them is the next task.
 - The implementation will be executed by **Google Antigravity**, an agentic IDE, from
   `PLAN.md`. The plan must therefore be literal and self-contained — real code at every
   step, no "implement X here".
-- **The developer scaffolds `backend/` and `frontend/` themselves.** The agent must
+- **The developer scaffolds `api/` and `web/` themselves.** The agent must
   never run `laravel new`, `composer create-project` or `npm create vite`.
 - They prefer **decisions and deliverables over questions**. Offer a recommendation and
   proceed under stated assumptions rather than asking a sequence of questions.
@@ -226,7 +226,7 @@ Failure is loud, success is quiet.
 | `docs/CONTEXT.md` | This file — decisions, reversals, status |
 | `docs/ARCHITECTURE.md` | Containers, local and cloud storage, sync, the stack |
 | `docs/SPEC.md` | Product spec · **25 acceptance criteria in §9** |
-| `docs/PLAN.md` | **54 tasks** — B1–B18 backend · F1–F15 shared UI · D1–D12 desktop · M1–M8 mobile |
+| `docs/PLAN.md` | **54 tasks** — B1–B18 api · F1–F15 shared UI · D1–D12 desktop · M1–M8 mobile |
 | `docs/SETUP-WINDOWS.md` | The Docker environment |
 | | **For the developer only** | |
 | `GETTING-STARTED.md` | Runbook — setup, **the prompts to paste**, model choice, tagging |

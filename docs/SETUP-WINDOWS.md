@@ -32,7 +32,7 @@ node --version        # v20.x or v22.x
 npm --version
 ```
 
-Node runs the frontend. It stays on the host rather than in Docker because Vite's
+Node runs the web. It stays on the host rather than in Docker because Vite's
 hot reload is much faster that way on Windows.
 
 ---
@@ -53,7 +53,7 @@ docker compose ps
 ```
 
 You want `notes-mysql` showing **healthy** and `notes-app` **running**. The `app`
-container waits for `backend/artisan` to exist before it starts serving, so it sitting
+container waits for `api/artisan` to exist before it starts serving, so it sitting
 idle before Task B1 is expected, not a fault.
 
 The `notes` database is created automatically with the right charset and collation.
@@ -83,7 +83,7 @@ function art { docker compose exec app php artisan @args }
 Node commands run normally on the host:
 
 ```powershell
-cd frontend
+cd web
 npm install
 npm run dev
 ```
@@ -93,7 +93,7 @@ npm run dev
 ## 5. One setting that differs under Docker
 
 Inside the container, MySQL is **not** on `127.0.0.1` — it is reachable by its service
-name. In `backend/.env`:
+name. In `api/.env`:
 
 ```dotenv
 DB_HOST=mysql           # the compose service name, NOT 127.0.0.1
@@ -110,7 +110,7 @@ if you later run PHP on the host instead.
 
 ## 6. Creating the Laravel app (Task B1, Docker form)
 
-The plan's `laravel new backend` uses a global installer you do not have. Inside the
+The plan's `laravel new api` uses a global installer you do not have. Inside the
 container, use Composer directly — this is the other command the Laravel docs give:
 
 ```powershell
@@ -118,14 +118,14 @@ docker compose exec app composer create-project laravel/laravel .
 docker compose exec app php artisan install:api
 ```
 
-The `.` is deliberate: `/var/www/html` inside the container **is** your `backend/`
+The `.` is deliberate: `/var/www/html` inside the container **is** your `api/`
 folder on Windows, so the project is created straight into it.
 
-If `backend/` does not exist yet, create it first so the bind mount has something to
+If `api/` does not exist yet, create it first so the bind mount has something to
 point at:
 
 ```powershell
-New-Item -ItemType Directory -Force backend | Out-Null
+New-Item -ItemType Directory -Force api | Out-Null
 docker compose up -d
 ```
 
@@ -168,7 +168,7 @@ stop that service, or change the published port to `3307:3306` in `docker-compos
 it should be idle, not restarting.
 
 **Changes to files are not picked up** — confirm the bind mount is working:
-`docker compose exec app ls` should list your `backend/` contents.
+`docker compose exec app ls` should list your `api/` contents.
 
 **Docker Desktop will not start** — enable virtualisation in the BIOS and make sure
-the WSL2 backend is installed (`wsl --install` in an admin PowerShell).
+the WSL2 api is installed (`wsl --install` in an admin PowerShell).

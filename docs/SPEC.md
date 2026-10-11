@@ -1,54 +1,73 @@
 # Notes App — Design Specification
 
-**Date:** 2026-10-09
-**Status:** Approved, ready for implementation
+**Date:** 2026-10-11 · **Status:** approved, ready for implementation
+**Supersedes:** the PWA specification of 2026-10-09
 
-A multi-user notes web application in the spirit of macOS Notes, Windows Notepad and
-GNOME Text Editor: multiple "files" in a three-pane workspace, edited in a rich-text
-editor, usable on phone, tablet and desktop.
+A cross-platform notes application in the spirit of Apple Notes. One React codebase
+ships as a web app and as native apps; a Laravel API on MySQL is the cloud backend.
+Notes live in one of two containers — **Cloud**, synced across every device, or
+**On This Device**, which never leaves the machine.
 
 ---
 
-## 1. Product scope
+## 1 · Scope
 
-### In scope (Phase 1)
+### Phase 1
 
-Multi-user accounts · notes CRUD · nested folders · tags · star · trash with restore
-and 30-day purge · rich-text editing with the full toolbar · autosave with conflict
-detection · global search · scoped list filter · editor tabs (desktop) · light/dark
-theme · full responsive behaviour across phone, tablet and desktop.
+Two containers · multi-user accounts · notes CRUD · nested folders · tags · star ·
+trash with 30-day purge · rich-text editing with the full toolbar · autosave with
+conflict detection · offline editing on native · cloud sync · global search · scoped
+list filter · editor tabs on desktop · light/dark · full responsive behaviour ·
+**Windows, macOS and Linux desktop apps** · the web app.
+
+### Phase 2
+
+Android and iOS, on the same Tauri project, reusing the responsive layout.
 
 ### Explicitly deferred
 
 | Deferred | Why |
 |---|---|
-| Import / export (`.md`, `.zip`, PDF) | Dropped by the product owner; revisit when Settings exists |
-| Settings dialog | Only theme is needed daily, and it is a header button |
-| Version history | `note_versions` table is created, nothing surfaces it |
-| Image attachments | Needs storage, signed URLs and an upload pipeline |
-| Sharing, collaboration, realtime | Conflict detection by version number is the Phase-1 substitute |
-| Background Sync API | Replay happens on an `online` event, not via the browser's background sync — it has patchy support and the app does not need to sync while closed |
-| Push notifications | Nothing to notify about in a single-user notes app |
-| Two-factor auth, sessions list | Not required for launch |
+| Import / export | Dropped by the product owner |
+| Settings screen | Only theme is touched daily, and it is a header button |
+| Version history UI | `note_versions` is written on conflict resolution; nothing surfaces it yet |
+| Attachments | Needs storage, signed URLs, an upload pipeline and sync of binaries |
+| Block-level auto-merge | Planned after real conflict rates are observable |
+| Sharing, real-time collaboration | Conflict detection by version is the Phase-1 answer |
+| End-to-end encryption | Server-side search requires readable text |
+| Background sync while closed | Restricted on mobile, not worth the platform work |
 
 ### Non-goals
 
-Native apps. Markdown as the typing surface — users type rich text. Collaborative
-editing. Syncing while the app is closed.
+A Progressive Web App. React Native or Flutter. Markdown as the typing surface.
 
 ---
 
-## 2. Stack (exact versions, verified 2026-10-09)
+## 2 · Platforms and builds
 
-### Backend
+One `frontend/` source tree, built three ways.
 
-| | |
-|---|---|
-| PHP | 8.3+ |
-| Laravel | 12.x, **API-only** (`laravel new` then `php artisan install:api`) |
-| Auth | **Laravel Sanctum, stateful cookie (SPA) mode** |
-| Database | **MySQL 8.0+ only** — hard constraint. InnoDB, `utf8mb4` / `utf8mb4_0900_ai_ci` |
-| Queue / scheduler | `database` driver |
+| Build | Targets | Containers | Offline | Auth |
+|---|---|---|---|---|
+| **Web** | Any browser | Cloud only | No | Session cookie |
+| **Desktop** | Windows, macOS, Linux | Both | Yes | Bearer token |
+| **Mobile** (phase 2) | Android, iOS | Both | Yes | Bearer token |
+
+---
+
+## 3 · Stack
+
+### Shell
+
+| | Version | Role |
+|---|---|---|
+| **Tauri** | 2.x | One project for every native target; ~5–15 MB installers |
+| **Rust** | stable | Tauri's core; required to build, no app code written in it |
+| **tauri-plugin-sql** | 2.x | SQLite from the webview |
+| **tauri-plugin-store** / keychain | 2.x | Token storage in the OS secure store |
+
+Renderers: WebView2 (Windows), WKWebView (macOS, iOS), WebKitGTK (Linux),
+Android System WebView.
 
 ### Frontend
 
@@ -56,493 +75,427 @@ editing. Syncing while the app is closed.
 |---|---|
 | `react`, `react-dom` | 19.3.0 |
 | `vite` | 8.3.4 |
-| `typescript` | 7.0.2 (strict) |
-| `@mantine/core` `@mantine/hooks` `@mantine/tiptap` `@mantine/spotlight` `@mantine/notifications` `@mantine/modals` `@mantine/form` | **9.7.1** |
-| `@tiptap/react` `@tiptap/starter-kit` + extensions | 3.31.4 |
+| `typescript` | 7.0.2, strict |
+| `@mantine/*` — core, hooks, tiptap, spotlight, notifications, modals, form | 9.7.1 |
+| `@tiptap/*` — react, starter-kit and the MIT extension set | 3.31.4 |
 | `@tanstack/react-query` | 5.104.1 |
 | `zustand` | 5.0.15 |
 | `react-router` | 8.4.0 |
 | `axios` | 1.20.0 |
 | `@tabler/icons-react` | 3.49.0 |
+| `idb-keyval` | 6.2.2 |
+| `uuid` | 14.0.2 |
 | `dayjs` | 1.11.23 |
 
-All TipTap extensions used are **MIT**. No TipTap Pro, no CKEditor licence.
+No TipTap Pro, no CKEditor. Every extension used is MIT.
+
+### Backend
+
+PHP 8.3 · Laravel 12, API-only · Laravel Sanctum · **MySQL 8.0+ only**, InnoDB,
+`utf8mb4` / `utf8mb4_0900_ai_ci`.
+
+### Testing
+
+Pest · Vitest + Testing Library · Playwright.
 
 ---
 
-## 3. Architecture decisions
+## 4 · The two containers
 
-### 3.1 Authentication — stateful session cookies
+Each container is a **complete, independent world**: its own folders, its own tags,
+its own Trash. Nothing is shared except search, which spans both.
 
-**Mechanism:** cookie-based stateful session auth ("Sanctum SPA authentication").
-**Not** JWT. **Not** access/refresh tokens.
+| | **Cloud** | **On This Device** |
+|---|---|---|
+| Stored in | MySQL, on the server | SQLite, on the machine |
+| Visible on other devices | Yes | **No** |
+| Works offline | **Yes** — cached and editable | Yes |
+| Survives uninstall | Yes | **No** |
+| Needs an account | Yes | **No** |
+| Can conflict | Yes | Never — one device by definition |
+| Exists in the web build | Yes | No |
 
-| Part | Detail |
-|---|---|
-| Credential | Opaque session ID — random, unsigned, not decodable |
-| Transport | `laravel_session` cookie: `HttpOnly`, `Secure`, `SameSite=Lax` |
-| Server state | Session row in MySQL (`SESSION_DRIVER=database`) |
-| CSRF | Double-submit cookie: `XSRF-TOKEN` cookie → `X-XSRF-TOKEN` header |
-| Expiry | Sliding, 7 days of inactivity. No refresh call |
-| Revocation | Delete the session row |
+**The app works with no account.** Install, write in On This Device, never sign up.
+Signing in adds the Cloud container; it does not gate the app.
 
-**Why not JWT:** one API and one frontend, so stateless verification buys nothing while
-costing refresh rotation, reuse detection and a revocation denylist. A JS-readable token
-plus an app that renders user-authored rich text is the combination that turns one
-sanitiser gap into account takeover.
+**New notes default to Cloud** when signed in, **On This Device** when not.
 
-**Requirement:** the SPA and the API must share a registrable domain
-(`notes.example.com` + `api.notes.example.com`). If hosting ever forces unrelated
-domains, fix it with a reverse proxy rather than switching to tokens.
+**Moving between containers** is available from the note menu. Cloud → local warns
+that the note stops syncing and disappears from other devices. Local → cloud uploads
+it, keeping the same UUID.
 
-**Required config:**
-- `bootstrap/app.php`: `->withMiddleware(fn (Middleware $m) => $m->statefulApi())`
-  — an API-only app has no session middleware on the `api` group without this, and
-  cookie auth silently fails.
-- `SANCTUM_STATEFUL_DOMAINS` lists both hosts; `SESSION_DOMAIN=.example.com`
-- `config/cors.php`: `supports_credentials => true`, explicit `allowed_origins`
-- axios: `withCredentials: true` **and `withXSRFToken: true`** — axios ≥1.6 stopped
-  attaching the XSRF header cross-origin without the second flag. Missing it produces
-  419 on every write and looks like a CORS bug.
+### Warning about uninstall
 
-### 3.2 Note body storage — ProseMirror JSON
+Local notes are the only copy, so the app says so in four places:
+
+1. A one-time dismissible callout the first time a note lands in On This Device, with
+   a **Move to Cloud** button in it.
+2. Permanent helper text under the sidebar section: *Not backed up · stays on this computer*.
+3. The status bar, whenever a local note is open: *On this device — not backed up*.
+4. A confirmation when moving Cloud → On This Device.
+
+No platform offers a reliable uninstall hook, so the warning lands while the data
+still matters.
+
+---
+
+## 5 · Architecture decisions
+
+### 5.1 Authentication — two mechanisms, one guard
+
+A packaged app loads from `tauri://localhost`, a different origin from the API, so
+SameSite cookies are never sent and there is no CSRF handshake. Sanctum runs both
+mechanisms on the same `auth:sanctum` routes.
+
+| Client | Mechanism | Credential stored in |
+|---|---|---|
+| Browser | Stateful session cookie | httpOnly cookie, `SameSite=Lax` |
+| Native | **Bearer token** | **OS secure store** — Credential Manager, Keychain, libsecret, Keystore |
+
+**The token never touches `localStorage`.** Web config is unchanged from before:
+`statefulApi()` middleware, `SANCTUM_STATEFUL_DOMAINS`, `supports_credentials`, and
+axios with **both** `withCredentials` and `withXSRFToken`.
+
+Signing out revokes the token, wipes every Cloud row from SQLite, and **leaves
+On This Device untouched**. Signing in as a different account wipes Cloud rows first.
+
+### 5.2 Note body — ProseMirror JSON
 
 The toolbar exposes highlight, text colour, subscript/superscript and text-align.
-**None of these can be represented in GFM markdown**, so markdown cannot be the
-canonical format.
+None can be represented in GFM markdown, so markdown cannot be canonical.
 
 | Column | Type | Role |
 |---|---|---|
-| `body` | `JSON` | Canonical ProseMirror document. Validated by MySQL on write and by the ProseMirror schema on load |
-| `plain_text` | `LONGTEXT` | **Derived server-side** by walking the JSON for text nodes. Feeds `FULLTEXT` search |
-| `excerpt` | `VARCHAR(200)` | First ~140 chars of `plain_text`, for the list snippet |
+| `body` | `JSON` | Canonical ProseMirror document |
+| `plain_text` | `LONGTEXT` | **Derived server-side**; feeds `FULLTEXT` |
+| `excerpt` | `VARCHAR(200)` | List snippet |
 
-`plain_text` is never accepted from the client — otherwise search drifts from content.
+`plain_text` is never accepted from a client, or search drifts from content.
 
-**Security:** ProseMirror's schema is a strict node whitelist and drops anything it does
-not recognise. The server never emits HTML built from note content.
+### 5.3 Local storage — SQLite, local-first
 
-### 3.3 Search — MySQL FULLTEXT
+On native the UI **always reads SQLite**; the sync engine fills it in the background.
+Offline is therefore not a special case, and there is one data path rather than two.
 
-```sql
-WHERE user_id = ? AND deleted_at IS NULL
-  AND MATCH(title, plain_text) AGAINST (? IN BOOLEAN MODE)
-```
+**Why not IndexedDB:** for On This Device notes the local file is the *only copy*, and
+IndexedDB can be evicted under storage pressure. SQLite is a real file the OS backs
+up, and FTS5 gives offline full-text search.
 
-Known limits versus Postgres, and the mitigations:
+IndexedDB is still used, for the **draft buffer only** — the in-progress document,
+written on every keystroke so a crash never loses typing.
 
-| Limit | Mitigation |
+The web build has no local database and reads the API directly.
+
+### 5.4 Sync — document-level, with conflict copies
+
+Only Cloud notes sync.
+
+**Push reuses the existing REST endpoints.** The outbox replays `POST /notes`,
+`PATCH /notes/{uuid}`, `PUT /notes/{uuid}/tags` and `DELETE /notes/{uuid}`, one
+operation at a time in order — a create must land before the edits that follow it.
+
+**Body writes coalesce by note:** the outbox keeps only the most recent body per note,
+so twenty minutes offline replays as one `PATCH`. **Metadata writes carry no version**
+and therefore can never conflict.
+
+**Pull is one new endpoint**, paginated by revision.
+
+**Push before pull.** The server holds the truth and detects conflicts; pulling first
+would mean reconciling locally against unpushed changes.
+
+**A per-account revision counter, not `updated_at`.** Timestamps lose notes to clock
+adjustment, same-millisecond writes and rows modified during a sync window.
+
+**Tombstones for hard deletes.** Without them an offline device keeps a ghost copy and
+its queued edit resurrects the note. **Tombstones are retained longer than the 30-day
+trash purge**; a client asking for a revision older than the oldest tombstone is told
+to do a full resync.
+
+**Conflict resolution** is per note, queued and surfaced as a banner — *"3 notes need
+your attention"* — never a stack of modals.
+
+| Choice | Result |
 |---|---|
-| No stemming (`release` ≠ `releases`) | Boolean mode with a trailing wildcard: `releas*` |
-| `innodb_ft_min_token_size = 3` | Queries under 3 chars are rejected by FormRequest; client shows "Type at least 3 characters" and sends nothing |
-| Built-in stopword list | Accepted |
-| No `ts_headline` highlighting | Snippets built in PHP; the API returns **plain text + matched terms**, and the client applies the `<mark>`. The server never emits HTML |
-| `FULLTEXT` cannot include `user_id` | Optimiser uses the FT index then filters. Re-check at ~1M rows |
+| **Save mine as a copy** ← default | A new note holds your text; the original keeps theirs. Nothing is lost |
+| Keep mine | Resends at the current version. The replaced body is written to `note_versions` |
+| Keep theirs | Local edit discarded |
 
-If quality becomes a complaint, Laravel Scout + Meilisearch drops in behind the same
-endpoint. Not needed for Phase 1.
+Deliberately **not CRDTs**: Yjs would eliminate conflicts but replaces readable JSON
+with binary blobs, needs compaction, makes server-side search and debugging much
+harder, and deletes the version model — to solve conflicts a single user hits rarely.
 
-### 3.4 Identifiers
+**Sync runs** on app launch, when the network returns, after a local write (debounced),
+and every few minutes while the window is focused. Never while the app is closed.
 
-`BIGINT UNSIGNED AUTO_INCREMENT` primary keys plus a `uuid CHAR(36)` unique column,
-which is what the API exposes. Random UUIDs as a clustered InnoDB primary key cause
-page splits.
+### 5.5 One server rule the sync model needs
 
-### 3.5 New note lifecycle
+A note trashed on device A while device B edits it offline: the server **rejects a body
+write to a trashed note with 409**, and B is asked *"This note was moved to Trash on
+another device — restore it, or discard your changes?"* Without the rule, B's edit
+lands silently on a trashed note.
 
-Create on the server immediately, discard silently if abandoned:
+### 5.6 Search
 
-1. **New note** → `POST /notes` with an empty body in the current folder.
-2. Tab and list row appear **optimistically** with a temporary client id; TanStack Query
-   swaps in the real UUID on response.
-3. When the note loses focus — tab closed, another note opened, window closed — if
-   `plain_text` is empty **and** nothing else changed (no tag, folder, star), issue a
-   **hard `DELETE ?force=1`**, not a trash. A blank untouched note was never a note.
-4. A nightly job hard-deletes empty untouched notes older than 24 h, because laptops
-   get closed.
-5. If the create fails, the row stays visible in an error state with Retry and the text
-   stays in IndexedDB. Never silently discard typing.
-
-Rejected: keeping new notes client-side until the first keystroke. Tagging, moving,
-starring, autosave, conflict detection and tab restore all need an id, so that approach
-special-cases "note without id" across the whole app.
-
-### 3.6 Autosave and conflict
-
-- Debounce **800 ms** idle, plus flush on tab switch, blur, `beforeunload`, and
-  **`visibilitychange`** (mobile browsers discard backgrounded tabs).
-- Every keystroke also writes to an **IndexedDB draft buffer**. On open, a local draft
-  newer than the server copy offers *Restore / Discard*.
-- `PATCH /notes/{uuid}` sends `{body, version}`. A stale `version` returns **409** with
-  the server's copy; the client shows a conflict sheet: *Keep mine / Keep theirs /
-  Save mine as a copy*.
-- **The version check applies only when the payload contains `body`.** Starring or
-  moving a note must never 409 against an in-flight autosave.
-
-### 3.7 Offline and PWA
-
-The app is an **installable Progressive Web App that works offline**.
-
-**What works with no network**
-
-| | Offline |
+| Source | Mechanism |
 |---|---|
-| Open the app (including a deep link) | ✅ from the precached shell |
-| Read notes, folders and tags you have opened or listed before | ✅ from the response cache |
-| Edit an existing note | ✅ queued, replayed on reconnect |
-| Create a note | ✅ the client mints the UUID |
-| Star, rename, move, trash | ✅ queued |
-| Search | ❌ `FULLTEXT` lives in MySQL. Falls back to filtering cached titles, labelled as such |
-| Register, sign in, change password | ❌ requires the server |
+| Cloud, online | MySQL `MATCH … AGAINST` in boolean mode with a trailing wildcard |
+| Cloud, offline | SQLite FTS5 over the local mirror |
+| On This Device | SQLite FTS5 |
 
-**Three caching strategies, by what the resource is**
+Results from both containers merge, each tagged with its container. MySQL's
+`innodb_ft_min_token_size` is 3, so terms under three characters are rejected by the
+request layer and the UI says *"Type at least 3 characters"* rather than returning an
+empty list that reads as "you have no notes".
 
-| Resource | Strategy | Why |
-|---|---|---|
-| App shell — HTML, JS, CSS, fonts, icons | **Precache**, served cache-first | It never changes between deploys; a new build precaches new files |
-| `GET /bootstrap`, `/notes`, `/notes/{uuid}` | **Network-first**, fall back to cache | Fresh when online, readable when not |
-| Everything else, and every non-GET | **Never cached** | Auth and writes must not be served from a cache |
+### 5.7 New note lifecycle
 
-**The offline write queue, and why it is tractable**
+Create immediately, discard silently if abandoned. The client mints a **UUIDv7**, so
+the id exists before the server sees it and offline creates work. `POST /notes` is
+**idempotent** — a replayed create returns the existing note rather than a twin.
 
-Naively replaying queued writes is a mess: each `PATCH` carries a `version`, so
-replaying five offline edits means the first succeeds and the next four `409`.
+If a note is still empty and untouched when it loses focus, it is hard-deleted with no
+toast and no confirmation. A nightly job sweeps the ones a crash left behind.
 
-Two properties make it simple here:
+### 5.8 Tabs
 
-1. **Coalesce by note.** Autosave is already last-write-wins per note from one device,
-   so the queue keeps only the **most recent** body per note UUID. Twenty minutes of
-   offline typing replays as **one** `PATCH`, carrying the last version the client
-   successfully saw.
-2. **Metadata writes carry no version** (§3.6), so star, rename, move and trash can
-   never conflict. Only body writes can, and there is at most one per note.
-
-So the only possible conflict is "another device edited this note while you were
-offline" — which is exactly the case the existing **conflict sheet** already handles.
-No CRDTs, no merge engine.
-
-**Creating notes offline** needs an id before the server can assign one, so the client
-mints a **UUIDv7** and `POST /notes` accepts it. The endpoint is **idempotent**: a
-replayed create with a UUID that already exists for that user returns the existing
-note rather than duplicating it. Without this, a flaky reconnect produces twins.
-
-**Replay** is triggered by the `online` event and on app start, one request at a time
-in queue order, with the status bar showing `Offline — 3 changes queued`.
-
-**Updates.** A new service worker takes over only after every tab is closed, so the
-app must detect a waiting worker and prompt: *"A new version is available — Reload."*
-Without this, users sit on stale JavaScript for days and bug reports become unfalsifiable.
-
-**Security.** Cached API responses live in Cache Storage, which is origin-scoped but
-survives sign-out. On logout the app **must** unregister the service worker, delete
-every cache and clear IndexedDB — otherwise the next person on a shared device can
-read the previous user's notes offline.
-
-### 3.8 Tabs
-
-Desktop and tablet only. **Persisted in `localStorage`, per device** — window state, not
-user data. No endpoint. Hidden entirely on phones.
+Desktop and tablet only, persisted to `localStorage` **per device**. Window state, not
+user data.
 
 ---
 
-## 4. Data model (MySQL 8)
+## 6 · Data model
 
-All tables InnoDB, `utf8mb4` / `utf8mb4_0900_ai_ci`.
+### 6.1 MySQL — cloud only
 
-```
-users             id, uuid, name, email UNIQUE, password, preferences JSON NULL,
-                  email_verified_at, remember_token, timestamps
-
-folders           id, uuid, user_id FK, parent_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-                  name VARCHAR(120), color CHAR(7) NULL, position INT DEFAULT 0, timestamps
-                  UNIQUE (user_id, parent_id, name)          -- parent_id 0 = root sentinel
-                  KEY (user_id, parent_id)
-
-tags              id, uuid, user_id FK, name VARCHAR(60), slug VARCHAR(60), timestamps
-                  UNIQUE (user_id, slug)
-
-notes             id, uuid CHAR(36) UNIQUE, user_id FK, folder_id FK NULL,
-                  title VARCHAR(255) DEFAULT '', title_locked TINYINT(1) DEFAULT 0,
-                  body JSON NULL, plain_text LONGTEXT NULL, excerpt VARCHAR(200) DEFAULT '',
-                  is_starred TINYINT(1) DEFAULT 0, version INT UNSIGNED DEFAULT 1,
-                  word_count INT UNSIGNED DEFAULT 0, deleted_at TIMESTAMP NULL, timestamps
-                  KEY (user_id, deleted_at, updated_at)       -- list pane, default sort
-                  KEY (user_id, folder_id, deleted_at)        -- folder scope + counts
-                  KEY (user_id, is_starred, deleted_at)       -- Starred
-                  FULLTEXT KEY ft_notes (title, plain_text)
-
-note_tag          note_id, tag_id, PRIMARY KEY (note_id, tag_id), KEY (tag_id)
-
-note_versions     id, note_id FK, body JSON, version INT, created_at
-                  -- created in Phase 1, nothing writes to it yet
-```
-
-**MySQL gotchas that are easy to miss**
-
-1. `JSON` columns **cannot have a `DEFAULT`**. `body` is nullable; the app writes an
-   empty ProseMirror doc on create.
-2. `UNIQUE (user_id, parent_id, name)` would **not** prevent duplicate root folders if
-   `parent_id` were `NULL`, because MySQL treats each `NULL` as distinct. Hence the
-   `parent_id = 0` sentinel, not `NULL`.
-3. `FULLTEXT` indexes accept only `CHAR`/`VARCHAR`/`TEXT` columns.
-
-**Sidebar counts are two grouped queries, never N queries:**
+There is **no `container` column server-side**. The server holds only Cloud notes and
+has no knowledge that local ones exist.
 
 ```sql
-SELECT folder_id, COUNT(*) FROM notes
- WHERE user_id = ? AND deleted_at IS NULL GROUP BY folder_id;
+users(id, uuid, name, email UNIQUE, password, preferences JSON, timestamps)
 
-SELECT nt.tag_id, COUNT(*) FROM note_tag nt JOIN notes n ON n.id = nt.note_id
- WHERE n.user_id = ? AND n.deleted_at IS NULL GROUP BY nt.tag_id;
+folders(id, uuid, user_id, parent_id DEFAULT 0, name, color, position, revision, timestamps)
+  UNIQUE(user_id, parent_id, name)        -- parent_id 0 is the root sentinel: MySQL
+                                          -- treats every NULL as distinct
+tags(id, uuid, user_id, name, slug, revision, timestamps)
+  UNIQUE(user_id, slug)
+
+notes(id, uuid CHAR(36) UNIQUE, user_id, folder_id,
+      title, title_locked, body JSON, plain_text LONGTEXT, excerpt,
+      is_starred, version, word_count, revision, deleted_at, timestamps)
+  KEY(user_id, deleted_at, updated_at)    KEY(user_id, folder_id, deleted_at)
+  KEY(user_id, is_starred, deleted_at)    KEY(user_id, revision)
+  FULLTEXT ft_notes(title, plain_text)
+
+note_tag(note_id, tag_id, PRIMARY KEY(note_id, tag_id), KEY(tag_id))
+note_versions(id, note_id, body JSON, version, created_at)
+
+user_sync_counters(user_id PRIMARY KEY, last_revision BIGINT)
+tombstones(id, user_id, entity_type, uuid, revision, created_at, KEY(user_id, revision))
+personal_access_tokens(…Sanctum…, name = the device name)
 ```
+
+**MySQL specifics that bite:** `JSON` columns cannot have a `DEFAULT`, so `body` is
+nullable and the app writes an empty document. `FULLTEXT` accepts only text columns,
+so it cannot include `user_id` — the optimiser filters after matching.
+
+Sidebar counts are **two grouped queries**, never one per folder.
+
+### 6.2 SQLite — on device, both containers
+
+One file in the OS application-data directory: `%APPDATA%\com.notesapp\notes.db`,
+`~/Library/Application Support/com.notesapp/notes.db`,
+`~/.local/share/com.notesapp/notes.db`, or the app sandbox on mobile.
+
+```sql
+notes(uuid PRIMARY KEY, container, folder_uuid, title, body, plain_text, excerpt,
+      is_starred, word_count, deleted_at, updated_at,
+      server_version, server_revision, dirty)
+folders(uuid PRIMARY KEY, container, parent_uuid, name, color, position,
+        deleted_at, dirty, server_revision)
+tags(uuid PRIMARY KEY, container, name, slug, deleted_at, dirty, server_revision)
+note_tag(note_uuid, tag_uuid, PRIMARY KEY(note_uuid, tag_uuid))
+outbox(id INTEGER PRIMARY KEY AUTOINCREMENT, kind, note_uuid, payload, created_at)
+meta(key PRIMARY KEY, value)              -- last_revision, account_uuid, schema_version
+notes_fts                                 -- FTS5 over title + plain_text
+```
+
+`container = 'local'` rows are never read by the sync engine. **That column is the
+entire isolation mechanism.** `server_version`, `server_revision` and `dirty` are NULL
+or 0 for local rows.
 
 ---
 
-## 5. API
+## 7 · API
 
-Base path `/api/v1`. All routes except auth are behind `auth:sanctum` and a policy that
-scopes every record to the authenticated user. **Never accept `user_id` from the client.**
-Public identifiers are UUIDs.
+Base `/api/v1`. Everything except auth sits behind `auth:sanctum` and a policy scoping
+each record to the authenticated user. **Never accept `user_id` from a client.**
 
 ### Auth
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/sanctum/csrf-cookie` | Primed once on app boot |
-| POST | `/api/v1/register` | |
-| POST | `/api/v1/login` | Throttled 5/min per email+IP, generic errors |
-| POST | `/api/v1/logout` | |
-| POST | `/api/v1/forgot-password` · `/reset-password` | |
-| GET | `/api/v1/me` | User + preferences |
-| PATCH | `/api/v1/me` | name, email |
-| PUT | `/api/v1/me/password` | |
+| GET | `/sanctum/csrf-cookie` | Web only |
+| POST | `/register` · `/login` · `/logout` | Web, cookie session |
+| POST | **`/tokens`** | **Native.** email + password + `device_name` → token, shown once. Throttled 5/min |
+| DELETE | **`/tokens/current`** | **Native** sign-out |
+| POST | `/forgot-password` · `/reset-password` | |
+| GET / PATCH | `/me` · `/me/password` | |
 
-### Bootstrap
+### Bootstrap, notes, folders, tags
 
-| GET | `/api/v1/bootstrap` |
-|---|---|
+Unchanged from the previous specification: `GET /bootstrap`; `GET|POST /notes`,
+`GET|PATCH|DELETE /notes/{uuid}`, `/notes/{uuid}/restore|duplicate|tags`,
+`DELETE /trash`; CRUD for `/folders` and `/tags`; `PATCH /preferences`; `GET /search`.
 
-Returns `{ user, preferences, folders[], tags[], counts{}, notes: <first page> }`.
-**One request renders the app.** Without it the first paint needs six round-trips and
-nothing serves the nine sidebar counts.
+`PATCH /notes/{uuid}` checks `version` **only when the payload contains `body`**, and
+returns **409** with the server copy on a mismatch. It also returns **409** for a body
+write to a trashed note.
 
-### Notes
+### Sync — one new endpoint
 
-| Method | Path | Notes |
-|---|---|---|
-| GET | `/notes?folder_id=&tag=&starred=&trashed=&q=&sort=&cursor=` | **Cursor** pagination — `updated_at` changes constantly, so offset pagination duplicates and skips rows |
-| POST | `/notes` | |
-| GET | `/notes/{uuid}` | |
-| PATCH | `/notes/{uuid}` | `{body, version}` → **409**; or `{title}` / `{folder_id}` / `{is_starred}` with **no** version check |
-| POST | `/notes/{uuid}/duplicate` | |
-| PUT | `/notes/{uuid}/tags` | `{names: [...]}` — **by name, not id**. Server upserts missing tags and returns the resolved set, so the picker's type-and-create is one request |
-| DELETE | `/notes/{uuid}` | Soft delete → trash |
-| POST | `/notes/{uuid}/restore` | Optional `{folder_id}` |
-| DELETE | `/notes/{uuid}?force=1` | Hard delete. Serves two paths: "Delete permanently", and the silent discard of an abandoned empty note (no toast, no confirm) |
-| DELETE | `/trash` | Empty trash |
+```
+GET /api/v1/sync?since=<revision>&limit=200
+→ { revision, notes[], folders[], tags[], deletions[{type,uuid}], has_more }
+```
 
-### Folders, tags, preferences, search
-
-| Method | Path | Notes |
-|---|---|---|
-| POST/PATCH/DELETE | `/folders` · `/folders/{uuid}` | **Deleting a folder moves its notes to root — it never deletes notes** |
-| POST/PATCH/DELETE | `/tags` · `/tags/{uuid}` | Deleting a tag detaches it; notes survive |
-| PATCH | `/preferences` | theme, sort, group-by-date, show-snippets |
-| GET | `/search?q=` | **Separate from `/notes?q=`** — returns mixed types (notes, folders, tags) with snippets, not homogeneous paginated notes |
+`since=0` is a full sync. A `since` older than the oldest tombstone returns
+`{ full_resync_required: true }`.
 
 ---
 
-## 6. UI
+## 8 · UI
 
-### 6.1 Layout
+### Layout
+
+Three panes on desktop — sidebar, note list, editor — collapsing to two with a drawer
+at 768–1099px and to a single-pane stack below 768px. The document fills the full
+editor width. The sidebar toggle sits at the far left. The header's right side holds
+only the theme toggle and the avatar; the avatar menu has exactly **Profile** and
+**Sign out**.
+
+### Sidebar — two accounts
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ ☰  Notes     🔍 Search notes and actions…  ⌘K      ☀  AV     │
-├───────────┬──────────────┬───────────────────────────────────┤
-│ ＋ New    │ All notes ⇅  │ ┌ Release plan ●─┬ Meeting ─┬ ＋ ┐│
-│           │ ▽ Filter in… │ ├─────────────────────────────────┤│
-│ All notes │ ┌──────────┐ │ │ B I U S Tx H ⟨⟩ H1-H4 A̲ • 1. ✓ ││
-│ Recent    │ │ Release  │ │ │ ❝ X₂ X² 🔗 🖼 ▦ {} ▸ — ≡ ↶ ↷ ¶ ││
-│ Starred   │ │ Ship r34 │ │ ├─────────────────────────────────┤│
-│ FOLDERS ＋│ └──────────┘ │ │ #todo #release  ＋ Add tag      ││
-│  • Work ⋯ │              │ │ # Release plan — r34            ││
-│ TAGS    ＋│              │ │ …full width, no max-width…      ││
-│ 🗑 Trash  │              │ └─────────────────────────────────┘│
-├───────────┴──────────────┴───────────────────────────────────┤
-│ ● Saved · 2 min ago   148 words   Work/Releases   Autosave on │
-└──────────────────────────────────────────────────────────────┘
+＋ New note
+
+☁ CLOUD                        ● Synced
+   All notes · Starred
+   FOLDERS   Work · Releases · Personal
+   TAGS      #todo #draft
+   🗑 Trash
+
+💻 ON THIS DEVICE
+   Not backed up · stays on this computer
+   All notes
+   FOLDERS   Quick notes
+   TAGS      #private
+   🗑 Trash
 ```
 
-- Sidebar toggle is at the **far left**, next to what it controls.
-- The document fills the **full width** of the editor pane — no centred max-width column.
-- Header right is **theme toggle + avatar only**. There is no gear icon.
-- Avatar menu has exactly two items: **Profile** and **Sign out**.
+Folders use a **folder icon tinted with their colour**, under a FOLDERS label — a bare
+coloured dot does not read as a folder.
 
-### 6.2 Two search controls, deliberately different
+### Two search controls, deliberately distinct
 
-| | **⌘K Spotlight** | **Funnel filter** |
+| | ⌘K Spotlight | List filter |
 |---|---|---|
 | Icon | Magnifier | **Funnel** |
-| Scope | Every note, any folder | Only the visible list |
-| Searches | Title + body + folders + tags + commands | Title + snippet |
-| Result | **Jumps** to a note, closes | **Narrows in place**, stays |
-| Placeholder | "Search notes and actions…" | "**Filter in Work**" — names the scope |
+| Scope | Every note, both containers | The visible list only |
+| Result | Jumps to a note | Narrows in place |
+| Placeholder | "Search all notes…" | "**Filter in Work**" — names the scope |
 
-The funnel is **hybrid**: it filters loaded rows instantly with no loader, and if the
-scope has more pages it fires a scoped server query in the background. Client-side-only
-filtering silently misses notes beyond the loaded page.
+The filter is **hybrid**: instant on loaded rows, with a background scoped query when
+the scope has more pages. Filtering only loaded rows silently hides notes. It clears
+when the scope changes.
 
-**Handoff:** in Spotlight, `⌘↵` / "See all results" switches the list pane to a
-`Search results for "…"` scope with a Clear button. The filter then narrows within it.
-The filter clears automatically when the scope changes — a sticky filter makes notes
-look deleted.
+### Editor
 
-### 6.3 Editor
+The full `@mantine/tiptap` control set — marks, H1–H4, colour, lists, task lists,
+sub/superscript, link, image, table, code block, details, alignment, history,
+invisible characters. **Table controls live in a contextual bar** shown only while the
+cursor is inside a table. BubbleMenu on desktop only — it collides with iOS selection
+handles.
 
-Full `@mantine/tiptap` control set, all MIT:
-
-**Marks** Bold · Italic · Underline · Strikethrough · ClearFormatting · Highlight · Code
-**Headings** H1–H4
-**Colour** text colour · clear colour
-**Blocks** bullet · ordered · task list · blockquote · subscript · superscript
-**Insert** link · unlink · image · table · code block · details · horizontal rule
-**Align** left · centre · right · justify
-**History** undo · redo
-**Extras** invisible characters · Rich text ⇄ Source
-**Menus** BubbleMenu (desktop only) · sticky toolbar
-
-**Table controls live in a contextual bar** shown only while the cursor is inside a
-table — add/delete row and column, merge, split, header row, header column, delete
-table. Eleven more buttons in the permanent toolbar would be unusable.
-
-**Title derivation:** first `# heading`, else the first non-empty line, truncated to 120
-chars — until renamed explicitly, after which `title_locked = 1` and it never
-auto-changes.
-
-### 6.4 Dropdowns (12)
-
-Account · Note actions · Folder actions · **Tag actions (Rename / Delete only)** ·
-Sort & view · Tab actions · Move to folder · Tag picker · Trash actions · Text colour ·
-Insert table (drag-to-size grid) · Link.
-
-Destructive items state what **survives**: "Notes inside move to All notes — nothing is
-deleted"; "Removed from 4 notes. The notes stay." Trash rows show "Auto-deleted 23 days
-from now".
-
-### 6.5 Loading rules
-
-**Never a full-screen loader.** A loader covers only the region whose data is missing.
-
-| Situation | Treatment |
-|---|---|
-| First boot | **Skeleton of the real layout** — sidebar, list rows, editor lines |
-| Switch folder / search | Skeleton rows **in the list pane only** |
-| Open a note | Tab appears instantly with the known title; skeleton lines in the body |
-| Button actions | Spinner **inside the button**, button disabled |
-| ⌘K search | 2px indeterminate bar under the input; **stale results stay visible, dimmed** |
-| Funnel filter | Inline spinner in the input → result count `4 of 24` |
-| Find in note | **None** — the document is in memory |
-| Autosave / prefetch | **None** |
-| Anything else | 2px top-of-window bar driven by `useIsFetching()` |
-
-Two rules that matter more than they sound:
-
-1. **Delay every loader by 250 ms.** Most requests return in under 100 ms; a one-frame
-   spinner reads as jank.
-2. **Mutations get optimistic updates, not spinners.** Star, move, rename and delete
-   apply instantly and roll back with a toast + Retry.
-
-**Never clear results while loading** — dim them. Clearing makes the list jump.
-Skeletons only when there is nothing to keep.
-
-### 6.6 Saving
-
-No spinner. The status bar is the indicator:
+### Status bar
 
 ```
-●  Saved · 2 min ago     ●  Saving…     ●  Saved
-▲  Couldn't save · retrying in 4s   [Retry]
+● Synced just now   Selected 10 words · 43 characters │ 148 words · 892 characters   Cloud · Work / Releases
 ```
 
-1. **Never block the editor.** Typing continues during a save.
-2. **"Saving…" has a 400 ms minimum display time**, or it strobes.
-3. **⌘S is the exception** — an explicit save earns an explicit acknowledgement.
-4. **Failure is loud, success is quiet.** Amber status, exponential backoff, draft kept
-   in IndexedDB, persistent banner after ~3 failures.
+Characters include spaces; words are whitespace-separated tokens. The selection
+segment appears only when there is a selection. Totals come from TipTap's
+`CharacterCount`; the selection is measured from the ProseMirror range, not the DOM.
 
-### 6.7 Responsive — three layouts, not one layout with things hidden
+Sync states: `Synced just now` · `Syncing… 12 of 30` · `Offline — 3 changes pending` ·
+`3 notes need your attention`. **Local notes show no sync state at all**, only
+*On this device — not backed up*.
 
-| Width | Layout |
-|---|---|
-| **≥ 1100px** desktop | Three panes. Sidebar collapses with ⌘1 |
-| **768–1099px** tablet | Two panes (list + editor). Sidebar is a **slide-in drawer** with a scrim |
-| **≤ 767px** phone | **One pane at a time**: Folders → Notes → Editor, with a back chevron |
+### Loading rules
 
-Phone specifics:
+**Never a full-screen loader.** Skeletons shaped like the real layout on first paint;
+skeleton rows in the list pane only when switching scope; a spinner inside the button
+for button actions; a 2px top bar for anything else; **nothing at all** for autosave
+and prefetch. **Every loader is delayed 250 ms** so fast requests show nothing.
+Mutations get optimistic updates, not spinners. Stale results stay visible and dimmed
+rather than vanishing.
 
-- **No tabs.** A mouse metaphor; eight of them on a 390px screen is unusable.
-- **Toolbar moves to the bottom**, horizontally scrollable, above the keyboard.
-- **Dropdowns become bottom sheets**, full width, 15px text, 12px padding.
-- **BubbleMenu disabled** below 768px — it collides with iOS selection handles.
-- **Inputs are 16px.** Under 16px, Safari zooms the page on focus and never zooms back.
-- **`@media (hover:none)`** makes row actions permanently visible; hover-only affordances
-  do not exist on touch.
-- **`env(safe-area-inset-bottom)`** on toolbar, status bar and toasts.
-- **`100dvh`, never `100vh`.**
-- **iOS keyboard:** a sticky bottom toolbar still gets covered in some cases. Use the
-  **`visualViewport` API** — translate the toolbar by
-  `window.innerHeight - visualViewport.height` on `resize`/`scroll`.
+### Saving
 
-Touch targets ≥ 44×44 everywhere.
+No spinner. The status bar is the indicator, with a 400 ms minimum display for
+"Saving…" so it cannot strobe. Typing is never blocked. ⌘S is the exception — an
+explicit save earns an explicit acknowledgement. Failure is loud and keeps the draft;
+success is quiet.
 
-### 6.8 Keyboard shortcuts
+### Responsive
 
-| Keys | Action |
-|---|---|
-| ⌘N / ⌘⇧N | New note / new folder |
-| ⌘K | Spotlight |
-| ⌘⇧F | Global search |
-| ⌘F | Find in note |
-| ⌘S | Force save |
-| ⌘W / ⌘⇧T | Close tab / reopen closed tab |
-| ⌘B ⌘I ⌘U | Bold, italic, underline |
-| ⌘1 / ⌘2 | Toggle sidebar / list |
-| ⌘D | Star |
-| ⌫ | Move to trash (undo toast) |
-| F2 | Rename |
+≥1100px three panes · 768–1099px two panes with a drawer · ≤767px one pane with back
+navigation, no tabs, a bottom scrollable toolbar, dropdowns as bottom sheets, 16px
+inputs, `env(safe-area-inset-*)`, `100dvh`, and touch targets ≥44px.
 
 ---
 
-## 7. Acceptance criteria
+## 9 · Acceptance criteria
 
-1. Register, log in, reload the page and stay signed in. Log out everywhere invalidates.
-2. Create a note, type, wait 1 s, reload — content is there.
-3. Open the same note in two tabs, edit both, save the stale one → conflict sheet, no
-   data loss.
-4. Star a note **while an autosave is in flight** → no 409.
-5. Create a note, click away without typing → it disappears from the list.
-6. Delete a folder with notes in it → the notes appear in All notes.
-7. Search a word present only in a note's body → that note is found, with a snippet.
-8. Search a 2-character term → no request is sent; the hint appears.
-9. Filter a folder with more notes than one page → results include notes from later pages.
-10. Toolbar: every listed control works, and a table can be created, edited and deleted.
-11. Highlight, colour, subscript and align survive a save and reload.
-12. At 390px: all three panes reachable, toolbar scrolls at the bottom, no horizontal
-    page scroll, no zoom on input focus.
-13. At 800px: sidebar opens as a drawer over a scrim.
-14. Dark and light themes both render every surface correctly.
-15. Kill the network mid-type: status goes amber, the draft survives a reload.
-16. Load the app, go offline, reload — the app still opens and previously loaded notes
-    are readable.
-17. Offline: edit a note for several minutes, create a second note, star a third.
-    Reconnect. All three land, the edited note produces exactly **one** `PATCH`, and
-    the created note is **not** duplicated.
-18. Offline on another device, edit the same note on a second device, then reconnect
-    the first — the conflict sheet appears rather than silently overwriting.
-19. Chrome offers to install the app, and the installed window opens without browser
-    chrome.
-20. Deploy a new build with the app open — the update prompt appears, and reloading
-    loads the new version.
-21. Sign out, then go offline and reload — no notes from the previous session are
-    readable.
+**Accounts and auth**
+
+1. Register, sign in on the web, reload — still signed in.
+2. Sign in on the desktop app; close and reopen it — still signed in, with the token
+   in the OS secure store and **not** in `localStorage`.
+3. Sign out on desktop: Cloud notes disappear from the app, On This Device notes remain.
+4. Use the desktop app with **no account at all** — On This Device works fully.
+
+**Editing**
+
+5. Create a note, type, wait a second, reload — the content is there.
+6. Highlight, colour, subscript and alignment survive a save and reload.
+7. Every toolbar control works; a table can be created, edited and deleted.
+8. The status bar shows words and characters; selecting text adds the selection counts.
+
+**Containers**
+
+9. A note created in On This Device never appears on a second device.
+10. Moving a note Cloud → On This Device warns, then it disappears from the other device.
+11. The first note placed in On This Device triggers the one-time callout.
+12. Search returns results from both containers, each tagged with its container.
+
+**Offline and sync**
+
+13. Go offline on desktop: Cloud notes are still readable and editable.
+14. Edit offline for several minutes, reconnect — exactly **one** `PATCH` per note.
+15. Create a note offline, reconnect — it appears on the other device and is **not** duplicated.
+16. Edit the same note offline on two devices, reconnect both — the second shows the
+    conflict sheet; "Save mine as a copy" loses nothing.
+17. Delete a note on device A while B is offline — it disappears on B after sync, and
+    B's queued edit does not resurrect it.
+18. Trash a note on A while B edits it offline — B is asked to restore or discard.
+19. Star a note while an autosave is in flight — no 409.
+20. A fresh device signs in and pulls everything, with visible progress.
+
+**Platforms**
+
+21. Installers build for Windows, macOS and Linux, and the app opens on each.
+22. The Linux build renders the editor correctly on Ubuntu LTS.
+23. At 390px all three panes are reachable, with no horizontal page scroll and no zoom
+    on input focus.
+24. Both themes render every surface correctly.
+25. A new desktop release triggers the updater, and the app updates after a restart.

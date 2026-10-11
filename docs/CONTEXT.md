@@ -179,6 +179,10 @@ The developer reviewed mockups closely. These came out of that:
 - **"Save mine as a copy" is the default button** in the conflict sheet — the only
   choice that cannot lose data.
 - **Local notes show no sync status**, only "On this device — not backed up".
+- **The status bar shows words and characters, plus the selection** when there is one:
+  `Selected 10 words · 43 characters | 148 words · 892 characters`. Characters include
+  spaces; words are whitespace-separated tokens. TipTap's `CharacterCount` extension
+  supplies the totals; the selection is measured from the ProseMirror selection range.
 
 ### Loading and saving rules
 

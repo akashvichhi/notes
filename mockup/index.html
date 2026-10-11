@@ -187,6 +187,10 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
 .sync{display:flex;align-items:center;gap:6px;color:var(--text-dim)}
 .sync.warn{color:var(--amber)} .sync.err{color:var(--red)}
 .status .sp{margin-left:auto}
+.counts{font-variant-numeric:tabular-nums}
+.sel{font-variant-numeric:tabular-nums;color:var(--blue-7);font-weight:500}
+.sel[hidden]{display:none}
+.vsep{width:1px;height:12px;background:var(--border-strong)}
 
 /* ============ menus, modal, toast ============ */
 .menu{position:fixed;display:none;width:250px;padding:4px;background:var(--bg-raised);
@@ -433,7 +437,9 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   <!-- ===================== STATUS BAR ===================== -->
   <footer class="status">
     <span class="sync" id="sync"><span class="dot ok"></span> Synced just now</span>
-    <span id="words">148 words</span>
+    <span class="sel" id="sel" hidden></span>
+    <span class="vsep" id="sel-sep" hidden></span>
+    <span class="counts" id="counts">148 words · 892 characters</span>
     <span class="sp"></span>
     <span id="where">Cloud · Work / Releases</span>
   </footer>
@@ -547,6 +553,7 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
     document.getElementById('doc-title').textContent=first[0];
     document.getElementById('tab-name').textContent=first[0];
     setState(scope==='local'?'local':'synced');
+    if (typeof updateTotals === 'function') updateTotals();
     document.getElementById('callout').style.display = scope==='local' ? 'flex' : 'none';
   }
   document.querySelectorAll('.item').forEach(function(b){
@@ -621,7 +628,48 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){ovl.classList.remove('open'); mm.classList.remove('open')}});
 
+  /* ---- word and character counts, including the selection ---- */
+  var canvasEl = document.querySelector('.canvas'),
+      selEl = document.getElementById('sel'),
+      selSep = document.getElementById('sel-sep'),
+      countsEl = document.getElementById('counts');
+
+  function measure(text){
+    text = text || '';
+    var trimmed = text.trim();
+    return {
+      // whitespace-separated tokens, matching how editors count
+      words: trimmed ? trimmed.split(/\s+/).length : 0,
+      chars: text.length          // characters include spaces
+    };
+  }
+
+  function updateTotals(){
+    var m = measure(document.querySelector('.doc').innerText);
+    countsEl.textContent = m.words.toLocaleString() + ' words · ' +
+                           m.chars.toLocaleString() + ' characters';
+  }
+
+  function updateSelection(){
+    var s = document.getSelection();
+    var inside = s && !s.isCollapsed && s.anchorNode && canvasEl.contains(s.anchorNode);
+
+    if (!inside){
+      selEl.hidden = true; selSep.hidden = true;
+      return;
+    }
+
+    var m = measure(s.toString());
+    selEl.textContent = 'Selected ' + m.words.toLocaleString() + ' words · ' +
+                        m.chars.toLocaleString() + ' characters';
+    selEl.hidden = false; selSep.hidden = false;
+  }
+
+  document.addEventListener('selectionchange', updateSelection);
+  updateTotals();
+
   render();
+  updateTotals();
 })();
 </script>
 </body>

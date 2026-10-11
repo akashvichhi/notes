@@ -302,10 +302,11 @@ Nine tasks carry a "REASONING-HEAVY TASK" banner. Before starting one of
 those, stop, tell me which task it is, and wait for me to say continue — I may
 want to switch model first, which only I can do.
 
+Each task's steps are a TDD cycle — follow them literally.
+
 STOP AFTER TASK F15. That is the end of this delivery: the backend and the
 web application. Do not start Task D1. When F15 is committed, run the full
 test suite, report what was built and how it tested, and wait for me.
-Each task's steps are a TDD cycle — follow them literally.
 
 Commit after EVERY task, without exception: one task, one commit, using the
 exact message in that task's final step, only once that task's tests pass.

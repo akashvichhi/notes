@@ -259,44 +259,24 @@ agent needs to see both applications and the `docs/` folder.
 
 ## Step 8 — Give the agent its instructions 🤖
 
-Paste this as the first message:
+**The prompt lives in `START.md` section 5.** Open that file, copy the block, paste it
+as your first message.
+
+It is kept in one place deliberately — a second copy here would drift out of date,
+and a stale prompt is worse than no prompt because it points the agent at tasks that
+no longer exist.
+
+A bare *"Start with START.md"* also works, but the full prompt is better: rules
+restated in the message carry more weight than rules in a file the agent read once.
+It repeats the five that matter most — stop at F15, one commit per task, do not
+scaffold, pause at reasoning-heavy tasks, stop rather than improvise.
+
+**To resume** a later session, use the short prompt at the end of `START.md`
+section 5:
 
 ```
-Build the application described in docs/SPEC.md by executing docs/PLAN.md.
-
-Read docs/SPEC.md, docs/PLAN.md and docs/SETUP-WINDOWS.md in full before
-writing any code.
-
-Environment: Windows with Docker. PHP and MySQL run in containers.
-- Every PHP and Composer command runs as `docker compose exec app <command>`.
-- Node and npm run on the host, from the frontend/ directory.
-- DB_HOST is `mysql`, the compose service name — never 127.0.0.1.
-
-The backend/ and frontend/ applications ALREADY EXIST. Do not run
-`laravel new`, `composer create-project` or `npm create vite`. Tasks B1 and
-F1 verify and configure what is already there. If either folder is missing
-or does not match the "Starting state" section of the plan, stop and tell me.
-
-Rules:
-- Work through the tasks strictly in order: B1, B1b, B2 … B15, then F1 … F19.
-  Do not skip ahead or reorder.
-- Each task's steps are a TDD cycle. Follow them literally: write the failing
-  test, run it and confirm it fails, implement, run it and confirm it passes,
-  commit. Do not write implementation before its test.
-- The "Global Constraints" section applies to every task. The backend layering
-  rules are not advisory: controllers contain no logic, every action is a
-  single-method service under app/Services/<Domain>.
-- After every backend task run
-  `docker compose exec app php artisan test --filter=ArchitectureTest`.
-  If it fails, move the logic into a service — never relax the test.
-- Use the exact dependency versions pinned in the plan. Do not upgrade or
-  substitute packages, and never add @tiptap-pro/* or CKEditor.
-- MySQL 8 only. No Postgres-specific features.
-- Do not invent files or endpoints that are not in the plan. If something in
-  the plan is wrong or impossible, stop and tell me instead of improvising.
-- Commit after each task with the message given in that task's final step.
-
-Start with Task B1.
+Continue from Task <id>. Re-read docs/PLAN.md for that task and follow its steps
+exactly. Do not redo earlier tasks. Commit after every task, one commit each.
 ```
 
 ---

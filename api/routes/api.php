@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\FolderController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\TagController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,5 +30,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/folders', [FolderController::class, 'store']);
         Route::patch('/folders/{folder}', [FolderController::class, 'update']);
         Route::delete('/folders/{folder}', [FolderController::class, 'destroy']);
+
+        Route::post('/tags', [TagController::class, 'store']);
+        Route::patch('/tags/{tag}', [TagController::class, 'update']);
+        Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
     });
 });

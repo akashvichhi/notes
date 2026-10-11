@@ -40,4 +40,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Folder::class);
     }
+
+    public function tags(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Tag::class);
+    }
 }

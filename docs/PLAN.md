@@ -8955,6 +8955,1936 @@ git add -A && git commit -m "test(frontend): end-to-end acceptance suite across 
 
 ---
 
+# PHASE 3 — NATIVE SHELL, LOCAL DATABASE AND SYNC
+
+Windows, macOS and Linux. Android and iOS are phase two and are not in this plan.
+
+**Pinned versions for this phase** — use exactly these:
+
+```
+@tauri-apps/cli 2.12.2 · @tauri-apps/api 2.12.3
+@tauri-apps/plugin-sql 2.5.0 · @tauri-apps/plugin-os 2.4.0
+@tauri-apps/plugin-updater 2.13.3 · @tauri-apps/plugin-process 2.4.0
+Rust crates: tauri 2 · tauri-plugin-sql (sqlite) · tauri-plugin-os
+             tauri-plugin-updater · keyring 3
+```
+
+---
+
+### Task D1: Tauri scaffold and the first window
+
+**Files:**
+- Create: `frontend/src-tauri/` — `Cargo.toml`, `tauri.conf.json`, `build.rs`,
+  `src/main.rs`, `src/lib.rs`, `capabilities/default.json`, `icons/`
+- Modify: `frontend/package.json`, `frontend/vite.config.ts`
+- Test: `frontend/src-tauri/src/lib.rs` (one Rust unit test), manual window check
+
+**Interfaces:**
+- Produces: `npm run tauri dev` opens a desktop window running the existing SPA, and
+  `npm run tauri build` produces an installer.
+
+- [ ] **Step 1: Install the Rust toolchain (once, on the build machine)**
+
+```powershell
+winget install Rustlang.Rustup
+rustup default stable
+rustc --version       # must print 1.7x or newer
+```
+
+Windows also needs the **MSVC build tools** — `winget install Microsoft.VisualStudio.2022.BuildTools`
+with the "Desktop development with C++" workload. Without it, `cargo` cannot link.
+
+- [ ] **Step 2: Add the Tauri CLI and API**
+
+```powershell
+cd frontend
+npm install -D @tauri-apps/cli@2.12.2
+npm install @tauri-apps/api@2.12.3 @tauri-apps/plugin-os@2.4.0 @tauri-apps/plugin-sql@2.5.0
+```
+
+Add to `frontend/package.json` scripts:
+
+```json
+"tauri": "tauri",
+"tauri:dev": "tauri dev",
+"tauri:build": "tauri build"
+```
+
+- [ ] **Step 3: Generate the icons from the existing brand asset**
+
+```powershell
+npx tauri icon ../assets/brand/icon-1024.png
+```
+
+This writes `src-tauri/icons/` in every format each platform needs. **Do not create
+or edit icons by hand** — `icon-1024.png` is the master.
+
+- [ ] **Step 4: Write `src-tauri/tauri.conf.json`**
+
+```json
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Notes",
+  "version": "0.1.0",
+  "identifier": "com.notesapp.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Notes",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 380,
+        "minHeight": 480,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: data:; style-src 'self' 'unsafe-inline'; connect-src 'self' http://127.0.0.1:8000 https://api.notes.example.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis", "dmg", "deb", "appimage"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "shortDescription": "Write, organise and search your notes.",
+    "longDescription": "A notes app with cloud sync and a device-only container."
+  }
+}
+```
+
+`connect-src` must list every API origin the app talks to. A missing entry fails
+silently as a blocked request, which looks exactly like the server being down.
+
+- [ ] **Step 5: Write `src-tauri/Cargo.toml`**
+
+```toml
+[package]
+name = "notes"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "notes_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-os = "2"
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+keyring = "3"
+```
+
+- [ ] **Step 6: Write `src-tauri/src/lib.rs` and `main.rs`**
+
+`src/lib.rs`:
+
+```rust
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_sql::Builder::default().build())
+        .run(tauri::generate_context!())
+        .expect("error while running the Notes application");
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn identifier_is_stable() {
+        // The bundle identifier is the OS app-data folder name. Changing it
+        // orphans every existing local database.
+        let conf = include_str!("../tauri.conf.json");
+        assert!(conf.contains("\"identifier\": \"com.notesapp.desktop\""));
+    }
+}
+```
+
+`src/main.rs`:
+
+```rust
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+fn main() {
+    notes_lib::run()
+}
+```
+
+`src/build.rs`:
+
+```rust
+fn main() {
+    tauri_build::build()
+}
+```
+
+- [ ] **Step 7: Run the Rust test and open the window**
+
+```powershell
+cd src-tauri; cargo test; cd ..
+npm run tauri:dev
+```
+Expected: a desktop window titled **Notes**, showing the sign-in page, with the app
+icon in the taskbar.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): Tauri 2 shell with branded icons and a locked CSP"
+```
+
+---
+
+### Task D2: Platform detection and the API transport
+
+**Files:**
+- Create: `frontend/src/platform/isNative.ts`, `frontend/src/platform/deviceKind.ts`
+- Modify: `frontend/src/api/client.ts`, `frontend/.env.development`
+- Test: `frontend/src/platform/deviceKind.test.ts`
+
+**Interfaces:**
+- Produces:
+  - `isNative(): boolean` — true inside a Tauri window.
+  - `deviceKind(): { icon: 'laptop'|'phone'|'tablet'; noun: string }` — drives the
+    On This Device icon and wording.
+  - The axios instance sends **cookies on web** and **`Authorization: Bearer` on
+    native**, never both.
+
+- [ ] **Step 1: Write the failing test**
+
+`frontend/src/platform/deviceKind.test.ts`:
+
+```ts
+import { describe, expect, it, vi } from 'vitest'
+import { deviceKindFor } from './deviceKind'
+
+describe('deviceKindFor', () => {
+  it('calls desktop platforms a computer', () => {
+    for (const p of ['windows', 'macos', 'linux'] as const) {
+      expect(deviceKindFor(p, 1440)).toEqual({ icon: 'laptop', noun: 'this computer' })
+    }
+  })
+
+  it('calls a narrow mobile platform a phone', () => {
+    expect(deviceKindFor('ios', 390)).toEqual({ icon: 'phone', noun: 'this phone' })
+    expect(deviceKindFor('android', 412)).toEqual({ icon: 'phone', noun: 'this phone' })
+  })
+
+  it('calls a wide mobile platform a tablet', () => {
+    // An iPad reports 'ios'. A phone icon on an iPad is wrong.
+    expect(deviceKindFor('ios', 1024)).toEqual({ icon: 'tablet', noun: 'this tablet' })
+  })
+
+  it('falls back to computer for the browser build', () => {
+    expect(deviceKindFor(null, 1440).icon).toBe('laptop')
+  })
+})
+```
+
+- [ ] **Step 2: Run it and watch it fail**
+
+```powershell
+npx vitest run src/platform/deviceKind.test.ts
+```
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Write the modules**
+
+`frontend/src/platform/isNative.ts`:
+
+```ts
+/**
+ * True inside a Tauri window. Tauri 2 sets __TAURI_INTERNALS__ on window before
+ * any app code runs, so this is safe to call at module scope.
+ */
+export function isNative(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
+```
+
+`frontend/src/platform/deviceKind.ts`:
+
+```ts
+import { platform } from '@tauri-apps/plugin-os'
+import { isNative } from './isNative'
+
+export type Platform = 'windows' | 'macos' | 'linux' | 'android' | 'ios'
+export interface DeviceKind { icon: 'laptop' | 'phone' | 'tablet'; noun: string }
+
+/** Pure, so it can be tested without a Tauri runtime. */
+export function deviceKindFor(p: Platform | null, viewportWidth: number): DeviceKind {
+  if (p === 'ios' || p === 'android') {
+    return viewportWidth >= 768
+      ? { icon: 'tablet', noun: 'this tablet' }
+      : { icon: 'phone', noun: 'this phone' }
+  }
+
+  return { icon: 'laptop', noun: 'this computer' }
+}
+
+export function deviceKind(): DeviceKind {
+  const p = isNative() ? (platform() as Platform) : null
+  return deviceKindFor(p, window.innerWidth)
+}
+```
+
+- [ ] **Step 4: Teach the API client both transports**
+
+In `frontend/src/api/client.ts`, replace the instance creation:
+
+```ts
+import { isNative } from '@/platform/isNative'
+import { loadToken } from '@/platform/secureStore'   // added in D3
+
+export const api: AxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL ?? '/api/v1',
+  // Cookies are for the browser build only. A packaged app is a different
+  // origin, so SameSite cookies are never sent and these flags do nothing.
+  withCredentials: !isNative(),
+  withXSRFToken: !isNative(),
+  headers: { Accept: 'application/json' },
+})
+
+api.interceptors.request.use(async (config) => {
+  if (isNative()) {
+    const token = await loadToken()
+    if (token) config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+```
+
+`ensureCsrf()` becomes a no-op on native:
+
+```ts
+export async function ensureCsrf(): Promise<void> {
+  if (isNative() || csrfPrimed) return
+  await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
+  csrfPrimed = true
+}
+```
+
+- [ ] **Step 5: Point the native build at an absolute API URL**
+
+The Vite dev proxy does not exist inside a packaged app. Add
+`frontend/.env.production`:
+
+```dotenv
+VITE_API_URL=https://api.notes.example.com/api/v1
+```
+
+and for native development, `frontend/.env.development.local`:
+
+```dotenv
+VITE_API_URL=http://127.0.0.1:8000/api/v1
+```
+
+- [ ] **Step 6: Run the tests**
+
+```powershell
+npx vitest run src/platform/deviceKind.test.ts
+```
+Expected: PASS (4 tests).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): platform detection and Bearer transport for native builds"
+```
+
+---
+
+### Task D3: Token authentication and the OS keychain
+
+**Files:**
+- Create: `frontend/src/platform/secureStore.ts`,
+  `frontend/src-tauri/src/keychain.rs`
+- Modify: `frontend/src-tauri/src/lib.rs`,
+  `frontend/src-tauri/capabilities/default.json`,
+  `frontend/src/api/auth.ts`, `frontend/src/hooks/queries/useAuth.ts`,
+  `frontend/src/pages/LoginPage.tsx`
+- Test: `frontend/src/platform/secureStore.test.ts`
+
+**Interfaces:**
+- Produces: `saveToken(t)`, `loadToken()`, `deleteToken()` backed by the **OS
+  keychain** on native and by nothing at all on web (the browser uses cookies).
+- `useLogin()` branches: cookie login on web, `POST /tokens` on native.
+
+> This is the one task that contains hand-written Rust — about thirty lines. The
+> `keyring` crate is the only way to reach Credential Manager, Keychain and
+> libsecret. **Do not substitute `localStorage`, `plugin-store` or a file**: the
+> token is a long-lived credential and the app renders user-authored HTML.
+
+- [ ] **Step 1: Write the Rust commands**
+
+`frontend/src-tauri/src/keychain.rs`:
+
+```rust
+use keyring::Entry;
+
+const SERVICE: &str = "com.notesapp.desktop";
+const ACCOUNT: &str = "api-token";
+
+fn entry() -> Result<Entry, String> {
+    Entry::new(SERVICE, ACCOUNT).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn save_token(token: String) -> Result<(), String> {
+    entry()?.set_password(&token).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn load_token() -> Result<Option<String>, String> {
+    match entry()?.get_password() {
+        Ok(t) => Ok(Some(t)),
+        // "not found" is the normal signed-out state, not an error.
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn delete_token() -> Result<(), String> {
+    match entry()?.delete_credential() {
+        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+```
+
+Register them in `src/lib.rs`:
+
+```rust
+mod keychain;
+
+// inside the builder chain, before .run(...)
+.invoke_handler(tauri::generate_handler![
+    keychain::save_token,
+    keychain::load_token,
+    keychain::delete_token
+])
+```
+
+- [ ] **Step 2: Write the failing TypeScript test**
+
+`frontend/src/platform/secureStore.test.ts`:
+
+```ts
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/platform/isNative', () => ({ isNative: () => false }))
+
+const { loadToken, saveToken, deleteToken } = await import('./secureStore')
+
+describe('secureStore on the web build', () => {
+  it('returns null rather than throwing', async () => {
+    // The browser uses cookies; there is no token to find.
+    await expect(loadToken()).resolves.toBeNull()
+  })
+
+  it('saving and deleting are no-ops, not errors', async () => {
+    await expect(saveToken('abc')).resolves.toBeUndefined()
+    await expect(deleteToken()).resolves.toBeUndefined()
+  })
+})
+```
+
+- [ ] **Step 3: Run it and watch it fail**
+
+```powershell
+npx vitest run src/platform/secureStore.test.ts
+```
+Expected: FAIL — module not found.
+
+- [ ] **Step 4: Write the TypeScript wrapper**
+
+`frontend/src/platform/secureStore.ts`:
+
+```ts
+import { invoke } from '@tauri-apps/api/core'
+import { isNative } from './isNative'
+
+let cached: string | null = null
+
+export async function saveToken(token: string): Promise<void> {
+  if (!isNative()) return
+  cached = token
+  await invoke('save_token', { token })
+}
+
+export async function loadToken(): Promise<string | null> {
+  if (!isNative()) return null
+  if (cached) return cached
+  // Reading the keychain on every request would be slow and, on some Linux
+  // setups, prompt the user. Cache for the lifetime of the window.
+  cached = (await invoke<string | null>('load_token')) ?? null
+  return cached
+}
+
+export async function deleteToken(): Promise<void> {
+  if (!isNative()) return
+  cached = null
+  await invoke('delete_token')
+}
+```
+
+- [ ] **Step 5: Add the API calls and branch the login**
+
+`frontend/src/api/auth.ts`:
+
+```ts
+export async function issueToken(payload: {
+  email: string; password: string; device_name: string
+}): Promise<string> {
+  const { data } = await api.post<{ token: string }>('/tokens', payload)
+  return data.token
+}
+
+export async function revokeToken(): Promise<void> {
+  await api.delete('/tokens/current')
+}
+```
+
+`useLogin()` in `frontend/src/hooks/queries/useAuth.ts`:
+
+```ts
+export function useLogin() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (creds: { email: string; password: string }) => {
+      if (isNative()) {
+        // The device name appears in a future device list, so make it legible.
+        const token = await issueToken({
+          ...creds,
+          device_name: `${hostname() ?? 'Device'} · ${platform()}`,
+        })
+        await saveToken(token)
+        return fetchMe()
+      }
+
+      return authApi.login(creds)
+    },
+    onSuccess: (user) => qc.setQueryData(AUTH_KEY, user),
+  })
+}
+```
+
+`useLogout()` calls `revokeToken()` then `deleteToken()` on native, and
+`authApi.logout()` on web — both inside `onSettled`, so a failed request still
+clears local credentials.
+
+- [ ] **Step 6: Allow the commands in the capability file**
+
+`frontend/src-tauri/capabilities/default.json`:
+
+```json
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capabilities the Notes window needs",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "os:default",
+    "sql:default",
+    "sql:allow-execute"
+  ]
+}
+```
+
+- [ ] **Step 7: Run everything**
+
+```powershell
+npx vitest run src/platform/secureStore.test.ts
+cd src-tauri; cargo test; cd ..
+npm run tauri:dev
+```
+
+Sign in inside the desktop window, close the app entirely, reopen it — **you must
+still be signed in**. Then confirm the token is in the OS store and not in the web
+storage: DevTools → Application → Local Storage should contain no token.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): token auth stored in the OS keychain"
+```
+
+---
+
+### Task D4: The local SQLite database
+
+**Files:**
+- Create: `frontend/src/db/schema.ts`, `frontend/src/db/connection.ts`,
+  `frontend/src/db/notesRepo.ts`, `frontend/src/db/foldersRepo.ts`,
+  `frontend/src/db/tagsRepo.ts`
+- Test: `frontend/src/db/schema.test.ts`, `frontend/src/db/notesRepo.test.ts`
+
+**Interfaces:**
+- Produces:
+  - `getDb(): Promise<Database>` — opens `sqlite:notes.db` in the app-data directory
+    and runs migrations once.
+  - `notesRepo` — `list(scope)`, `get(uuid)`, `upsert(note)`, `softDelete(uuid)`,
+    `hardDelete(uuid)`, `search(query, container?)`, `markDirty(uuid)`.
+  - Equivalent repos for folders and tags.
+- **Every repository method takes a `container`.** There is no call path that can
+  read or write across containers by accident.
+
+- [ ] **Step 1: Write the failing schema test**
+
+`frontend/src/db/schema.test.ts`:
+
+```ts
+import { describe, expect, it } from 'vitest'
+import { MIGRATIONS } from './schema'
+
+describe('schema', () => {
+  it('creates every table the app needs', () => {
+    const sql = MIGRATIONS.map((m) => m.sql).join('\n')
+
+    for (const table of ['notes', 'folders', 'tags', 'note_tag', 'outbox', 'meta']) {
+      expect(sql).toContain(`CREATE TABLE IF NOT EXISTS ${table}`)
+    }
+  })
+
+  it('has an FTS5 index over title and plain_text', () => {
+    const sql = MIGRATIONS.map((m) => m.sql).join('\n')
+    expect(sql).toContain('fts5')
+    expect(sql).toContain('notes_fts')
+  })
+
+  it('constrains container to the two known values', () => {
+    // A typo'd container would make rows invisible to both the UI and the
+    // sync engine, with no error anywhere.
+    expect(MIGRATIONS[0]!.sql).toContain("CHECK(container IN ('cloud','local'))")
+  })
+
+  it('numbers migrations from 1 with no gaps', () => {
+    expect(MIGRATIONS.map((m) => m.version)).toEqual(
+      MIGRATIONS.map((_, i) => i + 1),
+    )
+  })
+})
+```
+
+- [ ] **Step 2: Run it and watch it fail**
+
+```powershell
+npx vitest run src/db/schema.test.ts
+```
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Write the schema**
+
+`frontend/src/db/schema.ts`:
+
+```ts
+export interface Migration { version: number; sql: string }
+
+export const MIGRATIONS: Migration[] = [
+  {
+    version: 1,
+    sql: `
+CREATE TABLE IF NOT EXISTS notes (
+  uuid            TEXT PRIMARY KEY,
+  container       TEXT NOT NULL CHECK(container IN ('cloud','local')),
+  folder_uuid     TEXT,
+  title           TEXT NOT NULL DEFAULT '',
+  title_locked    INTEGER NOT NULL DEFAULT 0,
+  body            TEXT,              -- ProseMirror JSON, serialised
+  plain_text      TEXT NOT NULL DEFAULT '',
+  excerpt         TEXT NOT NULL DEFAULT '',
+  is_starred      INTEGER NOT NULL DEFAULT 0,
+  word_count      INTEGER NOT NULL DEFAULT 0,
+  deleted_at      TEXT,
+  updated_at      TEXT NOT NULL,
+  -- sync bookkeeping; NULL/0 for container='local'
+  server_version  INTEGER,
+  server_revision INTEGER,
+  dirty           INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_notes_scope ON notes(container, deleted_at, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notes_folder ON notes(container, folder_uuid, deleted_at);
+CREATE INDEX IF NOT EXISTS idx_notes_dirty ON notes(container, dirty);
+
+CREATE TABLE IF NOT EXISTS folders (
+  uuid TEXT PRIMARY KEY,
+  container TEXT NOT NULL CHECK(container IN ('cloud','local')),
+  parent_uuid TEXT, name TEXT NOT NULL, color TEXT,
+  position INTEGER NOT NULL DEFAULT 0, deleted_at TEXT,
+  dirty INTEGER NOT NULL DEFAULT 0, server_revision INTEGER
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_folders_unique
+  ON folders(container, IFNULL(parent_uuid,''), name) WHERE deleted_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS tags (
+  uuid TEXT PRIMARY KEY,
+  container TEXT NOT NULL CHECK(container IN ('cloud','local')),
+  name TEXT NOT NULL, slug TEXT NOT NULL, deleted_at TEXT,
+  dirty INTEGER NOT NULL DEFAULT 0, server_revision INTEGER
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tags_unique ON tags(container, slug);
+
+CREATE TABLE IF NOT EXISTS note_tag (
+  note_uuid TEXT NOT NULL, tag_uuid TEXT NOT NULL,
+  PRIMARY KEY (note_uuid, tag_uuid)
+);
+
+CREATE TABLE IF NOT EXISTS outbox (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,              -- create | body | meta | tags | trash | force
+  note_uuid TEXT NOT NULL,
+  payload TEXT NOT NULL,           -- JSON
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
+  uuid UNINDEXED, title, plain_text, container UNINDEXED,
+  tokenize = 'unicode61'
+);
+`,
+  },
+]
+```
+
+- [ ] **Step 4: Write the connection**
+
+`frontend/src/db/connection.ts`:
+
+```ts
+import Database from '@tauri-apps/plugin-sql'
+import { MIGRATIONS } from './schema'
+
+let db: Database | null = null
+let opening: Promise<Database> | null = null
+
+async function applyMigrations(conn: Database): Promise<void> {
+  await conn.execute(
+    'CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY)',
+  )
+
+  const rows = await conn.select<{ version: number }[]>(
+    'SELECT COALESCE(MAX(version), 0) AS version FROM schema_version',
+  )
+  const current = rows[0]?.version ?? 0
+
+  for (const m of MIGRATIONS) {
+    if (m.version <= current) continue
+    await conn.execute(m.sql)
+    await conn.execute('INSERT INTO schema_version (version) VALUES ($1)', [m.version])
+  }
+}
+
+/** Opens the database once. Concurrent callers share one open promise. */
+export async function getDb(): Promise<Database> {
+  if (db) return db
+  if (opening) return opening
+
+  opening = (async () => {
+    // Resolves to the OS app-data directory: %APPDATA%\com.notesapp.desktop,
+    // ~/Library/Application Support/..., ~/.local/share/...
+    const conn = await Database.load('sqlite:notes.db')
+    await conn.execute('PRAGMA journal_mode = WAL')
+    await conn.execute('PRAGMA foreign_keys = ON')
+    await applyMigrations(conn)
+    db = conn
+    return conn
+  })()
+
+  return opening
+}
+```
+
+- [ ] **Step 5: Write the notes repository**
+
+`frontend/src/db/notesRepo.ts` — every method takes an explicit container:
+
+```ts
+import { getDb } from './connection'
+import type { Container, LocalNote, NoteListItem } from '@/types/api'
+
+function rowToListItem(r: Record<string, unknown>): NoteListItem { /* map columns */ }
+
+export const notesRepo = {
+  async list(container: Container, opts: {
+    folderUuid?: string; tag?: string; starred?: boolean; trashed?: boolean
+  } = {}): Promise<NoteListItem[]> {
+    const db = await getDb()
+    const where = ['container = $1', opts.trashed ? 'deleted_at IS NOT NULL' : 'deleted_at IS NULL']
+    const args: unknown[] = [container]
+
+    if (opts.folderUuid) { args.push(opts.folderUuid); where.push(`folder_uuid = $${args.length}`) }
+    if (opts.starred) where.push('is_starred = 1')
+
+    const rows = await db.select<Record<string, unknown>[]>(
+      `SELECT * FROM notes WHERE ${where.join(' AND ')} ORDER BY updated_at DESC`,
+      args,
+    )
+    return rows.map(rowToListItem)
+  },
+
+  async upsert(note: LocalNote): Promise<void> {
+    const db = await getDb()
+    await db.execute(
+      `INSERT INTO notes (uuid, container, folder_uuid, title, title_locked, body,
+                          plain_text, excerpt, is_starred, word_count, deleted_at,
+                          updated_at, server_version, server_revision, dirty)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       ON CONFLICT(uuid) DO UPDATE SET
+         folder_uuid=excluded.folder_uuid, title=excluded.title,
+         title_locked=excluded.title_locked, body=excluded.body,
+         plain_text=excluded.plain_text, excerpt=excluded.excerpt,
+         is_starred=excluded.is_starred, word_count=excluded.word_count,
+         deleted_at=excluded.deleted_at, updated_at=excluded.updated_at,
+         server_version=excluded.server_version,
+         server_revision=excluded.server_revision, dirty=excluded.dirty`,
+      [/* …the fifteen values… */],
+    )
+
+    // Keep the search index in step with the row it mirrors.
+    await db.execute('DELETE FROM notes_fts WHERE uuid = $1', [note.uuid])
+    if (!note.deleted_at) {
+      await db.execute(
+        'INSERT INTO notes_fts (uuid, title, plain_text, container) VALUES ($1,$2,$3,$4)',
+        [note.uuid, note.title, note.plain_text, note.container],
+      )
+    }
+  },
+
+  /** Offline full-text search. Spans both containers when none is given. */
+  async search(query: string, container?: Container): Promise<NoteListItem[]> {
+    const db = await getDb()
+    const match = query.trim().split(/\s+/).map((t) => `${t}*`).join(' ')
+
+    const rows = await db.select<Record<string, unknown>[]>(
+      `SELECT n.* FROM notes_fts f JOIN notes n ON n.uuid = f.uuid
+        WHERE notes_fts MATCH $1 ${container ? 'AND n.container = $2' : ''}
+          AND n.deleted_at IS NULL
+        ORDER BY rank LIMIT 50`,
+      container ? [match, container] : [match],
+    )
+    return rows.map(rowToListItem)
+  },
+}
+```
+
+`foldersRepo` and `tagsRepo` follow the same shape: `list(container)`,
+`upsert(row)`, `softDelete(uuid)`, `hardDelete(uuid)`, each scoped by container.
+
+- [ ] **Step 6: Write the repository test**
+
+`frontend/src/db/notesRepo.test.ts` mocks `@tauri-apps/plugin-sql` with an in-memory
+fake and asserts: `list('local')` never returns cloud rows; `upsert` writes an FTS
+row and removes it when the note is trashed; `search('rele')` matches a prefix.
+
+- [ ] **Step 7: Run the tests**
+
+```powershell
+npx vitest run src/db/
+```
+Expected: PASS.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): SQLite schema, migrations and container-scoped repositories"
+```
+
+---
+
+### Task D5: Local-first reads
+
+**Files:**
+- Create: `frontend/src/data/notesSource.ts`, `frontend/src/data/foldersSource.ts`
+- Modify: `frontend/src/hooks/queries/useNotes.ts`,
+  `frontend/src/hooks/queries/useBootstrap.ts`
+- Test: `frontend/src/data/notesSource.test.ts`
+
+**Interfaces:**
+- Produces a **single data source** that every hook calls. On native it reads SQLite;
+  on web it calls the API. No component or hook branches on `isNative()` — only this
+  module does.
+
+- [ ] **Step 1: Write the failing test**
+
+`frontend/src/data/notesSource.test.ts`:
+
+```ts
+import { describe, expect, it, vi } from 'vitest'
+
+const listFromDb = vi.fn().mockResolvedValue([{ uuid: 'local-1' }])
+const listFromApi = vi.fn().mockResolvedValue({ data: [{ uuid: 'api-1' }] })
+
+vi.mock('@/db/notesRepo', () => ({ notesRepo: { list: listFromDb } }))
+vi.mock('@/api/notes', () => ({ fetchNotes: listFromApi }))
+
+describe('notesSource', () => {
+  it('reads SQLite on native and never touches the network', async () => {
+    vi.doMock('@/platform/isNative', () => ({ isNative: () => true }))
+    const { notesSource } = await import('./notesSource')
+
+    const rows = await notesSource.list({ kind: 'all', container: 'cloud', label: 'All' })
+
+    expect(rows[0]?.uuid).toBe('local-1')
+    expect(listFromApi).not.toHaveBeenCalled()
+  })
+
+  it('reads the API on the web build', async () => {
+    vi.resetModules()
+    vi.doMock('@/platform/isNative', () => ({ isNative: () => false }))
+    const { notesSource } = await import('./notesSource')
+
+    const rows = await notesSource.list({ kind: 'all', container: 'cloud', label: 'All' })
+
+    expect(rows[0]?.uuid).toBe('api-1')
+  })
+
+  it('never asks the API for a local scope', async () => {
+    vi.resetModules()
+    vi.doMock('@/platform/isNative', () => ({ isNative: () => false }))
+    const { notesSource } = await import('./notesSource')
+
+    // The web build has no On This Device container. Asking the server for one
+    // would return the user's cloud notes under a local label.
+    await expect(
+      notesSource.list({ kind: 'all', container: 'local', label: 'On This Device' }),
+    ).resolves.toEqual([])
+  })
+})
+```
+
+- [ ] **Step 2: Run it and watch it fail**
+
+```powershell
+npx vitest run src/data/notesSource.test.ts
+```
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Write the source**
+
+`frontend/src/data/notesSource.ts`:
+
+```ts
+import { fetchNotes } from '@/api/notes'
+import { notesRepo } from '@/db/notesRepo'
+import { isNative } from '@/platform/isNative'
+import type { Scope } from '@/stores/uiStore'
+import type { NoteListItem } from '@/types/api'
+
+/**
+ * The only module in the app that knows whether it is running natively.
+ * Everything above it just asks for notes.
+ */
+export const notesSource = {
+  async list(scope: Scope): Promise<NoteListItem[]> {
+    if (isNative()) {
+      return notesRepo.list(scope.container, {
+        folderUuid: scope.kind === 'folder' ? scope.uuid : undefined,
+        tag: scope.kind === 'tag' ? scope.slug : undefined,
+        starred: scope.kind === 'starred',
+        trashed: scope.kind === 'trash',
+      })
+    }
+
+    // The browser build has no local container.
+    if (scope.container === 'local') return []
+
+    const page = await fetchNotes(scopeToParams(scope))
+    return page.data
+  },
+}
+```
+
+- [ ] **Step 4: Point the hooks at it**
+
+`useNotes(scope)` calls `notesSource.list(scope)` instead of `fetchNotes` directly.
+The query key keeps the scope, so switching container refetches. On native the
+query resolves from SQLite in single-digit milliseconds, so **no loader is shown at
+all** — the `useDelayedLoading` 250 ms threshold handles this for free.
+
+`useBootstrap()` on native reads folders, tags and counts from the repositories and
+**does not call `/bootstrap`**; the sync engine is what talks to the server.
+
+- [ ] **Step 5: Run the tests**
+
+```powershell
+npx vitest run src/data/
+```
+Expected: PASS (3 tests).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): local-first reads through a single data source"
+```
+
+---
+
+### Task D6: Containers in the UI
+
+**Files:**
+- Modify: `frontend/src/stores/uiStore.ts`,
+  `frontend/src/components/layout/Sidebar.tsx`,
+  `frontend/src/components/notes/NoteRow.tsx`,
+  `frontend/src/hooks/queries/useNotes.ts`
+- Create: `frontend/src/components/notes/MoveToMenu.tsx`,
+  `frontend/src/components/layout/ContainerSection.tsx`
+- Test: `frontend/src/stores/uiStore.test.ts` (extended),
+  `frontend/src/components/notes/MoveToMenu.test.tsx`
+
+**Interfaces:**
+- Produces: `Scope` gains `container: 'cloud' | 'local'`; the sidebar renders **two
+  `<ContainerSection>`s**; `<MoveToMenu>` moves a note between folders **and**
+  between containers.
+- `useCreateNote()` defaults to `cloud` when signed in, `local` when not.
+
+- [ ] **Step 1: Write the failing tests**
+
+Add to `frontend/src/stores/uiStore.test.ts`:
+
+```ts
+it('carries a container on every scope', () => {
+  useUiStore.getState().setScope({ kind: 'all', container: 'local', label: 'On This Device' })
+  expect(useUiStore.getState().scope.container).toBe('local')
+})
+
+it('clears the filter when the container changes', () => {
+  useUiStore.setState({ filter: 'rele' })
+  useUiStore.getState().setScope({ kind: 'all', container: 'local', label: 'On This Device' })
+  expect(useUiStore.getState().filter).toBe('')
+})
+```
+
+`frontend/src/components/notes/MoveToMenu.test.tsx`:
+
+```tsx
+import { MantineProvider } from '@mantine/core'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { MoveToMenu } from './MoveToMenu'
+
+const folders = [
+  { uuid: 'f1', container: 'cloud', name: 'Work', parent_uuid: null, color: null, position: 0 },
+  { uuid: 'f2', container: 'local', name: 'Quick notes', parent_uuid: null, color: null, position: 0 },
+]
+
+describe('MoveToMenu', () => {
+  it('offers folders from both containers', () => {
+    render(<MantineProvider><MoveToMenu note={{ uuid: 'n1', container: 'cloud' }} folders={folders} onMove={vi.fn()} /></MantineProvider>)
+    expect(screen.getByText('Work')).toBeDefined()
+    expect(screen.getByText('Quick notes')).toBeDefined()
+  })
+
+  it('warns before moving a note out of the cloud', async () => {
+    const onMove = vi.fn()
+    render(<MantineProvider><MoveToMenu note={{ uuid: 'n1', container: 'cloud' }} folders={folders} onMove={onMove} /></MantineProvider>)
+
+    await userEvent.click(screen.getByText('Quick notes'))
+
+    // Leaving the cloud is destructive on other devices, so it must confirm.
+    expect(screen.getByText(/disappear from your other devices/i)).toBeDefined()
+    expect(onMove).not.toHaveBeenCalled()
+  })
+
+  it('does not warn when moving within the cloud', async () => {
+    const onMove = vi.fn()
+    render(<MantineProvider><MoveToMenu note={{ uuid: 'n1', container: 'cloud' }} folders={folders} onMove={vi.fn()} onMoveConfirmed={onMove} /></MantineProvider>)
+
+    await userEvent.click(screen.getByText('Work'))
+    expect(screen.queryByText(/disappear/i)).toBeNull()
+  })
+})
+```
+
+- [ ] **Step 2: Run them and watch them fail**
+
+```powershell
+npx vitest run src/stores/uiStore.test.ts src/components/notes/MoveToMenu.test.tsx
+```
+Expected: FAIL.
+
+- [ ] **Step 3: Extend the scope type**
+
+```ts
+export type Container = 'cloud' | 'local'
+
+export type Scope =
+  | { kind: 'all';      container: Container; label: string }
+  | { kind: 'starred';  container: Container; label: string }
+  | { kind: 'trash';    container: Container; label: string }
+  | { kind: 'folder';   container: Container; uuid: string; label: string }
+  | { kind: 'tag';      container: Container; slug: string; label: string }
+  | { kind: 'search';   container: Container; q: string; label: string }
+```
+
+Default scope: `{ kind: 'all', container: 'cloud', label: 'All notes' }` when signed
+in, `container: 'local'` when not.
+
+- [ ] **Step 4: Write `<ContainerSection>`**
+
+One component, rendered twice. Props: `container`, `title`, `folders`, `tags`,
+`counts`, and for cloud a `syncState`. It renders:
+
+- the heading, with the **cloud icon + sync badge** for cloud, or the
+  **`deviceKind().icon`** for local;
+- for local only, the permanent helper line
+  `Not backed up · stays on ${deviceKind().noun}`;
+- All notes, Starred (cloud only), a **FOLDERS** label with a `＋` and the folder
+  rows, a **TAGS** label with a `＋` and the tag chips, and Trash.
+
+Folders show a **folder icon tinted with the folder's colour**, never a bare dot —
+a dot does not read as a folder. Every folder row has a hover `⋯` menu (Rename · New
+subfolder · Change colour · Delete folder, with *"Notes inside move to All notes —
+nothing is deleted"*). Tags have a right-click menu with exactly **Rename** and
+**Delete tag**. Both containers get the full set; **folders and tags are creatable,
+renamable and deletable in each.**
+
+- [ ] **Step 5: Write `<MoveToMenu>`**
+
+Grouped by container, cloud first. Choosing a folder in the *other* container opens a
+Mantine confirm modal before anything happens:
+
+| Direction | Confirmation |
+|---|---|
+| Cloud → On This Device | *"This note will stop syncing and will disappear from your other devices."* |
+| On This Device → Cloud | *"This note will be uploaded to your account and appear on your other devices."* |
+
+The move keeps the same UUID. Cloud → local performs `DELETE /notes/{uuid}?force=1`
+**after** the local row is written, so a failure leaves a duplicate rather than
+nothing. Local → cloud writes the row, enqueues a `create`, then flips `container`.
+
+- [ ] **Step 6: Run the tests**
+
+```powershell
+npx vitest run src/stores/ src/components/notes/
+```
+Expected: PASS, including Review Focus item 9.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): two containers in the sidebar and move-between-containers"
+```
+
+---
+
+### Task D7: The outbox and push
+
+**Files:**
+- Create: `frontend/src/sync/outbox.ts`, `frontend/src/sync/push.ts`
+- Modify: `frontend/src/hooks/useAutosave.ts`,
+  `frontend/src/hooks/queries/useNotes.ts`
+- Test: `frontend/src/sync/outbox.test.ts`, `frontend/src/sync/push.test.ts`
+
+**Interfaces:**
+- Produces:
+  - `outbox.enqueue(op)` — **coalesces `body` ops by note uuid**, under a Web Lock.
+  - `outbox.pending()`, `outbox.shift()`, `outbox.count()`.
+  - `push(): Promise<{ pushed: number; conflicts: Note[] }>` — replays in order,
+    stopping at the first network error.
+- **Local notes are never enqueued.** Every write path checks `container` first.
+
+- [ ] **Step 1: Write the failing tests**
+
+`frontend/src/sync/outbox.test.ts`:
+
+```ts
+import { beforeEach, describe, expect, it } from 'vitest'
+import { outbox } from './outbox'
+
+const doc = (t: string) => ({ type: 'doc' as const, content: [{ type: 'paragraph', text: t }] })
+
+describe('outbox', () => {
+  beforeEach(async () => { await outbox.clear() })
+
+  it('keeps only the latest body per note', async () => {
+    await outbox.enqueue({ kind: 'body', uuid: 'n1', body: doc('one'), version: 3 })
+    await outbox.enqueue({ kind: 'body', uuid: 'n1', body: doc('two'), version: 3 })
+    await outbox.enqueue({ kind: 'body', uuid: 'n1', body: doc('three'), version: 3 })
+
+    const q = await outbox.pending()
+    expect(q).toHaveLength(1)
+    expect(q[0]!.body.content[0]).toMatchObject({ text: 'three' })
+  })
+
+  it('keeps the ORIGINAL version when coalescing', async () => {
+    await outbox.enqueue({ kind: 'body', uuid: 'n1', body: doc('a'), version: 3 })
+    await outbox.enqueue({ kind: 'body', uuid: 'n1', body: doc('b'), version: 99 })
+
+    // 3 is the last version the server confirmed; 99 was never real.
+    expect((await outbox.pending())[0]!.version).toBe(3)
+  })
+
+  it('does not coalesce metadata with body', async () => {
+    await outbox.enqueue({ kind: 'body', uuid: 'n1', body: doc('a'), version: 1 })
+    await outbox.enqueue({ kind: 'meta', uuid: 'n1', changes: { is_starred: true } })
+    expect(await outbox.count()).toBe(2)
+  })
+
+  it('keeps a create ahead of the edits that follow it', async () => {
+    await outbox.enqueue({ kind: 'create', uuid: 'n9' })
+    await outbox.enqueue({ kind: 'body', uuid: 'n9', body: doc('x'), version: 1 })
+
+    const q = await outbox.pending()
+    expect(q.map((o) => o.kind)).toEqual(['create', 'body'])
+  })
+
+  it('refuses to enqueue a local note', async () => {
+    // A local note reaching the outbox would upload data the user was told
+    // never leaves the machine.
+    await expect(
+      outbox.enqueue({ kind: 'body', uuid: 'L1', container: 'local', body: doc('x'), version: 1 }),
+    ).rejects.toThrow(/local/i)
+  })
+
+  it('loses nothing when writes interleave', async () => {
+    await Promise.all([
+      outbox.enqueue({ kind: 'meta', uuid: 'a', changes: { is_starred: true } }),
+      outbox.enqueue({ kind: 'meta', uuid: 'b', changes: { is_starred: true } }),
+      outbox.enqueue({ kind: 'trash', uuid: 'c' }),
+      outbox.enqueue({ kind: 'trash', uuid: 'd' }),
+    ])
+    expect(await outbox.count()).toBe(4)
+  })
+})
+```
+
+`frontend/src/sync/push.test.ts` asserts: operations replay **in order**; a 409
+collects the server copy and **stops** (later ops may depend on it); a 4xx that is
+not 409 drops the op rather than wedging the queue; a network error stops without
+dropping anything.
+
+- [ ] **Step 2: Run them and watch them fail**
+
+```powershell
+npx vitest run src/sync/
+```
+Expected: FAIL — modules not found.
+
+- [ ] **Step 3: Write the outbox**
+
+Backed by the SQLite `outbox` table on native, `idb-keyval` on web (the web build
+only ever uses it as a short retry buffer).
+
+```ts
+async function withLock<T>(fn: () => Promise<T>): Promise<T> {
+  // Two windows of the same app can enqueue at once; read-modify-write without
+  // a lock silently drops operations.
+  if (!navigator.locks) return fn()
+  return navigator.locks.request('notes-outbox', fn)
+}
+
+export const outbox = {
+  async enqueue(op: QueuedOp): Promise<void> {
+    if (op.container === 'local') {
+      throw new Error('Refusing to enqueue a local note: it must never leave the device')
+    }
+
+    return withLock(async () => {
+      const ops = await read()
+
+      if (op.kind === 'body') {
+        const at = ops.findIndex((o) => o.kind === 'body' && o.uuid === op.uuid)
+        if (at > -1) {
+          // Keep the original version: it is the last the server confirmed.
+          ops[at] = { ...op, version: (ops[at] as BodyOp).version }
+          return write(ops)
+        }
+      }
+
+      ops.push(op)
+      return write(ops)
+    })
+  },
+  /* pending, shift, count, clear — all under the same lock */
+}
+```
+
+- [ ] **Step 4: Write push**
+
+```ts
+export async function push(): Promise<{ pushed: number; conflicts: Note[] }> {
+  const conflicts: Note[] = []
+  let pushed = 0
+
+  // One at a time, in order: a create must land before the edits that follow it.
+  for (const op of await outbox.pending()) {
+    try {
+      if (op.kind === 'create') await createNote({ uuid: op.uuid, folder_id: op.folder_id })
+      if (op.kind === 'body')   await patchNote(op.uuid, { body: op.body, version: op.version })
+      if (op.kind === 'meta')   await patchNote(op.uuid, op.changes)
+      if (op.kind === 'tags')   await syncNoteTags(op.uuid, op.names)
+      if (op.kind === 'trash')  await trashNote(op.uuid)
+      if (op.kind === 'force')  await forceDeleteNote(op.uuid)
+
+      await outbox.shift()
+      pushed++
+    } catch (e) {
+      const err = normalizeError(e)
+
+      if (err.status === 409 && err.serverCopy) {
+        conflicts.push(err.serverCopy)
+        break                       // later ops may depend on this note
+      }
+
+      if (err.status >= 400 && err.status < 500) {
+        await outbox.shift()        // can never succeed; do not wedge the queue
+        continue
+      }
+
+      break                         // network or 5xx: retry on the next run
+    }
+  }
+
+  return { pushed, conflicts }
+}
+```
+
+- [ ] **Step 5: Route writes through the outbox**
+
+`useAutosave` writes the row to SQLite immediately, then — for cloud notes only —
+enqueues a `body` op. It no longer calls `patchNote` directly. Star, trash and tag
+mutations enqueue `meta`, `trash` and `tags` ops after their optimistic local write.
+**Local notes stop at the SQLite write.**
+
+- [ ] **Step 6: Run the tests**
+
+```powershell
+npx vitest run src/sync/
+```
+Expected: PASS (6 + 4 tests), including Review Focus item 7.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): coalescing outbox and ordered push"
+```
+
+---
+
+### Task D8: Pull and the sync engine
+
+**Files:**
+- Create: `frontend/src/sync/pull.ts`, `frontend/src/sync/engine.ts`,
+  `frontend/src/hooks/useSyncStatus.ts`
+- Modify: `frontend/src/components/layout/StatusBar.tsx`,
+  `frontend/src/components/layout/ContainerSection.tsx`
+- Test: `frontend/src/sync/pull.test.ts`, `frontend/src/sync/engine.test.ts`
+
+**Interfaces:**
+- Produces:
+  - `pull(): Promise<{ applied: number }>` — pages `GET /sync?since=` until
+    `has_more` is false, applying rows and deletions to SQLite and advancing
+    `meta.last_revision`.
+  - `syncEngine.run()` — **push, then pull**; `syncEngine.start()` wires the triggers.
+  - `useSyncStatus()` → `{ state, pending, conflicts, lastSyncedAt }`.
+
+- [ ] **Step 1: Write the failing tests**
+
+`frontend/src/sync/pull.test.ts`:
+
+```ts
+it('applies rows and advances the high-water mark', async () => { /* … */ })
+
+it('deletes local rows listed in deletions', async () => {
+  // Without this an offline device keeps a ghost copy forever, and its queued
+  // edit resurrects the note on the server.
+})
+
+it('follows has_more until the pages run out', async () => { /* … */ })
+
+it('wipes cloud rows and resyncs from zero on full_resync_required', async () => {
+  // It must NOT touch local rows while doing so.
+})
+
+it('never writes a pulled row into the local container', async () => { /* … */ })
+```
+
+`frontend/src/sync/engine.test.ts`:
+
+```ts
+it('pushes before pulling', async () => {
+  const order: string[] = []
+  // The server holds the truth and detects conflicts; pulling first would mean
+  // reconciling locally against unpushed changes.
+  expect(order).toEqual(['push', 'pull'])
+})
+
+it('does not pull when push reported a conflict', async () => { /* … */ })
+it('does nothing at all when offline', async () => { /* … */ })
+it('does nothing when signed out', async () => { /* … */ })
+it('never runs two syncs concurrently', async () => { /* … */ })
+```
+
+- [ ] **Step 2: Run them and watch them fail**
+
+```powershell
+npx vitest run src/sync/pull.test.ts src/sync/engine.test.ts
+```
+Expected: FAIL.
+
+- [ ] **Step 3: Write pull**
+
+```ts
+export async function pull(): Promise<{ applied: number }> {
+  let since = Number(await meta.get('last_revision')) || 0
+  let applied = 0
+
+  for (;;) {
+    const { data } = await api.get<SyncResponse>('/sync', { params: { since, limit: 200 } })
+
+    if (data.full_resync_required) {
+      // We have been away longer than tombstone retention, so we cannot know
+      // what was hard-deleted. Drop cloud rows and start again — and leave the
+      // local container completely untouched.
+      await notesRepo.clearContainer('cloud')
+      await foldersRepo.clearContainer('cloud')
+      await tagsRepo.clearContainer('cloud')
+      await meta.set('last_revision', '0')
+      since = 0
+      continue
+    }
+
+    for (const n of data.notes)   { await notesRepo.upsert(fromServer(n)); applied++ }
+    for (const f of data.folders) { await foldersRepo.upsert(fromServer(f)) }
+    for (const t of data.tags)    { await tagsRepo.upsert(fromServer(t)) }
+
+    for (const d of data.deletions) {
+      if (d.type === 'note')   await notesRepo.hardDelete(d.uuid, 'cloud')
+      if (d.type === 'folder') await foldersRepo.hardDelete(d.uuid, 'cloud')
+      if (d.type === 'tag')    await tagsRepo.hardDelete(d.uuid, 'cloud')
+      applied++
+    }
+
+    since = data.revision
+    await meta.set('last_revision', String(since))
+
+    if (!data.has_more) break
+  }
+
+  return { applied }
+}
+```
+
+`fromServer()` always sets `container: 'cloud'`, `dirty: 0`,
+`server_version: n.version` and `server_revision: n.revision`. **Nothing pulled from
+the server can ever become a local row.**
+
+- [ ] **Step 4: Write the engine**
+
+```ts
+let running = false
+
+export const syncEngine = {
+  async run(): Promise<void> {
+    if (running || !isNative() || !navigator.onLine || !(await loadToken())) return
+    running = true
+
+    try {
+      setState('syncing')
+      const { conflicts } = await push()
+
+      if (conflicts.length) {
+        conflictQueue.addAll(conflicts)
+        setState('conflict')
+        return                      // resolve before pulling over the top
+      }
+
+      await pull()
+      setState('synced')
+    } catch {
+      setState(navigator.onLine ? 'error' : 'offline')
+    } finally {
+      running = false
+    }
+  },
+
+  start(): void {
+    void this.run()                                   // app launch
+    window.addEventListener('online', () => void this.run())
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void this.run()
+    })
+    setInterval(() => void this.run(), 3 * 60 * 1000) // while the window lives
+  },
+}
+```
+
+`useAutosave` calls `syncEngine.run()` debounced 2 s after a successful local write,
+so a single edit reaches the server without waiting three minutes.
+
+- [ ] **Step 5: Surface the state**
+
+`useSyncStatus()` feeds both the sidebar badge and the status bar:
+
+| State | Sidebar badge | Status bar |
+|---|---|---|
+| `synced` | green ● Synced | `Synced just now` |
+| `syncing` | ● Syncing | `Syncing… 12 of 30` |
+| `offline` | amber ● Offline | `Offline — 3 changes pending` |
+| `conflict` | red ● Attention | `3 notes need your attention` |
+
+**A local note shows none of these** — its status bar reads
+`On ${deviceKind().noun} — not backed up`.
+
+- [ ] **Step 6: Run the tests**
+
+```powershell
+npx vitest run src/sync/
+```
+Expected: PASS.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): sync engine — push then pull, with visible state"
+```
+
+---
+
+### Task D9: The conflict queue
+
+**Files:**
+- Create: `frontend/src/sync/conflicts.ts`,
+  `frontend/src/components/sync/ConflictBanner.tsx`,
+  `frontend/src/components/sync/ConflictSheet.tsx`
+- Modify: `backend/app/Services/Notes/UpdateNote.php`,
+  `backend/app/Http/Requests/UpdateNoteRequest.php`
+- Test: `frontend/src/sync/conflicts.test.ts`,
+  `backend/tests/Feature/TrashedNoteConflictTest.php`
+
+**Interfaces:**
+- Produces: `conflictQueue` — `addAll(notes)`, `next()`, `resolve(uuid, choice)`,
+  `count()`; a banner reading *"3 notes need your attention"*; and a sheet showing
+  **both versions side by side** with **Save mine as a copy** as the default button.
+- Backend: a body write to a **trashed** note now returns 409.
+
+- [ ] **Step 1: Write the failing backend test**
+
+`backend/tests/Feature/TrashedNoteConflictTest.php`:
+
+```php
+<?php
+use App\Models\Note;
+use App\Models\User;
+
+it('refuses a body write to a note trashed on another device', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $note = Note::factory()->for($user)->create(['version' => 4]);
+    $note->delete();
+
+    // Without this the edit lands silently on a trashed note nobody looks at.
+    $this->patchJson("/api/v1/notes/{$note->uuid}", [
+        'body' => ['type' => 'doc', 'content' => []],
+        'version' => 4,
+    ])->assertStatus(409)->assertJsonPath('reason', 'trashed');
+});
+
+it('still allows restoring and starring a trashed note', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $note = Note::factory()->for($user)->create();
+    $note->delete();
+
+    $this->patchJson("/api/v1/notes/{$note->uuid}", ['is_starred' => true])->assertOk();
+    $this->postJson("/api/v1/notes/{$note->uuid}/restore")->assertOk();
+});
+```
+
+- [ ] **Step 2: Run it and watch it fail**
+
+```powershell
+docker compose exec app php artisan test --filter=TrashedNoteConflictTest
+```
+Expected: FAIL — the write succeeds.
+
+- [ ] **Step 3: Add the rule to `UpdateNote`**
+
+```php
+if (array_key_exists('body', $changes)) {
+    if ($note->trashed()) {
+        throw new NoteConflictException($note, reason: 'trashed');
+    }
+
+    if ((int) $changes['version'] !== (int) $note->version) {
+        throw new NoteConflictException($note, reason: 'version');
+    }
+    …
+```
+
+`NoteConflictException` gains a `reason` and renders it, so the client can choose
+between the *"changed on another device"* and *"moved to Trash"* wording.
+
+- [ ] **Step 4: Write the conflict queue**
+
+`frontend/src/sync/conflicts.ts` — a Zustand store holding
+`{ uuid, serverCopy, localBody, reason }[]`, persisted to SQLite so a restart does
+not lose an unresolved conflict. `resolve(uuid, choice)`:
+
+| Choice | Action |
+|---|---|
+| `copy` **(default)** | Create a new note (new UUIDv7) with the local body, title `"<title> (from this device)"`; adopt the server copy for the original |
+| `mine` | Enqueue `{body: localBody, version: serverCopy.version}`; the server writes the replaced body to `note_versions` first |
+| `theirs` | Discard the local body; write the server copy to SQLite |
+
+For `reason: 'trashed'` the choices become **Restore and keep my changes** /
+**Discard my changes**.
+
+- [ ] **Step 5: Write the banner and sheet**
+
+`<ConflictBanner>` sits above the note list whenever `count() > 0`:
+*"3 notes need your attention — Review"*. Never a stack of modals; a device back
+from a week offline could have several.
+
+`<ConflictSheet>` shows the two versions side by side, labelled *"Yours · this
+device · 2 min ago"* and *"<device name> · 11 min ago"*, with a line reading
+*"A copy of the replaced version is always kept in history."* **Save mine as a copy**
+is the only `primary` button — it is the sole choice that cannot lose data.
+
+- [ ] **Step 6: Make "Keep mine" non-destructive**
+
+In `UpdateNote`, before overwriting the body, write the current one to
+`note_versions`. The table exists and nothing writes to it; this is what makes
+*Keep mine* recoverable.
+
+- [ ] **Step 7: Run the tests**
+
+```powershell
+docker compose exec app php artisan test --filter=TrashedNoteConflictTest
+npx vitest run src/sync/conflicts.test.ts
+```
+Expected: PASS.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add -A && git commit -m "feat: conflict queue, side-by-side resolution and trashed-note rule"
+```
+
+---
+
+### Task D10: Sign-out purge and the uninstall warnings
+
+**Files:**
+- Create: `frontend/src/platform/wipeCloudData.ts`,
+  `frontend/src/components/notes/LocalNoteCallout.tsx`
+- Modify: `frontend/src/hooks/queries/useAuth.ts`,
+  `frontend/src/components/layout/StatusBar.tsx`,
+  `frontend/src/components/editor/Editor.tsx`
+- Test: `frontend/src/platform/wipeCloudData.test.ts`
+
+**Interfaces:**
+- Produces: `wipeCloudData()` — deletes every `container = 'cloud'` row, the outbox,
+  `meta.last_revision` and the keychain token, and **leaves every local row intact**.
+- The four uninstall warnings from the spec.
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+describe('wipeCloudData', () => {
+  it('deletes cloud rows and keeps local ones', async () => {
+    await seed([{ uuid: 'c1', container: 'cloud' }, { uuid: 'l1', container: 'local' }])
+    await wipeCloudData()
+
+    expect(await notesRepo.list('cloud')).toHaveLength(0)
+    // Signing out must never touch notes the user was told stay on the device.
+    expect(await notesRepo.list('local')).toHaveLength(1)
+  })
+
+  it('clears the outbox and the sync high-water mark', async () => { /* … */ })
+  it('deletes the keychain token', async () => { /* … */ })
+  it('runs even when the server call failed', async () => { /* … */ })
+})
+```
+
+- [ ] **Step 2: Run it and watch it fail**
+
+```powershell
+npx vitest run src/platform/wipeCloudData.test.ts
+```
+Expected: FAIL.
+
+- [ ] **Step 3: Write it, and call it from `onSettled`**
+
+```ts
+export async function wipeCloudData(): Promise<void> {
+  // onSettled, never onSuccess: offline or with an expired session the revoke
+  // call fails, and leaving the data behind is the shared-device hole this
+  // exists to close.
+  await notesRepo.clearContainer('cloud')
+  await foldersRepo.clearContainer('cloud')
+  await tagsRepo.clearContainer('cloud')
+  await outbox.clear()
+  await meta.delete('last_revision')
+  await deleteToken()
+}
+```
+
+- [ ] **Step 4: Add the four warnings**
+
+1. **`<LocalNoteCallout>`** — shown once, the first time a note lands in On This
+   Device (`meta.local_callout_seen`). Text: *"This note is only on
+   ${deviceKind().noun}. Notes in On This Device are not backed up and never leave
+   this ${noun}. They are deleted if you uninstall the app."* Buttons: **Move to
+   Cloud** and **Keep it here**.
+2. **Sidebar helper line** — `Not backed up · stays on ${deviceKind().noun}`.
+3. **Status bar** — `On ${deviceKind().noun} — not backed up`, replacing the sync
+   state entirely for local notes.
+4. **Move confirmation** — already built in D6.
+
+- [ ] **Step 5: Run the tests**
+
+```powershell
+npx vitest run src/platform/
+```
+Expected: PASS, including Review Focus item 8.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A && git commit -m "feat(desktop): sign-out purge of cloud data and the uninstall warnings"
+```
+
+---
+
+### Task D11: Auto-update and CI builds
+
+**Files:**
+- Create: `.github/workflows/desktop.yml`
+- Modify: `frontend/src-tauri/tauri.conf.json`,
+  `frontend/src-tauri/Cargo.toml`, `frontend/src-tauri/src/lib.rs`
+- Create: `frontend/src/components/common/UpdatePrompt.tsx`
+- Test: manual — build on all three platforms
+
+**Interfaces:**
+- Produces: signed installers for Windows, macOS and Linux from CI, and an in-app
+  *"A new version is available — Restart"* prompt.
+
+- [ ] **Step 1: Add the updater plugin**
+
+```powershell
+cd frontend
+npm install @tauri-apps/plugin-updater@2.13.3 @tauri-apps/plugin-process@2.4.0
+```
+
+```toml
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+```
+
+- [ ] **Step 2: Generate the update signing keypair**
+
+```powershell
+npx tauri signer generate -w $env:USERPROFILE\.tauri\notes.key
+```
+
+The **public** key goes in `tauri.conf.json`. The **private** key and its password
+become the GitHub secrets `TAURI_SIGNING_PRIVATE_KEY` and
+`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Losing the private key means no existing
+install can ever auto-update again — back it up before continuing.
+
+```json
+"plugins": {
+  "updater": {
+    "active": true,
+    "endpoints": ["https://releases.notes.example.com/{{target}}/{{arch}}/{{current_version}}"],
+    "dialog": false,
+    "pubkey": "<the generated public key>"
+  }
+}
+```
+
+`"dialog": false` because the app draws its own prompt — a native dialog cannot
+explain that unsaved work is safe.
+
+- [ ] **Step 3: Write the prompt**
+
+```tsx
+export function UpdatePrompt() {
+  const [update, setUpdate] = useState<Update | null>(null)
+
+  useEffect(() => { void check().then(setUpdate) }, [])
+
+  if (!update) return null
+
+  return (
+    <Notification withCloseButton={false} /* bottom-centre, above the status bar */>
+      <Group justify="space-between" wrap="nowrap">
+        <Text size="sm">Version {update.version} is available.</Text>
+        <Button size="compact-sm" onClick={async () => {
+          // Flush the editor and the outbox before the process restarts.
+          await syncEngine.run()
+          await update.downloadAndInstall()
+          await relaunch()
+        }}>Restart</Button>
+      </Group>
+    </Notification>
+  )
+}
+```
+
+Check on launch and every six hours — a desktop app can stay open for weeks.
+
+- [ ] **Step 4: Write the CI matrix**
+
+`.github/workflows/desktop.yml`:
+
+```yaml
+name: desktop
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, target: '' }
+          - { os: macos-latest,   target: '--target universal-apple-darwin' }
+          - { os: ubuntu-22.04,   target: '' }   # oldest supported glibc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Linux build dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: npm ci
+        working-directory: frontend
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: frontend
+          tagName: v__VERSION__
+          releaseName: 'Notes v__VERSION__'
+          releaseDraft: true
+          args: ${{ matrix.target }}
+```
+
+**Build on `ubuntu-22.04`, not `ubuntu-latest`.** A binary linked against a newer
+glibc will not start on older distributions, and the failure is a bare
+"version `GLIBC_2.38' not found" with no hint that CI caused it.
+
+- [ ] **Step 5: Verify**
+
+Push a `v0.1.0` tag. All three jobs must go green and attach `.msi`, `.dmg` and
+`.AppImage`/`.deb` to a draft release. Install the Windows build and confirm the app
+opens with the Notes icon.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A && git commit -m "ci(desktop): signed matrix builds and in-app auto-update"
+```
+
+---
+
+### Task D12: Native end-to-end verification
+
+**Files:**
+- Create: `docs/NATIVE-TEST-PLAN.md`
+- Modify: `frontend/e2e/sync.spec.ts`
+- Test: the suite, plus a scripted manual pass
+
+**Interfaces:**
+- Consumes: everything. This is the acceptance gate for Phase 3.
+
+- [ ] **Step 1: Automate what Playwright can reach**
+
+Playwright drives the **web build**, so it covers the API contract rather than the
+Tauri window. `frontend/e2e/sync.spec.ts` asserts, against two browser contexts
+sharing one account:
+
+```ts
+test('an edit in one context appears in the other after sync', async () => { /* … */ })
+test('a stale version produces a 409 with the server copy', async () => { /* … */ })
+test('a hard delete appears in the sync deletions', async () => { /* … */ })
+test('a since older than the oldest tombstone demands a full resync', async () => { /* … */ })
+test('starring during an in-flight save does not 409', async () => { /* … */ })
+```
+
+- [ ] **Step 2: Write the manual plan for what it cannot**
+
+`docs/NATIVE-TEST-PLAN.md`, one numbered check per acceptance criterion in
+`SPEC.md` §9 that needs a real window — each with the exact steps and the expected
+result:
+
+| # | Check |
+|---|---|
+| 1 | Sign in, quit the app completely, reopen — still signed in |
+| 2 | DevTools → Local Storage contains **no** token |
+| 3 | Disconnect the network: cloud notes still open and edit |
+| 4 | Edit offline for two minutes, reconnect — exactly **one** `PATCH` in the Laravel log |
+| 5 | Create offline, reconnect — appears on device B, **not** duplicated |
+| 6 | Edit the same note offline on A and B, reconnect both — B shows the conflict sheet |
+| 7 | Delete on A while B is offline — gone on B after sync, and B's edit does not resurrect it |
+| 8 | Trash on A while B edits offline — B is asked to restore or discard |
+| 9 | A note in On This Device never appears on B |
+| 10 | Move cloud → local: warning, then it disappears from B |
+| 11 | Sign out: cloud notes gone, local notes intact |
+| 12 | Sign in as a second account: no trace of the first account's notes |
+| 13 | Quit mid-edit, reopen — the draft is restored |
+| 14 | Resize to 390px wide: all three panes reachable, no horizontal scroll |
+| 15 | Ubuntu LTS: the editor, tables and the bubble menu render correctly |
+| 16 | Install the signed build on a clean machine — no SmartScreen or Gatekeeper block |
+
+- [ ] **Step 3: Run everything**
+
+```powershell
+docker compose exec app php artisan test
+cd frontend; npx vitest run; npx playwright test
+cd src-tauri; cargo test; cd ..
+npm run tauri:build
+```
+
+- [ ] **Step 4: Walk the manual plan on two machines**
+
+Two devices signed into one account. Every row in the table must pass before Phase 3
+is complete.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A && git commit -m "test(desktop): sync end-to-end coverage and the native test plan"
+```
+
+---
+
 ## Running the whole thing
 
 ```powershell
@@ -8977,6 +10907,15 @@ Tests (run each from its own directory — PowerShell has no `&&` chaining befor
 ```powershell
 docker compose exec app php artisan test
 cd frontend; npx vitest run; npx playwright test
+cd src-tauri; cargo test; cd ..
+```
+
+Desktop app:
+
+```powershell
+cd frontend
+npm run tauri:dev        # a desktop window, hot-reloading
+npm run tauri:build      # installers in src-tauri/target/release/bundle/
 ```
 
 ---
@@ -8990,9 +10929,10 @@ B4–B6; API §5 → B7–B12; layout §6.1 → F4; search controls §6.2 → F7
 F9; dropdowns §6.4 → F6, F7, F12; loading §6.5 → F5, F7, F11; saving §6.6 → F10;
 responsive §6.7 → F4, F14; shortcuts §6.8 → F8, F10, F11. Acceptance §7 → F15.
 
-**PWA coverage:** spec §3.7 → F16 (shell, update prompt, install), F17 (offline reads,
-sign-out purge), F18 (write queue), F19 (offline E2E), with B15 providing the
-idempotent create the queue depends on.
+**Cross-platform coverage:** spec §2 and §4 → D1 (shell), D2 (platform), D6
+(containers); §5.1 auth → B16, D3; §5.3 local storage → D4, D5; §5.4 sync → B17, B18,
+D7, D8; §5.5 trashed-note rule → D9; §5.6 search → D4 (FTS5) and B11; uninstall
+warnings → D10; distribution → D11; acceptance → D12.
 
 **Deferred items carry no tasks, deliberately:** import/export, Settings, version
 history, attachments, sharing. `note_versions` is created in B6 and nothing writes to it.

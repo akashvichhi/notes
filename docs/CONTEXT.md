@@ -208,17 +208,22 @@ Failure is loud, success is quiet.
 
 ---
 
-## 9 · Next steps
+## 9 · Status
 
-1. **Rewrite `SPEC.md`** against `ARCHITECTURE.md` — containers, dual auth, SQLite,
-   sync protocol; delete the PWA sections.
-2. **Rewrite `PLAN.md`** — remove the four PWA tasks, add roughly twelve: Tauri shell,
-   SQLite store and migrations, sync engine, conflict queue, token auth both sides,
-   revision counter, tombstones, pull endpoint, container UI, move-between-containers,
-   uninstall warnings, CI matrix builds.
-3. Hand `PLAN.md` to Antigravity using the prompt in `GETTING-STARTED.md`.
+**All documents are current and consistent as of 2026-10-11.**
 
----
+| Document | State |
+|---|---|
+| `START.md` | Ready — entry point, ground rules, folder map, the agent prompt |
+| `docs/ARCHITECTURE.md` | Current |
+| `docs/SPEC.md` | Rewritten for containers, dual auth, SQLite and sync · 25 acceptance criteria |
+| `docs/PLAN.md` | **46 tasks** — B1–B18 backend, F1–F15 shared UI, D1–D12 native |
+| `mockup/index.html` | Current |
+
+Hand the folder to the IDE and point it at `START.md`.
+
+Phase two (Android, iOS) is **not** in the plan. It reuses the same Tauri project and
+the responsive layout from F4 and F14.
 
 ## 10 · Constraints that will get optimised away if nobody writes them down
 

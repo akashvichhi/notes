@@ -214,13 +214,18 @@ Failure is loud, success is quiet.
 
 | Document | State |
 |---|---|
-| `START.md` | Ready — entry point, ground rules, folder map, the agent prompt |
-| `docs/ARCHITECTURE.md` | Current |
-| `docs/SPEC.md` | Rewritten for containers, dual auth, SQLite and sync · 25 acceptance criteria |
+| | **For the agent** | |
+| `START.md` | Entry point — read order, folder map, git bootstrap, delivery gates, ground rules |
+| `docs/PRINCIPLES.md` | How to work — 11 absolutes, the task loop, the self-audit |
+| `docs/CONTEXT.md` | This file — decisions, reversals, status |
+| `docs/ARCHITECTURE.md` | Containers, local and cloud storage, sync, the stack |
+| `docs/SPEC.md` | Product spec · **25 acceptance criteria in §9** |
 | `docs/PLAN.md` | **54 tasks** — B1–B18 backend · F1–F15 shared UI · D1–D12 desktop · M1–M8 mobile |
-| `docs/PRINCIPLES.md` | How the agent must work — absolutes, task loop, self-audit |
-| `docs/WHEN-IT-GOES-WRONG.md` | Recovery playbook for the developer |
-| `mockup/index.html` | Current |
+| `docs/SETUP-WINDOWS.md` | The Docker environment |
+| | **For the developer only** | |
+| `docs/GETTING-STARTED.md` | Runbook — setup, **the prompts to paste**, model choice, tagging |
+| `docs/WHEN-IT-GOES-WRONG.md` | Recovery — detection, undo by severity, correction prompts |
+| `mockup/index.html` | Interactive UI reference |
 
 Hand the folder to the IDE and point it at `START.md`.
 

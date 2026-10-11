@@ -134,6 +134,20 @@ Local notes are the only copy, so the app says so in four places:
 3. The status bar, whenever a local note is open: *On this device — not backed up*.
 4. A confirmation when moving Cloud → On This Device.
 
+**The icon and the noun follow the hardware.** The container is always *named*
+"On This Device" — it is a data concept and must read the same everywhere — but the
+icon beside it and the noun in the helper text come from `platform()`:
+
+| Platform | Icon | Helper text |
+|---|---|---|
+| Windows, macOS, Linux | laptop | *Not backed up · stays on this computer* |
+| Android phone, iPhone | phone | *Not backed up · stays on this phone* |
+| iPad, Android tablet | tablet | *Not backed up · stays on this tablet* |
+
+The same noun is used in the status bar (*On this phone — not backed up*) and in the
+move-to-local confirmation. A laptop icon on a phone undermines the one message this
+container has to land.
+
 No platform offers a reliable uninstall hook, so the warning lands while the data
 still matters.
 

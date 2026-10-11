@@ -267,6 +267,8 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.7-4.7"/></symbol>
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6-1.4A3.8 3.8 0 0 1 18 18z"/></symbol>
   <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 20h20"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></symbol>
+  <symbol id="i-tablet" viewBox="0 0 24 24"><rect x="4.5" y="2.5" width="15" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></symbol>
   <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
@@ -339,11 +341,11 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       <!-- ON THIS DEVICE -->
       <div class="acct">
         <div class="acct-head">
-          <svg class="icon sm" viewBox="0 0 24 24" style="color:var(--text-faint)"><use href="#i-laptop"/></svg>
+          <svg class="icon sm" id="dev-icon" viewBox="0 0 24 24" style="color:var(--text-faint)"><use href="#i-laptop"/></svg>
           <span class="acct-title">On This Device</span>
         </div>
         <!-- the permanent, quiet warning -->
-        <div class="acct-note">Not backed up · stays on this computer</div>
+        <div class="acct-note">Not backed up · stays on <span id="dev-noun">this computer</span></div>
         <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">5</span></button>
 
         <div class="sec">Folders</div>
@@ -591,7 +593,7 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
     if(s==='local'){
       // local notes never sync, so they never show sync state
       sync.className='sync'; sync.innerHTML=
-        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-laptop"/></svg> On this device — not backed up';
+        '<svg class="icon sm" viewBox="0 0 24 24"><use href="'+deviceKind().icon+'"/></svg> On '+deviceKind().noun+' — not backed up';
       where.textContent='On This Device · Quick notes';
     }
     if(s==='conflict'){
@@ -627,6 +629,23 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
 
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){ovl.classList.remove('open'); mm.classList.remove('open')}});
+
+  /* ---- the On This Device icon and noun follow the hardware ----
+     Real app: Tauri's platform() returns windows|macos|linux|android|ios.
+     This mockup approximates it with the viewport. The container NAME never
+     changes — it is a data concept — only the icon and the noun do. */
+  function deviceKind(){
+    if (matchMedia('(max-width:767px)').matches)  return {icon:'#i-phone',  noun:'this phone'};
+    if (matchMedia('(max-width:1099px)').matches) return {icon:'#i-tablet', noun:'this tablet'};
+    return {icon:'#i-laptop', noun:'this computer'};
+  }
+  function applyDeviceKind(){
+    var k = deviceKind();
+    document.getElementById('dev-icon').firstElementChild.setAttribute('href', k.icon);
+    document.getElementById('dev-noun').textContent = k.noun;
+  }
+  applyDeviceKind();
+  window.addEventListener('resize', applyDeviceKind);
 
   /* ---- word and character counts, including the selection ---- */
   var canvasEl = document.querySelector('.canvas'),

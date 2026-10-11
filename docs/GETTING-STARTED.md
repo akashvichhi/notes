@@ -149,6 +149,62 @@ lets you `git diff` or `git reset` back to a known-good point if a task goes wro
 
 ---
 
+## Step 6b — Choose the model 🤖
+
+From the official list at `https://antigravity.google/docs/models/`, a **Google AI Pro
+(non-trial)** plan offers:
+
+| Model | Use it for |
+|---|---|
+| **Claude Opus 5.5 (thinking)** | The reasoning-heavy tasks |
+| **Claude Sonnet 5.5 (thinking)** | General work |
+| **Gemini 3.1 Pro** (Low / High) | General work and the bulk of transcription |
+| **Gemini 3.8 / 3.7 / 3.6 Flash** (Fast → High effort) | Routine, high-volume tasks |
+| ~~Claude Sonnet 4.6 · Opus 4.6 · GPT-OSS-120b~~ | **Do not use — removed 2 Nov 2026** |
+
+**Avoid the 4.6 models and GPT-OSS entirely.** They are scheduled for removal on
+**2 November 2026**, which is inside the window of this build. Starting a 45-task
+project on a model that disappears halfway through means switching mid-stream, and
+`PRINCIPLES.md` is explicit that a task half-built by one model and finished by
+another is where assumptions get silently dropped.
+
+### The quota detail that shapes the strategy
+
+Antigravity tracks usage as **separate budgets for Gemini and for Claude/GPT**, with
+both a weekly and a five-hour limit. They do not compete. So:
+
+- Run the **transcription tasks on Gemini** — `B2`–`B5`, `B7`, `B9`–`B14`, `F1`–`F3`,
+  `F5`–`F8`, `F12`. The plan already contains the code; these need accurate
+  instruction-following, not invention. `Gemini 3.1 Pro (High)` is the sensible
+  default, dropping to Flash if you are comfortable with the output.
+- Save the **Claude budget for the reasoning-heavy tasks**: `B8` version conflicts,
+  `B17`/`B18` revisions and tombstones, `D3` the Rust keychain, `D4` the SQLite
+  schema, `D7`/`D8` the sync engine, `D9` the conflict queue. These are where a
+  plausible-looking wrong answer costs days. Use a **thinking** variant.
+
+Spending each budget on what it is best at gets you roughly twice the useful work
+per week.
+
+### Judge it on the first three tasks
+
+Whichever model you start with, run `B1`, `B1b` and `B2`, then check:
+
+1. One commit per task, or did it batch them?
+2. Did it write the failing test first and actually run it?
+3. Is `ArchitectureTest` green **without having been edited**?
+4. Did it invent any file not in the plan?
+
+Twenty minutes, and it tells you more than any benchmark. A model that fails these on
+`B2` will fail them far worse on `D7`.
+
+### Switching models
+
+Your choice persists for the conversation, and a change mid-run does not apply until
+the current turn finishes. So **switch only between tasks, never inside one**, and
+start a fresh conversation when you switch.
+
+---
+
 ## Step 7 — Open the project in Antigravity 🤖
 
 Open the folder `C:\dev\notes-app` — **the root**, not `backend` or `frontend`. The

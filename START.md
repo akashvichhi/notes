@@ -283,8 +283,10 @@ is wrong or impossible, **stop and say so** rather than improvising.
 
 ---
 
----
+## 5 · Not for you
 
 The developer's own guides — `docs/GETTING-STARTED.md` and
 `docs/WHEN-IT-GOES-WRONG.md` — are **not for you**. They cover model selection, git
 recovery and the prompts the developer sends, none of which are yours to act on.
+
+When you have read this file and the five in §2, begin at **Task B1**.

@@ -100,6 +100,8 @@ kbd{font-family:var(--font);font-size:11px;padding:1px 5px;border-radius:var(--r
 .item .n{margin-left:auto;font-size:11.5px;color:var(--text-faint);font-variant-numeric:tabular-nums}
 .item.on .n{color:var(--blue-7)}
 .cdot{width:8px;height:8px;border-radius:999px;flex:none}
+.sec{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--text-faint);padding:9px 8px 3px}
 .tags{display:flex;flex-wrap:wrap;gap:5px;padding:4px 8px}
 .tag{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--bg-raised);
   border:1px solid var(--border-strong);color:var(--text-dim)}
@@ -316,13 +318,18 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
         </div>
         <button class="item on" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">24</span></button>
         <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-star"/></svg> Starred <span class="n">3</span></button>
-        <button class="item" data-scope="cloud"><span class="cdot" style="background:var(--blue-6)"></span> Work <span class="n">11</span></button>
-        <button class="item child" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-folder"/></svg> Releases <span class="n">4</span></button>
-        <button class="item" data-scope="cloud"><span class="cdot" style="background:var(--green)"></span> Personal <span class="n">7</span></button>
+
+        <div class="sec">Folders</div>
+        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Work <span class="n">11</span></button>
+        <button class="item child" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Releases <span class="n">4</span></button>
+        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--green)"><use href="#i-folder"/></svg> Personal <span class="n">7</span></button>
+
+        <div class="sec">Tags</div>
         <div class="tags">
           <button class="tag">#todo</button><button class="tag">#draft</button>
         </div>
-        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">2</span></button>
+
+        <button class="item" data-scope="cloud" style="margin-top:6px"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">2</span></button>
       </div>
 
       <!-- ON THIS DEVICE -->
@@ -334,9 +341,14 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
         <!-- the permanent, quiet warning -->
         <div class="acct-note">Not backed up · stays on this computer</div>
         <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">5</span></button>
-        <button class="item" data-scope="local"><span class="cdot" style="background:var(--violet)"></span> Scratch <span class="n">2</span></button>
+
+        <div class="sec">Folders</div>
+        <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--violet)"><use href="#i-folder"/></svg> Quick notes <span class="n">2</span></button>
+
+        <div class="sec">Tags</div>
         <div class="tags"><button class="tag">#private</button></div>
-        <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">0</span></button>
+
+        <button class="item" data-scope="local" style="margin-top:6px"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">0</span></button>
       </div>
     </aside>
 
@@ -436,7 +448,7 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   <button class="mi"><span class="cdot" style="background:var(--green)"></span> Personal</button>
   <div class="msep"></div>
   <div class="mlabel">On This Device</div>
-  <button class="mi" id="mi-local"><span class="cdot" style="background:var(--violet)"></span> Scratch</button>
+  <button class="mi" id="mi-local"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--violet)"><use href="#i-folder"/></svg> Quick notes</button>
   <div class="mnote">Moving here stops syncing. The note disappears from your other devices.</div>
 </div>
 
@@ -506,8 +518,8 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       ['Onboarding checklist','Laptop, VPN, repo access, first ticket.','Last week','Work',false,'']
     ]},
     local:{title:'On This Device',count:5,filter:'Filter in On This Device',rows:[
-      ['Scratch — interview prep','Rails n+1, ActiveJob retries, React memo traps.','5 min ago','Scratch',true,'local'],
-      ['Wifi codes','Guest network and the printer PIN.','Yesterday','Scratch',false,'local'],
+      ['Interview prep','Rails n+1, ActiveJob retries, React memo traps.','5 min ago','Quick notes',true,'local'],
+      ['Wifi codes','Guest network and the printer PIN.','Yesterday','Quick notes',false,'local'],
       ['Draft resignation','Not ready to send. Definitely not syncing this one.','3 days ago','',false,'local'],
       ['Car service history','Last oil change 94,200 km.','Last month','',false,'local'],
       ['Book notes','Thinking in Systems — stocks and flows.','Last month','',false,'local']
@@ -573,7 +585,7 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       // local notes never sync, so they never show sync state
       sync.className='sync'; sync.innerHTML=
         '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-laptop"/></svg> On this device — not backed up';
-      where.textContent='On This Device · Scratch';
+      where.textContent='On This Device · Quick notes';
     }
     if(s==='conflict'){
       sync.className='sync err'; sync.innerHTML=

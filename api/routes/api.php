@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\FolderController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use Illuminate\Http\Request;
@@ -24,5 +25,9 @@ Route::prefix('v1')->group(function () {
         Route::patch('/me', [ProfileController::class, 'update']);
         Route::put('/me/password', [ProfileController::class, 'password']);
         Route::patch('/preferences', [ProfileController::class, 'preferences']);
+
+        Route::post('/folders', [FolderController::class, 'store']);
+        Route::patch('/folders/{folder}', [FolderController::class, 'update']);
+        Route::delete('/folders/{folder}', [FolderController::class, 'destroy']);
     });
 });

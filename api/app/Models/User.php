@@ -35,4 +35,9 @@ class User extends Authenticatable
             'preferences' => 'array',
         ];
     }
+
+    public function folders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Folder::class);
+    }
 }

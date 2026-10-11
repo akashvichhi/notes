@@ -151,7 +151,20 @@ missing, stop and say so.
 
 **Each task is a TDD cycle.** Write the failing test, run it and confirm it fails,
 implement, run it and confirm it passes, commit. Never write implementation before its
-test. Commit after every task, using the message in that task's final step.
+test.
+
+**COMMIT AFTER EVERY SINGLE TASK.** This is not optional and not something to batch.
+
+- One task → one commit. Never finish two tasks and make one commit.
+- Use the exact commit message given in that task's final step.
+- Commit only when that task's tests pass. Never commit a red suite.
+- Stage everything the task touched: `git add -A`.
+- Do not commit before a task is finished, and do not move on to the next task until
+  the previous one is committed.
+
+Each commit is the checkpoint the developer uses to review progress and to roll back a
+task that went wrong. A batch of five tasks in one commit destroys that, and there is
+no way to recover it afterwards.
 
 **Controllers contain no logic.** Every action is a single-method service under
 `app/Services/<Domain>`; queries live in `app/Queries`; stateless helpers in
@@ -188,8 +201,12 @@ and docs/PLAN.md before writing any code.
 Follow every ground rule in START.md section 4.
 
 Execute docs/PLAN.md task by task, in order, starting with the first task.
-Each task's steps are a TDD cycle — follow them literally and commit at the end
-of each task.
+Each task's steps are a TDD cycle — follow them literally.
+
+Commit after EVERY task, without exception: one task, one commit, using the
+exact message in that task's final step, only once that task's tests pass.
+Never batch several tasks into one commit, and do not start the next task
+until the previous one is committed.
 
 Environment: Windows with Docker. Run every PHP and Composer command as
 `docker compose exec app <command>`. Node runs on the host from frontend/.
@@ -205,7 +222,7 @@ To resume in a later session:
 
 ```
 Continue from Task <id>. Re-read docs/PLAN.md for that task and follow its steps
-exactly. Do not redo earlier tasks.
+exactly. Do not redo earlier tasks. Commit after every task, one commit each.
 ```
 
 ---
@@ -220,8 +237,9 @@ docker compose logs -f app
 
 Three early warning signs:
 
-1. **Several tasks completed, one commit.** It is not following the plan. Stop it and
-   point it back at the task list.
+1. **Several tasks completed, one commit.** The commit count in `git log --oneline`
+   must match the number of finished tasks. If it does not, stop the agent, tell it to
+   commit per task, and check what the uncommitted work actually contains.
 2. **`ArchitectureTest` failing.** Logic is creeping into controllers. Tell it to move
    the logic into a service, never to change the test.
 3. **Dependency drift** — `git diff backend/composer.json frontend/package.json`. The

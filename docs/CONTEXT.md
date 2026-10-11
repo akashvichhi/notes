@@ -128,7 +128,7 @@ real-time collaboration · end-to-end encryption · background sync while closed
 | Decision | Why | Rejected |
 |---|---|---|
 | **Tauri 2** | One project for all five platforms; ~5–15 MB installers; extends to mobile later without a second toolchain | Electron + Capacitor (two shells, 120–150 MB), React Native / Flutter (full rewrite — Mantine and TipTap do not run there) |
-| **Desktop first**, mobile phase two | No store review, no $99/yr to start; shakes out token auth and sync before store deadlines | All five at once |
+| **Desktop first**, mobile after | No store review, no $99/yr to start; shakes out token auth and sync before store deadlines | All five at once |
 | **PWA removed** | Replaced by the native shell. `vite-plugin-pwa`, workbox, service worker, web manifest all deleted |
 
 ---

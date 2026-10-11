@@ -15,7 +15,7 @@ gates. Begin at Task B1, and stop at the first gate after Task F15.
 ## 1 · What this is
 
 A cross-platform notes application. One React codebase ships as a web app and as
-native apps for Windows, macOS and Linux (Android and iOS in phase two), against a
+native apps for Windows, macOS, Linux, Android and iOS, against a
 Laravel API on MySQL.
 
 Notes live in one of two containers:

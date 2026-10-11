@@ -28,9 +28,9 @@ React Router 8 · axios 1.20 — **Tauri 2 · Rust · SQLite (tauri-plugin-sql)*
 three before Task B1. This plan argues from the spec; anything underspecified here is
 answered there.
 
-**Phases:** `B1`–`B18` backend · `F1`–`F15` the shared UI · `D1`–`D11` the native
-shell, local database and sync engine. Android and iOS are **phase two**, not in this
-plan; they reuse the same Tauri project and the responsive layout from F4 and F14.
+**Phases:** `B1`–`B18` backend · `F1`–`F15` the shared UI · `D1`–`D12` the desktop
+shell, local database and sync engine · `M1`–`M8` Android and iOS. **Each phase ends
+at a `⛔ STOP` gate**, and the next begins only when the developer asks for it.
 
 ---
 
@@ -8998,7 +8998,8 @@ accepted yet.
 > **Only begin this phase when the developer has tested the web application and
 > explicitly asked for the desktop app.** See the delivery gate above.
 
-Windows, macOS and Linux. Android and iOS are phase two and are not in this plan.
+Windows, macOS and Linux. Android and iOS come later, in Phase 4 (`M1`–`M8`), on
+this same Tauri project.
 
 **Pinned versions for this phase** — use exactly these:
 

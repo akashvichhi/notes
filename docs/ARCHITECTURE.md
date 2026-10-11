@@ -316,7 +316,7 @@ wipes cloud rows first.
 
 | Technology | Role |
 |---|---|
-| **Tauri 2** | One project → Windows, macOS, Linux; Android and iOS in phase two |
+| **Tauri 2** | One project → Windows, macOS, Linux (Phase 3); Android and iOS (Phase 4) |
 | **Rust** (rustup, cargo) | Tauri's core. Required to build; no app code is written in it |
 | **tauri-plugin-sql** | SQLite access from the webview |
 | WebView2 / WKWebView / WebKitGTK / Android WebView | The renderer on each platform |
@@ -364,7 +364,7 @@ including offline and sync scenarios).
 | Tauri updater | Desktop auto-update, with its own signing keypair |
 | Apple Developer | $99/yr — macOS notarization, iOS |
 | Windows code-signing cert | ~$200–400/yr, or SmartScreen warns on every install |
-| Google Play Console | $25 once, phase two |
+| Google Play Console | $25 once, for Phase 4 |
 
 ### Removed from the previous design
 

@@ -1,5 +1,8 @@
 # Getting started — from scratch
 
+> **For the developer, not the agent.** If you are the coding agent, this file is
+> not for you — read `START.md` and follow its read order.
+
 Everything you run yourself, in order, and exactly what to give the IDE.
 **Local terminal = PowerShell on Windows.** Commands are marked 🖥️ (terminal) or
 🤖 (Antigravity).

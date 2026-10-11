@@ -259,24 +259,66 @@ agent needs to see both applications and the `docs/` folder.
 
 ## Step 8 — Give the agent its instructions 🤖
 
-**The prompt lives in `START.md` section 5.** Open that file, copy the block, paste it
-as your first message.
+Paste this as your first message. It restates the rules that matter most — rules in
+the message carry more weight than rules in a file the agent read once.
 
-It is kept in one place deliberately — a second copy here would drift out of date,
-and a stale prompt is worse than no prompt because it points the agent at tasks that
-no longer exist.
+```
+Read START.md in full, then docs/PRINCIPLES.md, docs/CONTEXT.md,
+docs/ARCHITECTURE.md, docs/SPEC.md and docs/PLAN.md before writing any code.
 
-A bare *"Start with START.md"* also works, but the full prompt is better: rules
-restated in the message carry more weight than rules in a file the agent read once.
-It repeats the five that matter most — stop at F15, one commit per task, do not
-scaffold, pause at reasoning-heavy tasks, stop rather than improvise.
+Follow every ground rule in START.md section 4, and work according to
+docs/PRINCIPLES.md throughout — in particular: work on master only, never
+create a branch or a worktree, never weaken a test to make it pass, verify
+before you claim anything works, and stop and tell me rather than improvising
+when something is wrong.
 
-**To resume** a later session, use the short prompt at the end of `START.md`
-section 5:
+Execute docs/PLAN.md task by task, in order, starting with Task B1.
+
+Nine tasks carry a "REASONING-HEAVY TASK" banner. Before starting one of
+those, stop, tell me which task it is, and wait for me to say continue — I may
+want to switch model first, which only I can do.
+
+Each task's steps are a TDD cycle — follow them literally.
+
+STOP AFTER TASK F15. That is the end of this delivery: the backend and the
+web application. Do not start Task D1. When F15 is committed, run the full
+test suite, report what was built and how it tested, and wait for me.
+
+Commit after EVERY task, without exception: one task, one commit, using the
+exact message in that task's final step, only once that task's tests pass.
+Never batch several tasks into one commit, and do not start the next task
+until the previous one is committed.
+
+Environment: Windows with Docker. Run every PHP and Composer command as
+`docker compose exec app <command>`. Node runs on the host from frontend/.
+DB_HOST is `mysql`.
+
+The backend/ and frontend/ applications already exist. Do not scaffold them.
+
+Before Task B1, follow START.md section 2c: make sure a git repository exists,
+creating one if it does not, and set the repository-scoped git identity given
+there. You commit after every task, so this must be in place first.
+
+If anything in the plan is wrong, impossible, or contradicts
+docs/ARCHITECTURE.md, stop and tell me instead of improvising.
+```
+
+**To resume** in a later session — you will do this many times, as context and rate
+limits stop the agent inside a stage:
 
 ```
 Continue from Task <id>. Re-read docs/PLAN.md for that task and follow its steps
 exactly. Do not redo earlier tasks. Commit after every task, one commit each.
+```
+
+**To start the next stage**, once you have tested the previous one:
+
+```
+Start Phase 3. Begin at Task D1.
+```
+
+```
+Start Phase 4. Begin at Task M1.
 ```
 
 ---
@@ -346,7 +388,7 @@ npm run dev
 
 Open `http://localhost:5173` and sign in as **demo@example.com** / **password**.
 
-Then walk the acceptance criteria in `docs/SPEC.md` §7 — particularly the five E2E
+Then walk the acceptance criteria in `docs/SPEC.md` §9 — particularly the five E2E
 cannot check: the conflict sheet with two tabs open, starring during an in-flight
 save, the tablet drawer at 800px, both colour themes, and killing the network
 mid-type to confirm the draft survives a reload.

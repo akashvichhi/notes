@@ -9,8 +9,7 @@ Copy-Item assets\brand\favicon.svg,
           assets\brand\icon-192.png,
           assets\brand\icon-512.png,
           assets\brand\icon-512-maskable.png,
-          assets\brand\og-image.png,
-          assets\brand\manifest.webmanifest  frontend\public\
+          assets\brand\og-image.png  frontend\public\
 
 Remove-Item frontend\public\vite.svg -ErrorAction SilentlyContinue
 ```
@@ -18,7 +17,7 @@ Remove-Item frontend\public\vite.svg -ErrorAction SilentlyContinue
 ```bash
 # macOS / Linux
 cp assets/brand/{favicon.svg,favicon.ico,apple-touch-icon.png,icon-192.png,\
-icon-512.png,icon-512-maskable.png,og-image.png,manifest.webmanifest} frontend/public/
+icon-512.png,icon-512-maskable.png,og-image.png} frontend/public/
 rm -f frontend/public/vite.svg
 ```
 
@@ -43,7 +42,7 @@ instead, so Vite can inline and tree-shake them.
 | **`logo-dark.svg`** | vector | Same lockup **for dark backgrounds** |
 | **`logo-mark.svg`** | vector | Square mark alone, fixed blue. Use where the lockup is too wide |
 | **`logo-mark-mono.svg`** | vector | Square mark whose background is `currentColor`, so it inherits the surrounding text colour. For single-colour contexts |
-| **`manifest.webmanifest`** | — | PWA metadata. Optional in Phase 1; harmless to ship |
+| ~~`manifest.webmanifest`~~ | — | **Unused.** Written for the PWA design, which was replaced by native apps. Do not copy it or link to it |
 
 ---
 
@@ -53,7 +52,6 @@ instead, so Vite can inline and tree-shake them.
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link rel="manifest" href="/manifest.webmanifest" />
 
 <meta name="theme-color" content="#228be6" />
 <meta name="description" content="Write, organise and search your notes." />

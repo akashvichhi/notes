@@ -5372,7 +5372,6 @@ Replace the `<head>` of `frontend/index.html` with:
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link rel="manifest" href="/manifest.webmanifest" />
 
 <meta name="theme-color" content="#228be6" />
 <meta name="description" content="Write, organise and search your notes." />
@@ -5391,8 +5390,10 @@ Set the package name in `frontend/package.json`:
 { "name": "notes-app", "private": true }
 ```
 
-`assets/brand/manifest.webmanifest` is **not** copied — Task F16 has
-`vite-plugin-pwa` generate the manifest instead, so there is one source of truth.
+`assets/brand/manifest.webmanifest` is **not copied and not referenced.** It was
+written for the Progressive Web App design, which this project no longer uses — the
+native apps replace it. Do not add a `<link rel="manifest">`; it would 404 on every
+page load.
 
 > `assets/brand/README.md` documents what every file is for. Do not generate,
 > redraw, recolour or replace any of them.
@@ -8953,7 +8954,7 @@ Expected: all projects green.
 
 - [ ] **Step 4: Walk the remaining acceptance criteria by hand**
 
-From `docs/SPEC.md` §7, verify by hand the ones E2E does not cover:
+From `docs/SPEC.md` §9, verify by hand the ones E2E does not cover:
 criterion 3 (two tabs, conflict sheet), criterion 4 (star during an in-flight save),
 criterion 13 (tablet drawer at 800px), criterion 14 (both themes),
 criterion 15 (offline — kill the network mid-type, confirm the amber status and that the
@@ -11393,7 +11394,7 @@ storage §3.2 → B6, B8; search §3.3 → B11, F11; identifiers §3.4 → B2, B
 lifecycle §3.5 → B7, B13, F13; autosave §3.6 → B8, F10; tabs §3.7 → F8; data model §4 →
 B4–B6; API §5 → B7–B12; layout §6.1 → F4; search controls §6.2 → F7, F11; editor §6.3 →
 F9; dropdowns §6.4 → F6, F7, F12; loading §6.5 → F5, F7, F11; saving §6.6 → F10;
-responsive §6.7 → F4, F14; shortcuts §6.8 → F8, F10, F11. Acceptance §7 → F15.
+responsive §6.7 → F4, F14; shortcuts §6.8 → F8, F10, F11. Acceptance §9 → F15, D12, M8.
 
 **Cross-platform coverage:** spec §2 and §4 → D1 (shell), D2 (platform), D6
 (containers); §5.1 auth → B16, D3; §5.3 local storage → D4, D5; §5.4 sync → B17, B18,

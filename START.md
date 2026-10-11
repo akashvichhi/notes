@@ -6,8 +6,9 @@ Entry point for the coding agent. Read this file first, in full.
 
 ## ✅ STATUS — 2026-10-11 · READY
 
-All documents are current and consistent. `docs/PLAN.md` holds **46 tasks** covering
-the backend, the shared UI and the native desktop apps. Begin at Task B1.
+All documents are current and consistent. `docs/PLAN.md` holds **54 tasks** across
+four phases — backend, shared UI, desktop and mobile — separated by three `⛔ STOP`
+gates. Begin at Task B1, and stop at the first gate after Task F15.
 
 ---
 

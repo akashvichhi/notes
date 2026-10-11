@@ -4461,6 +4461,687 @@ git add -A && git commit -m "feat(backend): idempotent note create with client-s
 
 ---
 
+### Task B16: Token authentication for native clients
+
+**Files:**
+- Create: `backend/app/Http/Controllers/Api/V1/TokenController.php`,
+  `backend/app/Http/Requests/IssueTokenRequest.php`,
+  `backend/app/Services/Auth/IssueToken.php`,
+  `backend/app/Services/Auth/RevokeCurrentToken.php`
+- Modify: `backend/routes/api.php`, `backend/config/sanctum.php`
+- Test: `backend/tests/Feature/TokenAuthTest.php`
+
+**Interfaces:**
+- Produces: `POST /api/v1/tokens` `{email, password, device_name}` → `{token}` shown
+  once, and `DELETE /api/v1/tokens/current`. Both auth mechanisms work on the same
+  `auth:sanctum` routes — cookies for the browser, Bearer for native.
+
+- [ ] **Step 1: Write the failing tests**
+
+`backend/tests/Feature/TokenAuthTest.php`:
+
+```php
+<?php
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+beforeEach(function () {
+    $this->user = User::factory()->create(['password' => Hash::make('correct-horse-battery')]);
+});
+
+it('issues a token for valid credentials', function () {
+    $this->postJson('/api/v1/tokens', [
+        'email' => $this->user->email,
+        'password' => 'correct-horse-battery',
+        'device_name' => "Akash's ThinkPad",
+    ])->assertCreated()->assertJsonStructure(['token']);
+
+    expect($this->user->tokens()->count())->toBe(1)
+        ->and($this->user->tokens()->first()->name)->toBe("Akash's ThinkPad");
+});
+
+it('refuses a bad password', function () {
+    $this->postJson('/api/v1/tokens', [
+        'email' => $this->user->email, 'password' => 'wrong', 'device_name' => 'x',
+    ])->assertStatus(422);
+});
+
+it('authenticates an API request with the token', function () {
+    $token = $this->postJson('/api/v1/tokens', [
+        'email' => $this->user->email,
+        'password' => 'correct-horse-battery',
+        'device_name' => 'Desktop',
+    ])->json('token');
+
+    $this->withHeader('Authorization', "Bearer {$token}")
+        ->getJson('/api/v1/me')->assertOk()->assertJsonPath('data.email', $this->user->email);
+});
+
+it('revokes only the calling token on sign-out', function () {
+    $a = $this->user->createToken('Device A')->plainTextToken;
+    $this->user->createToken('Device B');
+
+    $this->withHeader('Authorization', "Bearer {$a}")
+        ->deleteJson('/api/v1/tokens/current')->assertNoContent();
+
+    // Signing out one device must not sign out the others.
+    expect($this->user->fresh()->tokens()->count())->toBe(1)
+        ->and($this->user->fresh()->tokens()->first()->name)->toBe('Device B');
+});
+
+it('rejects a revoked token', function () {
+    $token = $this->user->createToken('Gone')->plainTextToken;
+    $this->user->tokens()->delete();
+
+    $this->withHeader('Authorization', "Bearer {$token}")
+        ->getJson('/api/v1/me')->assertUnauthorized();
+});
+
+it('still accepts a cookie session on the same route', function () {
+    // Both guards coexist: this is the whole reason for choosing Sanctum.
+    $this->actingAs($this->user);
+    $this->getJson('/api/v1/me')->assertOk();
+});
+```
+
+- [ ] **Step 2: Run them and watch them fail**
+
+```powershell
+docker compose exec app php artisan test --filter=TokenAuthTest
+```
+Expected: FAIL — 404 on `/tokens`.
+
+- [ ] **Step 3: Write the request**
+
+`backend/app/Http/Requests/IssueTokenRequest.php`:
+
+```php
+<?php
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class IssueTokenRequest extends FormRequest
+{
+    public function authorize(): bool { return true; }
+
+    public function rules(): array
+    {
+        return [
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+            // Shown in a future device list, so it must be meaningful and bounded.
+            'device_name' => ['required', 'string', 'max:120'],
+        ];
+    }
+}
+```
+
+- [ ] **Step 4: Write the services**
+
+`backend/app/Services/Auth/IssueToken.php`:
+
+```php
+<?php
+namespace App\Services\Auth;
+
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+
+class IssueToken
+{
+    public function __invoke(string $email, string $password, string $deviceName): string
+    {
+        $user = User::where('email', $email)->first();
+
+        if (! $user || ! Hash::check($password, $user->password)) {
+            // Same generic message as cookie login: never reveal whether the
+            // address is registered.
+            throw ValidationException::withMessages(['email' => __('auth.failed')]);
+        }
+
+        // One token per device. Re-issuing for the same device name replaces the
+        // old one, so a reinstall does not accumulate dead tokens.
+        $user->tokens()->where('name', $deviceName)->delete();
+
+        return $user->createToken($deviceName)->plainTextToken;
+    }
+}
+```
+
+`backend/app/Services/Auth/RevokeCurrentToken.php`:
+
+```php
+<?php
+namespace App\Services\Auth;
+
+use App\Models\User;
+
+class RevokeCurrentToken
+{
+    /** Revokes only the calling device's token, never the others. */
+    public function __invoke(User $user): void
+    {
+        $user->currentAccessToken()?->delete();
+    }
+}
+```
+
+- [ ] **Step 5: Write the controller and routes**
+
+`backend/app/Http/Controllers/Api/V1/TokenController.php`:
+
+```php
+<?php
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\IssueTokenRequest;
+use App\Services\Auth\IssueToken;
+use App\Services\Auth\RevokeCurrentToken;
+use Illuminate\Http\Request;
+
+class TokenController extends Controller
+{
+    public function store(IssueTokenRequest $request, IssueToken $issueToken)
+    {
+        $token = $issueToken(
+            $request->validated('email'),
+            $request->validated('password'),
+            $request->validated('device_name'),
+        );
+
+        return response()->json(['token' => $token], 201);
+    }
+
+    public function destroy(Request $request, RevokeCurrentToken $revoke)
+    {
+        $revoke($request->user());
+
+        return response()->noContent();
+    }
+}
+```
+
+```php
+// routes/api.php
+Route::post('/tokens', [TokenController::class, 'store'])->middleware('throttle:5,1');
+Route::middleware('auth:sanctum')->delete('/tokens/current', [TokenController::class, 'destroy']);
+```
+
+- [ ] **Step 6: Set a token expiry**
+
+`backend/config/sanctum.php`:
+
+```php
+// 90 days. Tokens are revocable server-side, so this is a backstop, not the
+// primary control.
+'expiration' => 60 * 24 * 90,
+```
+
+- [ ] **Step 7: Run the tests**
+
+```powershell
+docker compose exec app php artisan test --filter=TokenAuthTest
+docker compose exec app php artisan test --filter=ArchitectureTest
+```
+Expected: PASS (6 tests), guard green.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add -A && git commit -m "feat(backend): Bearer token auth for native clients alongside cookie sessions"
+```
+
+---
+
+### Task B17: Revision counter and tombstones
+
+**Files:**
+- Create: `backend/database/migrations/*_add_sync_revisions.php`,
+  `backend/app/Models/Tombstone.php`,
+  `backend/app/Services/Sync/BumpRevision.php`,
+  `backend/app/Services/Sync/RecordTombstone.php`
+- Modify: `backend/app/Models/Note.php`, `Folder.php`, `Tag.php` (a `booted` hook),
+  `backend/app/Services/Notes/DeleteNote.php`, `EmptyTrash.php`,
+  `backend/app/Console/Commands/PruneEmptyNotes.php`, `PurgeTrash.php`
+- Test: `backend/tests/Feature/SyncRevisionTest.php`
+
+**Interfaces:**
+- Produces: a monotonic `revision` per account, stamped on every syncable write, and
+  a `tombstones` row for every **hard** delete.
+- `BumpRevision::__invoke(User $user): int` — the next revision, inside a transaction.
+- `RecordTombstone::__invoke(User $user, string $type, string $uuid): void`.
+
+- [ ] **Step 1: Write the migration**
+
+```php
+Schema::create('user_sync_counters', function (Blueprint $table) {
+    $table->foreignId('user_id')->primary()->constrained()->cascadeOnDelete();
+    $table->unsignedBigInteger('last_revision')->default(0);
+});
+
+Schema::create('tombstones', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+    $table->string('entity_type', 16);           // note | folder | tag
+    $table->uuid('uuid');
+    $table->unsignedBigInteger('revision');
+    $table->timestamp('created_at')->useCurrent();
+    $table->index(['user_id', 'revision']);
+});
+
+foreach (['notes', 'folders', 'tags'] as $table) {
+    Schema::table($table, function (Blueprint $t) {
+        $t->unsignedBigInteger('revision')->default(0);
+        $t->index(['user_id', 'revision']);
+    });
+}
+```
+
+- [ ] **Step 2: Write the failing tests**
+
+`backend/tests/Feature/SyncRevisionTest.php`:
+
+```php
+<?php
+use App\Models\Note;
+use App\Models\Tombstone;
+use App\Models\User;
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
+});
+
+it('stamps an increasing revision on every write', function () {
+    $a = Note::factory()->for($this->user)->create();
+    $b = Note::factory()->for($this->user)->create();
+
+    expect($b->fresh()->revision)->toBeGreaterThan($a->fresh()->revision);
+});
+
+it('bumps the revision when a note is updated', function () {
+    $note = Note::factory()->for($this->user)->create();
+    $before = $note->fresh()->revision;
+
+    $this->patchJson("/api/v1/notes/{$note->uuid}", ['is_starred' => true])->assertOk();
+
+    expect($note->fresh()->revision)->toBeGreaterThan($before);
+});
+
+it('keeps revisions separate per account', function () {
+    $mine = Note::factory()->for($this->user)->create();
+    $theirs = Note::factory()->for(User::factory())->create();
+
+    // Two accounts must not share a counter, or one leaks the other's write rate.
+    expect($theirs->fresh()->revision)->toBe(1)
+        ->and($mine->fresh()->revision)->toBe(1);
+});
+
+it('writes a tombstone on hard delete but not on soft delete', function () {
+    $note = Note::factory()->for($this->user)->create();
+
+    $this->deleteJson("/api/v1/notes/{$note->uuid}")->assertNoContent();
+    expect(Tombstone::count())->toBe(0);          // trashed, still discoverable
+
+    $this->deleteJson("/api/v1/notes/{$note->uuid}?force=1")->assertNoContent();
+    expect(Tombstone::where('uuid', $note->uuid)->exists())->toBeTrue();
+});
+
+it('writes tombstones when the trash is emptied', function () {
+    $a = Note::factory()->for($this->user)->create();
+    $b = Note::factory()->for($this->user)->create();
+    $a->delete(); $b->delete();
+
+    $this->deleteJson('/api/v1/trash')->assertNoContent();
+
+    expect(Tombstone::where('user_id', $this->user->id)->count())->toBe(2);
+});
+
+it('writes tombstones when the purge command runs', function () {
+    $note = Note::factory()->for($this->user)->create();
+    $note->delete();
+    $note->forceFill(['deleted_at' => now()->subDays(31)])->save();
+
+    $this->artisan('notes:purge-trash');
+
+    // Otherwise a device offline for 31 days never learns the note is gone.
+    expect(Tombstone::where('uuid', $note->uuid)->exists())->toBeTrue();
+});
+```
+
+- [ ] **Step 3: Run them and watch them fail**
+
+```powershell
+docker compose exec app php artisan test --filter=SyncRevisionTest
+```
+Expected: FAIL — no `revision` column, no `Tombstone`.
+
+- [ ] **Step 4: Write the services**
+
+`backend/app/Services/Sync/BumpRevision.php`:
+
+```php
+<?php
+namespace App\Services\Sync;
+
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
+class BumpRevision
+{
+    /**
+     * The next revision for this account. A row-level counter rather than a
+     * timestamp: clock adjustment and same-millisecond writes silently lose
+     * notes from a timestamp-based sync.
+     */
+    public function __invoke(User $user): int
+    {
+        return DB::transaction(function () use ($user) {
+            DB::table('user_sync_counters')->upsert(
+                ['user_id' => $user->id, 'last_revision' => 0], ['user_id'], []
+            );
+
+            DB::table('user_sync_counters')->where('user_id', $user->id)
+                ->lockForUpdate()->increment('last_revision');
+
+            return (int) DB::table('user_sync_counters')
+                ->where('user_id', $user->id)->value('last_revision');
+        });
+    }
+}
+```
+
+`backend/app/Services/Sync/RecordTombstone.php`:
+
+```php
+<?php
+namespace App\Services\Sync;
+
+use App\Models\Tombstone;
+use App\Models\User;
+
+class RecordTombstone
+{
+    public function __construct(private readonly BumpRevision $bump) {}
+
+    public function __invoke(User $user, string $entityType, string $uuid): void
+    {
+        Tombstone::create([
+            'user_id' => $user->id,
+            'entity_type' => $entityType,
+            'uuid' => $uuid,
+            'revision' => ($this->bump)($user),
+        ]);
+    }
+}
+```
+
+- [ ] **Step 5: Stamp the revision automatically**
+
+Add to `Note`, `Folder` and `Tag`:
+
+```php
+protected static function booted(): void
+{
+    static::saving(function (self $model) {
+        if ($model->user_id && $model->isDirty(array_diff($model->getDirty() ? array_keys($model->getDirty()) : [], ['revision']))) {
+            $model->revision = app(\App\Services\Sync\BumpRevision::class)($model->user);
+        }
+    });
+}
+```
+
+- [ ] **Step 6: Record tombstones on every hard-delete path**
+
+`DeleteNote` (when `$force`), `EmptyTrash` (one per note), `PurgeTrash` and
+`PruneEmptyNotes` all call `RecordTombstone` before the row disappears. Collect the
+UUIDs first — once `forceDelete()` has run there is nothing left to record.
+
+- [ ] **Step 7: Prune tombstones, but not too soon**
+
+Add to `routes/console.php`:
+
+```php
+// Retained 90 days — three times the 30-day trash purge. A device offline
+// longer than this is told to full-resync rather than silently reconciled.
+Schedule::call(fn () => \App\Models\Tombstone::where('created_at', '<', now()->subDays(90))->delete())
+    ->dailyAt('03:30');
+```
+
+- [ ] **Step 8: Run the tests**
+
+```powershell
+docker compose exec app php artisan test --filter=SyncRevisionTest
+docker compose exec app php artisan test
+```
+Expected: PASS (6 tests) and the full suite green.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add -A && git commit -m "feat(backend): per-account revision counter and tombstones for sync"
+```
+
+---
+
+### Task B18: The sync pull endpoint
+
+**Files:**
+- Create: `backend/app/Http/Controllers/Api/V1/SyncController.php`,
+  `backend/app/Http/Requests/SyncRequest.php`,
+  `backend/app/Services/Sync/BuildSyncDelta.php`
+- Modify: `backend/routes/api.php`
+- Test: `backend/tests/Feature/SyncPullTest.php`
+
+**Interfaces:**
+- Produces: `GET /api/v1/sync?since=<revision>&limit=200` →
+  `{revision, notes[], folders[], tags[], deletions[{type,uuid}], has_more}`.
+  `since=0` is a full sync. A `since` older than the oldest tombstone returns
+  `{full_resync_required: true}`.
+
+- [ ] **Step 1: Write the failing tests**
+
+`backend/tests/Feature/SyncPullTest.php`:
+
+```php
+<?php
+use App\Models\Note;
+use App\Models\Tombstone;
+use App\Models\User;
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
+});
+
+it('returns everything for since=0', function () {
+    Note::factory()->count(3)->for($this->user)->create();
+
+    $this->getJson('/api/v1/sync?since=0')
+        ->assertOk()->assertJsonCount(3, 'notes')->assertJsonPath('has_more', false);
+});
+
+it('returns only what changed after the given revision', function () {
+    $old = Note::factory()->for($this->user)->create();
+    $mark = $old->fresh()->revision;
+    $new = Note::factory()->for($this->user)->create();
+
+    $res = $this->getJson("/api/v1/sync?since={$mark}")->assertOk();
+
+    expect($res->json('notes'))->toHaveCount(1)
+        ->and($res->json('notes.0.uuid'))->toBe($new->uuid);
+});
+
+it('reports deletions so an offline device can drop its copy', function () {
+    $note = Note::factory()->for($this->user)->create();
+    $mark = $note->fresh()->revision;
+    $this->deleteJson("/api/v1/notes/{$note->uuid}?force=1");
+
+    $this->getJson("/api/v1/sync?since={$mark}")
+        ->assertOk()
+        ->assertJsonPath('deletions.0.uuid', $note->uuid)
+        ->assertJsonPath('deletions.0.type', 'note');
+});
+
+it('includes trashed notes as rows, not deletions', function () {
+    $note = Note::factory()->for($this->user)->create();
+    $mark = $note->fresh()->revision;
+    $this->deleteJson("/api/v1/notes/{$note->uuid}");
+
+    // Soft deletes travel as ordinary rows with deleted_at set, so Trash syncs.
+    $this->getJson("/api/v1/sync?since={$mark}")
+        ->assertOk()->assertJsonCount(1, 'notes')->assertJsonCount(0, 'deletions');
+});
+
+it('paginates and advances the high-water mark', function () {
+    Note::factory()->count(5)->for($this->user)->create();
+
+    $first = $this->getJson('/api/v1/sync?since=0&limit=2')->assertOk();
+    expect($first->json('has_more'))->toBeTrue()->and($first->json('notes'))->toHaveCount(2);
+
+    $second = $this->getJson('/api/v1/sync?since='.$first->json('revision').'&limit=2');
+    expect($second->json('notes'))->toHaveCount(2);
+});
+
+// REVIEW FOCUS 10
+it('demands a full resync when since predates the oldest tombstone', function () {
+    Tombstone::create([
+        'user_id' => $this->user->id, 'entity_type' => 'note',
+        'uuid' => '0193c5a1-0000-7000-8000-00000000aaaa', 'revision' => 50,
+    ]);
+
+    $this->getJson('/api/v1/sync?since=10')
+        ->assertOk()->assertJsonPath('full_resync_required', true);
+});
+
+it('never returns another account\'s rows', function () {
+    Note::factory()->count(2)->for(User::factory())->create();
+
+    $this->getJson('/api/v1/sync?since=0')->assertOk()->assertJsonCount(0, 'notes');
+});
+```
+
+- [ ] **Step 2: Run them and watch them fail**
+
+```powershell
+docker compose exec app php artisan test --filter=SyncPullTest
+```
+Expected: FAIL — 404.
+
+- [ ] **Step 3: Write the request and the service**
+
+`backend/app/Http/Requests/SyncRequest.php` validates
+`['since' => ['required','integer','min:0'], 'limit' => ['nullable','integer','min:1','max:500']]`.
+
+`backend/app/Services/Sync/BuildSyncDelta.php`:
+
+```php
+<?php
+namespace App\Services\Sync;
+
+use App\Http\Resources\FolderResource;
+use App\Http\Resources\NoteResource;
+use App\Http\Resources\TagResource;
+use App\Models\Note;
+use App\Models\Tombstone;
+use App\Models\User;
+
+class BuildSyncDelta
+{
+    public function __invoke(User $user, int $since, int $limit = 200): array
+    {
+        // A device that has been away longer than tombstone retention cannot be
+        // reconciled incrementally: it would keep notes that were hard-deleted.
+        $oldestTombstone = Tombstone::where('user_id', $user->id)->min('revision');
+
+        if ($since > 0 && $oldestTombstone !== null && $since < $oldestTombstone) {
+            return ['full_resync_required' => true];
+        }
+
+        $notes = Note::withTrashed()->ownedBy($user)
+            ->where('revision', '>', $since)
+            ->with(['folder', 'tags'])
+            ->orderBy('revision')->limit($limit + 1)->get();
+
+        $hasMore = $notes->count() > $limit;
+        $notes = $notes->take($limit);
+
+        $folders = $user->folders()->where('revision', '>', $since)->orderBy('revision')->get();
+        $tags = $user->tags()->where('revision', '>', $since)->orderBy('revision')->get();
+
+        $deletions = Tombstone::where('user_id', $user->id)
+            ->where('revision', '>', $since)->orderBy('revision')->limit($limit)->get()
+            ->map(fn ($t) => ['type' => $t->entity_type, 'uuid' => $t->uuid]);
+
+        // The high-water mark is the largest revision actually returned, so a
+        // truncated page never advances the client past rows it has not seen.
+        $revision = max([
+            $since,
+            (int) $notes->max('revision'),
+            (int) $folders->max('revision'),
+            (int) $tags->max('revision'),
+            (int) $deletions->count() ? (int) Tombstone::where('user_id', $user->id)
+                ->where('revision', '>', $since)->limit($limit)->max('revision') : $since,
+        ]);
+
+        return [
+            'revision' => $revision,
+            'notes' => NoteResource::collection($notes),
+            'folders' => FolderResource::collection($folders),
+            'tags' => TagResource::collection($tags),
+            'deletions' => $deletions->values(),
+            'has_more' => $hasMore,
+        ];
+    }
+}
+```
+
+- [ ] **Step 4: Write the controller and route**
+
+```php
+<?php
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\SyncRequest;
+use App\Services\Sync\BuildSyncDelta;
+
+class SyncController extends Controller
+{
+    public function __invoke(SyncRequest $request, BuildSyncDelta $buildDelta)
+    {
+        return $buildDelta(
+            $request->user(),
+            (int) $request->validated('since'),
+            (int) ($request->validated('limit') ?? 200),
+        );
+    }
+}
+```
+
+```php
+Route::get('/sync', SyncController::class)->middleware('throttle:120,1');
+```
+
+- [ ] **Step 5: Run the tests**
+
+```powershell
+docker compose exec app php artisan test --filter=SyncPullTest
+docker compose exec app php artisan test --filter=ArchitectureTest
+```
+Expected: PASS (7 tests), including Review Focus item 10.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A && git commit -m "feat(backend): sync pull endpoint with tombstones and full-resync guard"
+```
+
+---
+
 # PHASE 2 — FRONTEND
 
 ### Task F1: Verify and configure the provided Vite app

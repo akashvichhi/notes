@@ -233,9 +233,10 @@ Hand the folder to the IDE and point it at `START.md`.
 | 3 · Mobile | M1–M8 | ⛔ after M8 |
 
 **Model guidance** (`GETTING-STARTED.md` step 6b): Gemini and Claude have separate
-quotas in Antigravity, so run the transcription tasks on Gemini 3.1 Pro and save
-Claude Opus 5.5 for B8, B17, B18, D3, D4, D7–D9. Avoid Sonnet/Opus 4.6 and GPT-OSS —
-removed 2 November 2026.
+quotas in Antigravity, so run the other 45 tasks on **Gemini 3.1 Pro (High)** and save
+**Claude Opus 5.5 (thinking)** for the 9 reasoning-heavy ones — `B8`, `B17`, `B18`,
+`D3`, `D4`, `D7`, `D8`, `D9`, `M3`. Avoid Sonnet/Opus 4.6 and GPT-OSS — removed
+2 November 2026.
 
 **iOS requires a Mac.** M2, M3 (iOS half) and M8 (iOS half) cannot be done on
 Windows.

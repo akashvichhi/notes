@@ -173,17 +173,32 @@ another is where assumptions get silently dropped.
 Antigravity tracks usage as **separate budgets for Gemini and for Claude/GPT**, with
 both a weekly and a five-hour limit. They do not compete. So:
 
-- Run the **transcription tasks on Gemini** — `B2`–`B5`, `B7`, `B9`–`B14`, `F1`–`F3`,
-  `F5`–`F8`, `F12`. The plan already contains the code; these need accurate
-  instruction-following, not invention. `Gemini 3.1 Pro (High)` is the sensible
-  default, dropping to Flash if you are comfortable with the output.
-- Save the **Claude budget for the reasoning-heavy tasks**: `B8` version conflicts,
-  `B17`/`B18` revisions and tombstones, `D3` the Rust keychain, `D4` the SQLite
-  schema, `D7`/`D8` the sync engine, `D9` the conflict queue. These are where a
-  plausible-looking wrong answer costs days. Use a **thinking** variant.
+**Claude Opus 5.5 (thinking)** — the 9 tasks where a plausible-looking wrong answer
+costs days:
 
-Spending each budget on what it is best at gets you roughly twice the useful work
-per week.
+| Task | Why |
+|---|---|
+| `B8` | Version conflicts — the 409 contract the whole sync model rests on |
+| `B17` | Revision counter and tombstones |
+| `B18` | The sync pull endpoint and the full-resync guard |
+| `D3` | Rust keychain commands — a language with far less training data |
+| `D4` | SQLite schema, migrations and container isolation |
+| `D7` | The coalescing outbox and ordered push |
+| `D8` | The sync engine — push, pull, convergence |
+| `D9` | The conflict queue and resolution |
+| `M3` | Mobile secure storage — platform research, not transcription |
+
+**Gemini 3.1 Pro (High)** — the other **45 tasks**. The plan already contains the
+code; these need accurate instruction-following over long context, not invention.
+Drop to a Flash model if you are happy with the output.
+
+Spending each budget on what it is best at gets you roughly twice the useful work per
+week, because the two quotas do not compete.
+
+**If a task stalls three times, switch model rather than thrash.** `M1` and `M2` are
+procedural but produce famously opaque toolchain errors — NDK paths, Gradle, Xcode
+signing. A stronger model is better at reading those than at writing the code around
+them.
 
 ### Judge it on the first three tasks
 

@@ -29,11 +29,12 @@ Notes live in one of two containers:
 
 | Order | File | Why |
 |---|---|---|
-| 1 | `docs/CONTEXT.md` | Every decision and the reasoning behind it, including six reversals that must not be undone |
-| 2 | `docs/ARCHITECTURE.md` | **The current design.** Containers, local and cloud storage, the sync protocol, auth, the full stack |
-| 3 | `docs/SPEC.md` | Product spec and acceptance criteria |
-| 4 | `docs/PLAN.md` | **The 46 tasks you execute, in order** |
-| 5 | `docs/SETUP-WINDOWS.md` | The Docker environment |
+| 1 | `docs/PRINCIPLES.md` | **How to work on this project** — branching, when to stop, how to test, what never to do |
+| 2 | `docs/CONTEXT.md` | Every decision and the reasoning behind it, including six reversals that must not be undone |
+| 3 | `docs/ARCHITECTURE.md` | **The current design.** Containers, local and cloud storage, the sync protocol, auth, the full stack |
+| 4 | `docs/SPEC.md` | Product spec and acceptance criteria |
+| 5 | `docs/PLAN.md` | **The 46 tasks you execute, in order** |
+| 6 | `docs/SETUP-WINDOWS.md` | The Docker environment |
 | — | `mockup/index.html` | Open in a browser to see the intended UI |
 
 ---
@@ -196,6 +197,11 @@ is a Vite + React + TypeScript project, both created by the developer. **Never**
 `laravel new`, `composer create-project` or `npm create vite`. If either folder is
 missing, stop and say so.
 
+**Follow `docs/PRINCIPLES.md`.** It governs everything the plan does not spell out:
+work on `master` only — **no branches, no worktrees, no stashing** — stop rather than
+improvise, never weaken a test to make it pass, verify before you claim, and report
+failures plainly.
+
 **Work through the tasks strictly in order.** Do not skip ahead or reorder.
 
 **Each task is a TDD cycle.** Write the failing test, run it and confirm it fails,
@@ -244,10 +250,14 @@ is wrong or impossible, **stop and say so** rather than improvising.
 Paste this into the agent as your first message:
 
 ```
-Read START.md in full, then docs/CONTEXT.md, docs/ARCHITECTURE.md, docs/SPEC.md
-and docs/PLAN.md before writing any code.
+Read START.md in full, then docs/PRINCIPLES.md, docs/CONTEXT.md,
+docs/ARCHITECTURE.md, docs/SPEC.md and docs/PLAN.md before writing any code.
 
-Follow every ground rule in START.md section 4.
+Follow every ground rule in START.md section 4, and work according to
+docs/PRINCIPLES.md throughout — in particular: work on master only, never
+create a branch or a worktree, never weaken a test to make it pass, verify
+before you claim anything works, and stop and tell me rather than improvising
+when something is wrong.
 
 Execute docs/PLAN.md task by task, in order, starting with the first task.
 Each task's steps are a TDD cycle — follow them literally.

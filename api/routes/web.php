@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Serve the React SPA for the root and any client-side routes
+Route::get('/{any?}', function () {
+    return response()->file(public_path('index.html'));
+})->where('any', '^(?!api|sanctum).*$'); // Ensures /api and /sanctum are not captured

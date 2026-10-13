@@ -39,6 +39,7 @@ export const NoteRow = memo(function NoteRow({
   )
   return (
     <UnstyledButton
+      className={classes.noteRow}
       p="xs"
       style={{
         display:      'block',
@@ -62,7 +63,7 @@ export const NoteRow = memo(function NoteRow({
               className={classes.rowAction}
               component="div"
               size="sm"
-              style={{ opacity: note.is_starred ? 1 : 0 }}
+              style={note.is_starred ? { opacity: 1 } : undefined}
               variant="subtle"
               onClick={(e) => {
                 e.stopPropagation()
@@ -84,7 +85,6 @@ export const NoteRow = memo(function NoteRow({
                 className={classes.rowAction}
                 component="div"
                 size="sm"
-                style={{ opacity: 0 }}
                 variant="subtle"
                 onClick={(e) => e.stopPropagation()}
               >

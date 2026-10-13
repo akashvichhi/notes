@@ -82,6 +82,16 @@
   :global(.mantine-Menu-item) { padding: 12px 14px; font-size: 15px; }
 }
 
+.noteRow .rowAction {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.noteRow:hover .rowAction,
+.noteRow:focus-within .rowAction {
+  opacity: 1 !important;
+}
+
 /* Touch devices of any size cannot use hover-only affordances. */
 @media (hover: none) {
   .rowAction { opacity: 1 !important; }

@@ -2,13 +2,14 @@ import { ActionIcon, Badge, Group, Menu, Stack, Text, UnstyledButton } from '@ma
 import { IconDots, IconStar, IconStarFilled } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { memo, useMemo } from 'react'
 
 import type { NoteListItem } from '@/types/api'
 import classes from '../layout/shell.module.css'
 
 dayjs.extend(relativeTime)
 
-export function NoteRow({
+export const NoteRow = memo(function NoteRow({
   note,
   active,
   onOpen,
@@ -29,6 +30,11 @@ export function NoteRow({
   onRestoreTo?: () => void
   onForceDelete?: () => void
 }) {
+  const updatedAgo = useMemo(() => dayjs(note.updated_at).fromNow(), [note.updated_at])
+  const autoDeletedAgo = useMemo(
+    () => (note.deleted_at ? dayjs(note.deleted_at).add(30, 'day').fromNow() : null),
+    [note.deleted_at],
+  )
   return (
     <UnstyledButton
       onClick={onOpen}
@@ -93,9 +99,11 @@ export function NoteRow({
                     Delete permanently
                   </Menu.Item>
                   {/* The retention clock only helps if it is visible while deciding. */}
-                  <Text size="xs" c="dimmed" px="sm" pb="xs">
-                    Auto-deleted {dayjs(note.deleted_at).add(30, 'day').fromNow()}.
-                  </Text>
+                  {autoDeletedAgo && (
+                    <Text size="xs" c="dimmed" px="sm" pb="xs">
+                      Auto-deleted {autoDeletedAgo}.
+                    </Text>
+                  )}
                 </>
               ) : (
                 <>
@@ -117,7 +125,7 @@ export function NoteRow({
 
         <Group gap={6}>
           <Text size="xs" c="dimmed">
-            {dayjs(note.updated_at).fromNow()}
+            {updatedAgo}
           </Text>
           {note.folder && (
             <Badge size="xs" variant="light">
@@ -128,4 +136,4 @@ export function NoteRow({
       </Stack>
     </UnstyledButton>
   )
-}
+})

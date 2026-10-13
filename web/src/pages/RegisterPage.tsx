@@ -1,11 +1,12 @@
 import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
+import { memo, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import { normalizeError } from '@/api/client'
 import { useRegister } from '@/hooks/queries/useAuth'
 
-export function RegisterPage() {
+export const RegisterPage = memo(function RegisterPage() {
   const navigate = useNavigate()
   const register = useRegister()
 
@@ -20,18 +21,21 @@ export function RegisterPage() {
     },
   })
 
-  const error = register.error ? normalizeError(register.error) : null
+  const error = useMemo(() => (register.error ? normalizeError(register.error) : null), [register.error])
+
+  const handleSubmit = useCallback(
+    (values: { name: string; email: string; password: string; password_confirmation: string }) => {
+      register.mutate(values, { onSuccess: () => navigate('/') })
+    },
+    [navigate, register]
+  )
 
   return (
     <Center h="100dvh" p="md">
       <Paper withBorder p="xl" w={400} maw="100%">
         <Title order={2} mb="lg">Create an account</Title>
 
-        <form
-          onSubmit={form.onSubmit((values) =>
-            register.mutate(values, { onSuccess: () => navigate('/') }),
-          )}
-        >
+        <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack>
             {error && <Alert color="red">{error.message}</Alert>}
 
@@ -60,4 +64,4 @@ export function RegisterPage() {
       </Paper>
     </Center>
   )
-}
+})

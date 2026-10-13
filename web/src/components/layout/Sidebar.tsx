@@ -2,7 +2,7 @@ import { ActionIcon, Badge, Button, Group, Menu, NavLink, Stack, Text, TextInput
 import {
   IconDots, IconFolder, IconNote, IconPlus, IconStar, IconTrash,
 } from '@tabler/icons-react'
-import { useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'
@@ -11,7 +11,7 @@ import { useCreateNote } from '@/hooks/queries/useNotes'
 import { useUiStore } from '@/stores/uiStore'
 import { useIsPhone } from '@/hooks/useIsPhone'
 
-export function Sidebar() {
+export const Sidebar = memo(function Sidebar() {
   const { folders, tags, counts } = useBootstrap()
   const { scope, setScope, setView, closeNav } = useUiStore()
   const isPhone = useIsPhone()
@@ -27,13 +27,16 @@ export function Sidebar() {
   const [creating, setCreating] = useState<'folder' | 'tag' | null>(null)
   const [draftName, setDraftName] = useState('')
 
-  function pick(next: Parameters<typeof setScope>[0]) {
-    setScope(next)
-    closeNav()
-    if (isPhone) setView('list')
-  }
+  const pick = useCallback(
+    (next: Parameters<typeof setScope>[0]) => {
+      setScope(next)
+      closeNav()
+      if (isPhone) setView('list')
+    },
+    [setScope, closeNav, isPhone, setView],
+  )
 
-  function commitInline() {
+  const commitInline = useCallback(() => {
     const name = draftName.trim()
     if (name) {
       if (creating === 'folder') {
@@ -44,14 +47,18 @@ export function Sidebar() {
     }
     setCreating(null)
     setDraftName('')
-  }
+  }, [draftName, creating, createFolder, createTag])
+
+  const handleCreateNote = useCallback(() => {
+    createNote.mutate({})
+  }, [createNote])
 
   return (
     <Stack p="xs" gap={2} h="100%">
       <Button
         leftSection={<IconPlus size={16} />}
         loading={createNote.isPending}
-        onClick={() => createNote.mutate({})}
+        onClick={handleCreateNote}
       >
         New note
       </Button>
@@ -174,4 +181,4 @@ export function Sidebar() {
       />
     </Stack>
   )
-}
+})

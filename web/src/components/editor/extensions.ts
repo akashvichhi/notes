@@ -1,7 +1,7 @@
 import { CharacterCount } from '@tiptap/extension-character-count'
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
 import { Color } from '@tiptap/extension-color'
-import { Details } from '@tiptap/extension-details'
+import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details'
 import { Highlight } from '@tiptap/extension-highlight'
 import { Image } from '@tiptap/extension-image'
 import { InvisibleCharacters } from '@tiptap/extension-invisible-characters'
@@ -46,6 +46,8 @@ export const editorExtensions = [
   TableCell,
   Image,
   Details,
+  DetailsSummary,
+  DetailsContent,
   InvisibleCharacters.configure({ visible: false }),
   CodeBlockLowlight.configure({ lowlight: createLowlight(common) }),
   Typography,

@@ -119,5 +119,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
     return () => window.removeEventListener('keydown', onKey)
   }, [save])
 
-  return { status, savedAt, conflict, clearConflict: () => setConflict(null), onChange, saveNow: save }
+  const clearConflict = useCallback(() => setConflict(null), [])
+
+  return { status, savedAt, conflict, clearConflict, onChange, saveNow: save }
 }

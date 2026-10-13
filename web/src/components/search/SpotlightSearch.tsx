@@ -1,7 +1,7 @@
 import { Progress, Text } from '@mantine/core'
 import { Spotlight, spotlight } from '@mantine/spotlight'
 import { IconFolder, IconNote, IconPlus, IconSearch } from '@tabler/icons-react'
-import { useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 
 import { HighlightTerms } from './Highlight'
 import { MIN_QUERY, useSearch } from '@/hooks/queries/useSearch'
@@ -10,7 +10,7 @@ import { useDelayedLoading } from '@/lib/useDelayedLoading'
 import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'
 
-export function SpotlightSearch() {
+export const SpotlightSearch = memo(function SpotlightSearch() {
   const [query, setQuery] = useState('')
   const { data, isFetching } = useSearch(query)
   const showBar = useDelayedLoading(isFetching)
@@ -18,7 +18,21 @@ export function SpotlightSearch() {
   const setScope = useUiStore((s) => s.setScope)
   const createNote = useCreateNote()
 
-  const short = query.trim().length > 0 && query.trim().length < MIN_QUERY
+  const trimmedQuery = useMemo(() => query.trim(), [query])
+  const short = useMemo(
+    () => trimmedQuery.length > 0 && trimmedQuery.length < MIN_QUERY,
+    [trimmedQuery],
+  )
+
+  const handleSeeAllResults = useCallback(() => {
+    // Hand off to the list pane instead of competing with it.
+    setScope({ kind: 'search', q: trimmedQuery, label: `Results for “${trimmedQuery}”` })
+    spotlight.close()
+  }, [setScope, trimmedQuery])
+
+  const handleCreateEmptyNote = useCallback(() => {
+    createNote.mutate({})
+  }, [createNote])
 
   return (
     <Spotlight.Root query={query} onQueryChange={setQuery} scrollable>
@@ -49,25 +63,21 @@ export function SpotlightSearch() {
           </Spotlight.Action>
         ))}
 
-        {query.trim().length >= MIN_QUERY && (
+        {trimmedQuery.length >= MIN_QUERY && (
           <Spotlight.Action
             leftSection={<IconSearch size={18} />}
-            onClick={() => {
-              // Hand off to the list pane instead of competing with it.
-              setScope({ kind: 'search', q: query.trim(), label: `Results for “${query.trim()}”` })
-              spotlight.close()
-            }}
+            onClick={handleSeeAllResults}
           >
-            See all results for “{query.trim()}”
+            See all results for “{trimmedQuery}”
           </Spotlight.Action>
         )}
 
-        {data && data.notes.length === 0 && query.trim().length >= MIN_QUERY && (
-          <Spotlight.Action leftSection={<IconPlus size={18} />} onClick={() => createNote.mutate({})}>
-            No results — create note “{query.trim()}”
+        {data && data.notes.length === 0 && trimmedQuery.length >= MIN_QUERY && (
+          <Spotlight.Action leftSection={<IconPlus size={18} />} onClick={handleCreateEmptyNote}>
+            No results — create note “{trimmedQuery}”
           </Spotlight.Action>
         )}
       </Spotlight.ActionsList>
     </Spotlight.Root>
   )
-}
+})

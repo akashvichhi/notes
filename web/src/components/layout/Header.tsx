@@ -3,15 +3,24 @@ import {
   IconChevronLeft, IconMenu2, IconMoon, IconNotes, IconSearch, IconSun,
 } from '@tabler/icons-react'
 import { spotlight } from '@mantine/spotlight'
+import { memo, useCallback } from 'react'
 
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { AccountMenu } from './AccountMenu'
 import { useUiStore } from '@/stores/uiStore'
 
-export function Header() {
+export const Header = memo(function Header() {
   const isPhone = useIsPhone()
   const { view, setView, toggleNav, scope } = useUiStore()
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
+
+  const handleBack = useCallback(() => {
+    setView(view === 'editor' ? 'list' : 'folders')
+  }, [view, setView])
+
+  const handleOpenSpotlight = useCallback(() => {
+    spotlight.open()
+  }, [])
 
   return (
     <Group h={52} px="sm" gap="sm" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
@@ -19,7 +28,7 @@ export function Header() {
         <ActionIcon
           variant="subtle" size="lg" aria-label="Back"
           style={{ visibility: view === 'folders' ? 'hidden' : 'visible' }}
-          onClick={() => setView(view === 'editor' ? 'list' : 'folders')}
+          onClick={handleBack}
         >
           <IconChevronLeft size={18} />
         </ActionIcon>
@@ -41,7 +50,7 @@ export function Header() {
       {isPhone && <Text fw={600} size="md" truncate style={{ flex: 1 }}>{scope.label}</Text>}
 
       <UnstyledButton
-        onClick={spotlight.open}
+        onClick={handleOpenSpotlight}
         style={{ flex: 1, maxWidth: 460 }}
         visibleFrom="sm"
         aria-label="Search notes and actions"
@@ -57,7 +66,7 @@ export function Header() {
       </UnstyledButton>
 
       {isPhone && (
-        <ActionIcon variant="subtle" size="lg" onClick={spotlight.open} aria-label="Search">
+        <ActionIcon variant="subtle" size="lg" onClick={handleOpenSpotlight} aria-label="Search">
           <IconSearch size={18} />
         </ActionIcon>
       )}
@@ -70,4 +79,4 @@ export function Header() {
       </Group>
     </Group>
   )
-}
+})

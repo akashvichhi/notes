@@ -11,7 +11,7 @@ import {
   Text,
 } from '@mantine/core'
 import { IconArrowsSort, IconFolder, IconPlus } from '@tabler/icons-react'
-import { useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 
 import { ListSkeleton } from '@/components/common/Skeletons'
 import { FilterInput } from './FilterInput'
@@ -32,7 +32,7 @@ import { useUiStore } from '@/stores/uiStore'
 import type { NoteListItem, UUID } from '@/types/api'
 import { useIsPhone } from '@/hooks/useIsPhone'
 
-export function NoteList({
+export const NoteList = memo(function NoteList({
   activeUuid,
   onSelectNote,
 }: {
@@ -62,20 +62,34 @@ export function NoteList({
     return filterNotes(allNotes, filter)
   }, [allNotes, filter])
 
-  const handleOpen = (uuid: string) => {
-    onSelectNote(uuid)
-    if (isPhone) setView('editor')
-  }
+  const handleOpen = useCallback(
+    (uuid: string) => {
+      onSelectNote(uuid)
+      if (isPhone) setView('editor')
+    },
+    [onSelectNote, isPhone, setView],
+  )
 
-  const handleRestoreToFolder = async (folderId: UUID | null) => {
-    if (!restoreModalNote) return
-    const uuid = restoreModalNote.uuid
+  const handleRestoreToFolder = useCallback(
+    async (folderId: UUID | null) => {
+      if (!restoreModalNote) return
+      const uuid = restoreModalNote.uuid
+      setRestoreModalNote(null)
+      await restoreNote.mutateAsync(uuid)
+      if (folderId !== null) {
+        await patchNote(uuid, { folder_id: folderId })
+      }
+    },
+    [restoreModalNote, restoreNote],
+  )
+
+  const handleCreateNote = useCallback(() => {
+    createNote.mutate({})
+  }, [createNote])
+
+  const handleCloseRestoreModal = useCallback(() => {
     setRestoreModalNote(null)
-    await restoreNote.mutateAsync(uuid)
-    if (folderId !== null) {
-      await patchNote(uuid, { folder_id: folderId })
-    }
-  }
+  }, [])
 
   return (
     <Stack gap="xs" p="sm" h="100%">
@@ -117,7 +131,7 @@ export function NoteList({
                 size="xs"
                 variant="light"
                 leftSection={<IconPlus size={14} />}
-                onClick={() => createNote.mutate({})}
+                onClick={handleCreateNote}
               >
                 Create note
               </Button>
@@ -155,7 +169,7 @@ export function NoteList({
 
       <Modal
         opened={Boolean(restoreModalNote)}
-        onClose={() => setRestoreModalNote(null)}
+        onClose={handleCloseRestoreModal}
         title="Restore note to folder"
         centered
         size="sm"
@@ -178,4 +192,4 @@ export function NoteList({
       </Modal>
     </Stack>
   )
-}
+})

@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react'
+import { memo, type ReactNode } from 'react'
 
 import { useUiStore } from '@/stores/uiStore'
 import classes from './shell.module.css'
 
-export function AppShellLayout({
+export const AppShellLayout = memo(function AppShellLayout({
   nav, list, editor, header, status,
 }: {
   nav: ReactNode; list: ReactNode; editor: ReactNode; header: ReactNode; status: ReactNode
@@ -28,4 +28,4 @@ export function AppShellLayout({
       {status}
     </div>
   )
-}
+})

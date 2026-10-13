@@ -1,7 +1,8 @@
 import { Button, Group, Modal, Stack, Text } from '@mantine/core'
+import { memo } from 'react'
 import type { Note } from '@/types/api'
 
-export function ConflictSheet({
+export const ConflictSheet = memo(function ConflictSheet({
   serverCopy, onKeepMine, onKeepTheirs, onSaveCopy, onClose,
 }: {
   serverCopy: Note
@@ -22,4 +23,4 @@ export function ConflictSheet({
       </Stack>
     </Modal>
   )
-}
+})

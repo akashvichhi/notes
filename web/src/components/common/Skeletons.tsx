@@ -1,7 +1,8 @@
 import { Box, Group, Skeleton, Stack } from '@mantine/core'
+import { memo, useMemo } from 'react'
 
 /** The shape of the loaded app, so nothing jumps when data arrives. */
-export function AppSkeleton() {
+export const AppSkeleton = memo(function AppSkeleton() {
   return (
     <Box h="100dvh" style={{ display: 'grid', gridTemplateRows: '52px 1fr 28px' }}>
       <Group px="sm" h={52}><Skeleton h={24} w={120} /></Group>
@@ -16,25 +17,27 @@ export function AppSkeleton() {
       <Box />
     </Box>
   )
-}
+})
 
-export function ListSkeleton({ rows = 6 }: { rows?: number }) {
+export const ListSkeleton = memo(function ListSkeleton({ rows = 6 }: { rows?: number }) {
+  const rowList = useMemo(() => Array.from({ length: rows }, (_, i) => i), [rows])
+
   return (
     <Stack gap="md">
-      {Array.from({ length: rows }, (_, i) => (
+      {rowList.map((i) => (
         <Stack key={i} gap={6}>
           <Skeleton h={12} w="55%" /><Skeleton h={9} w="85%" /><Skeleton h={8} w="30%" />
         </Stack>
       ))}
     </Stack>
   )
-}
+})
 
-export function EditorSkeleton() {
+export const EditorSkeleton = memo(function EditorSkeleton() {
   return (
     <Stack gap="md">
       <Skeleton h={26} w="45%" />
       <Skeleton h={11} /><Skeleton h={11} /><Skeleton h={11} w="80%" />
     </Stack>
   )
-}
+})

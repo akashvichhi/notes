@@ -1,48 +1,67 @@
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { type SyntheticEvent, useState } from 'react'
+import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { useUpdatePassword } from '@/hooks/queries/useAuth'
 
-export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+export const ChangePasswordModal = memo(function ChangePasswordModal({
+  onClose,
+}: {
+  onClose: () => void
+}) {
   const updatePassword = useUpdatePassword()
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (newPassword !== confirmPassword) {
-      notifications.show({ color: 'red', message: 'New passwords do not match' })
-      return
-    }
+  const handleCurrentPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentPassword(e.currentTarget.value)
+  }, [])
 
-    if (newPassword.length < 8) {
-      notifications.show({ color: 'red', message: 'Password must be at least 8 characters long' })
-      return
-    }
+  const handleNewPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPassword(e.currentTarget.value)
+  }, [])
 
-    updatePassword.mutate(
-      {
-        current_password: currentPassword,
-        password: newPassword,
-        password_confirmation: confirmPassword,
-      },
-      {
-        onSuccess: () => {
-          notifications.show({ color: 'green', message: 'Password updated successfully' })
-          onClose()
+  const handleConfirmPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.currentTarget.value)
+  }, [])
+
+  const handleSubmit = useCallback(
+    (e: SyntheticEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      if (newPassword !== confirmPassword) {
+        notifications.show({ color: 'red', message: 'New passwords do not match' })
+        return
+      }
+
+      if (newPassword.length < 8) {
+        notifications.show({ color: 'red', message: 'Password must be at least 8 characters long' })
+        return
+      }
+
+      updatePassword.mutate(
+        {
+          current_password: currentPassword,
+          password: newPassword,
+          password_confirmation: confirmPassword,
         },
-        onError: (err: unknown) => {
-          const msg =
-            (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-            'Failed to change password'
-          notifications.show({ color: 'red', message: msg })
+        {
+          onSuccess: () => {
+            notifications.show({ color: 'green', message: 'Password updated successfully' })
+            onClose()
+          },
+          onError: (err: unknown) => {
+            const msg =
+              (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+              'Failed to change password'
+            notifications.show({ color: 'red', message: msg })
+          },
         },
-      },
-    )
-  }
+      )
+    },
+    [newPassword, confirmPassword, currentPassword, updatePassword, onClose],
+  )
 
   return (
     <Modal opened onClose={onClose} title="Change Password" centered size="sm">
@@ -52,7 +71,7 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
             label="Current password"
             placeholder="••••••••"
             value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.currentTarget.value)}
+            onChange={handleCurrentPasswordChange}
             required
             autoFocus
           />
@@ -60,14 +79,14 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
             label="New password"
             placeholder="At least 8 characters"
             value={newPassword}
-            onChange={(e) => setNewPassword(e.currentTarget.value)}
+            onChange={handleNewPasswordChange}
             required
           />
           <PasswordInput
             label="Confirm new password"
             placeholder="Repeat new password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+            onChange={handleConfirmPasswordChange}
             required
           />
           <Group justify="flex-end" gap="xs" mt="sm">
@@ -82,4 +101,4 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
       </form>
     </Modal>
   )
-}
+})

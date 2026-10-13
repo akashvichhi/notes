@@ -1,11 +1,12 @@
 import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
+import { memo, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import { normalizeError } from '@/api/client'
 import { useLogin } from '@/hooks/queries/useAuth'
 
-export function LoginPage() {
+export const LoginPage = memo(function LoginPage() {
   const navigate = useNavigate()
   const login = useLogin()
 
@@ -17,18 +18,21 @@ export function LoginPage() {
     },
   })
 
-  const error = login.error ? normalizeError(login.error) : null
+  const error = useMemo(() => (login.error ? normalizeError(login.error) : null), [login.error])
+
+  const handleSubmit = useCallback(
+    (values: { email: string; password: string }) => {
+      login.mutate(values, { onSuccess: () => navigate('/') })
+    },
+    [login, navigate]
+  )
 
   return (
     <Center h="100dvh" p="md">
       <Paper withBorder p="xl" w={400} maw="100%">
         <Title order={2} mb="lg">Sign in</Title>
 
-        <form
-          onSubmit={form.onSubmit((values) =>
-            login.mutate(values, { onSuccess: () => navigate('/') }),
-          )}
-        >
+        <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack>
             {error && <Alert color="red">{error.message}</Alert>}
 
@@ -52,4 +56,4 @@ export function LoginPage() {
       </Paper>
     </Center>
   )
-}
+})

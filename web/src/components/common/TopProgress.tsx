@@ -1,9 +1,10 @@
 import { Box } from '@mantine/core'
 import { useIsFetching } from '@tanstack/react-query'
+import { memo } from 'react'
 import { useDelayedLoading } from '@/lib/useDelayedLoading'
 
 /** Catch-all indicator for fetches with no better home. Never blocks. */
-export function TopProgress() {
+export const TopProgress = memo(function TopProgress() {
   const show = useDelayedLoading(useIsFetching() > 0)
   if (!show) return null
 
@@ -13,4 +14,4 @@ export function TopProgress() {
       style={{ zIndex: 1000, animation: 'pulse 1s ease-in-out infinite' }}
     />
   )
-}
+})

@@ -2,7 +2,7 @@ import { RichTextEditor } from '@mantine/tiptap'
 import { Box } from '@mantine/core'
 import { useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { EditorToolbar } from './EditorToolbar'
@@ -15,10 +15,14 @@ import { useKeyboardInset } from '@/hooks/useVisualViewport'
 import type { Note } from '@/types/api'
 import mobile from './mobile.module.css'
 
-export function Editor({ note }: { note: Note }) {
+export const Editor = memo(function Editor({ note }: { note: Note }) {
   const isPhone = useIsPhone()
   const keyboardInset = useKeyboardInset()
   const [mode, setMode] = useState<'rich' | 'source'>('rich')
+
+  const handleModeChange = useCallback((m: 'rich' | 'source') => {
+    setMode(m)
+  }, [])
 
   const editor = useEditor(
     {
@@ -43,7 +47,7 @@ export function Editor({ note }: { note: Note }) {
     <Box className={mobile.editorRoot} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
       <RichTextEditor editor={editor} style={{ display: 'contents' }}>
         <Box className={mobile.toolbar} style={{ transform: keyboardInset ? `translateY(-${keyboardInset}px)` : undefined }}>
-          <EditorToolbar mode={mode} onMode={setMode} />
+          <EditorToolbar mode={mode} onMode={handleModeChange} />
         </Box>
         <TableBar editor={editor} />
 
@@ -66,4 +70,4 @@ export function Editor({ note }: { note: Note }) {
       </RichTextEditor>
     </Box>
   )
-}
+})

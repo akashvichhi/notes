@@ -1,34 +1,49 @@
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { type SyntheticEvent, useState } from 'react'
+import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { useMe, useUpdateProfile } from '@/hooks/queries/useAuth'
 
-export function AccountDetailsModal({ onClose }: { onClose: () => void }) {
+export const AccountDetailsModal = memo(function AccountDetailsModal({
+  onClose,
+}: {
+  onClose: () => void
+}) {
   const { data: user } = useMe()
   const updateProfile = useUpdateProfile()
 
   const [name, setName] = useState(user?.name ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
 
-  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    updateProfile.mutate(
-      { name, email },
-      {
-        onSuccess: () => {
-          notifications.show({ color: 'green', message: 'Account details updated successfully' })
-          onClose()
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.currentTarget.value)
+  }, [])
+
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.currentTarget.value)
+  }, [])
+
+  const handleSubmit = useCallback(
+    (e: SyntheticEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      updateProfile.mutate(
+        { name, email },
+        {
+          onSuccess: () => {
+            notifications.show({ color: 'green', message: 'Account details updated successfully' })
+            onClose()
+          },
+          onError: (err: unknown) => {
+            const msg =
+              (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+              'Failed to update account details'
+            notifications.show({ color: 'red', message: msg })
+          },
         },
-        onError: (err: unknown) => {
-          const msg =
-            (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-            'Failed to update account details'
-          notifications.show({ color: 'red', message: msg })
-        },
-      },
-    )
-  }
+      )
+    },
+    [name, email, updateProfile, onClose],
+  )
 
   return (
     <Modal opened onClose={onClose} title="Account Details" centered size="sm">
@@ -38,7 +53,7 @@ export function AccountDetailsModal({ onClose }: { onClose: () => void }) {
             label="Name"
             placeholder="Your name"
             value={name}
-            onChange={(e) => setName(e.currentTarget.value)}
+            onChange={handleNameChange}
             required
             autoFocus
           />
@@ -47,7 +62,7 @@ export function AccountDetailsModal({ onClose }: { onClose: () => void }) {
             placeholder="Your email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.currentTarget.value)}
+            onChange={handleEmailChange}
             required
           />
           <Group justify="flex-end" gap="xs" mt="sm">
@@ -62,4 +77,4 @@ export function AccountDetailsModal({ onClose }: { onClose: () => void }) {
       </form>
     </Modal>
   )
-}
+})

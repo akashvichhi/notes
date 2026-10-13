@@ -1,6 +1,7 @@
 import { RichTextEditor } from '@mantine/tiptap'
 import { Box } from '@mantine/core'
-import { BubbleMenu, useEditor } from '@tiptap/react'
+import { useEditor } from '@tiptap/react'
+import { BubbleMenu } from '@tiptap/react/menus'
 import { useEffect, useState } from 'react'
 
 import { useIsPhone } from '../layout/AppShell'

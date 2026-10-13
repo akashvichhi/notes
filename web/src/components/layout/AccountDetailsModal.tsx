@@ -1,6 +1,6 @@
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { useState } from 'react'
+import { type SyntheticEvent, useState } from 'react'
 
 import { useMe, useUpdateProfile } from '@/hooks/queries/useAuth'
 
@@ -11,7 +11,7 @@ export function AccountDetailsModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState(user?.name ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     updateProfile.mutate(
       { name, email },

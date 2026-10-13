@@ -1,6 +1,6 @@
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { useState } from 'react'
+import { type SyntheticEvent, useState } from 'react'
 
 import { useUpdatePassword } from '@/hooks/queries/useAuth'
 
@@ -11,7 +11,7 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (newPassword !== confirmPassword) {
       notifications.show({ color: 'red', message: 'New passwords do not match' })

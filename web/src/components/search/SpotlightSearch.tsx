@@ -1,14 +1,16 @@
 import { Progress, Text } from '@mantine/core'
 import { Spotlight, spotlight } from '@mantine/spotlight'
 import { IconFolder, IconNote, IconPlus, IconSearch } from '@tabler/icons-react'
+
 import { memo, useCallback, useMemo, useState } from 'react'
 
-import { HighlightTerms } from './Highlight'
-import { MIN_QUERY, useSearch } from '@/hooks/queries/useSearch'
 import { useCreateNote } from '@/hooks/queries/useNotes'
+import { MIN_QUERY, useSearch } from '@/hooks/queries/useSearch'
 import { useDelayedLoading } from '@/lib/useDelayedLoading'
 import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'
+
+import { HighlightTerms } from './Highlight'
 
 export const SpotlightSearch = memo(function SpotlightSearch() {
   const [query, setQuery] = useState('')
@@ -35,23 +37,23 @@ export const SpotlightSearch = memo(function SpotlightSearch() {
   }, [createNote])
 
   return (
-    <Spotlight.Root query={query} onQueryChange={setQuery} scrollable>
-      <Spotlight.Search placeholder="Search notes and actions…" leftSection={<IconSearch size={18} />} />
+    <Spotlight.Root scrollable query={query} onQueryChange={setQuery}>
+      <Spotlight.Search leftSection={<IconSearch size={18} />} placeholder="Search notes and actions…" />
 
       {/* Stale results stay visible and dim rather than vanishing. */}
-      {showBar && <Progress value={100} size={2} animated />}
+      {showBar && <Progress animated size={2} value={100} />}
 
       <Spotlight.ActionsList style={{ opacity: isFetching ? 0.45 : 1 }}>
         {short && (
-          <Text p="md" size="sm" c="dimmed" ta="center">Type at least {MIN_QUERY} characters</Text>
+          <Text c="dimmed" p="md" size="sm" ta="center">Type at least {MIN_QUERY} characters</Text>
         )}
 
         {data?.notes.map((hit) => (
-          <Spotlight.Action key={hit.uuid} onClick={() => openTab(hit.uuid, hit.title)}
-            leftSection={<IconNote size={18} />}>
+          <Spotlight.Action key={hit.uuid} leftSection={<IconNote size={18} />}
+            onClick={() => openTab(hit.uuid, hit.title)}>
             <div>
-              <Text size="sm" fw={500}><HighlightTerms text={hit.title} terms={hit.terms} /></Text>
-              <Text size="xs" c="dimmed"><HighlightTerms text={hit.snippet} terms={hit.terms} /></Text>
+              <Text fw={500} size="sm"><HighlightTerms terms={hit.terms} text={hit.title} /></Text>
+              <Text c="dimmed" size="xs"><HighlightTerms terms={hit.terms} text={hit.snippet} /></Text>
             </div>
           </Spotlight.Action>
         ))}

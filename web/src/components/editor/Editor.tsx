@@ -1,19 +1,21 @@
-import { RichTextEditor } from '@mantine/tiptap'
 import { Box } from '@mantine/core'
+import { RichTextEditor } from '@mantine/tiptap'
 import { useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
+
 import { memo, useCallback, useEffect, useState } from 'react'
 
-import { useIsPhone } from '@/hooks/useIsPhone'
-import { EditorToolbar } from './EditorToolbar'
-import { TableBar } from './TableBar'
-import { TagStrip } from './TagStrip'
-import { editorExtensions } from './extensions'
 import { useAbandonedNote } from '@/hooks/useAbandonedNote'
 import { useAutosave } from '@/hooks/useAutosave'
+import { useIsPhone } from '@/hooks/useIsPhone'
 import { useKeyboardInset } from '@/hooks/useVisualViewport'
 import type { Note } from '@/types/api'
+
+import { EditorToolbar } from './EditorToolbar'
+import { editorExtensions } from './extensions'
 import mobile from './mobile.module.css'
+import { TableBar } from './TableBar'
+import { TagStrip } from './TagStrip'
 
 export const Editor = memo(function Editor({ note }: { note: Note }) {
   const isPhone = useIsPhone()
@@ -26,8 +28,8 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
 
   const editor = useEditor(
     {
-      extensions: editorExtensions,
-      content: note.body ?? { type: 'doc', content: [] },
+      extensions:  editorExtensions,
+      content:     note.body ?? { type: 'doc', content: [] },
       // ProseMirror's schema is a strict whitelist; anything unrecognised is dropped.
       editorProps: { attributes: { 'aria-label': 'Note body' } },
     },
@@ -62,7 +64,7 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
           </BubbleMenu>
         )}
 
-        <Box className={mobile.content} style={{ overflowY: 'auto', minHeight: 0, flex: 1 }} px={{ base: 16, sm: 28, lg: 48 }} py="lg">
+        <Box className={mobile.content} px={{ base: 16, sm: 28, lg: 48 }} py="lg" style={{ overflowY: 'auto', minHeight: 0, flex: 1 }}>
           <TagStrip note={note} />
           {/* Full width: no max-width column. */}
           <RichTextEditor.Content />

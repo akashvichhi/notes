@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance } from 'axios'
+
 import type { Note } from '@/types/api'
 
 export interface ApiError {
@@ -9,12 +10,12 @@ export interface ApiError {
 }
 
 export const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? '/api/v1',
+  baseURL:         import.meta.env.VITE_API_URL ?? '/api/v1',
   withCredentials: true,
   // Required since axios 1.6: without it the X-XSRF-TOKEN header is not
   // attached and every write returns 419 CSRF token mismatch.
-  withXSRFToken: true,
-  headers: { Accept: 'application/json' },
+  withXSRFToken:   true,
+  headers:         { Accept: 'application/json' },
 })
 
 let csrfPrimed = false
@@ -36,9 +37,9 @@ export function normalizeError(e: unknown): ApiError {
   const serverCopy = (data.server_copy as { data?: Note } | undefined)?.data
 
   return {
-    status: err.response.status,
+    status:  err.response.status,
     message: (data.message as string) ?? 'Request failed',
-    errors: data.errors as Record<string, string[]> | undefined,
+    errors:  data.errors as Record<string, string[]> | undefined,
     serverCopy,
   }
 }

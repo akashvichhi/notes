@@ -1,6 +1,7 @@
-import { RichTextEditor, useRichTextEditorContext } from '@mantine/tiptap'
 import { SegmentedControl } from '@mantine/core'
+import { RichTextEditor, useRichTextEditorContext } from '@mantine/tiptap'
 import { IconTable } from '@tabler/icons-react'
+
 import { memo, useCallback } from 'react'
 
 import { useIsPhone } from '@/hooks/useIsPhone'
@@ -83,11 +84,11 @@ export const EditorToolbar = memo(function EditorToolbar({
 
       {!isPhone && (
         <SegmentedControl
+          data={MODE_OPTIONS}
           ml="auto"
           size="xs"
           value={mode}
           onChange={handleModeChange}
-          data={MODE_OPTIONS}
         />
       )}
     </RichTextEditor.Toolbar>

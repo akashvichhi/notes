@@ -1,5 +1,6 @@
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
+
 import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { useUpdatePassword } from '@/hooks/queries/useAuth'
@@ -42,8 +43,8 @@ export const ChangePasswordModal = memo(function ChangePasswordModal({
 
       updatePassword.mutate(
         {
-          current_password: currentPassword,
-          password: newPassword,
+          current_password:      currentPassword,
+          password:              newPassword,
           password_confirmation: confirmPassword,
         },
         {
@@ -53,8 +54,8 @@ export const ChangePasswordModal = memo(function ChangePasswordModal({
           },
           onError: (err: unknown) => {
             const msg =
-              (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-              'Failed to change password'
+              (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+              ?? 'Failed to change password'
             notifications.show({ color: 'red', message: msg })
           },
         },
@@ -64,36 +65,36 @@ export const ChangePasswordModal = memo(function ChangePasswordModal({
   )
 
   return (
-    <Modal opened onClose={onClose} title="Change Password" centered size="sm">
+    <Modal centered opened size="sm" title="Change Password" onClose={onClose}>
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <PasswordInput
+            autoFocus
+            required
             label="Current password"
             placeholder="••••••••"
             value={currentPassword}
             onChange={handleCurrentPasswordChange}
-            required
-            autoFocus
           />
           <PasswordInput
+            required
             label="New password"
             placeholder="At least 8 characters"
             value={newPassword}
             onChange={handleNewPasswordChange}
-            required
           />
           <PasswordInput
+            required
             label="Confirm new password"
             placeholder="Repeat new password"
             value={confirmPassword}
             onChange={handleConfirmPasswordChange}
-            required
           />
-          <Group justify="flex-end" gap="xs" mt="sm">
+          <Group gap="xs" justify="flex-end" mt="sm">
             <Button variant="default" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" loading={updatePassword.isPending}>
+            <Button loading={updatePassword.isPending} type="submit">
               Update password
             </Button>
           </Group>

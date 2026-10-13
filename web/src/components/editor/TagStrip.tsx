@@ -1,11 +1,11 @@
 import { Badge, Button, Group, Popover, Stack, TextInput } from '@mantine/core'
 import { IconCheck, IconPlus, IconSearch } from '@tabler/icons-react'
+import { useQueryClient } from '@tanstack/react-query'
+
 import { memo, useCallback, useMemo, useState } from 'react'
 
-import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { syncNoteTags } from '@/api/notes'
-import { useQueryClient } from '@tanstack/react-query'
-import { BOOTSTRAP_KEY } from '@/hooks/queries/useBootstrap'
+import { useBootstrap , BOOTSTRAP_KEY } from '@/hooks/queries/useBootstrap'
 import { NOTES_KEY } from '@/hooks/queries/useNotes'
 import type { Note } from '@/types/api'
 
@@ -69,17 +69,17 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
   return (
     <Group gap="xs" mb="md" wrap="wrap">
       {activeNames.map((tag) => (
-        <Badge key={tag} variant="light" size="sm">
+        <Badge key={tag} size="sm" variant="light">
           #{tag}
         </Badge>
       ))}
 
-      <Popover opened={opened} onChange={setOpened} position="bottom-start" withArrow shadow="md">
+      <Popover withArrow opened={opened} position="bottom-start" shadow="md" onChange={setOpened}>
         <Popover.Target>
           <Button
+            leftSection={<IconPlus size={12} />}
             size="compact-xs"
             variant="subtle"
-            leftSection={<IconPlus size={12} />}
             onClick={handleToggleOpened}
           >
             Add tag
@@ -89,9 +89,9 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
         <Popover.Dropdown p="xs" w={220}>
           <Stack gap="xs">
             <TextInput
-              size="xs"
-              placeholder="Search or create tag"
               leftSection={<IconSearch size={12} />}
+              placeholder="Search or create tag"
+              size="xs"
               value={query}
               onChange={handleQueryChange}
               onKeyDown={handleQueryKeyDown}
@@ -103,11 +103,11 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
                 return (
                   <Button
                     key={t.uuid}
+                    fullWidth
+                    justify="space-between"
+                    rightSection={isSelected ? <IconCheck size={12} /> : null}
                     size="compact-xs"
                     variant={isSelected ? 'light' : 'subtle'}
-                    justify="space-between"
-                    fullWidth
-                    rightSection={isSelected ? <IconCheck size={12} /> : null}
                     onClick={() => handleToggle(t.name)}
                   >
                     #{t.name}
@@ -117,10 +117,10 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
 
               {!hasExactMatch && (
                 <Button
-                  size="compact-xs"
-                  variant="subtle"
                   color="blue"
                   leftSection={<IconPlus size={12} />}
+                  size="compact-xs"
+                  variant="subtle"
                   onClick={handleCreate}
                 >
                   Create #{query.trim()}

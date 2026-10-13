@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import type { UUID } from '@/types/api'
 
 export type View = 'folders' | 'list' | 'editor'
@@ -26,17 +27,17 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  view: 'list',
-  navOpen: false,
+  view:          'list',
+  navOpen:       false,
   listCollapsed: false,
-  scope: { kind: 'all', label: 'All notes' },
-  filter: '',
-  setView: (view) => set({ view }),
-  toggleNav: () => set((s) => ({ navOpen: !s.navOpen })),
-  closeNav: () => set({ navOpen: false }),
-  toggleList: () => set((s) => ({ listCollapsed: !s.listCollapsed })),
+  scope:         { kind: 'all', label: 'All notes' },
+  filter:        '',
+  setView:       (view) => set({ view }),
+  toggleNav:     () => set((s) => ({ navOpen: !s.navOpen })),
+  closeNav:      () => set({ navOpen: false }),
+  toggleList:    () => set((s) => ({ listCollapsed: !s.listCollapsed })),
   // Changing scope always clears the filter: a sticky filter makes notes
   // look deleted.
-  setScope: (scope) => set({ scope, filter: '' }),
-  setFilter: (filter) => set({ filter }),
+  setScope:      (scope) => set({ scope, filter: '' }),
+  setFilter:     (filter) => set({ filter }),
 }))

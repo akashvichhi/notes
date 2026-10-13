@@ -1,6 +1,7 @@
 import { memo, type ReactNode } from 'react'
 
 import { useUiStore } from '@/stores/uiStore'
+
 import classes from './shell.module.css'
 
 export const AppShellLayout = memo(function AppShellLayout({
@@ -13,10 +14,10 @@ export const AppShellLayout = memo(function AppShellLayout({
   return (
     <div
       className={classes.app}
-      data-view={view}
-      data-nav-open={navOpen}
-      data-nav-collapsed={!navOpen}
       data-list-collapsed={listCollapsed}
+      data-nav-collapsed={!navOpen}
+      data-nav-open={navOpen}
+      data-view={view}
     >
       {header}
       <div className={classes.panes}>

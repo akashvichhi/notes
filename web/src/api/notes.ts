@@ -1,5 +1,6 @@
-import { api } from './client'
 import type { Note, NoteListItem, ProseMirrorDoc, UUID } from '@/types/api'
+
+import { api } from './client'
 
 export interface NotesPage {
   data: NoteListItem[]

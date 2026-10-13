@@ -1,5 +1,6 @@
 import { Box, Button, Center, Stack, Text, ThemeIcon } from '@mantine/core'
 import { IconNotes, IconPlus } from '@tabler/icons-react'
+
 import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router'
 
@@ -8,13 +9,13 @@ import { TopProgress } from '@/components/common/TopProgress'
 import { Editor } from '@/components/editor/Editor'
 import { TabBar } from '@/components/editor/TabBar'
 import { AppShellLayout } from '@/components/layout/AppShell'
-import { useIsPhone } from '@/hooks/useIsPhone'
 import { Header } from '@/components/layout/Header'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { StatusBar } from '@/components/layout/StatusBar'
 import { NoteList } from '@/components/notes/NoteList'
 import { SpotlightSearch } from '@/components/search/SpotlightSearch'
 import { useCreateNote, useNote } from '@/hooks/queries/useNotes'
+import { useIsPhone } from '@/hooks/useIsPhone'
 import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -75,25 +76,25 @@ export const AppPage = memo(function AppPage() {
         ) : note ? (
           <Editor key={note.uuid} note={note} />
         ) : (
-          <Center style={{ flex: 1 }} p="xl">
+          <Center p="xl" style={{ flex: 1 }}>
             <Stack align="center" gap="sm">
-              <ThemeIcon size={48} radius="xl" variant="light" color="blue">
+              <ThemeIcon color="blue" radius="xl" size={48} variant="light">
                 <IconNotes size={26} />
               </ThemeIcon>
               <Text fw={600} size="md">No note selected</Text>
-              <Text size="sm" c="dimmed" ta="center" maw={300}>
+              <Text c="dimmed" maw={300} size="sm" ta="center">
                 {scope.kind === 'trash'
                   ? 'Choose a note from Trash to view or restore it.'
                   : 'Choose a note from the list, or create a new one to begin writing.'}
               </Text>
               {scope.kind !== 'trash' && (
                 <Button
-                  size="sm"
-                  variant="light"
                   leftSection={<IconPlus size={16} />}
                   loading={createNote.isPending}
-                  onClick={handleCreateNote}
                   mt="xs"
+                  size="sm"
+                  variant="light"
+                  onClick={handleCreateNote}
                 >
                   New note
                 </Button>
@@ -109,8 +110,8 @@ export const AppPage = memo(function AppPage() {
   const statusSlot = useMemo(
     () => (
       <StatusBar
-        words={note?.word_count ?? 0}
         folderPath={note?.folder?.name ?? null}
+        words={note?.word_count ?? 0}
       />
     ),
     [note?.word_count, note?.folder?.name]
@@ -122,10 +123,10 @@ export const AppPage = memo(function AppPage() {
       <SpotlightSearch />
 
       <AppShellLayout
-        header={headerSlot}
-        nav={navSlot}
-        list={listSlot}
         editor={editorSlot}
+        header={headerSlot}
+        list={listSlot}
+        nav={navSlot}
         status={statusSlot}
       />
     </>

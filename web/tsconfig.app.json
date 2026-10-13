@@ -19,7 +19,10 @@
     /* Linting */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "paths": { "@/*": ["./src/*"] },
+    "paths": {
+      "@/*": ["./src/*"],
+      "@src/*": ["./src/*"]
+    },
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,

@@ -1,5 +1,6 @@
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
+
 import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { useMe, useUpdateProfile } from '@/hooks/queries/useAuth'
@@ -35,8 +36,8 @@ export const AccountDetailsModal = memo(function AccountDetailsModal({
           },
           onError: (err: unknown) => {
             const msg =
-              (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-              'Failed to update account details'
+              (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+              ?? 'Failed to update account details'
             notifications.show({ color: 'red', message: msg })
           },
         },
@@ -46,30 +47,30 @@ export const AccountDetailsModal = memo(function AccountDetailsModal({
   )
 
   return (
-    <Modal opened onClose={onClose} title="Account Details" centered size="sm">
+    <Modal centered opened size="sm" title="Account Details" onClose={onClose}>
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <TextInput
+            autoFocus
+            required
             label="Name"
             placeholder="Your name"
             value={name}
             onChange={handleNameChange}
-            required
-            autoFocus
           />
           <TextInput
+            required
             label="Email"
             placeholder="Your email"
             type="email"
             value={email}
             onChange={handleEmailChange}
-            required
           />
-          <Group justify="flex-end" gap="xs" mt="sm">
+          <Group gap="xs" justify="flex-end" mt="sm">
             <Button variant="default" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" loading={updateProfile.isPending}>
+            <Button loading={updateProfile.isPending} type="submit">
               Save changes
             </Button>
           </Group>

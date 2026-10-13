@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+
 import type { UUID } from '@/types/api'
 
 export interface Tab { uuid: UUID; title: string; dirty: boolean }
@@ -21,9 +22,9 @@ interface TabsState {
 export const useTabsStore = create<TabsState>()(
   persist(
     (set, get) => ({
-      tabs: [],
+      tabs:       [],
       activeUuid: null,
-      closed: [],
+      closed:     [],
 
       open: (uuid, title) => {
         const { tabs } = get()
@@ -44,9 +45,9 @@ export const useTabsStore = create<TabsState>()(
         const neighbour = next[index - 1] ?? next[index] ?? null
 
         set({
-          tabs: next,
+          tabs:       next,
           activeUuid: activeUuid === uuid ? neighbour?.uuid ?? null : activeUuid,
-          closed: [...closed, removed].slice(-10),
+          closed:     [...closed, removed].slice(-10),
         })
       },
 

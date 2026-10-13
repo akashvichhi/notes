@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 
-import { RequireAuth } from '@/components/RequireAuth'
 import { RouteErrorBoundary } from '@/components/common/RouteErrorBoundary'
+import { RequireAuth } from '@/components/RequireAuth'
 import { AppPage } from '@/pages/AppPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'

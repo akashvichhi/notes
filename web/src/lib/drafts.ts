@@ -1,4 +1,5 @@
 import { del, get, set } from 'idb-keyval'
+
 import type { ProseMirrorDoc, UUID } from '@/types/api'
 
 export interface Draft { doc: ProseMirrorDoc; savedAt: number }

@@ -1,11 +1,13 @@
 import { Avatar, Loader, Menu, Overlay, Stack, Text } from '@mantine/core'
 import { IconLock, IconLogout, IconUser } from '@tabler/icons-react'
+
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
+import { useLogout, useMe } from '@/hooks/queries/useAuth'
+
 import { AccountDetailsModal } from './AccountDetailsModal'
 import { ChangePasswordModal } from './ChangePasswordModal'
-import { useLogout, useMe } from '@/hooks/queries/useAuth'
 
 export const AccountMenu = memo(function AccountMenu() {
   const { data: user } = useMe()
@@ -48,19 +50,19 @@ export const AccountMenu = memo(function AccountMenu() {
 
   return (
     <>
-      <Menu position="bottom-end" withinPortal>
+      <Menu withinPortal position="bottom-end">
         <Menu.Target>
-          <Avatar size={28} radius="xl" color="blue" style={{ cursor: 'pointer' }}>
+          <Avatar color="blue" radius="xl" size={28} style={{ cursor: 'pointer' }}>
             {initials}
           </Avatar>
         </Menu.Target>
         <Menu.Dropdown>
           <Stack gap={0} px="sm" py="xs">
             {/* Confirming which account you are in, before you sign out of it. */}
-            <Text size="sm" fw={600}>
+            <Text fw={600} size="sm">
               {user?.name}
             </Text>
-            <Text size="xs" c="dimmed" truncate>
+            <Text truncate c="dimmed" size="xs">
               {user?.email}
             </Text>
           </Stack>
@@ -83,7 +85,7 @@ export const AccountMenu = memo(function AccountMenu() {
             disabled={logout.isPending}
             leftSection={
               logout.isPending ? (
-                <Loader size={14} color="red" />
+                <Loader color="red" size={14} />
               ) : (
                 <IconLogout size={16} />
               )
@@ -97,15 +99,15 @@ export const AccountMenu = memo(function AccountMenu() {
 
       {logout.isPending && (
         <Overlay
-          fixed
           center
-          zIndex={10000}
-          blur={2}
+          fixed
           backgroundOpacity={0.6}
+          blur={2}
+          zIndex={10000}
         >
           <Stack align="center" gap="sm">
-            <Loader size="lg" color="blue" />
-            <Text size="sm" fw={600} c="white">
+            <Loader color="blue" size="lg" />
+            <Text c="white" fw={600} size="sm">
               Signing out…
             </Text>
           </Stack>

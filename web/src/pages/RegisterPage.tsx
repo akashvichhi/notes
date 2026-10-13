@@ -1,5 +1,6 @@
 import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
+
 import { memo, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 
@@ -12,10 +13,10 @@ export const RegisterPage = memo(function RegisterPage() {
 
   const form = useForm({
     initialValues: { name: '', email: '', password: '', password_confirmation: '' },
-    validate: {
-      name: (v) => (v.trim().length > 0 ? null : 'Enter your name'),
-      email: (v) => (/^\S+@\S+$/.test(v) ? null : 'Enter a valid email address'),
-      password: (v) => (v.length >= 8 ? null : 'Password must be at least 8 characters'),
+    validate:      {
+      name:                  (v) => (v.trim().length > 0 ? null : 'Enter your name'),
+      email:                 (v) => (/^\S+@\S+$/.test(v) ? null : 'Enter a valid email address'),
+      password:              (v) => (v.length >= 8 ? null : 'Password must be at least 8 characters'),
       password_confirmation: (v, values) =>
         v === values.password ? null : 'Passwords do not match',
     },
@@ -32,27 +33,27 @@ export const RegisterPage = memo(function RegisterPage() {
 
   return (
     <Center h="100dvh" p="md">
-      <Paper withBorder p="xl" w={400} maw="100%">
-        <Title order={2} mb="lg">Create an account</Title>
+      <Paper withBorder maw="100%" p="xl" w={400}>
+        <Title mb="lg" order={2}>Create an account</Title>
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack>
             {error && <Alert color="red">{error.message}</Alert>}
 
-            <TextInput label="Name" autoComplete="name" {...form.getInputProps('name')} />
-            <TextInput label="Email" autoComplete="email" {...form.getInputProps('email')} />
+            <TextInput autoComplete="name" label="Name" {...form.getInputProps('name')} />
+            <TextInput autoComplete="email" label="Email" {...form.getInputProps('email')} />
             <PasswordInput
-              label="Password"
               autoComplete="new-password"
+              label="Password"
               {...form.getInputProps('password')}
             />
             <PasswordInput
-              label="Confirm password"
               autoComplete="new-password"
+              label="Confirm password"
               {...form.getInputProps('password_confirmation')}
             />
 
-            <Button type="submit" loading={register.isPending} fullWidth>
+            <Button fullWidth loading={register.isPending} type="submit">
               Register
             </Button>
 

@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/react'
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { patchNote } from '@/api/notes'
 import { normalizeError } from '@/api/client'
-import { clearDraft, saveDraft } from '@/lib/drafts'
+import { patchNote } from '@/api/notes'
 import { NOTES_KEY } from '@/hooks/queries/useNotes'
+import { clearDraft, saveDraft } from '@/lib/drafts'
 import { useTabsStore } from '@/stores/tabsStore'
 import type { Note } from '@/types/api'
 

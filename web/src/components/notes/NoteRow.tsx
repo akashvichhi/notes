@@ -2,10 +2,11 @@ import { ActionIcon, Badge, Group, Menu, Stack, Text, UnstyledButton } from '@ma
 import { IconDots, IconStar, IconStarFilled } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+
 import { memo, useMemo } from 'react'
 
+import classes from '@/components/layout/shell.module.css'
 import type { NoteListItem } from '@/types/api'
-import classes from '../layout/shell.module.css'
 
 dayjs.extend(relativeTime)
 
@@ -37,53 +38,53 @@ export const NoteRow = memo(function NoteRow({
   )
   return (
     <UnstyledButton
-      onClick={onOpen}
       p="xs"
       style={{
-        display: 'block',
-        width: '100%',
+        display:      'block',
+        width:        '100%',
         borderRadius: 'var(--mantine-radius-md)',
-        borderLeft: `3px solid ${active ? 'var(--mantine-color-blue-6)' : 'transparent'}`,
-        background: active ? 'var(--mantine-color-blue-light)' : undefined,
-        minHeight: 44,
+        borderLeft:   `3px solid ${active ? 'var(--mantine-color-blue-6)' : 'transparent'}`,
+        background:   active ? 'var(--mantine-color-blue-light)' : undefined,
+        minHeight:    44,
       }}
+      onClick={onOpen}
     >
       <Stack gap={3}>
         <Group gap={6} wrap="nowrap">
-          <Text size="sm" fw={500} truncate style={{ flex: 1 }}>
+          <Text truncate fw={500} size="sm" style={{ flex: 1 }}>
             {note.title || 'New note'}
           </Text>
 
           {!note.deleted_at && (
             <ActionIcon
-              component="div"
-              size="sm"
-              variant="subtle"
               aria-label={note.is_starred ? 'Unstar' : 'Star'}
               className={classes.rowAction}
+              component="div"
+              size="sm"
               style={{ opacity: note.is_starred ? 1 : 0 }}
+              variant="subtle"
               onClick={(e) => {
                 e.stopPropagation()
                 onStar()
               }}
             >
               {note.is_starred ? (
-                <IconStarFilled size={14} color="var(--mantine-color-yellow-6)" />
+                <IconStarFilled color="var(--mantine-color-yellow-6)" size={14} />
               ) : (
                 <IconStar size={14} />
               )}
             </ActionIcon>
           )}
 
-          <Menu position="bottom-end" withinPortal>
+          <Menu withinPortal position="bottom-end">
             <Menu.Target>
               <ActionIcon
-                component="div"
-                size="sm"
-                variant="subtle"
                 aria-label="Note actions"
                 className={classes.rowAction}
+                component="div"
+                size="sm"
                 style={{ opacity: 0 }}
+                variant="subtle"
                 onClick={(e) => e.stopPropagation()}
               >
                 <IconDots size={14} />
@@ -100,7 +101,7 @@ export const NoteRow = memo(function NoteRow({
                   </Menu.Item>
                   {/* The retention clock only helps if it is visible while deciding. */}
                   {autoDeletedAgo && (
-                    <Text size="xs" c="dimmed" px="sm" pb="xs">
+                    <Text c="dimmed" pb="xs" px="sm" size="xs">
                       Auto-deleted {autoDeletedAgo}.
                     </Text>
                   )}
@@ -119,12 +120,12 @@ export const NoteRow = memo(function NoteRow({
           </Menu>
         </Group>
 
-        <Text size="xs" c="dimmed" truncate>
+        <Text truncate c="dimmed" size="xs">
           {note.excerpt}
         </Text>
 
         <Group gap={6}>
-          <Text size="xs" c="dimmed">
+          <Text c="dimmed" size="xs">
             {updatedAgo}
           </Text>
           {note.folder && (

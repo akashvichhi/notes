@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/react'
+
 import { useEffect, useRef } from 'react'
 
 import { forceDeleteNote } from '@/api/notes'
@@ -29,12 +30,12 @@ export function useAbandonedNote(note: Note, editor: Editor | null) {
       const { note: n, editor: e } = latest.current
 
       const untouched =
-        (e?.getText() ?? '').trim() === '' &&
-        !n.is_starred &&
-        n.tags.length === 0 &&
-        n.folder === null &&
-        !n.title_locked &&
-        n.version === 1
+        (e?.getText() ?? '').trim() === ''
+        && !n.is_starred
+        && n.tags.length === 0
+        && n.folder === null
+        && !n.title_locked
+        && n.version === 1
 
       if (!untouched) return
 

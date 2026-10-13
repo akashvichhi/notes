@@ -11,11 +11,11 @@ import {
   Text,
 } from '@mantine/core'
 import { IconArrowsSort, IconFolder, IconPlus } from '@tabler/icons-react'
+
 import { memo, useCallback, useMemo, useState } from 'react'
 
+import { patchNote } from '@/api/notes'
 import { ListSkeleton } from '@/components/common/Skeletons'
-import { FilterInput } from './FilterInput'
-import { NoteRow } from './NoteRow'
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import {
   useCreateNote,
@@ -26,11 +26,13 @@ import {
   useStarNote,
   useTrashNote,
 } from '@/hooks/queries/useNotes'
-import { patchNote } from '@/api/notes'
+import { useIsPhone } from '@/hooks/useIsPhone'
 import { filterNotes } from '@/lib/filterNotes'
 import { useUiStore } from '@/stores/uiStore'
 import type { NoteListItem, UUID } from '@/types/api'
-import { useIsPhone } from '@/hooks/useIsPhone'
+
+import { FilterInput } from './FilterInput'
+import { NoteRow } from './NoteRow'
 
 export const NoteList = memo(function NoteList({
   activeUuid,
@@ -92,14 +94,14 @@ export const NoteList = memo(function NoteList({
   }, [])
 
   return (
-    <Stack gap="xs" p="sm" h="100%">
+    <Stack gap="xs" h="100%" p="sm">
       <Group justify="space-between">
         <Text fw={700} size="sm">{scope.label}</Text>
         <Group gap="xs">
-          <Text size="xs" c="dimmed">{allNotes.length} notes</Text>
+          <Text c="dimmed" size="xs">{allNotes.length} notes</Text>
           <Menu position="bottom-end">
             <Menu.Target>
-              <ActionIcon size="sm" variant="subtle" aria-label="Sort options">
+              <ActionIcon aria-label="Sort options" size="sm" variant="subtle">
                 <IconArrowsSort size={14} />
               </ActionIcon>
             </Menu.Target>
@@ -116,8 +118,8 @@ export const NoteList = memo(function NoteList({
       <FilterInput
         hasMore={Boolean(hasNextPage)}
         localCount={filtered.length}
-        totalCount={allNotes.length}
         params={{}}
+        totalCount={allNotes.length}
       />
 
       <ScrollArea style={{ flex: 1 }}>
@@ -126,14 +128,14 @@ export const NoteList = memo(function NoteList({
         ) : filtered.length === 0 ? (
           <Center h={180}>
             <Stack align="center" gap="xs">
-              <Text size="sm" c="dimmed">
+              <Text c="dimmed" size="sm">
                 {scope.kind === 'trash' ? 'Trash is empty' : 'No notes found'}
               </Text>
               {scope.kind !== 'trash' && (
                 <Button
+                  leftSection={<IconPlus size={14} />}
                   size="xs"
                   variant="light"
-                  leftSection={<IconPlus size={14} />}
                   onClick={handleCreateNote}
                 >
                   Create note
@@ -146,22 +148,22 @@ export const NoteList = memo(function NoteList({
             {filtered.map((note) => (
               <NoteRow
                 key={note.uuid}
-                note={note}
                 active={note.uuid === activeUuid}
-                onOpen={() => handleOpen(note.uuid)}
-                onStar={() => starNote.mutate({ uuid: note.uuid, is_starred: !note.is_starred })}
-                onTrash={() => trashNote.mutate(note.uuid)}
+                note={note}
                 onDuplicate={() => duplicateNote.mutate(note.uuid)}
+                onForceDelete={() => forceDeleteNote.mutate(note.uuid)}
+                onOpen={() => handleOpen(note.uuid)}
                 onRestore={() => restoreNote.mutate(note.uuid)}
                 onRestoreTo={() => setRestoreModalNote(note)}
-                onForceDelete={() => forceDeleteNote.mutate(note.uuid)}
+                onStar={() => starNote.mutate({ uuid: note.uuid, is_starred: !note.is_starred })}
+                onTrash={() => trashNote.mutate(note.uuid)}
               />
             ))}
             {hasNextPage && (
               <Button
-                variant="subtle"
-                size="xs"
                 loading={isFetchingNextPage}
+                size="xs"
+                variant="subtle"
                 onClick={() => fetchNextPage()}
               >
                 Load more
@@ -172,11 +174,11 @@ export const NoteList = memo(function NoteList({
       </ScrollArea>
 
       <Modal
-        opened={Boolean(restoreModalNote)}
-        onClose={handleCloseRestoreModal}
-        title="Restore note to folder"
         centered
+        opened={Boolean(restoreModalNote)}
         size="sm"
+        title="Restore note to folder"
+        onClose={handleCloseRestoreModal}
       >
         <Stack gap="xs">
           <NavLink

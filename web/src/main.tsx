@@ -7,6 +7,7 @@ import './index.css'
 import { MantineProvider } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -15,7 +16,7 @@ import { theme } from './theme'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider theme={theme} defaultColorScheme="auto">
+    <MantineProvider defaultColorScheme="auto" theme={theme}>
       <ModalsProvider>
         <Notifications position="bottom-center" />
         <App />

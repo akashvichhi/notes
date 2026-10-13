@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { notifications } from '@mantine/notifications'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import * as foldersApi from '@/api/folders'
+
 import { BOOTSTRAP_KEY } from './useBootstrap'
 import { NOTES_KEY } from './useNotes'
 
@@ -9,7 +10,7 @@ export function useCreateFolder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: foldersApi.createFolder,
-    onSuccess: () => qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY }),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY }),
   })
 }
 
@@ -26,7 +27,7 @@ export function useDeleteFolder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: foldersApi.deleteFolder,
-    onSuccess: () => {
+    onSuccess:  () => {
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       // Destructive actions must say what SURVIVES, not just what went.

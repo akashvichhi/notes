@@ -1,5 +1,6 @@
-import { api } from './client'
 import type { Tag, UUID } from '@/types/api'
+
+import { api } from './client'
 
 export async function createTag(payload: { name: string }): Promise<Tag> {
   const { data } = await api.post<{ data: Tag }>('/tags', payload)

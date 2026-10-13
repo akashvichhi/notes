@@ -1,13 +1,15 @@
 import { ActionIcon, Center, Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core'
+import { spotlight } from '@mantine/spotlight'
 import {
   IconChevronLeft, IconMenu2, IconMoon, IconNotes, IconSearch, IconSun,
 } from '@tabler/icons-react'
-import { spotlight } from '@mantine/spotlight'
+
 import { memo, useCallback } from 'react'
 
 import { useIsPhone } from '@/hooks/useIsPhone'
-import { AccountMenu } from './AccountMenu'
 import { useUiStore } from '@/stores/uiStore'
+
+import { AccountMenu } from './AccountMenu'
 
 export const Header = memo(function Header() {
   const isPhone = useIsPhone()
@@ -23,18 +25,18 @@ export const Header = memo(function Header() {
   }, [])
 
   return (
-    <Group h={52} px="sm" gap="sm" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
+    <Group gap="sm" h={52} px="sm" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
       {isPhone ? (
         <ActionIcon
-          variant="subtle" size="lg" aria-label="Back"
-          style={{ visibility: view === 'folders' ? 'hidden' : 'visible' }}
+          aria-label="Back" size="lg" style={{ visibility: view === 'folders' ? 'hidden' : 'visible' }}
+          variant="subtle"
           onClick={handleBack}
         >
           <IconChevronLeft size={18} />
         </ActionIcon>
       ) : (
         // The sidebar toggle sits next to what it controls, at the far left.
-        <ActionIcon variant="subtle" size="lg" aria-label="Toggle sidebar" onClick={toggleNav}>
+        <ActionIcon aria-label="Toggle sidebar" size="lg" variant="subtle" onClick={toggleNav}>
           <IconMenu2 size={18} />
         </ActionIcon>
       )}
@@ -42,37 +44,37 @@ export const Header = memo(function Header() {
       {/* Brand mark: the favicon's shape, drawn with the icon set already
           installed. No image asset, so it stays crisp and follows the theme. */}
       <Group gap={8} visibleFrom="sm" wrap="nowrap">
-        <Center w={26} h={26} bg="blue.6" style={{ borderRadius: 7, flex: 'none' }}>
-          <IconNotes size={16} color="white" stroke={2} />
+        <Center bg="blue.6" h={26} style={{ borderRadius: 7, flex: 'none' }} w={26}>
+          <IconNotes color="white" size={16} stroke={2} />
         </Center>
         <Text fw={600} size="sm">Notes</Text>
       </Group>
-      {isPhone && <Text fw={600} size="md" truncate style={{ flex: 1 }}>{scope.label}</Text>}
+      {isPhone && <Text truncate fw={600} size="md" style={{ flex: 1 }}>{scope.label}</Text>}
 
       <UnstyledButton
-        onClick={handleOpenSpotlight}
+        aria-label="Search notes and actions"
         style={{ flex: 1, maxWidth: 460 }}
         visibleFrom="sm"
-        aria-label="Search notes and actions"
+        onClick={handleOpenSpotlight}
       >
-        <Group gap="xs" px="sm" h={32} style={{
-          border: '1px solid var(--mantine-color-default-border)',
+        <Group gap="xs" h={32} px="sm" style={{
+          border:       '1px solid var(--mantine-color-default-border)',
           borderRadius: 'var(--mantine-radius-md)',
         }}>
-          <IconSearch size={15} opacity={0.6} />
-          <Text size="sm" c="dimmed" style={{ flex: 1 }}>Search notes and actions…</Text>
-          <Text size="xs" c="dimmed">⌘K</Text>
+          <IconSearch opacity={0.6} size={15} />
+          <Text c="dimmed" size="sm" style={{ flex: 1 }}>Search notes and actions…</Text>
+          <Text c="dimmed" size="xs">⌘K</Text>
         </Group>
       </UnstyledButton>
 
       {isPhone && (
-        <ActionIcon variant="subtle" size="lg" onClick={handleOpenSpotlight} aria-label="Search">
+        <ActionIcon aria-label="Search" size="lg" variant="subtle" onClick={handleOpenSpotlight}>
           <IconSearch size={18} />
         </ActionIcon>
       )}
 
       <Group gap={4} ml="auto">
-        <ActionIcon variant="subtle" size="lg" onClick={toggleColorScheme} aria-label="Toggle colour scheme">
+        <ActionIcon aria-label="Toggle colour scheme" size="lg" variant="subtle" onClick={toggleColorScheme}>
           {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
         </ActionIcon>
         <AccountMenu />

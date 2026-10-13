@@ -1,5 +1,6 @@
-import { api, ensureCsrf } from './client'
 import type { User } from '@/types/api'
+
+import { api, ensureCsrf } from './client'
 
 export async function fetchMe(): Promise<User> {
   const { data } = await api.get<{ data: User }>('/me')

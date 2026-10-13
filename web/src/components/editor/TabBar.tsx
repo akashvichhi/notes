@@ -1,10 +1,11 @@
 import { ActionIcon, Box, Group, Menu, ScrollArea, Text, UnstyledButton } from '@mantine/core'
 import { IconPlus, IconX } from '@tabler/icons-react'
+
 import { memo, useCallback } from 'react'
 
-import { useTabsStore } from '@/stores/tabsStore'
 import { useCreateNote } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
+import { useTabsStore } from '@/stores/tabsStore'
 import type { Tab } from '@/stores/tabsStore'
 
 interface TabItemProps {
@@ -61,42 +62,42 @@ const TabItem = memo(function TabItem({
       <Menu.Target>
         <UnstyledButton
           component="div"
+          h={28}
+          px="xs"
           role="button"
+          style={{
+            cursor:       'pointer',
+            borderRadius: 'var(--mantine-radius-sm)',
+            background:   isActive ? 'var(--mantine-color-default-hover)' : 'transparent',
+            border:       '1px solid',
+            borderColor:  isActive
+              ? 'var(--mantine-color-default-border)'
+              : 'transparent',
+            display:    'flex',
+            alignItems: 'center',
+            gap:        6,
+          }}
           tabIndex={0}
           onClick={handleActivate}
           onKeyDown={handleKeyDown}
-          px="xs"
-          h={28}
-          style={{
-            cursor: 'pointer',
-            borderRadius: 'var(--mantine-radius-sm)',
-            background: isActive ? 'var(--mantine-color-default-hover)' : 'transparent',
-            border: '1px solid',
-            borderColor: isActive
-              ? 'var(--mantine-color-default-border)'
-              : 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
         >
           {tab.dirty && (
             <Box
-              w={6}
-              h={6}
               bg="yellow.6"
+              h={6}
               style={{ borderRadius: '50%', flexShrink: 0 }}
+              w={6}
             />
           )}
-          <Text size="xs" truncate maw={140} fw={isActive ? 600 : 400}>
+          <Text truncate fw={isActive ? 600 : 400} maw={140} size="xs">
             {tab.title || 'Untitled'}
           </Text>
           <ActionIcon
+            aria-label="Close tab"
+            color="gray"
             size={16}
             variant="subtle"
-            color="gray"
             onClick={handleClose}
-            aria-label="Close tab"
           >
             <IconX size={10} />
           </ActionIcon>
@@ -130,25 +131,25 @@ export const TabBar = memo(function TabBar() {
 
   return (
     <Group
+      gap={4}
       h={36}
       px="xs"
-      gap={4}
       style={{
         borderBottom: '1px solid var(--mantine-color-default-border)',
-        overflow: 'hidden',
+        overflow:     'hidden',
       }}
     >
-      <ScrollArea type="never" style={{ flex: 1 }}>
+      <ScrollArea style={{ flex: 1 }} type="never">
         <Group gap={4} wrap="nowrap">
           {tabs.map((tab) => (
             <TabItem
               key={tab.uuid}
-              tab={tab}
               isActive={tab.uuid === activeUuid}
+              tab={tab}
               onActivate={handleActivate}
               onClose={handleClose}
-              onCloseOthers={handleCloseOthers}
               onCloseAll={closeAll}
+              onCloseOthers={handleCloseOthers}
               onReopen={reopen}
             />
           ))}
@@ -156,10 +157,10 @@ export const TabBar = memo(function TabBar() {
       </ScrollArea>
 
       <ActionIcon
+        aria-label="New note tab"
         size="sm"
         variant="subtle"
         onClick={handleCreateNote}
-        aria-label="New note tab"
       >
         <IconPlus size={14} />
       </ActionIcon>

@@ -2,6 +2,7 @@ import { Loader, Text, TextInput } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { IconFilter } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
+
 import { memo, useCallback, useMemo } from 'react'
 
 import { fetchNotes } from '@/api/notes'
@@ -24,8 +25,8 @@ export const FilterInput = memo(function FilterInput({
 
   const server = useQuery({
     queryKey: ['notes-filter', scope, debounced],
-    queryFn: () => fetchNotes({ ...params, q: debounced }),
-    enabled: hasMore && debounced.trim().length > 0,
+    queryFn:  () => fetchNotes({ ...params, q: debounced }),
+    enabled:  hasMore && debounced.trim().length > 0,
   })
 
   const showSpinner = useDelayedLoading(server.isFetching)
@@ -41,18 +42,18 @@ export const FilterInput = memo(function FilterInput({
 
   const rightSection = useMemo(() => {
     if (showSpinner) return <Loader size={14} />
-    if (filter) return <Text size="xs" c="dimmed">{localCount} of {totalCount}</Text>
+    if (filter) return <Text c="dimmed" size="xs">{localCount} of {totalCount}</Text>
     return null
   }, [showSpinner, filter, localCount, totalCount])
 
   return (
     <TextInput
-      value={filter}
-      onChange={handleChange}
-      placeholder={placeholder}
       leftSection={<IconFilter size={15} />}
+      placeholder={placeholder}
       rightSection={rightSection}
       rightSectionWidth={filter ? 64 : 36}
+      value={filter}
+      onChange={handleChange}
     />
   )
 })

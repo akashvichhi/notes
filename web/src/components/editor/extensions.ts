@@ -27,7 +27,7 @@ import { common, createLowlight } from 'lowlight'
 export const editorExtensions = [
   StarterKit.configure({
     codeBlock: false,
-    link: { openOnClick: false, autolink: true },
+    link:      { openOnClick: false, autolink: true },
   }),
   Highlight,
   TextStyle,

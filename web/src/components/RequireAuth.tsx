@@ -9,7 +9,7 @@ export const RequireAuth = memo(function RequireAuth({ children }: { children: R
 
   // A skeleton of the real layout, not a centred spinner.
   if (isLoading) return <AppSkeleton />
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate replace to="/login" />
 
   return <>{children}</>
 })

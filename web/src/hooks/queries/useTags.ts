@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { notifications } from '@mantine/notifications'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import * as tagsApi from '@/api/tags'
+
 import { BOOTSTRAP_KEY } from './useBootstrap'
 import { NOTES_KEY } from './useNotes'
 
@@ -9,7 +10,7 @@ export function useCreateTag() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: tagsApi.createTag,
-    onSuccess: () => qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY }),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY }),
   })
 }
 
@@ -26,7 +27,7 @@ export function useDeleteTag() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: tagsApi.deleteTag,
-    onSuccess: () => {
+    onSuccess:  () => {
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       notifications.show({

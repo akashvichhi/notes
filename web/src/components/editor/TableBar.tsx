@@ -1,5 +1,6 @@
 import { Button, Group, Text } from '@mantine/core'
 import type { Editor } from '@tiptap/react'
+
 import { memo, useCallback } from 'react'
 
 /**
@@ -20,8 +21,8 @@ export const TableBar = memo(function TableBar({ editor }: { editor: Editor | nu
   if (!editor?.isActive('table')) return null
 
   return (
-    <Group gap="xs" p={6} bg="var(--mantine-color-blue-light)" wrap="wrap">
-      <Text size="xs" fw={700} tt="uppercase" c="blue">Table</Text>
+    <Group bg="var(--mantine-color-blue-light)" gap="xs" p={6} wrap="wrap">
+      <Text c="blue" fw={700} size="xs" tt="uppercase">Table</Text>
 
       <Button.Group>
         <Button size="compact-xs" variant="default" onClick={addColBefore}>+ Col ←</Button>
@@ -40,7 +41,7 @@ export const TableBar = memo(function TableBar({ editor }: { editor: Editor | nu
         <Button size="compact-xs" variant="default" onClick={toggleHeaderCol}>Header col</Button>
       </Button.Group>
 
-      <Button size="compact-xs" variant="default" color="red" onClick={deleteTable}>
+      <Button color="red" size="compact-xs" variant="default" onClick={deleteTable}>
         Delete table
       </Button>
     </Group>

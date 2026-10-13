@@ -2,14 +2,15 @@ import { ActionIcon, Badge, Button, Group, Menu, NavLink, Stack, Text, TextInput
 import {
   IconDots, IconFolder, IconNote, IconPlus, IconStar, IconTrash,
 } from '@tabler/icons-react'
+
 import { memo, useCallback, useState } from 'react'
 
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'
-import { useCreateTag, useDeleteTag } from '@/hooks/queries/useTags'
 import { useCreateNote } from '@/hooks/queries/useNotes'
-import { useUiStore } from '@/stores/uiStore'
+import { useCreateTag, useDeleteTag } from '@/hooks/queries/useTags'
 import { useIsPhone } from '@/hooks/useIsPhone'
+import { useUiStore } from '@/stores/uiStore'
 
 export const Sidebar = memo(function Sidebar() {
   const { folders, tags, counts } = useBootstrap()
@@ -54,7 +55,7 @@ export const Sidebar = memo(function Sidebar() {
   }, [createNote])
 
   return (
-    <Stack p="xs" gap={2} h="100%">
+    <Stack gap={2} h="100%" p="xs">
       <Button
         leftSection={<IconPlus size={16} />}
         loading={createNote.isPending}
@@ -63,23 +64,23 @@ export const Sidebar = memo(function Sidebar() {
         New note
       </Button>
 
-      <Text size="xs" fw={700} c="dimmed" tt="uppercase" mt="md" px="xs">Library</Text>
+      <Text c="dimmed" fw={700} mt="md" px="xs" size="xs" tt="uppercase">Library</Text>
       <NavLink
-        label="All notes" leftSection={<IconNote size={16} />}
-        rightSection={<Text size="xs" c="dimmed">{counts?.all ?? 0}</Text>}
-        active={scope.kind === 'all'}
+        active={scope.kind === 'all'} label="All notes"
+        leftSection={<IconNote size={16} />}
+        rightSection={<Text c="dimmed" size="xs">{counts?.all ?? 0}</Text>}
         onClick={() => pick({ kind: 'all', label: 'All notes' })}
       />
       <NavLink
-        label="Starred" leftSection={<IconStar size={16} />}
-        rightSection={<Text size="xs" c="dimmed">{counts?.starred ?? 0}</Text>}
-        active={scope.kind === 'starred'}
+        active={scope.kind === 'starred'} label="Starred"
+        leftSection={<IconStar size={16} />}
+        rightSection={<Text c="dimmed" size="xs">{counts?.starred ?? 0}</Text>}
         onClick={() => pick({ kind: 'starred', label: 'Starred' })}
       />
 
       <Group justify="space-between" mt="md" px="xs">
-        <Text size="xs" fw={700} c="dimmed" tt="uppercase">Folders</Text>
-        <ActionIcon size="sm" variant="subtle" aria-label="New folder"
+        <Text c="dimmed" fw={700} size="xs" tt="uppercase">Folders</Text>
+        <ActionIcon aria-label="New folder" size="sm" variant="subtle"
           onClick={() => { setCreating('folder'); setDraftName('') }}>
           <IconPlus size={14} />
         </ActionIcon>
@@ -87,9 +88,9 @@ export const Sidebar = memo(function Sidebar() {
 
       {creating === 'folder' && (
         <TextInput
-          autoFocus size="xs" placeholder="Folder name" value={draftName}
-          onChange={(e) => setDraftName(e.currentTarget.value)}
+          autoFocus placeholder="Folder name" size="xs" value={draftName}
           onBlur={commitInline}
+          onChange={(e) => setDraftName(e.currentTarget.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') commitInline()
             if (e.key === 'Escape') setCreating(null)
@@ -99,15 +100,14 @@ export const Sidebar = memo(function Sidebar() {
 
       {folders.map((f) => (
         <NavLink
-          key={f.uuid} label={f.name} leftSection={<IconFolder size={16} />}
-          active={scope.kind === 'folder' && scope.uuid === f.uuid}
-          onClick={() => pick({ kind: 'folder', uuid: f.uuid, label: f.name })}
+          key={f.uuid} active={scope.kind === 'folder' && scope.uuid === f.uuid} label={f.name}
+          leftSection={<IconFolder size={16} />}
           rightSection={
             <Group gap={4} wrap="nowrap">
-              <Text size="xs" c="dimmed">{counts?.folders[f.uuid] ?? 0}</Text>
-              <Menu position="bottom-end" withinPortal>
+              <Text c="dimmed" size="xs">{counts?.folders[f.uuid] ?? 0}</Text>
+              <Menu withinPortal position="bottom-end">
                 <Menu.Target>
-                  <ActionIcon size="sm" variant="subtle" aria-label="Folder actions"
+                  <ActionIcon aria-label="Folder actions" size="sm" variant="subtle"
                     onClick={(e) => e.stopPropagation()}>
                     <IconDots size={14} />
                   </ActionIcon>
@@ -121,19 +121,20 @@ export const Sidebar = memo(function Sidebar() {
                   <Menu.Item color="red" onClick={() => deleteFolder.mutate(f.uuid)}>
                     Delete folder
                   </Menu.Item>
-                  <Text size="xs" c="dimmed" px="sm" pb="xs">
+                  <Text c="dimmed" pb="xs" px="sm" size="xs">
                     Notes inside move to All notes — nothing is deleted.
                   </Text>
                 </Menu.Dropdown>
               </Menu>
             </Group>
           }
+          onClick={() => pick({ kind: 'folder', uuid: f.uuid, label: f.name })}
         />
       ))}
 
       <Group justify="space-between" mt="md" px="xs">
-        <Text size="xs" fw={700} c="dimmed" tt="uppercase">Tags</Text>
-        <ActionIcon size="sm" variant="subtle" aria-label="New tag"
+        <Text c="dimmed" fw={700} size="xs" tt="uppercase">Tags</Text>
+        <ActionIcon aria-label="New tag" size="sm" variant="subtle"
           onClick={() => { setCreating('tag'); setDraftName('') }}>
           <IconPlus size={14} />
         </ActionIcon>
@@ -141,9 +142,9 @@ export const Sidebar = memo(function Sidebar() {
 
       {creating === 'tag' && (
         <TextInput
-          autoFocus size="xs" placeholder="Tag name" value={draftName}
-          onChange={(e) => setDraftName(e.currentTarget.value)}
+          autoFocus placeholder="Tag name" size="xs" value={draftName}
           onBlur={commitInline}
+          onChange={(e) => setDraftName(e.currentTarget.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') commitInline()
             if (e.key === 'Escape') setCreating(null)
@@ -153,10 +154,10 @@ export const Sidebar = memo(function Sidebar() {
 
       <Group gap={5} px="xs" wrap="wrap">
         {tags.map((t) => (
-          <Menu key={t.uuid} position="bottom-start" withinPortal trigger="click">
+          <Menu key={t.uuid} withinPortal position="bottom-start" trigger="click">
             <Menu.Target>
               <Badge
-                variant="light" style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer' }} variant="light"
                 onClick={() => pick({ kind: 'tag', slug: t.slug, label: `#${t.name}` })}
                 onContextMenu={(e) => e.preventDefault()}
               >
@@ -174,9 +175,9 @@ export const Sidebar = memo(function Sidebar() {
       </Group>
 
       <NavLink
-        mt="auto" label="Trash" leftSection={<IconTrash size={16} />}
-        rightSection={<Text size="xs" c="dimmed">{counts?.trashed ?? 0}</Text>}
-        active={scope.kind === 'trash'}
+        active={scope.kind === 'trash'} label="Trash" leftSection={<IconTrash size={16} />}
+        mt="auto"
+        rightSection={<Text c="dimmed" size="xs">{counts?.trashed ?? 0}</Text>}
         onClick={() => pick({ kind: 'trash', label: 'Trash' })}
       />
     </Stack>

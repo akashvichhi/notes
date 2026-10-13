@@ -1,13 +1,35 @@
-import { ActionIcon, Box, Button, Center, Group, Menu, ScrollArea, Stack, Text } from '@mantine/core'
-import { IconArrowsSort, IconPlus } from '@tabler/icons-react'
-import { useMemo } from 'react'
+import {
+  ActionIcon,
+  Button,
+  Center,
+  Group,
+  Menu,
+  Modal,
+  NavLink,
+  ScrollArea,
+  Stack,
+  Text,
+} from '@mantine/core'
+import { IconArrowsSort, IconFolder, IconPlus } from '@tabler/icons-react'
+import { useMemo, useState } from 'react'
 
 import { ListSkeleton } from '@/components/common/Skeletons'
 import { FilterInput } from './FilterInput'
 import { NoteRow } from './NoteRow'
-import { useCreateNote, useDuplicateNote, useNotes, useStarNote, useTrashNote } from '@/hooks/queries/useNotes'
+import { useBootstrap } from '@/hooks/queries/useBootstrap'
+import {
+  useCreateNote,
+  useDuplicateNote,
+  useForceDeleteNote,
+  useNotes,
+  useRestoreNote,
+  useStarNote,
+  useTrashNote,
+} from '@/hooks/queries/useNotes'
+import { patchNote } from '@/api/notes'
 import { filterNotes } from '@/lib/filterNotes'
 import { useUiStore } from '@/stores/uiStore'
+import type { NoteListItem, UUID } from '@/types/api'
 import { useIsPhone } from '../layout/AppShell'
 
 export function NoteList({
@@ -21,10 +43,16 @@ export function NoteList({
   const isPhone = useIsPhone()
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotes(scope)
+  const { folders } = useBootstrap()
+
   const starNote = useStarNote(scope)
   const trashNote = useTrashNote()
   const duplicateNote = useDuplicateNote()
   const createNote = useCreateNote()
+  const restoreNote = useRestoreNote()
+  const forceDeleteNote = useForceDeleteNote()
+
+  const [restoreModalNote, setRestoreModalNote] = useState<NoteListItem | null>(null)
 
   const allNotes = useMemo(() => {
     return data?.pages.flatMap((page) => page.data) ?? []
@@ -37,6 +65,16 @@ export function NoteList({
   const handleOpen = (uuid: string) => {
     onSelectNote(uuid)
     if (isPhone) setView('editor')
+  }
+
+  const handleRestoreToFolder = async (folderId: UUID | null) => {
+    if (!restoreModalNote) return
+    const uuid = restoreModalNote.uuid
+    setRestoreModalNote(null)
+    await restoreNote.mutateAsync(uuid)
+    if (folderId !== null) {
+      await patchNote(uuid, { folder_id: folderId })
+    }
   }
 
   return (
@@ -96,6 +134,9 @@ export function NoteList({
                 onStar={() => starNote.mutate({ uuid: note.uuid, is_starred: !note.is_starred })}
                 onTrash={() => trashNote.mutate(note.uuid)}
                 onDuplicate={() => duplicateNote.mutate(note.uuid)}
+                onRestore={() => restoreNote.mutate(note.uuid)}
+                onRestoreTo={() => setRestoreModalNote(note)}
+                onForceDelete={() => forceDeleteNote.mutate(note.uuid)}
               />
             ))}
             {hasNextPage && (
@@ -111,6 +152,30 @@ export function NoteList({
           </Stack>
         )}
       </ScrollArea>
+
+      <Modal
+        opened={Boolean(restoreModalNote)}
+        onClose={() => setRestoreModalNote(null)}
+        title="Restore note to folder"
+        centered
+        size="sm"
+      >
+        <Stack gap="xs">
+          <NavLink
+            label="Root (No folder)"
+            leftSection={<IconFolder size={16} />}
+            onClick={() => handleRestoreToFolder(null)}
+          />
+          {folders.map((folder) => (
+            <NavLink
+              key={folder.uuid}
+              label={folder.name}
+              leftSection={<IconFolder size={16} />}
+              onClick={() => handleRestoreToFolder(folder.uuid)}
+            />
+          ))}
+        </Stack>
+      </Modal>
     </Stack>
   )
 }

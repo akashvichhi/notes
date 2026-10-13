@@ -33,9 +33,15 @@ export function useNotes(scope: Scope) {
   return useInfiniteQuery({
     queryKey: [...NOTES_KEY, scope],
     queryFn:  ({ pageParam }) =>
-      notesApi.fetchNotes({ ...scopeParams(scope), cursor: pageParam as string | undefined }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (last) => last.meta.next_cursor ?? undefined,
+      notesApi.fetchNotes({
+        ...scopeParams(scope),
+        page: pageParam ? String(pageParam) : undefined,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (last) =>
+      last.meta.current_page < last.meta.last_page
+        ? last.meta.current_page + 1
+        : undefined,
   })
 }
 

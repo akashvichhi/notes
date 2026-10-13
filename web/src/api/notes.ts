@@ -2,9 +2,19 @@ import type { Note, NoteListItem, ProseMirrorDoc, UUID } from '@/types/api'
 
 import { api } from './client'
 
+export interface PaginationMeta {
+  current_page: number
+  from: number | null
+  last_page: number
+  path: string
+  per_page: number
+  to: number | null
+  total: number
+}
+
 export interface NotesPage {
   data: NoteListItem[]
-  meta: { next_cursor: string | null }
+  meta: PaginationMeta
 }
 
 export async function fetchNotes(params: Record<string, string | undefined>): Promise<NotesPage> {

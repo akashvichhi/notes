@@ -4,13 +4,13 @@ namespace App\Queries;
 
 use App\Models\Note;
 use App\Models\User;
-use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class NotesQuery
 {
     public function __construct(private readonly FolderQuery $folders) {}
 
-    public function paginate(User $user, array $filters, int $perPage = 50): CursorPaginator
+    public function paginate(User $user, array $filters, int $perPage = 50): LengthAwarePaginator
     {
         $query = Note::ownedBy($user)->with(['folder', 'tags']);
 
@@ -30,14 +30,15 @@ class NotesQuery
             $query->where('is_starred', true);
         }
 
-        // Cursor pagination: updated_at changes constantly, so offset pagination
-        // would duplicate and skip rows while the user types.
         $query = match ($filters['sort'] ?? 'updated') {
             'created' => $query->orderByDesc('created_at')->orderByDesc('id'),
             'title' => $query->orderBy('title')->orderBy('id'),
             default => $query->orderByDesc('updated_at')->orderByDesc('id'),
         };
 
-        return $query->cursorPaginate($perPage);
+        $resolvedPerPage = (int) ($filters['per_page'] ?? $perPage);
+        $resolvedPage = isset($filters['page']) ? (int) $filters['page'] : null;
+
+        return $query->paginate(perPage: $resolvedPerPage, page: $resolvedPage);
     }
 }

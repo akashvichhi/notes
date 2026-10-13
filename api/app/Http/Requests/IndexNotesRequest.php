@@ -19,7 +19,8 @@ class IndexNotesRequest extends FormRequest
             'starred' => ['nullable', 'boolean'],
             'trashed' => ['nullable', 'boolean'],
             'sort' => ['nullable', 'in:updated,created,title'],
-            'cursor' => ['nullable', 'string'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 
@@ -32,6 +33,8 @@ class IndexNotesRequest extends FormRequest
             'starred' => $this->boolean('starred'),
             'trashed' => $this->boolean('trashed'),
             'sort' => $this->input('sort', 'updated'),
+            'page' => $this->has('page') ? $this->integer('page', 1) : null,
+            'per_page' => $this->has('per_page') ? $this->integer('per_page', 50) : null,
         ];
     }
 }

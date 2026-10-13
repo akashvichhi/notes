@@ -9,6 +9,7 @@ use App\Http\Requests\RestoreNoteRequest;
 use App\Http\Requests\StoreNoteRequest;
 use App\Http\Requests\SyncNoteTagsRequest;
 use App\Http\Requests\UpdateNoteRequest;
+use App\Http\Resources\NoteListCollection;
 use App\Http\Resources\NoteListResource;
 use App\Http\Resources\NoteResource;
 use App\Models\Note;
@@ -26,7 +27,7 @@ class NoteController extends Controller
 {
     public function index(IndexNotesRequest $request, NotesQuery $notes)
     {
-        return NoteListResource::collection(
+        return new NoteListCollection(
             $notes->paginate($request->user(), $request->filters()),
         );
     }

@@ -23,4 +23,9 @@ class NoteListResource extends JsonResource
             'deleted_at' => $this->deleted_at?->toIso8601String(),
         ];
     }
+
+    public static function collection($resource)
+    {
+        return new NoteListCollection($resource);
+    }
 }

@@ -93,12 +93,14 @@ export const NoteList = memo(function NoteList({
     setRestoreModalNote(null)
   }, [])
 
+  const totalCount = data?.pages[0]?.meta.total ?? allNotes.length
+
   return (
     <Stack gap="xs" h="100%" p="sm">
       <Group justify="space-between">
         <Text fw={700} size="sm">{scope.label}</Text>
         <Group gap="xs">
-          <Text c="dimmed" size="xs">{allNotes.length} notes</Text>
+          <Text c="dimmed" size="xs">{totalCount} notes</Text>
           <Menu position="bottom-end">
             <Menu.Target>
               <ActionIcon aria-label="Sort options" size="sm" variant="subtle">
@@ -119,7 +121,7 @@ export const NoteList = memo(function NoteList({
         hasMore={Boolean(hasNextPage)}
         localCount={filtered.length}
         params={{}}
-        totalCount={allNotes.length}
+        totalCount={totalCount}
       />
 
       <ScrollArea style={{ flex: 1 }}>

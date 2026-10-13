@@ -17,6 +17,7 @@ export const NoteRow = memo(function NoteRow({
   onOpen,
   onStar,
   onTrash,
+  onRename,
   onDuplicate,
   onRestore,
   onRestoreTo,
@@ -27,6 +28,7 @@ export const NoteRow = memo(function NoteRow({
   onOpen: () => void
   onStar: () => void
   onTrash: () => void
+  onRename?: () => void
   onDuplicate: () => void
   onRestore?: () => void
   onRestoreTo?: () => void
@@ -109,6 +111,7 @@ export const NoteRow = memo(function NoteRow({
                 </>
               ) : (
                 <>
+                  <Menu.Item onClick={onRename}>Rename</Menu.Item>
                   <Menu.Item onClick={onStar}>{note.is_starred ? 'Unstar' : 'Star'}</Menu.Item>
                   <Menu.Item onClick={onDuplicate}>Duplicate</Menu.Item>
                   <Menu.Divider />

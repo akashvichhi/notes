@@ -98,6 +98,26 @@ export function useStarNote(scope: Scope) {
   })
 }
 
+export function useRenameNote() {
+  const qc = useQueryClient()
+  const setTitle = useTabsStore((s) => s.setTitle)
+
+  return useMutation({
+    mutationFn: ({ uuid, title }: { uuid: string; title: string }) =>
+      notesApi.patchNote(uuid, { title }),
+    onSuccess: (updated) => {
+      setTitle(updated.uuid, updated.title || 'Untitled')
+      qc.invalidateQueries({ queryKey: NOTES_KEY })
+      qc.invalidateQueries({ queryKey: [...NOTE_KEY, updated.uuid] })
+      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      notifications.show({ message: 'Note renamed' })
+    },
+    onError: () => {
+      notifications.show({ color: 'red', message: "Couldn't rename note." })
+    },
+  })
+}
+
 export function useCreateNote() {
   const qc = useQueryClient()
   const openTab = useTabsStore((s) => s.open)

@@ -13,6 +13,7 @@ import {
   ScrollArea,
   Stack,
   Text,
+  TextInput,
 } from '@mantine/core'
 import { IconArrowsSort, IconFolder, IconPlus } from '@tabler/icons-react'
 
@@ -25,6 +26,7 @@ import {
   useDuplicateNote,
   useForceDeleteNote,
   useNotes,
+  useRenameNote,
   useRestoreNote,
   useStarNote,
   useTrashNote,
@@ -56,8 +58,11 @@ export const NoteList = memo(function NoteList({
   const createNote = useCreateNote()
   const restoreNote = useRestoreNote()
   const forceDeleteNote = useForceDeleteNote()
+  const renameNote = useRenameNote()
 
   const [restoreModalNote, setRestoreModalNote] = useState<NoteListItem | null>(null)
+  const [renameModalNote, setRenameModalNote] = useState<NoteListItem | null>(null)
+  const [renameTitle, setRenameTitle] = useState('')
 
   const allNotes = useMemo(() => {
     return data?.pages.flatMap((page) => page.data) ?? []
@@ -95,6 +100,25 @@ export const NoteList = memo(function NoteList({
   const handleCloseRestoreModal = useCallback(() => {
     setRestoreModalNote(null)
   }, [])
+
+  const handleOpenRename = useCallback((note: NoteListItem) => {
+    setRenameModalNote(note)
+    setRenameTitle(note.title || '')
+  }, [])
+
+  const handleCloseRename = useCallback(() => {
+    setRenameModalNote(null)
+    setRenameTitle('')
+  }, [])
+
+  const handleConfirmRename = useCallback(async () => {
+    if (!renameModalNote) return
+    await renameNote.mutateAsync({
+      uuid:  renameModalNote.uuid,
+      title: renameTitle.trim(),
+    })
+    handleCloseRename()
+  }, [renameModalNote, renameNote, renameTitle, handleCloseRename])
 
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -185,6 +209,7 @@ export const NoteList = memo(function NoteList({
                 onDuplicate={() => duplicateNote.mutate(note.uuid)}
                 onForceDelete={() => forceDeleteNote.mutate(note.uuid)}
                 onOpen={() => handleOpen(note.uuid)}
+                onRename={() => handleOpenRename(note)}
                 onRestore={() => restoreNote.mutate(note.uuid)}
                 onRestoreTo={() => setRestoreModalNote(note)}
                 onStar={() => starNote.mutate({ uuid: note.uuid, is_starred: !note.is_starred })}
@@ -226,6 +251,40 @@ export const NoteList = memo(function NoteList({
             />
           ))}
         </Stack>
+      </Modal>
+
+      <Modal
+        centered
+        opened={Boolean(renameModalNote)}
+        size="sm"
+        title="Rename note"
+        onClose={handleCloseRename}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            void handleConfirmRename()
+          }}
+        >
+          <Stack gap="sm">
+            <TextInput
+              autoFocus
+              data-autofocus
+              label="Note title"
+              placeholder="Enter note title"
+              value={renameTitle}
+              onChange={(e) => setRenameTitle(e.currentTarget.value)}
+            />
+            <Group gap="xs" justify="flex-end">
+              <Button variant="default" onClick={handleCloseRename}>
+                Cancel
+              </Button>
+              <Button loading={renameNote.isPending} type="submit">
+                Save
+              </Button>
+            </Group>
+          </Stack>
+        </form>
       </Modal>
     </Stack>
   )

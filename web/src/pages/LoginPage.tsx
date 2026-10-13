@@ -44,7 +44,7 @@ export function LoginPage() {
               Sign in
             </Button>
 
-            <Button component={Link} to="/register" variant="subtle" size="compact-sm">
+            <Button component={Link} to="/register" variant="white">
               Create an account
             </Button>
           </Stack>

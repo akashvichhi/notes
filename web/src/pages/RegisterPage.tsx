@@ -52,7 +52,7 @@ export function RegisterPage() {
               Register
             </Button>
 
-            <Button component={Link} to="/login" variant="subtle" size="compact-sm">
+            <Button component={Link} to="/login" variant="white">
               Already have an account? Sign in
             </Button>
           </Stack>

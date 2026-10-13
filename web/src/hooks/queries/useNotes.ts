@@ -1,12 +1,21 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { notifications } from '@mantine/notifications'
 
 import * as notesApi from '@/api/notes'
 import { BOOTSTRAP_KEY } from './useBootstrap'
 import type { Scope } from '@/stores/uiStore'
-import type { NoteListItem } from '@/types/api'
+import type { NoteListItem, UUID } from '@/types/api'
 
 export const NOTES_KEY = ['notes'] as const
+export const NOTE_KEY = ['note'] as const
+
+export function useNote(uuid?: UUID | null) {
+  return useQuery({
+    queryKey: [...NOTE_KEY, uuid],
+    queryFn: () => (uuid ? notesApi.fetchNote(uuid) : null),
+    enabled: Boolean(uuid),
+  })
+}
 
 function scopeParams(scope: Scope): Record<string, string | undefined> {
   switch (scope.kind) {

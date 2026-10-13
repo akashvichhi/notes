@@ -1,8 +1,9 @@
+import { memo, useCallback } from 'react'
+import { useRouteError } from 'react-router'
+
 import { Alert, Button, Center, Container, Stack, Text, Title } from '@mantine/core'
 import { IconAlertTriangle, IconRefresh } from '@tabler/icons-react'
 
-import { memo, useCallback } from 'react'
-import { useRouteError } from 'react-router'
 
 export const RouteErrorBoundary = memo(function RouteErrorBoundary() {
   const error = useRouteError() as Error | null

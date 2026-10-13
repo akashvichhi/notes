@@ -1,6 +1,7 @@
+import { memo } from 'react'
+
 import { Button, Group, Modal, Stack, Text } from '@mantine/core'
 
-import { memo } from 'react'
 
 import type { Note } from '@/types/api'
 

@@ -1,9 +1,10 @@
+import { memo, useCallback, useState } from 'react'
+
 import { ActionIcon, Badge, Button, Group, Menu, NavLink, Stack, Text, TextInput } from '@mantine/core'
 import {
   IconDots, IconFolder, IconNote, IconPlus, IconStar, IconTrash,
 } from '@tabler/icons-react'
 
-import { memo, useCallback, useState } from 'react'
 
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'

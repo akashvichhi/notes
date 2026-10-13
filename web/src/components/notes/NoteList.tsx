@@ -1,8 +1,12 @@
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
 import {
   ActionIcon,
+  Box,
   Button,
   Center,
   Group,
+  Loader,
   Menu,
   Modal,
   NavLink,
@@ -12,7 +16,6 @@ import {
 } from '@mantine/core'
 import { IconArrowsSort, IconFolder, IconPlus } from '@tabler/icons-react'
 
-import { memo, useCallback, useMemo, useState } from 'react'
 
 import { patchNote } from '@/api/notes'
 import { ListSkeleton } from '@/components/common/Skeletons'
@@ -93,6 +96,32 @@ export const NoteList = memo(function NoteList({
     setRestoreModalNote(null)
   }, [])
 
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const handleBottomReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage()
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || !hasNextPage) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage()
+        }
+      },
+      { rootMargin: '150px' },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
   const totalCount = data?.pages[0]?.meta.total ?? allNotes.length
 
   return (
@@ -124,7 +153,7 @@ export const NoteList = memo(function NoteList({
         totalCount={totalCount}
       />
 
-      <ScrollArea style={{ flex: 1 }}>
+      <ScrollArea style={{ flex: 1 }} onBottomReached={handleBottomReached}>
         {isLoading ? (
           <ListSkeleton />
         ) : filtered.length === 0 ? (
@@ -136,6 +165,7 @@ export const NoteList = memo(function NoteList({
               {scope.kind !== 'trash' && (
                 <Button
                   leftSection={<IconPlus size={14} />}
+                  loading={createNote.isPending}
                   size="xs"
                   variant="light"
                   onClick={handleCreateNote}
@@ -162,14 +192,13 @@ export const NoteList = memo(function NoteList({
               />
             ))}
             {hasNextPage && (
-              <Button
-                loading={isFetchingNextPage}
-                size="xs"
-                variant="subtle"
-                onClick={() => fetchNextPage()}
-              >
-                Load more
-              </Button>
+              <Box ref={sentinelRef} py="xs">
+                {isFetchingNextPage && (
+                  <Center>
+                    <Loader size="xs" />
+                  </Center>
+                )}
+              </Box>
             )}
           </Stack>
         )}

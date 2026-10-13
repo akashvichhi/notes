@@ -1,6 +1,7 @@
+import { useMemo } from 'react'
+
 import { useQuery } from '@tanstack/react-query'
 
-import { useMemo } from 'react'
 
 import { fetchBootstrap } from '@/api/bootstrap'
 import type { Folder, NoteListItem, Tag, User } from '@/types/api'

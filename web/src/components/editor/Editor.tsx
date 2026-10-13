@@ -1,11 +1,11 @@
+import { memo, useCallback, useEffect, useState } from 'react'
+
 import { Box } from '@mantine/core'
 import { RichTextEditor } from '@mantine/tiptap'
 import { useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 
-import { memo, useCallback, useEffect, useState } from 'react'
 
-import { useAbandonedNote } from '@/hooks/useAbandonedNote'
 import { useAutosave } from '@/hooks/useAutosave'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useKeyboardInset } from '@/hooks/useVisualViewport'
@@ -37,7 +37,6 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
   )
 
   const { onChange } = useAutosave(note, editor)
-  useAbandonedNote(note, editor)
 
   useEffect(() => {
     if (!editor) return

@@ -1,8 +1,9 @@
+import { memo, useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
+
 import { Avatar, Loader, Menu, Overlay, Stack, Text } from '@mantine/core'
 import { IconLock, IconLogout, IconUser } from '@tabler/icons-react'
 
-import { memo, useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
 
 import { useLogout, useMe } from '@/hooks/queries/useAuth'
 

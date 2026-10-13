@@ -1,7 +1,8 @@
+import { memo, useCallback } from 'react'
+
 import { ActionIcon, Box, Group, Menu, ScrollArea, Text, UnstyledButton } from '@mantine/core'
 import { IconPlus, IconX } from '@tabler/icons-react'
 
-import { memo, useCallback } from 'react'
 
 import { useCreateNote } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'

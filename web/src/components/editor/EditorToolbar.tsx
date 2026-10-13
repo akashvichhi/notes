@@ -1,8 +1,9 @@
+import { memo, useCallback } from 'react'
+
 import { SegmentedControl } from '@mantine/core'
 import { RichTextEditor, useRichTextEditorContext } from '@mantine/tiptap'
 import { IconTable } from '@tabler/icons-react'
 
-import { memo, useCallback } from 'react'
 
 import { useIsPhone } from '@/hooks/useIsPhone'
 

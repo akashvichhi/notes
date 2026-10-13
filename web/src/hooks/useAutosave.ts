@@ -1,7 +1,8 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+
 import { useQueryClient } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/react'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { normalizeError } from '@/api/client'
 import { patchNote } from '@/api/notes'

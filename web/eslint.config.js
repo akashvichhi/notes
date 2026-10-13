@@ -75,8 +75,8 @@ export default defineConfig([
           ],
           pathGroups: [
             {
-              pattern: '{react,react-dom,react-dom/client,react-router,react-router-dom}',
-              group: 'internal',
+              pattern: '{react,react/**,react-dom,react-dom/**,react-router,react-router/**,react-router-dom}',
+              group: 'external',
               position: 'before',
             },
             {
@@ -89,7 +89,7 @@ export default defineConfig([
               position: 'after',
             },
           ],
-          pathGroupsExcludedImportTypes: ['react', 'react-dom', 'react-router', 'react-router-dom'],
+          pathGroupsExcludedImportTypes: ['builtin'],
           'newlines-between': 'always',
           alphabetize: {
             order: 'asc',

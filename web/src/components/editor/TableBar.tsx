@@ -1,7 +1,8 @@
+import { memo, useCallback } from 'react'
+
 import { Button, Group, Text } from '@mantine/core'
 import type { Editor } from '@tiptap/react'
 
-import { memo, useCallback } from 'react'
 
 /**
  * Only rendered while the cursor is inside a table. Eleven more buttons in the

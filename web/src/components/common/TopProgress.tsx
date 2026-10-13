@@ -1,7 +1,8 @@
+import { memo } from 'react'
+
 import { Box } from '@mantine/core'
 import { useIsFetching } from '@tanstack/react-query'
 
-import { memo } from 'react'
 
 import { useDelayedLoading } from '@/lib/useDelayedLoading'
 

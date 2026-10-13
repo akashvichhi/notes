@@ -1,8 +1,9 @@
+import { memo, useCallback, useMemo, useState } from 'react'
+
 import { Badge, Button, Group, Popover, Stack, TextInput } from '@mantine/core'
 import { IconCheck, IconPlus, IconSearch } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { memo, useCallback, useMemo, useState } from 'react'
 
 import { syncNoteTags } from '@/api/notes'
 import { useBootstrap , BOOTSTRAP_KEY } from '@/hooks/queries/useBootstrap'

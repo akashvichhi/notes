@@ -1,8 +1,9 @@
+import { memo, useMemo } from 'react'
+
 import { Group, Text } from '@mantine/core'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-import { memo, useMemo } from 'react'
 
 import type { SaveStatus } from '@/hooks/useAutosave'
 

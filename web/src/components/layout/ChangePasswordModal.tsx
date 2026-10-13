@@ -1,7 +1,8 @@
+import { memo, type SyntheticEvent, useCallback, useState } from 'react'
+
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 
-import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { useUpdatePassword } from '@/hooks/queries/useAuth'
 

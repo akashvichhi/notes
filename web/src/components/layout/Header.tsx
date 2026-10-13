@@ -1,10 +1,11 @@
+import { memo, useCallback } from 'react'
+
 import { ActionIcon, Center, Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core'
 import { spotlight } from '@mantine/spotlight'
 import {
   IconChevronLeft, IconMenu2, IconMoon, IconNotes, IconSearch, IconSun,
 } from '@tabler/icons-react'
 
-import { memo, useCallback } from 'react'
 
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useUiStore } from '@/stores/uiStore'

@@ -1,9 +1,10 @@
+import { memo, useCallback, useMemo } from 'react'
+
 import { Loader, Text, TextInput } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { IconFilter } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 
-import { memo, useCallback, useMemo } from 'react'
 
 import { fetchNotes } from '@/api/notes'
 import { useDelayedLoading } from '@/lib/useDelayedLoading'

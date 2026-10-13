@@ -1,6 +1,7 @@
+import { memo, useMemo } from 'react'
+
 import { Box, Group, Skeleton, Stack } from '@mantine/core'
 
-import { memo, useMemo } from 'react'
 
 export const ListSkeleton = memo(function ListSkeleton({ rows = 6 }: { rows?: number }) {
   const rowList = useMemo(() => Array.from({ length: rows }, (_, i) => i), [rows])

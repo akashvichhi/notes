@@ -1,8 +1,9 @@
+import { memo, useCallback, useMemo, useState } from 'react'
+
 import { Progress, Text } from '@mantine/core'
 import { Spotlight, spotlight } from '@mantine/spotlight'
 import { IconFolder, IconNote, IconPlus, IconSearch } from '@tabler/icons-react'
 
-import { memo, useCallback, useMemo, useState } from 'react'
 
 import { useCreateNote } from '@/hooks/queries/useNotes'
 import { MIN_QUERY, useSearch } from '@/hooks/queries/useSearch'

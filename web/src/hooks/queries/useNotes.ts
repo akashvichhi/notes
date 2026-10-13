@@ -2,6 +2,7 @@ import { notifications } from '@mantine/notifications'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import * as notesApi from '@/api/notes'
+import { useTabsStore } from '@/stores/tabsStore'
 import type { Scope } from '@/stores/uiStore'
 import type { NoteListItem, UUID } from '@/types/api'
 
@@ -11,10 +12,31 @@ export const NOTES_KEY = ['notes'] as const
 export const NOTE_KEY = ['note'] as const
 
 export function useNote(uuid?: UUID | null) {
+  const closeTab = useTabsStore((s) => s.close)
+
   return useQuery({
     queryKey: [...NOTE_KEY, uuid],
-    queryFn:  () => (uuid ? notesApi.fetchNote(uuid) : null),
-    enabled:  Boolean(uuid),
+    queryFn:  async () => {
+      if (!uuid) return null
+      try {
+        return await notesApi.fetchNote(uuid)
+      } catch (err: unknown) {
+        const error = err as { response?: { status?: number }; status?: number }
+        if (error.response?.status === 404 || error.status === 404) {
+          closeTab(uuid)
+          return null
+        }
+        throw err
+      }
+    },
+    enabled: Boolean(uuid),
+    retry:   (failureCount, err) => {
+      const error = err as { response?: { status?: number }; status?: number }
+      if (error.response?.status === 404 || error.status === 404) {
+        return false
+      }
+      return failureCount < 2
+    },
   })
 }
 
@@ -78,9 +100,12 @@ export function useStarNote(scope: Scope) {
 
 export function useCreateNote() {
   const qc = useQueryClient()
+  const openTab = useTabsStore((s) => s.open)
+
   return useMutation({
     mutationFn: notesApi.createNote,
-    onSuccess:  () => {
+    onSuccess:  (newNote) => {
+      openTab(newNote.uuid, newNote.title || 'Untitled')
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },

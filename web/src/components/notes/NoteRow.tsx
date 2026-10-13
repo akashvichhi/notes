@@ -1,9 +1,10 @@
+import { memo, useMemo } from 'react'
+
 import { ActionIcon, Badge, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core'
 import { IconDots, IconStar, IconStarFilled } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-import { memo, useMemo } from 'react'
 
 import classes from '@/components/layout/shell.module.css'
 import type { NoteListItem } from '@/types/api'

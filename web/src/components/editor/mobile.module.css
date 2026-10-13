@@ -1,0 +1,24 @@
+@media (max-width: 767px) {
+  .editorRoot { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .content { order: 1; overflow-y: auto; min-height: 0; flex: 1; }
+
+  /* A 45-control wrapping toolbar would eat half a phone screen. */
+  .toolbar {
+    order: 2;
+    position: sticky;
+    bottom: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-top: 1px solid var(--mantine-color-default-border);
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+
+  /* Touch targets. */
+  .toolbar button { min-width: 38px; min-height: 38px; }
+
+  /* Tables scroll rather than forcing the page to. */
+  .content table { display: block; overflow-x: auto; }
+}

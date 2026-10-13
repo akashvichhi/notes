@@ -10,10 +10,13 @@ import { TagStrip } from './TagStrip'
 import { editorExtensions } from './extensions'
 import { useAbandonedNote } from '@/hooks/useAbandonedNote'
 import { useAutosave } from '@/hooks/useAutosave'
+import { useKeyboardInset } from '@/hooks/useVisualViewport'
 import type { Note } from '@/types/api'
+import mobile from './mobile.module.css'
 
 export function Editor({ note }: { note: Note }) {
   const isPhone = useIsPhone()
+  const keyboardInset = useKeyboardInset()
   const [mode, setMode] = useState<'rich' | 'source'>('rich')
 
   const editor = useEditor(
@@ -36,9 +39,11 @@ export function Editor({ note }: { note: Note }) {
   }, [editor, onChange])
 
   return (
-    <Box style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+    <Box className={mobile.editorRoot} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
       <RichTextEditor editor={editor} style={{ display: 'contents' }}>
-        <EditorToolbar mode={mode} onMode={setMode} />
+        <Box className={mobile.toolbar} style={{ transform: keyboardInset ? `translateY(-${keyboardInset}px)` : undefined }}>
+          <EditorToolbar mode={mode} onMode={setMode} />
+        </Box>
         <TableBar editor={editor} />
 
         {/* The bubble menu collides with iOS selection handles. */}
@@ -52,7 +57,7 @@ export function Editor({ note }: { note: Note }) {
           </BubbleMenu>
         )}
 
-        <Box style={{ overflowY: 'auto', minHeight: 0, flex: 1 }} px={{ base: 16, sm: 28, lg: 48 }} py="lg">
+        <Box className={mobile.content} style={{ overflowY: 'auto', minHeight: 0, flex: 1 }} px={{ base: 16, sm: 28, lg: 48 }} py="lg">
           <TagStrip note={note} />
           {/* Full width: no max-width column. */}
           <RichTextEditor.Content />

@@ -52,6 +52,18 @@
   .app[data-view='folders'] .nav { display: block; }
   .app[data-view='list'] .list { display: flex; }
   .app[data-view='editor'] .editor { display: flex; }
+
+  /* Dropdowns become bottom sheets: a menu anchored to a 20px ⋯ is a dart throw. */
+  :global(.mantine-Menu-dropdown) {
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  :global(.mantine-Menu-item) { padding: 12px 14px; font-size: 15px; }
 }
 
 /* Touch devices of any size cannot use hover-only affordances. */

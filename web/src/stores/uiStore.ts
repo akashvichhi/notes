@@ -13,6 +13,13 @@ export type Scope =
   | { kind: 'tag'; slug: string; label: string }
   | { kind: 'search'; q: string; label: string }
 
+export interface EditorStats {
+  words: number
+  characters: number
+  selectedWords: number
+  selectedCharacters: number
+}
+
 interface UiState {
   view: View
   navOpen: boolean
@@ -21,6 +28,7 @@ interface UiState {
   filter: string
   saveStatus: SaveStatus
   savedAt: number | null
+  editorStats: EditorStats | null
   setView: (v: View) => void
   toggleNav: () => void
   closeNav: () => void
@@ -28,6 +36,7 @@ interface UiState {
   setScope: (s: Scope) => void
   setFilter: (f: string) => void
   setSaveStatus: (saveStatus: SaveStatus, savedAt?: number | null) => void
+  setEditorStats: (editorStats: EditorStats | null) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -38,6 +47,7 @@ export const useUiStore = create<UiState>((set) => ({
   filter:        '',
   saveStatus:    'idle',
   savedAt:       null,
+  editorStats:   null,
   setView:       (view) => set({ view }),
   toggleNav:     () => set((s) => ({ navOpen: !s.navOpen })),
   closeNav:      () => set({ navOpen: false }),
@@ -48,4 +58,5 @@ export const useUiStore = create<UiState>((set) => ({
   setFilter:     (filter) => set({ filter }),
   setSaveStatus: (saveStatus, savedAt) =>
     set((s) => ({ saveStatus, savedAt: savedAt !== undefined ? savedAt : s.savedAt })),
+  setEditorStats: (editorStats) => set({ editorStats }),
 }))

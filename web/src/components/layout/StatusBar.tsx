@@ -4,7 +4,6 @@ import { Group, Text } from '@mantine/core'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-
 import type { SaveStatus } from '@/stores/uiStore'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -25,6 +24,8 @@ export const StatusBar = memo(function StatusBar({
 }) {
   const storeStatus = useUiStore((s) => s.saveStatus)
   const storeSavedAt = useUiStore((s) => s.savedAt)
+  const editorStats = useUiStore((s) => s.editorStats)
+
   const status = propStatus ?? storeStatus
   const savedAt = propSavedAt ?? storeSavedAt
 
@@ -32,9 +33,19 @@ export const StatusBar = memo(function StatusBar({
     return savedAt ? dayjs(savedAt).fromNow() : null
   }, [savedAt])
 
+  const statsText = useMemo(() => {
+    if (editorStats) {
+      const { words: w, characters: c, selectedWords: sw, selectedCharacters: sc } = editorStats
+      if (sc > 0) {
+        return `${sw} of ${w} words · ${sc} of ${c} characters selected`
+      }
+      return `${w} words · ${c} characters`
+    }
+    return `${words} words`
+  }, [editorStats, words])
+
   return (
     <Group gap="lg" h={28} px="sm" style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}>
-      {/* No spinner: autosave fires every ~800ms and a spinner that often is noise. */}
       {status === 'saving' && <Text c="dimmed" size="xs">Saving…</Text>}
       {status === 'saved' && savedAtText && (
         <Text c="dimmed" size="xs">Saved · {savedAtText}</Text>
@@ -45,7 +56,7 @@ export const StatusBar = memo(function StatusBar({
         </Text>
       )}
 
-      <Text c="dimmed" size="xs" visibleFrom="sm">{words} words</Text>
+      <Text c="dimmed" size="xs" visibleFrom="sm">{statsText}</Text>
       {folderPath && <Text c="dimmed" size="xs" visibleFrom="sm">{folderPath}</Text>}
       <Text c="dimmed" ml="auto" size="xs">Autosave on</Text>
     </Group>

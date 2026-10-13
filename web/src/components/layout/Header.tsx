@@ -52,14 +52,6 @@ export const Header = memo(function Header() {
           <IconNotes color="white" size={16} stroke={2} />
         </Center>
         <Text fw={600} size="sm">Notes</Text>
-        {activeTitle && (
-          <>
-            <Text c="dimmed" size="xs">/</Text>
-            <Text truncate c="dimmed" fw={500} maw={180} size="sm">
-              {activeTitle}
-            </Text>
-          </>
-        )}
       </Group>
       {isPhone && (
         <Text truncate fw={600} size="md" style={{ flex: 1 }}>

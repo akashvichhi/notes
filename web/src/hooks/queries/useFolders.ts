@@ -166,11 +166,6 @@ export function useDeleteFolder() {
       }
       notifications.show({ color: 'red', message: "Couldn't delete folder." })
     },
-    onSuccess: () => {
-      notifications.show({
-        message: 'Folder deleted. Its notes moved to All notes — nothing was deleted.',
-      })
-    },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: NOTES_KEY })

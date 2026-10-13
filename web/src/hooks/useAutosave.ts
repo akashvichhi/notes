@@ -5,12 +5,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/react'
 
 import { normalizeError } from '@/api/client'
-import { patchNote } from '@/api/notes'
-import { NOTES_KEY } from '@/hooks/queries/useNotes'
+import { type NotesPage, patchNote } from '@/api/notes'
+import { NOTE_KEY, NOTES_KEY } from '@/hooks/queries/useNotes'
 import { clearDraft, saveDraft } from '@/lib/drafts'
 import { useTabsStore } from '@/stores/tabsStore'
 import { type SaveStatus, useUiStore } from '@/stores/uiStore'
-import type { Note } from '@/types/api'
+import type { Note, NoteListItem } from '@/types/api'
 
 export type { SaveStatus }
 
@@ -58,6 +58,30 @@ export function useAutosave(note: Note, editor: Editor | null) {
 
         await clearDraft(note.uuid)
         setDirty(note.uuid, false)
+
+        qc.setQueryData([...NOTE_KEY, note.uuid], updated)
+        if (updated.title) {
+          useTabsStore.getState().setTitle(note.uuid, updated.title)
+        }
+        qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: NotesPage[] } | undefined) => {
+          if (!old?.pages?.length) return old
+          return {
+            ...old,
+            pages: old.pages.map((p) => ({
+              ...p,
+              data: p.data.map((n: NoteListItem) =>
+                n.uuid === note.uuid
+                  ? {
+                    ...n,
+                    title:      updated.title ?? n.title,
+                    excerpt:    updated.excerpt ?? n.excerpt,
+                    updated_at: updated.updated_at ?? n.updated_at,
+                  }
+                  : n
+              ),
+            })),
+          }
+        })
         qc.invalidateQueries({ queryKey: NOTES_KEY })
 
         // Hold "Saving…" long enough to be readable.
@@ -68,15 +92,6 @@ export function useAutosave(note: Note, editor: Editor | null) {
           setSavedAt(now)
           setSaveStatus('saved', now)
         }, Math.max(0, MIN_SAVING_MS - elapsed))
-
-        if (isExplicit) {
-          notifications.show({
-            id:        'explicit-save',
-            message:   'Note saved',
-            color:     'teal',
-            autoClose: 1500,
-          })
-        }
       } catch (e) {
         const err = normalizeError(e)
 

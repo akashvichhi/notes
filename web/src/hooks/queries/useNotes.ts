@@ -201,9 +201,6 @@ export function useRenameNote() {
       }
       notifications.show({ color: 'red', message: "Couldn't rename note." })
     },
-    onSuccess: () => {
-      notifications.show({ message: 'Note renamed' })
-    },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
@@ -393,9 +390,6 @@ export function useTrashNote() {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       }
       notifications.show({ color: 'red', message: "Couldn't move note to trash." })
-    },
-    onSuccess: () => {
-      notifications.show({ message: 'Moved to Trash' })
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
@@ -673,9 +667,6 @@ export function useMoveNoteFolder() {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       }
       notifications.show({ color: 'red', message: "Couldn't move note to folder." })
-    },
-    onSuccess: () => {
-      notifications.show({ message: 'Note moved to folder' })
     },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })

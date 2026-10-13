@@ -171,11 +171,6 @@ export function useDeleteTag() {
       }
       notifications.show({ color: 'red', message: "Couldn't delete tag." })
     },
-    onSuccess: () => {
-      notifications.show({
-        message: 'Tag deleted. It was removed from your notes — the notes stay.',
-      })
-    },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: NOTES_KEY })

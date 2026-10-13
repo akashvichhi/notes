@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Box, Text } from '@mantine/core'
+import { Box } from '@mantine/core'
 import { RichTextEditor } from '@mantine/tiptap'
 import { useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
@@ -9,6 +9,7 @@ import { useAutosave } from '@/hooks/useAutosave'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useKeyboardInset } from '@/hooks/useVisualViewport'
 import { sanitizeProseMirrorDoc } from '@/lib/prosemirror'
+import { useUiStore } from '@/stores/uiStore'
 import type { Note } from '@/types/api'
 
 import { EditorToolbar } from './EditorToolbar'
@@ -21,6 +22,7 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
   const isPhone = useIsPhone()
   const keyboardInset = useKeyboardInset()
   const [mode, setMode] = useState<'rich' | 'source'>('rich')
+  const setEditorStats = useUiStore((s) => s.setEditorStats)
 
   const handleModeChange = useCallback((m: 'rich' | 'source') => {
     setMode(m)
@@ -50,6 +52,38 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
     }
   }, [editor, sanitizedContent])
 
+  // Track live word count, character count, and selected count
+  useEffect(() => {
+    if (!editor) return
+
+    const updateStats = () => {
+      const words = editor.storage.characterCount?.words() ?? 0
+      const characters = editor.storage.characterCount?.characters() ?? 0
+      const { from, to, empty } = editor.state.selection
+      let selectedWords = 0
+      let selectedCharacters = 0
+      if (!empty) {
+        const text = editor.state.doc.textBetween(from, to, ' ')
+        selectedCharacters = text.length
+        const trimmed = text.trim()
+        selectedWords = trimmed ? trimmed.split(/\s+/).length : 0
+      }
+      setEditorStats({
+        words,
+        characters,
+        selectedWords,
+        selectedCharacters,
+      })
+    }
+
+    updateStats()
+    editor.on('transaction', updateStats)
+    return () => {
+      editor.off('transaction', updateStats)
+      setEditorStats(null)
+    }
+  }, [editor, setEditorStats])
+
   const { onChange } = useAutosave(note, editor)
 
   useEffect(() => {
@@ -77,10 +111,7 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
           </BubbleMenu>
         )}
 
-        <Box className={mobile.content} px={{ base: 16, sm: 28, lg: 48 }} py="lg" style={{ overflowY: 'auto', minHeight: 0, flex: 1 }}>
-          <Text fw={700} fz={26} lh={1.25} mb="xs">
-            {note.title || 'Untitled'}
-          </Text>
+        <Box className={mobile.content} px={{ base: 12, sm: 16 }} py="md" style={{ overflowY: 'auto', minHeight: 0, flex: 1 }}>
           <TagStrip note={note} />
           {/* Full width: no max-width column. */}
           <RichTextEditor.Content />

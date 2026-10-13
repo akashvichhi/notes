@@ -60,7 +60,7 @@ const TabItem = memo(function TabItem({
   )
 
   const saveStatus = useUiStore((s) => s.saveStatus)
-  const isSaving = tab.dirty || (isActive && saveStatus === 'saving')
+  const isSaving = isActive && saveStatus === 'saving'
 
   return (
     <Menu position="bottom-start" shadow="md">

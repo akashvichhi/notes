@@ -1,6 +1,6 @@
 import { Button, Divider, Modal, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { useMe, useUpdatePassword, useUpdateProfile } from '@/hooks/queries/useAuth'
 
@@ -9,19 +9,12 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
   const updateProfile = useUpdateProfile()
   const updatePassword = useUpdatePassword()
 
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [name, setName] = useState(user?.name ?? '')
+  const [email, setEmail] = useState(user?.email ?? '')
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name ?? '')
-      setEmail(user.email ?? '')
-    }
-  }, [user])
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,8 +24,10 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
         onSuccess: () => {
           notifications.show({ color: 'green', message: 'Profile updated' })
         },
-        onError: (err: any) => {
-          const msg = err?.response?.data?.message ?? 'Failed to update profile'
+        onError: (err: unknown) => {
+          const msg =
+            (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+            'Failed to update profile'
           notifications.show({ color: 'red', message: msg })
         },
       },
@@ -59,8 +54,10 @@ export function ProfileModal({ onClose }: { onClose: () => void }) {
           setNewPassword('')
           setConfirmPassword('')
         },
-        onError: (err: any) => {
-          const msg = err?.response?.data?.message ?? 'Failed to change password'
+        onError: (err: unknown) => {
+          const msg =
+            (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+            'Failed to change password'
           notifications.show({ color: 'red', message: msg })
         },
       },

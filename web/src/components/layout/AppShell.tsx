@@ -1,4 +1,3 @@
-import { useMediaQuery } from '@mantine/hooks'
 import type { ReactNode } from 'react'
 
 import { useUiStore } from '@/stores/uiStore'
@@ -29,8 +28,4 @@ export function AppShellLayout({
       {status}
     </div>
   )
-}
-
-export function useIsPhone(): boolean {
-  return useMediaQuery('(max-width: 767px)') ?? false
 }

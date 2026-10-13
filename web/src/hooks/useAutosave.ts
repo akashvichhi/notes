@@ -25,6 +25,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
   const version = useRef(note.version)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retries = useRef(0)
+  const saveRef = useRef<() => void>(() => {})
 
   useEffect(() => { version.current = note.version }, [note.version, note.uuid])
 
@@ -65,9 +66,13 @@ export function useAutosave(note: Note, editor: Editor | null) {
       setStatus('error')
       retries.current += 1
       const backoff = Math.min(30_000, 2 ** retries.current * 1000)
-      timer.current = setTimeout(save, backoff)
+      timer.current = setTimeout(() => saveRef.current(), backoff)
     }
   }, [editor, note.uuid, qc, setDirty])
+
+  useEffect(() => {
+    saveRef.current = save
+  }, [save])
 
   const onChange = useCallback(() => {
     if (!editor) return

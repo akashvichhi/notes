@@ -36,7 +36,11 @@ export function Sidebar() {
   function commitInline() {
     const name = draftName.trim()
     if (name) {
-      creating === 'folder' ? createFolder.mutate({ name }) : createTag.mutate({ name })
+      if (creating === 'folder') {
+        createFolder.mutate({ name })
+      } else {
+        createTag.mutate({ name })
+      }
     }
     setCreating(null)
     setDraftName('')

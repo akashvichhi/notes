@@ -9,13 +9,13 @@ export function useDelayedLoading(isLoading: boolean, delayMs = 250): boolean {
 
   useEffect(() => {
     if (!isLoading) {
-      setShow(false)
-      return
+      const id = requestAnimationFrame(() => setShow(false))
+      return () => cancelAnimationFrame(id)
     }
 
     const t = setTimeout(() => setShow(true), delayMs)
     return () => clearTimeout(t)
   }, [isLoading, delayMs])
 
-  return show
+  return isLoading && show
 }

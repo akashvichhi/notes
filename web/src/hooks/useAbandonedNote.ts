@@ -19,7 +19,10 @@ export function useAbandonedNote(note: Note, editor: Editor | null) {
   const closeTab = useTabsStore((s) => s.close)
 
   const latest = useRef({ note, editor })
-  latest.current = { note, editor }
+
+  useEffect(() => {
+    latest.current = { note, editor }
+  }, [note, editor])
 
   useEffect(() => {
     return () => {

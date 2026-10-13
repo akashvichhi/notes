@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 
+import { ALL_NOTES_LABEL } from '@/constants/labels'
 import type { UUID } from '@/types/api'
+
 
 export type View = 'folders' | 'list' | 'editor'
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -43,7 +45,7 @@ export const useUiStore = create<UiState>((set) => ({
   view:          'list',
   navOpen:       false,
   listCollapsed: false,
-  scope:         { kind: 'all', label: 'All notes' },
+  scope:         { kind: 'all', label: ALL_NOTES_LABEL },
   filter:        '',
   saveStatus:    'idle',
   savedAt:       null,

@@ -7,6 +7,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 
 
 import classes from '@/components/layout/shell.module.css'
+import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
 import type { NoteListItem } from '@/types/api'
 
 dayjs.extend(relativeTime)
@@ -37,10 +38,6 @@ export const NoteRow = memo(function NoteRow({
   onForceDelete?: () => void
 }) {
   const updatedAgo = useMemo(() => dayjs(note.updated_at).fromNow(), [note.updated_at])
-  const autoDeletedAgo = useMemo(
-    () => (note.deleted_at ? dayjs(note.deleted_at).add(30, 'day').fromNow() : null),
-    [note.deleted_at],
-  )
   return (
     <UnstyledButton
       className={classes.noteRow}
@@ -58,7 +55,7 @@ export const NoteRow = memo(function NoteRow({
       <Stack gap={3}>
         <Group gap={6} wrap="nowrap">
           <Text truncate fw={500} size="sm" style={{ flex: 1 }}>
-            {note.title || 'New note'}
+            {note.title || DEFAULT_NOTE_TITLE}
           </Text>
 
           {!note.deleted_at && (
@@ -104,12 +101,6 @@ export const NoteRow = memo(function NoteRow({
                   <Menu.Item color="red" onClick={onForceDelete}>
                     Delete permanently
                   </Menu.Item>
-                  {/* The retention clock only helps if it is visible while deciding. */}
-                  {autoDeletedAgo && (
-                    <Text c="dimmed" pb="xs" px="sm" size="xs">
-                      Auto-deleted {autoDeletedAgo}.
-                    </Text>
-                  )}
                 </>
               ) : (
                 <>

@@ -1,13 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import {
-  ActionIcon,
   Box,
   Button,
   Center,
   Group,
   Loader,
-  Menu,
   Modal,
   NavLink,
   ScrollArea,
@@ -15,7 +13,7 @@ import {
   Text,
   TextInput,
 } from '@mantine/core'
-import { IconArrowsSort, IconFolder, IconPlus } from '@tabler/icons-react'
+import { IconFolder, IconPlus } from '@tabler/icons-react'
 
 
 import { patchNote } from '@/api/notes'
@@ -174,19 +172,6 @@ export const NoteList = memo(function NoteList({
         <Text fw={700} size="sm">{scope.label}</Text>
         <Group gap="xs">
           <Text c="dimmed" size="xs">{totalCount} notes</Text>
-          <Menu position="bottom-end">
-            <Menu.Target>
-              <ActionIcon aria-label="Sort options" size="sm" variant="subtle">
-                <IconArrowsSort size={14} />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>Sort by</Menu.Label>
-              <Menu.Item>Date updated</Menu.Item>
-              <Menu.Item>Date created</Menu.Item>
-              <Menu.Item>Title A–Z</Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
         </Group>
       </Group>
 

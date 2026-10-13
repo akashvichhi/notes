@@ -2,6 +2,7 @@ import { notifications } from '@mantine/notifications'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import * as notesApi from '@/api/notes'
+import { COPY_NOTE_SUFFIX, DEFAULT_NOTE_TITLE } from '@/constants/labels'
 import { useTabsStore } from '@/stores/tabsStore'
 import type { Scope } from '@/stores/uiStore'
 import type { Bootstrap, Folder, Note, NoteListItem, Tag, UUID } from '@/types/api'
@@ -65,9 +66,20 @@ function scopeParams(scope: Scope): Record<string, string | undefined> {
   }
 }
 
+function scopeKey(scope: Scope): string {
+  switch (scope.kind) {
+  case 'folder': return `folder:${scope.uuid}`
+  case 'tag': return `tag:${scope.slug}`
+  case 'starred': return 'starred'
+  case 'trash': return 'trash'
+  case 'search': return `search:${scope.q}`
+  default: return 'all'
+  }
+}
+
 export function useNotes(scope: Scope) {
   return useInfiniteQuery({
-    queryKey: [...NOTES_KEY, scope],
+    queryKey: [...NOTES_KEY, scopeKey(scope)],
     queryFn:  ({ pageParam }) =>
       notesApi.fetchNotes({
         ...scopeParams(scope),
@@ -78,6 +90,7 @@ export function useNotes(scope: Scope) {
       last.meta.current_page < last.meta.last_page
         ? last.meta.current_page + 1
         : undefined,
+    staleTime: Infinity,
   })
 }
 
@@ -167,7 +180,7 @@ export function useRenameNote() {
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
 
       // 1. Instantly update tab title in UI
-      setTitle(uuid, title || 'Untitled')
+      setTitle(uuid, title || DEFAULT_NOTE_TITLE)
 
       // 2. Instantly update note lists
       qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
@@ -190,7 +203,7 @@ export function useRenameNote() {
     },
     onError: (_err, { uuid }, ctx) => {
       if (ctx?.prevSingleNote) {
-        setTitle(uuid, ctx.prevSingleNote.title || 'Untitled')
+        setTitle(uuid, ctx.prevSingleNote.title || DEFAULT_NOTE_TITLE)
         qc.setQueryData([...NOTE_KEY, uuid], ctx.prevSingleNote)
       }
       if (ctx?.prevNotes) {
@@ -229,7 +242,7 @@ export function useCreateNote() {
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
 
       // 1. Open tab immediately
-      openTab(uuid, 'Untitled')
+      openTab(uuid, DEFAULT_NOTE_TITLE)
 
       // 2. Populate single note cache optimistically
       const foldersList = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
@@ -239,7 +252,7 @@ export function useCreateNote() {
 
       const optimisticNote: Note = {
         uuid,
-        title:        'Untitled',
+        title:        DEFAULT_NOTE_TITLE,
         title_locked: false,
         body:         { type: 'doc', content: [] },
         excerpt:      '',
@@ -256,7 +269,7 @@ export function useCreateNote() {
       // 3. Prepend to note list queries
       const optimisticListItem: NoteListItem = {
         uuid,
-        title:      'Untitled',
+        title:      DEFAULT_NOTE_TITLE,
         excerpt:    '',
         is_starred: false,
         folder:     currentFolder,
@@ -331,6 +344,9 @@ export function useTrashNote() {
   return useMutation({
     mutationFn: notesApi.trashNote,
     onMutate:   async (uuid: string) => {
+      // Close open tab immediately
+      useTabsStore.getState().close(uuid)
+
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
 
@@ -457,6 +473,9 @@ export function useForceDeleteNote() {
   return useMutation({
     mutationFn: notesApi.forceDeleteNote,
     onMutate:   async (uuid: string) => {
+      // Close open tab immediately
+      useTabsStore.getState().close(uuid)
+
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
 
@@ -534,7 +553,9 @@ export function useDuplicateNote() {
       }
 
       const tempUuid = crypto.randomUUID()
-      const title = sourceItem ? (sourceItem.title === '' ? '' : `${sourceItem.title} (copy)`) : 'Untitled (copy)'
+      const title = sourceItem
+        ? (sourceItem.title === '' ? '' : `${sourceItem.title}${COPY_NOTE_SUFFIX}`)
+        : `${DEFAULT_NOTE_TITLE}${COPY_NOTE_SUFFIX}`
       const folder = sourceItem?.folder ?? null
       const tags = sourceItem?.tags ?? []
       const excerpt = sourceItem?.excerpt ?? ''

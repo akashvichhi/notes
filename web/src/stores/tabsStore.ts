@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
 import type { UUID } from '@/types/api'
 
 export interface Tab { uuid: UUID; title: string; dirty: boolean }
@@ -30,14 +31,14 @@ export const useTabsStore = create<TabsState>()(
         const { tabs } = get()
         const existing = tabs.find((t) => t.uuid === uuid)
         if (existing) {
-          const nextTitle = title && (!existing.title || existing.title === 'Untitled') ? title : existing.title
+          const nextTitle = title && (!existing.title || existing.title === DEFAULT_NOTE_TITLE || existing.title === 'Untitled') ? title : existing.title
           set({
             tabs:       tabs.map((t) => (t.uuid === uuid ? { ...t, title: nextTitle } : t)),
             activeUuid: uuid,
           })
           return
         }
-        set({ tabs: [...tabs, { uuid, title: title || 'Untitled', dirty: false }], activeUuid: uuid })
+        set({ tabs: [...tabs, { uuid, title: title || DEFAULT_NOTE_TITLE, dirty: false }], activeUuid: uuid })
       },
 
       close: (uuid) => {

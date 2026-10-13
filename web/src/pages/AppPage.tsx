@@ -15,6 +15,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { StatusBar } from '@/components/layout/StatusBar'
 import { NoteList } from '@/components/notes/NoteList'
 import { SpotlightSearch } from '@/components/search/SpotlightSearch'
+import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
 import { useCreateNote, useNote } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useTabsStore } from '@/stores/tabsStore'
@@ -44,7 +45,7 @@ export const AppPage = memo(function AppPage() {
 
   const handleSelectNote = useCallback(
     (uuid: string, title?: string) => {
-      openTab(uuid, title || 'Untitled')
+      openTab(uuid, title || DEFAULT_NOTE_TITLE)
       if (isPhone) {
         setView('editor')
       }
@@ -57,7 +58,7 @@ export const AppPage = memo(function AppPage() {
       {},
       {
         onSuccess: (newNote) => {
-          openTab(newNote.uuid, newNote.title || 'Untitled')
+          openTab(newNote.uuid, newNote.title || DEFAULT_NOTE_TITLE)
           if (isPhone) {
             setView('editor')
           }
@@ -104,7 +105,7 @@ export const AppPage = memo(function AppPage() {
                   variant="light"
                   onClick={handleCreateNote}
                 >
-                  New note
+                  {DEFAULT_NOTE_TITLE}
                 </Button>
               )}
             </Stack>

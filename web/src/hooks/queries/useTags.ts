@@ -2,6 +2,7 @@ import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import * as tagsApi from '@/api/tags'
+import { ALL_NOTES_LABEL } from '@/constants/labels'
 import { useUiStore } from '@/stores/uiStore'
 import type { Bootstrap, Note, Tag, UUID } from '@/types/api'
 
@@ -69,7 +70,6 @@ export function useCreateTag() {
         }
       })
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY }),
   })
 }
 
@@ -127,10 +127,6 @@ export function useRenameTag() {
       }
       notifications.show({ color: 'red', message: "Couldn't rename tag." })
     },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
-      qc.invalidateQueries({ queryKey: NOTES_KEY })
-    },
   })
 }
 
@@ -153,7 +149,7 @@ export function useDeleteTag() {
         && (currentScope.slug === tagToDelete?.slug || currentScope.label === tagToDelete?.name)
       const prevScope = wasActiveScope ? currentScope : null
       if (wasActiveScope) {
-        useUiStore.getState().setScope({ kind: 'all', label: 'All notes' })
+        useUiStore.getState().setScope({ kind: 'all', label: ALL_NOTES_LABEL })
       }
 
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
@@ -195,10 +191,6 @@ export function useDeleteTag() {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
       }
       notifications.show({ color: 'red', message: "Couldn't delete tag." })
-    },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
-      qc.invalidateQueries({ queryKey: NOTES_KEY })
     },
   })
 }

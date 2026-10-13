@@ -21,6 +21,12 @@ import {
   IconTrash,
 } from '@tabler/icons-react'
 
+import {
+  ALL_NOTES_LABEL,
+  DEFAULT_NOTE_TITLE,
+  STARRED_LABEL,
+  TRASH_LABEL,
+} from '@/constants/labels'
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'
 import { useCreateNote } from '@/hooks/queries/useNotes'
@@ -132,7 +138,7 @@ export const Sidebar = memo(function Sidebar() {
           loading={createNote.isPending}
           onClick={handleCreateNote}
         >
-          New note
+          {DEFAULT_NOTE_TITLE}
         </Button>
 
         <Text c="dimmed" fw={700} mt="md" px="xs" size="xs" tt="uppercase">
@@ -140,17 +146,17 @@ export const Sidebar = memo(function Sidebar() {
         </Text>
         <NavLink
           active={scope.kind === 'all'}
-          label="All notes"
+          label={ALL_NOTES_LABEL}
           leftSection={<IconNote size={16} />}
           rightSection={<Text c="dimmed" size="xs">{counts?.all ?? 0}</Text>}
-          onClick={() => pick({ kind: 'all', label: 'All notes' })}
+          onClick={() => pick({ kind: 'all', label: ALL_NOTES_LABEL })}
         />
         <NavLink
           active={scope.kind === 'starred'}
-          label="Starred"
+          label={STARRED_LABEL}
           leftSection={<IconStar size={16} />}
           rightSection={<Text c="dimmed" size="xs">{counts?.starred ?? 0}</Text>}
-          onClick={() => pick({ kind: 'starred', label: 'Starred' })}
+          onClick={() => pick({ kind: 'starred', label: STARRED_LABEL })}
         />
 
         <Group justify="space-between" mt="md" px="xs">
@@ -192,7 +198,16 @@ export const Sidebar = memo(function Sidebar() {
             label={f.name}
             leftSection={<IconFolder size={16} />}
             rightSection={
-              <Group gap={4} wrap="nowrap">
+              <Group
+                data-folder-actions="true"
+                gap={4}
+                wrap="nowrap"
+                onClick={(e) => {
+                  e.stopPropagation()
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
                 <Text c="dimmed" size="xs">
                   {counts?.folders[f.uuid] ?? 0}
                 </Text>
@@ -202,7 +217,11 @@ export const Sidebar = memo(function Sidebar() {
                       aria-label="Folder actions"
                       size="sm"
                       variant="subtle"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
                     >
                       <IconDots size={14} />
                     </ActionIcon>
@@ -222,7 +241,10 @@ export const Sidebar = memo(function Sidebar() {
                 </Menu>
               </Group>
             }
-            onClick={() => pick({ kind: 'folder', uuid: f.uuid, label: f.name })}
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest('[data-folder-actions]')) return
+              pick({ kind: 'folder', uuid: f.uuid, label: f.name })
+            }}
           />
         ))}
 
@@ -312,11 +334,11 @@ export const Sidebar = memo(function Sidebar() {
 
         <NavLink
           active={scope.kind === 'trash'}
-          label="Trash"
+          label={TRASH_LABEL}
           leftSection={<IconTrash size={16} />}
           mt="auto"
           rightSection={<Text c="dimmed" size="xs">{counts?.trashed ?? 0}</Text>}
-          onClick={() => pick({ kind: 'trash', label: 'Trash' })}
+          onClick={() => pick({ kind: 'trash', label: TRASH_LABEL })}
         />
       </Stack>
 

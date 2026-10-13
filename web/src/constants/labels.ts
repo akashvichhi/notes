@@ -1,0 +1,5 @@
+export const DEFAULT_NOTE_TITLE = 'New note'
+export const ALL_NOTES_LABEL = 'All notes'
+export const STARRED_LABEL = 'Starred'
+export const TRASH_LABEL = 'Trash'
+export const COPY_NOTE_SUFFIX = ' (copy)'

@@ -4,6 +4,7 @@ import { ActionIcon, Group, Loader, Menu, ScrollArea, Text, UnstyledButton } fro
 import { IconPlus, IconX } from '@tabler/icons-react'
 
 
+import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
 import { useCreateNote } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useTabsStore } from '@/stores/tabsStore'
@@ -90,7 +91,7 @@ const TabItem = memo(function TabItem({
             <Loader size={10} style={{ flexShrink: 0 }} />
           )}
           <Text truncate fw={isActive ? 600 : 400} maw={140} size="xs">
-            {tab.title || 'Untitled'}
+            {tab.title || DEFAULT_NOTE_TITLE}
           </Text>
           <ActionIcon
             aria-label="Close tab"

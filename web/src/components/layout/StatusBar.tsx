@@ -5,13 +5,14 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
 
-import type { SaveStatus } from '@/hooks/useAutosave'
+import type { SaveStatus } from '@/stores/uiStore'
+import { useUiStore } from '@/stores/uiStore'
 
 dayjs.extend(relativeTime)
 
 export const StatusBar = memo(function StatusBar({
-  status = 'idle',
-  savedAt = null,
+  status: propStatus,
+  savedAt: propSavedAt,
   words = 0,
   folderPath = null,
   onRetry = () => {},
@@ -22,6 +23,11 @@ export const StatusBar = memo(function StatusBar({
   folderPath?: string | null
   onRetry?: () => void
 }) {
+  const storeStatus = useUiStore((s) => s.saveStatus)
+  const storeSavedAt = useUiStore((s) => s.savedAt)
+  const status = propStatus ?? storeStatus
+  const savedAt = propSavedAt ?? storeSavedAt
+
   const savedAtText = useMemo(() => {
     return savedAt ? dayjs(savedAt).fromNow() : null
   }, [savedAt])

@@ -1,4 +1,4 @@
-import { Avatar, Menu, Stack, Text } from '@mantine/core'
+import { Avatar, Loader, Menu, Overlay, Stack, Text } from '@mantine/core'
 import { IconLock, IconLogout, IconUser } from '@tabler/icons-react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -40,7 +40,10 @@ export const AccountMenu = memo(function AccountMenu() {
   }, [])
 
   const handleLogout = useCallback(() => {
-    logout.mutate(undefined, { onSuccess: () => navigate('/login') })
+    if (logout.isPending) return
+    logout.mutate(undefined, {
+      onSettled: () => navigate('/login'),
+    })
   }, [logout, navigate])
 
   return (
@@ -77,13 +80,37 @@ export const AccountMenu = memo(function AccountMenu() {
           <Menu.Divider />
           <Menu.Item
             color="red"
-            leftSection={<IconLogout size={16} />}
+            disabled={logout.isPending}
+            leftSection={
+              logout.isPending ? (
+                <Loader size={14} color="red" />
+              ) : (
+                <IconLogout size={16} />
+              )
+            }
             onClick={handleLogout}
           >
-            Sign out
+            {logout.isPending ? 'Signing out…' : 'Sign out'}
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
+
+      {logout.isPending && (
+        <Overlay
+          fixed
+          center
+          zIndex={10000}
+          blur={2}
+          backgroundOpacity={0.6}
+        >
+          <Stack align="center" gap="sm">
+            <Loader size="lg" color="blue" />
+            <Text size="sm" fw={600} c="white">
+              Signing out…
+            </Text>
+          </Stack>
+        </Overlay>
+      )}
 
       {accountDetailsOpen && (
         <AccountDetailsModal onClose={handleCloseAccountDetails} />

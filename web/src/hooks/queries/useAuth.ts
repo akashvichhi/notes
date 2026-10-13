@@ -44,6 +44,10 @@ export function useLogout() {
       qc.setQueryData(AUTH_KEY, null)
       qc.clear()
     },
+    onError: () => {
+      qc.setQueryData(AUTH_KEY, null)
+      qc.clear()
+    },
   })
 }
 

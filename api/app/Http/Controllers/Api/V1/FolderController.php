@@ -20,6 +20,7 @@ class FolderController extends Controller
             $request->validated('name'),
             $request->parentId(),
             $request->validated('color'),
+            $request->validated('uuid'),
         );
 
         return (new FolderResource($folder))->response()->setStatusCode(201);

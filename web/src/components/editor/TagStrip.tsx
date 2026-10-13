@@ -1,43 +1,37 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 
-import { Badge, Button, Group, Popover, Stack, TextInput } from '@mantine/core'
-import { IconCheck, IconPlus, IconSearch } from '@tabler/icons-react'
-import { useQueryClient } from '@tanstack/react-query'
+import { ActionIcon, Badge, Button, Group, Popover, Stack, TextInput } from '@mantine/core'
+import { IconCheck, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 
-
-import { syncNoteTags } from '@/api/notes'
-import { useBootstrap , BOOTSTRAP_KEY } from '@/hooks/queries/useBootstrap'
-import { NOTES_KEY } from '@/hooks/queries/useNotes'
+import { useBootstrap } from '@/hooks/queries/useBootstrap'
+import { useSyncNoteTags } from '@/hooks/queries/useNotes'
 import type { Note } from '@/types/api'
 
 export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
   const { tags } = useBootstrap()
-  const qc = useQueryClient()
+  const syncTags = useSyncNoteTags()
   const [opened, setOpened] = useState(false)
   const [query, setQuery] = useState('')
 
   const activeNames = useMemo(() => note.tags ?? [], [note.tags])
 
   const handleToggle = useCallback(
-    async (tagName: string) => {
+    (tagName: string) => {
       let next: string[]
       if (activeNames.includes(tagName)) {
         next = activeNames.filter((t) => t !== tagName)
       } else {
         next = [...activeNames, tagName]
       }
-      await syncNoteTags(note.uuid, next)
-      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
-      qc.invalidateQueries({ queryKey: NOTES_KEY })
-      qc.invalidateQueries({ queryKey: ['note', note.uuid] })
+      syncTags.mutate({ uuid: note.uuid, names: next })
     },
-    [activeNames, note.uuid, qc]
+    [activeNames, note.uuid, syncTags],
   )
 
-  const handleCreate = useCallback(async () => {
+  const handleCreate = useCallback(() => {
     const trimmed = query.trim()
     if (!trimmed) return
-    await handleToggle(trimmed)
+    handleToggle(trimmed)
     setQuery('')
   }, [handleToggle, query])
 
@@ -60,7 +54,7 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') handleCreate()
     },
-    [handleCreate]
+    [handleCreate],
   )
 
   const handleToggleOpened = useCallback(() => {
@@ -70,7 +64,27 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
   return (
     <Group gap="xs" mb="md" wrap="wrap">
       {activeNames.map((tag) => (
-        <Badge key={tag} size="sm" variant="light">
+        <Badge
+          key={tag}
+          pr={4}
+          rightSection={
+            <ActionIcon
+              aria-label={`Remove tag ${tag}`}
+              color="gray"
+              component="span"
+              size={14}
+              variant="transparent"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleToggle(tag)
+              }}
+            >
+              <IconX size={10} />
+            </ActionIcon>
+          }
+          size="sm"
+          variant="light"
+        >
           #{tag}
         </Badge>
       ))}

@@ -16,6 +16,7 @@ class StoreTagRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'uuid' => ['sometimes', 'uuid'],
             'name' => [
                 'required', 'string', 'max:60',
                 Rule::unique('tags', 'slug')

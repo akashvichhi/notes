@@ -4,12 +4,26 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import * as notesApi from '@/api/notes'
 import { useTabsStore } from '@/stores/tabsStore'
 import type { Scope } from '@/stores/uiStore'
-import type { NoteListItem, UUID } from '@/types/api'
+import type { Bootstrap, Folder, Note, NoteListItem, Tag, UUID } from '@/types/api'
 
 import { BOOTSTRAP_KEY } from './useBootstrap'
 
 export const NOTES_KEY = ['notes'] as const
 export const NOTE_KEY = ['note'] as const
+
+function getFoldersArray(folders: Bootstrap['folders'] | undefined): Folder[] {
+  if (!folders) return []
+  return Array.isArray(folders) ? folders : (folders.data ?? [])
+}
+
+function getTagsArray(tags: Bootstrap['tags'] | undefined): Tag[] {
+  if (!tags) return []
+  return Array.isArray(tags) ? tags : (tags.data ?? [])
+}
+
+function slugify(text: string): string {
+  return text.toLowerCase().trim().replace(/[\s\W-]+/g, '-')
+}
 
 export function useNote(uuid?: UUID | null) {
   const closeTab = useTabsStore((s) => s.close)
@@ -67,34 +81,72 @@ export function useNotes(scope: Scope) {
   })
 }
 
-/** Optimistic star: waiting on a round-trip to see a star fill feels slow. */
-export function useStarNote(scope: Scope) {
+/** Optimistic star: update list, single note, and sidebar counts immediately */
+export function useStarNote(_scope?: Scope) {
   const qc = useQueryClient()
-  const key = [...NOTES_KEY, scope]
 
   return useMutation({
     mutationFn: ({ uuid, is_starred }: { uuid: string; is_starred: boolean }) =>
       notesApi.patchNote(uuid, { is_starred }),
     onMutate: async ({ uuid, is_starred }) => {
-      await qc.cancelQueries({ queryKey: key })
-      const previous = qc.getQueryData(key)
+      await qc.cancelQueries({ queryKey: NOTES_KEY })
+      await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
 
-      qc.setQueryData(key, (old: { pages: notesApi.NotesPage[] } | undefined) =>
-        old && {
+      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevSingleNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+
+      // 1. Update all cached note lists
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+        if (!old?.pages?.length) return old
+        return {
           ...old,
           pages: old.pages.map((p) => ({
             ...p,
             data: p.data.map((n: NoteListItem) => (n.uuid === uuid ? { ...n, is_starred } : n)),
           })),
-        })
+        }
+      })
 
-      return { previous }
+      // 2. Update single note query if open
+      if (prevSingleNote) {
+        qc.setQueryData<Note>([...NOTE_KEY, uuid], { ...prevSingleNote, is_starred })
+      }
+
+      // 3. Update sidebar starred count
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+        if (!old) return old
+        const currentStarred = old.counts?.starred ?? 0
+        const delta = is_starred ? 1 : -1
+        return {
+          ...old,
+          counts: {
+            ...old.counts,
+            starred: Math.max(0, currentStarred + delta),
+          },
+        }
+      })
+
+      return { prevNotes, prevSingleNote, prevBootstrap }
     },
-    onError: (_e, _v, ctx) => {
-      qc.setQueryData(key, ctx?.previous)
+    onError: (_e, { uuid }, ctx) => {
+      if (ctx?.prevNotes) {
+        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+      }
+      if (ctx?.prevSingleNote) {
+        qc.setQueryData([...NOTE_KEY, uuid], ctx.prevSingleNote)
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
       notifications.show({ color: 'red', message: "Couldn't update that note." })
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY }),
+    onSettled: (_data, _err, { uuid }) => {
+      qc.invalidateQueries({ queryKey: NOTES_KEY })
+      qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+    },
   })
 }
 
@@ -105,15 +157,57 @@ export function useRenameNote() {
   return useMutation({
     mutationFn: ({ uuid, title }: { uuid: string; title: string }) =>
       notesApi.patchNote(uuid, { title }),
-    onSuccess: (updated) => {
-      setTitle(updated.uuid, updated.title || 'Untitled')
-      qc.invalidateQueries({ queryKey: NOTES_KEY })
-      qc.invalidateQueries({ queryKey: [...NOTE_KEY, updated.uuid] })
-      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+    onMutate: async ({ uuid, title }) => {
+      await qc.cancelQueries({ queryKey: NOTES_KEY })
+      await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+
+      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevSingleNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+
+      // 1. Instantly update tab title in UI
+      setTitle(uuid, title || 'Untitled')
+
+      // 2. Instantly update note lists
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+        if (!old?.pages?.length) return old
+        return {
+          ...old,
+          pages: old.pages.map((p) => ({
+            ...p,
+            data: p.data.map((n: NoteListItem) => (n.uuid === uuid ? { ...n, title } : n)),
+          })),
+        }
+      })
+
+      // 3. Instantly update single note query
+      if (prevSingleNote) {
+        qc.setQueryData<Note>([...NOTE_KEY, uuid], { ...prevSingleNote, title })
+      }
+
+      return { prevNotes, prevSingleNote, prevBootstrap }
+    },
+    onError: (_err, { uuid }, ctx) => {
+      if (ctx?.prevSingleNote) {
+        setTitle(uuid, ctx.prevSingleNote.title || 'Untitled')
+        qc.setQueryData([...NOTE_KEY, uuid], ctx.prevSingleNote)
+      }
+      if (ctx?.prevNotes) {
+        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      notifications.show({ color: 'red', message: "Couldn't rename note." })
+    },
+    onSuccess: () => {
       notifications.show({ message: 'Note renamed' })
     },
-    onError: () => {
-      notifications.show({ color: 'red', message: "Couldn't rename note." })
+    onSettled: (_data, _err, { uuid }) => {
+      qc.invalidateQueries({ queryKey: NOTES_KEY })
+      qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },
   })
 }
@@ -123,9 +217,112 @@ export function useCreateNote() {
   const openTab = useTabsStore((s) => s.open)
 
   return useMutation({
-    mutationFn: notesApi.createNote,
-    onSuccess:  (newNote) => {
-      openTab(newNote.uuid, newNote.title || 'Untitled')
+    mutationFn: (payload: { folder_id?: UUID; uuid?: UUID }) => {
+      const uuid = payload.uuid || crypto.randomUUID()
+      return notesApi.createNote({ ...payload, uuid })
+    },
+    onMutate: async (payload) => {
+      const uuid = payload.uuid || crypto.randomUUID()
+      payload.uuid = uuid
+
+      await qc.cancelQueries({ queryKey: NOTES_KEY })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+
+      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+
+      // 1. Open tab immediately
+      openTab(uuid, 'Untitled')
+
+      // 2. Populate single note cache optimistically
+      const foldersList = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
+      const currentFolder = payload.folder_id
+        ? foldersList.find((f) => f.uuid === payload.folder_id) ?? null
+        : null
+
+      const optimisticNote: Note = {
+        uuid,
+        title:        'Untitled',
+        title_locked: false,
+        body:         { type: 'doc', content: [] },
+        excerpt:      '',
+        is_starred:   false,
+        version:      1,
+        word_count:   0,
+        folder:       currentFolder,
+        tags:         [],
+        updated_at:   new Date().toISOString(),
+        deleted_at:   null,
+      }
+      qc.setQueryData([...NOTE_KEY, uuid], optimisticNote)
+
+      // 3. Prepend to note list queries
+      const optimisticListItem: NoteListItem = {
+        uuid,
+        title:      'Untitled',
+        excerpt:    '',
+        is_starred: false,
+        folder:     currentFolder,
+        tags:       [],
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+      }
+
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+        if (!old?.pages?.length || !old.pages[0]) return old
+        const first = old.pages[0]
+        return {
+          ...old,
+          pages: [
+            {
+              ...first,
+              data: [optimisticListItem, ...first.data],
+              meta: {
+                ...first.meta,
+                total: (first.meta?.total ?? 0) + 1,
+              },
+            },
+            ...old.pages.slice(1),
+          ],
+        }
+      })
+
+      // 4. Update bootstrap counts
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          counts: {
+            ...old.counts,
+            all:     (old.counts?.all ?? 0) + 1,
+            folders: payload.folder_id
+              ? {
+                ...old.counts?.folders,
+                [payload.folder_id]: (old.counts?.folders?.[payload.folder_id] ?? 0) + 1,
+              }
+              : old.counts?.folders,
+          },
+        }
+      })
+
+      return { prevNotes, prevBootstrap, uuid }
+    },
+    onError: (_err, _v, ctx) => {
+      if (ctx?.uuid) {
+        useTabsStore.getState().close(ctx.uuid)
+      }
+      if (ctx?.prevNotes) {
+        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      notifications.show({ color: 'red', message: "Couldn't create note." })
+    },
+    onSuccess: (newNote) => {
+      qc.setQueryData([...NOTE_KEY, newNote.uuid], newNote)
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },
@@ -136,10 +333,73 @@ export function useTrashNote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: notesApi.trashNote,
-    onSuccess:  () => {
+    onMutate:   async (uuid: string) => {
+      await qc.cancelQueries({ queryKey: NOTES_KEY })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+
+      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+
+      // Find note in cached pages to get starred / folder info
+      let trashedItem: NoteListItem | undefined
+      for (const [, queryData] of prevNotes) {
+        const pagesData = queryData as { pages?: notesApi.NotesPage[] }
+        const item = pagesData?.pages?.flatMap((p) => p.data).find((n) => n.uuid === uuid)
+        if (item) {
+          trashedItem = item
+          break
+        }
+      }
+
+      // Remove from non-trash lists
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+        if (!old?.pages?.length) return old
+        return {
+          ...old,
+          pages: old.pages.map((p) => ({
+            ...p,
+            data: p.data.filter((n: NoteListItem) => n.uuid !== uuid),
+          })),
+        }
+      })
+
+      // Update bootstrap counts
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+        if (!old) return old
+        const nextFolderCounts = { ...old.counts?.folders }
+        const folderUuid = trashedItem?.folder?.uuid
+        if (folderUuid && nextFolderCounts[folderUuid] !== undefined) {
+          nextFolderCounts[folderUuid] = Math.max(0, nextFolderCounts[folderUuid] - 1)
+        }
+        return {
+          ...old,
+          counts: {
+            ...old.counts,
+            all:     Math.max(0, (old.counts?.all ?? 1) - 1),
+            trashed: (old.counts?.trashed ?? 0) + 1,
+            starred: trashedItem?.is_starred ? Math.max(0, (old.counts?.starred ?? 1) - 1) : (old.counts?.starred ?? 0),
+            folders: nextFolderCounts,
+          },
+        }
+      })
+
+      return { prevNotes, prevBootstrap }
+    },
+    onError: (_err, _v, ctx) => {
+      if (ctx?.prevNotes) {
+        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      notifications.show({ color: 'red', message: "Couldn't move note to trash." })
+    },
+    onSuccess: () => {
+      notifications.show({ message: 'Moved to Trash' })
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
-      notifications.show({ message: 'Moved to Trash' })
     },
   })
 }
@@ -148,7 +408,50 @@ export function useRestoreNote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: notesApi.restoreNote,
-    onSuccess:  () => {
+    onMutate:   async (uuid: string) => {
+      await qc.cancelQueries({ queryKey: NOTES_KEY })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+
+      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+
+      // Remove from trash list
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+        if (!old?.pages?.length) return old
+        return {
+          ...old,
+          pages: old.pages.map((p) => ({
+            ...p,
+            data: p.data.filter((n: NoteListItem) => n.uuid !== uuid),
+          })),
+        }
+      })
+
+      // Update bootstrap counts
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          counts: {
+            ...old.counts,
+            trashed: Math.max(0, (old.counts?.trashed ?? 1) - 1),
+            all:     (old.counts?.all ?? 0) + 1,
+          },
+        }
+      })
+
+      return { prevNotes, prevBootstrap }
+    },
+    onError: (_err, _v, ctx) => {
+      if (ctx?.prevNotes) {
+        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      notifications.show({ color: 'red', message: "Couldn't restore note." })
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },
@@ -159,7 +462,47 @@ export function useForceDeleteNote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: notesApi.forceDeleteNote,
-    onSuccess:  () => {
+    onMutate:   async (uuid: string) => {
+      await qc.cancelQueries({ queryKey: NOTES_KEY })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+
+      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+        if (!old?.pages?.length) return old
+        return {
+          ...old,
+          pages: old.pages.map((p) => ({
+            ...p,
+            data: p.data.filter((n: NoteListItem) => n.uuid !== uuid),
+          })),
+        }
+      })
+
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          counts: {
+            ...old.counts,
+            trashed: Math.max(0, (old.counts?.trashed ?? 1) - 1),
+          },
+        }
+      })
+
+      return { prevNotes, prevBootstrap }
+    },
+    onError: (_err, _v, ctx) => {
+      if (ctx?.prevNotes) {
+        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      notifications.show({ color: 'red', message: "Couldn't permanently delete note." })
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },
@@ -176,3 +519,169 @@ export function useDuplicateNote() {
     },
   })
 }
+
+/** Optimistically sync/toggle tags on a note */
+export function useSyncNoteTags() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ uuid, names }: { uuid: UUID; names: string[] }) =>
+      notesApi.syncNoteTags(uuid, names),
+    onMutate: async ({ uuid, names }) => {
+      await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+
+      const prevNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+
+      // 1. Update single note query tags immediately
+      if (prevNote) {
+        qc.setQueryData<Note>([...NOTE_KEY, uuid], { ...prevNote, tags: names })
+      }
+
+      // 2. Update bootstrap tags and tag counts immediately
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+        if (!old) return old
+        const currentTags = getTagsArray(old.tags)
+        const currentNames = currentTags.map((t) => t.name)
+
+        // Add any brand new tags optimistically
+        const addedTags: Tag[] = names
+          .filter((name) => !currentNames.includes(name))
+          .map((name) => ({
+            uuid: crypto.randomUUID(),
+            name,
+            slug: slugify(name),
+          }))
+
+        const nextTags = [...currentTags, ...addedTags]
+        const nextTagCounts = { ...old.counts?.tags }
+
+        // Recalculate delta for old tags vs new tags on this note
+        const prevNames = prevNote?.tags ?? []
+        for (const added of names) {
+          if (!prevNames.includes(added)) {
+            const slug = slugify(added)
+            nextTagCounts[slug] = (nextTagCounts[slug] ?? 0) + 1
+          }
+        }
+        for (const removed of prevNames) {
+          if (!names.includes(removed)) {
+            const slug = slugify(removed)
+            nextTagCounts[slug] = Math.max(0, (nextTagCounts[slug] ?? 1) - 1)
+          }
+        }
+
+        return {
+          ...old,
+          tags:   nextTags,
+          counts: {
+            ...old.counts,
+            tags: nextTagCounts,
+          },
+        }
+      })
+
+      return { prevNote, prevBootstrap }
+    },
+    onError: (_err, { uuid }, ctx) => {
+      if (ctx?.prevNote) {
+        qc.setQueryData([...NOTE_KEY, uuid], ctx.prevNote)
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      notifications.show({ color: 'red', message: "Couldn't update tags on note." })
+    },
+    onSettled: (_data, _err, { uuid }) => {
+      qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: NOTES_KEY })
+    },
+  })
+}
+
+/** Optimistically move note to a folder or root */
+export function useMoveNoteFolder() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ uuid, folder_id }: { uuid: UUID; folder_id: UUID | null }) =>
+      notesApi.patchNote(uuid, { folder_id }),
+    onMutate: async ({ uuid, folder_id }) => {
+      await qc.cancelQueries({ queryKey: NOTES_KEY })
+      await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+
+      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevSingleNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+
+      const foldersList = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
+      const targetFolder = folder_id ? foldersList.find((f) => f.uuid === folder_id) ?? null : null
+      const prevFolderUuid = prevSingleNote?.folder?.uuid
+
+      // 1. Update single note query
+      if (prevSingleNote) {
+        qc.setQueryData<Note>([...NOTE_KEY, uuid], {
+          ...prevSingleNote,
+          folder: targetFolder,
+        })
+      }
+
+      // 2. Update note lists
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+        if (!old?.pages?.length) return old
+        return {
+          ...old,
+          pages: old.pages.map((p) => ({
+            ...p,
+            data: p.data.map((n: NoteListItem) => (n.uuid === uuid ? { ...n, folder: targetFolder } : n)),
+          })),
+        }
+      })
+
+      // 3. Update bootstrap counts
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+        if (!old) return old
+        const nextFolderCounts = { ...old.counts?.folders }
+        if (prevFolderUuid && nextFolderCounts[prevFolderUuid] !== undefined) {
+          nextFolderCounts[prevFolderUuid] = Math.max(0, nextFolderCounts[prevFolderUuid] - 1)
+        }
+        if (folder_id && nextFolderCounts[folder_id] !== undefined) {
+          nextFolderCounts[folder_id] = nextFolderCounts[folder_id] + 1
+        }
+        return {
+          ...old,
+          counts: {
+            ...old.counts,
+            folders: nextFolderCounts,
+          },
+        }
+      })
+
+      return { prevNotes, prevSingleNote, prevBootstrap }
+    },
+    onError: (_err, { uuid }, ctx) => {
+      if (ctx?.prevSingleNote) {
+        qc.setQueryData([...NOTE_KEY, uuid], ctx.prevSingleNote)
+      }
+      if (ctx?.prevNotes) {
+        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      notifications.show({ color: 'red', message: "Couldn't move note to folder." })
+    },
+    onSuccess: () => {
+      notifications.show({ message: 'Note moved to folder' })
+    },
+    onSettled: (_data, _err, { uuid }) => {
+      qc.invalidateQueries({ queryKey: NOTES_KEY })
+      qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+    },
+  })
+}
+

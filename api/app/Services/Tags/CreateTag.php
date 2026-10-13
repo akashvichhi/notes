@@ -8,8 +8,16 @@ use Illuminate\Support\Str;
 
 class CreateTag
 {
-    public function __invoke(User $user, string $name): Tag
+    public function __invoke(User $user, string $name, ?string $uuid = null): Tag
     {
-        return $user->tags()->create(['name' => $name, 'slug' => Str::slug($name)]);
+        $tag = $user->tags()->make(['name' => $name, 'slug' => Str::slug($name)]);
+
+        if ($uuid) {
+            $tag->uuid = $uuid;
+        }
+
+        $tag->save();
+
+        return $tag;
     }
 }

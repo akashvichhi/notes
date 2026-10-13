@@ -16,6 +16,7 @@ class StoreFolderRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'uuid' => ['sometimes', 'uuid'],
             'name' => [
                 'required', 'string', 'max:120',
                 Rule::unique('folders', 'name')

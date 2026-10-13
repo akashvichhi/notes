@@ -14,6 +14,7 @@ class StoreNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'uuid' => ['sometimes', 'uuid'],
             'folder_id' => ['nullable', 'uuid'],
         ];
     }

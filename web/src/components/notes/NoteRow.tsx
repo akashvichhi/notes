@@ -19,6 +19,7 @@ export const NoteRow = memo(function NoteRow({
   onTrash,
   onRename,
   onDuplicate,
+  onMoveToFolder,
   onRestore,
   onRestoreTo,
   onForceDelete,
@@ -30,6 +31,7 @@ export const NoteRow = memo(function NoteRow({
   onTrash: () => void
   onRename?: () => void
   onDuplicate: () => void
+  onMoveToFolder?: () => void
   onRestore?: () => void
   onRestoreTo?: () => void
   onForceDelete?: () => void
@@ -112,6 +114,7 @@ export const NoteRow = memo(function NoteRow({
               ) : (
                 <>
                   <Menu.Item onClick={onRename}>Rename</Menu.Item>
+                  <Menu.Item onClick={onMoveToFolder}>Move to folder…</Menu.Item>
                   <Menu.Item onClick={onStar}>{note.is_starred ? 'Unstar' : 'Star'}</Menu.Item>
                   <Menu.Item onClick={onDuplicate}>Duplicate</Menu.Item>
                   <Menu.Divider />

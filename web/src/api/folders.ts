@@ -2,7 +2,7 @@ import type { Folder, UUID } from '@/types/api'
 
 import { api } from './client'
 
-export async function createFolder(payload: { name: string; parent_uuid?: UUID }): Promise<Folder> {
+export async function createFolder(payload: { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID }): Promise<Folder> {
   const { data } = await api.post<{ data: Folder }>('/folders', payload)
   return data.data
 }

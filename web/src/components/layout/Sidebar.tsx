@@ -1,6 +1,6 @@
 import { memo, useCallback, useState } from 'react'
 
-import { ActionIcon, Badge, Button, Group, Menu, NavLink, Stack, Text, TextInput } from '@mantine/core'
+import { ActionIcon, Button, Group, Menu, NavLink, Stack, Text, TextInput, UnstyledButton } from '@mantine/core'
 import {
   IconDots, IconFolder, IconNote, IconPlus, IconStar, IconTrash,
 } from '@tabler/icons-react'
@@ -9,7 +9,7 @@ import {
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'
 import { useCreateNote } from '@/hooks/queries/useNotes'
-import { useCreateTag, useDeleteTag } from '@/hooks/queries/useTags'
+import { useCreateTag, useDeleteTag, useRenameTag } from '@/hooks/queries/useTags'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -22,6 +22,7 @@ export const Sidebar = memo(function Sidebar() {
   const renameFolder = useRenameFolder()
   const deleteFolder = useDeleteFolder()
   const createTag = useCreateTag()
+  const renameTag = useRenameTag()
   const deleteTag = useDeleteTag()
   const createNote = useCreateNote()
 
@@ -52,8 +53,8 @@ export const Sidebar = memo(function Sidebar() {
   }, [draftName, creating, createFolder, createTag])
 
   const handleCreateNote = useCallback(() => {
-    createNote.mutate({})
-  }, [createNote])
+    createNote.mutate(scope.kind === 'folder' ? { folder_id: scope.uuid } : {})
+  }, [createNote, scope])
 
   return (
     <Stack gap={2} h="100%" p="xs">
@@ -153,25 +154,60 @@ export const Sidebar = memo(function Sidebar() {
         />
       )}
 
-      <Group gap={5} px="xs" wrap="wrap">
+      <Group gap={6} px="xs" wrap="wrap">
         {tags.map((t) => (
-          <Menu key={t.uuid} withinPortal position="bottom-start" trigger="click">
-            <Menu.Target>
-              <Badge
-                style={{ cursor: 'pointer' }} variant="light"
-                onClick={() => pick({ kind: 'tag', slug: t.slug, label: `#${t.name}` })}
-                onContextMenu={(e) => e.preventDefault()}
-              >
-                #{t.name} {counts?.tags[t.slug] ?? 0}
-              </Badge>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {/* Tag menu is exactly two items. */}
-              <Menu.Item>Rename</Menu.Item>
-              <Menu.Divider />
-              <Menu.Item color="red" onClick={() => deleteTag.mutate(t.uuid)}>Delete tag</Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+          <Group
+            key={t.uuid}
+            gap={2}
+            style={{
+              borderRadius: 'var(--mantine-radius-xl)',
+              background:   scope.kind === 'tag' && scope.slug === t.slug
+                ? 'var(--mantine-color-blue-light)'
+                : 'var(--mantine-color-default-hover)',
+              padding: '2px 4px 2px 8px',
+              border:  '1px solid var(--mantine-color-default-border)',
+            }}
+            wrap="nowrap"
+          >
+            <UnstyledButton
+              onClick={() => pick({ kind: 'tag', slug: t.slug, label: `#${t.name}` })}
+            >
+              <Text fw={500} size="xs" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                #{t.name}{' '}
+                <Text span c="dimmed" size="xs">
+                  {counts?.tags[t.slug] ?? 0}
+                </Text>
+              </Text>
+            </UnstyledButton>
+
+            <Menu withinPortal position="bottom-start" shadow="md">
+              <Menu.Target>
+                <ActionIcon
+                  aria-label={`Tag ${t.name} actions`}
+                  color="gray"
+                  size="xs"
+                  variant="subtle"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <IconDots size={12} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  onClick={() => {
+                    const name = window.prompt('Rename tag', t.name)
+                    if (name && name.trim()) renameTag.mutate({ uuid: t.uuid, name: name.trim() })
+                  }}
+                >
+                  Rename tag
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item color="red" onClick={() => deleteTag.mutate(t.uuid)}>
+                  Delete tag
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
         ))}
       </Group>
 

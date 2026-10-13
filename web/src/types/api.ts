@@ -61,11 +61,11 @@ export interface Counts {
 }
 
 export interface Bootstrap {
-  user: { data: User }
-  folders: { data: Folder[] }
-  tags: { data: Tag[] }
+  user: User | { data: User }
+  folders: Folder[] | { data: Folder[] }
+  tags: Tag[] | { data: Tag[] }
   counts: Counts
-  notes: { data: NoteListItem[] }
+  notes: NoteListItem[] | { data: NoteListItem[] }
 }
 
 export interface SearchHit {

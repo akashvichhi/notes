@@ -14,7 +14,7 @@ import type { Note } from '@/types/api'
 
 export type { SaveStatus }
 
-const DEBOUNCE_MS = 800
+const DEBOUNCE_MS = 5000 // 5 seconds debounce
 const MIN_SAVING_MS = 400 // below this, "Saving…" strobes
 
 export function useAutosave(note: Note, editor: Editor | null) {

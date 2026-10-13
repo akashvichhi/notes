@@ -27,7 +27,7 @@ export async function fetchNote(uuid: UUID): Promise<Note> {
   return data.data
 }
 
-export async function createNote(payload: { folder_id?: UUID }): Promise<Note> {
+export async function createNote(payload: { folder_id?: UUID; uuid?: UUID }): Promise<Note> {
   const { data } = await api.post<{ data: Note }>('/notes', payload)
   return data.data
 }

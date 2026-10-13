@@ -25,6 +25,7 @@ import {
   useCreateNote,
   useDuplicateNote,
   useForceDeleteNote,
+  useMoveNoteFolder,
   useNotes,
   useRenameNote,
   useRestoreNote,
@@ -59,8 +60,10 @@ export const NoteList = memo(function NoteList({
   const restoreNote = useRestoreNote()
   const forceDeleteNote = useForceDeleteNote()
   const renameNote = useRenameNote()
+  const moveNoteFolder = useMoveNoteFolder()
 
   const [restoreModalNote, setRestoreModalNote] = useState<NoteListItem | null>(null)
+  const [moveModalNote, setMoveModalNote] = useState<NoteListItem | null>(null)
   const [renameModalNote, setRenameModalNote] = useState<NoteListItem | null>(null)
   const [renameTitle, setRenameTitle] = useState('')
 
@@ -93,9 +96,19 @@ export const NoteList = memo(function NoteList({
     [restoreModalNote, restoreNote],
   )
 
+  const handleMoveToFolder = useCallback(
+    (folderId: UUID | null) => {
+      if (!moveModalNote) return
+      const uuid = moveModalNote.uuid
+      setMoveModalNote(null)
+      moveNoteFolder.mutate({ uuid, folder_id: folderId })
+    },
+    [moveModalNote, moveNoteFolder],
+  )
+
   const handleCreateNote = useCallback(() => {
-    createNote.mutate({})
-  }, [createNote])
+    createNote.mutate(scope.kind === 'folder' ? { folder_id: scope.uuid } : {})
+  }, [createNote, scope])
 
   const handleCloseRestoreModal = useCallback(() => {
     setRestoreModalNote(null)
@@ -208,6 +221,7 @@ export const NoteList = memo(function NoteList({
                 note={note}
                 onDuplicate={() => duplicateNote.mutate(note.uuid)}
                 onForceDelete={() => forceDeleteNote.mutate(note.uuid)}
+                onMoveToFolder={() => setMoveModalNote(note)}
                 onOpen={() => handleOpen(note.uuid)}
                 onRename={() => handleOpenRename(note)}
                 onRestore={() => restoreNote.mutate(note.uuid)}
@@ -228,6 +242,32 @@ export const NoteList = memo(function NoteList({
           </Stack>
         )}
       </ScrollArea>
+
+      <Modal
+        centered
+        opened={Boolean(moveModalNote)}
+        size="sm"
+        title="Move note to folder"
+        onClose={() => setMoveModalNote(null)}
+      >
+        <Stack gap="xs">
+          <NavLink
+            active={!moveModalNote?.folder}
+            label="Root (No folder)"
+            leftSection={<IconFolder size={16} />}
+            onClick={() => handleMoveToFolder(null)}
+          />
+          {folders.map((folder) => (
+            <NavLink
+              key={folder.uuid}
+              active={moveModalNote?.folder?.uuid === folder.uuid}
+              label={folder.name}
+              leftSection={<IconFolder size={16} />}
+              onClick={() => handleMoveToFolder(folder.uuid)}
+            />
+          ))}
+        </Stack>
+      </Modal>
 
       <Modal
         centered

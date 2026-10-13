@@ -34,7 +34,11 @@ class NoteController extends Controller
 
     public function store(StoreNoteRequest $request, CreateNote $createNote)
     {
-        $note = $createNote($request->user(), $request->validated('folder_id'));
+        $note = $createNote(
+            $request->user(),
+            $request->validated('folder_id'),
+            $request->validated('uuid'),
+        );
 
         return (new NoteResource($note))->response()->setStatusCode(201);
     }

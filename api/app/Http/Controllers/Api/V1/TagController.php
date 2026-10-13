@@ -15,7 +15,11 @@ class TagController extends Controller
 {
     public function store(StoreTagRequest $request, CreateTag $createTag)
     {
-        $tag = $createTag($request->user(), $request->validated('name'));
+        $tag = $createTag(
+            $request->user(),
+            $request->validated('name'),
+            $request->validated('uuid'),
+        );
 
         return (new TagResource($tag))->response()->setStatusCode(201);
     }

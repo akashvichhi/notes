@@ -1,14 +1,14 @@
-import { memo, useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Box } from '@mantine/core'
+import { Box, Text } from '@mantine/core'
 import { RichTextEditor } from '@mantine/tiptap'
 import { useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 
-
 import { useAutosave } from '@/hooks/useAutosave'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useKeyboardInset } from '@/hooks/useVisualViewport'
+import { sanitizeProseMirrorDoc } from '@/lib/prosemirror'
 import type { Note } from '@/types/api'
 
 import { EditorToolbar } from './EditorToolbar'
@@ -26,15 +26,29 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
     setMode(m)
   }, [])
 
+  const sanitizedContent = useMemo(() => {
+    return sanitizeProseMirrorDoc(note.body)
+  }, [note.body])
+
   const editor = useEditor(
     {
       extensions:  editorExtensions,
-      content:     note.body ?? { type: 'doc', content: [] },
+      content:     sanitizedContent,
       // ProseMirror's schema is a strict whitelist; anything unrecognised is dropped.
       editorProps: { attributes: { 'aria-label': 'Note body' } },
     },
     [note.uuid],
   )
+
+  // Keep editor content in sync when note body changes externally or finishes loading
+  useEffect(() => {
+    if (!editor) return
+    const currentJson = JSON.stringify(editor.getJSON())
+    const nextJson = JSON.stringify(sanitizedContent)
+    if (currentJson !== nextJson) {
+      editor.commands.setContent(sanitizedContent, { emitUpdate: false })
+    }
+  }, [editor, sanitizedContent])
 
   const { onChange } = useAutosave(note, editor)
 
@@ -64,6 +78,9 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
         )}
 
         <Box className={mobile.content} px={{ base: 16, sm: 28, lg: 48 }} py="lg" style={{ overflowY: 'auto', minHeight: 0, flex: 1 }}>
+          <Text fw={700} fz={26} lh={1.25} mb="xs">
+            {note.title || 'Untitled'}
+          </Text>
           <TagStrip note={note} />
           {/* Full width: no max-width column. */}
           <RichTextEditor.Content />

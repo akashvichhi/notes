@@ -8,6 +8,7 @@ import {
 
 
 import { useIsPhone } from '@/hooks/useIsPhone'
+import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'
 
 import { AccountMenu } from './AccountMenu'
@@ -16,6 +17,8 @@ export const Header = memo(function Header() {
   const isPhone = useIsPhone()
   const { view, setView, toggleNav, scope } = useUiStore()
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
+  const activeTab = useTabsStore((s) => s.tabs.find((t) => t.uuid === s.activeUuid))
+  const activeTitle = activeTab?.title
 
   const handleBack = useCallback(() => {
     setView(view === 'editor' ? 'list' : 'folders')
@@ -49,8 +52,20 @@ export const Header = memo(function Header() {
           <IconNotes color="white" size={16} stroke={2} />
         </Center>
         <Text fw={600} size="sm">Notes</Text>
+        {activeTitle && (
+          <>
+            <Text c="dimmed" size="xs">/</Text>
+            <Text truncate c="dimmed" fw={500} maw={180} size="sm">
+              {activeTitle}
+            </Text>
+          </>
+        )}
       </Group>
-      {isPhone && <Text truncate fw={600} size="md" style={{ flex: 1 }}>{scope.label}</Text>}
+      {isPhone && (
+        <Text truncate fw={600} size="md" style={{ flex: 1 }}>
+          {view === 'editor' && activeTitle ? activeTitle : scope.label}
+        </Text>
+      )}
 
       <UnstyledButton
         aria-label="Search notes and actions"

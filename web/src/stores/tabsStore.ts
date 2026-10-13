@@ -28,11 +28,16 @@ export const useTabsStore = create<TabsState>()(
 
       open: (uuid, title) => {
         const { tabs } = get()
-        if (tabs.some((t) => t.uuid === uuid)) {
-          set({ activeUuid: uuid })
+        const existing = tabs.find((t) => t.uuid === uuid)
+        if (existing) {
+          const nextTitle = title && (!existing.title || existing.title === 'Untitled') ? title : existing.title
+          set({
+            tabs:       tabs.map((t) => (t.uuid === uuid ? { ...t, title: nextTitle } : t)),
+            activeUuid: uuid,
+          })
           return
         }
-        set({ tabs: [...tabs, { uuid, title, dirty: false }], activeUuid: uuid })
+        set({ tabs: [...tabs, { uuid, title: title || 'Untitled', dirty: false }], activeUuid: uuid })
       },
 
       close: (uuid) => {

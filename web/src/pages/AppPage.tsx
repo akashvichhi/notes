@@ -35,9 +35,16 @@ export const AppPage = memo(function AppPage() {
 
   const { data: note, isLoading } = useNote(activeUuid)
 
+  // Sync tab title whenever note data is available
+  useEffect(() => {
+    if (note?.uuid && note.title) {
+      useTabsStore.getState().setTitle(note.uuid, note.title)
+    }
+  }, [note?.uuid, note?.title])
+
   const handleSelectNote = useCallback(
-    (uuid: string) => {
-      openTab(uuid, '')
+    (uuid: string, title?: string) => {
+      openTab(uuid, title || 'Untitled')
       if (isPhone) {
         setView('editor')
       }

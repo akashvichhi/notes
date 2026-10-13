@@ -45,7 +45,7 @@ export const NoteList = memo(function NoteList({
   onSelectNote,
 }: {
   activeUuid?: string | null
-  onSelectNote: (uuid: string) => void
+  onSelectNote: (uuid: string, title?: string) => void
 }) {
   const { scope, filter, setView } = useUiStore()
   const isPhone = useIsPhone()
@@ -76,8 +76,8 @@ export const NoteList = memo(function NoteList({
   }, [allNotes, filter])
 
   const handleOpen = useCallback(
-    (uuid: string) => {
-      onSelectNote(uuid)
+    (uuid: string, title?: string) => {
+      onSelectNote(uuid, title)
       if (isPhone) setView('editor')
     },
     [onSelectNote, isPhone, setView],
@@ -222,7 +222,7 @@ export const NoteList = memo(function NoteList({
                 onDuplicate={() => duplicateNote.mutate(note.uuid)}
                 onForceDelete={() => forceDeleteNote.mutate(note.uuid)}
                 onMoveToFolder={() => setMoveModalNote(note)}
-                onOpen={() => handleOpen(note.uuid)}
+                onOpen={() => handleOpen(note.uuid, note.title)}
                 onRename={() => handleOpenRename(note)}
                 onRestore={() => restoreNote.mutate(note.uuid)}
                 onRestoreTo={() => setRestoreModalNote(note)}

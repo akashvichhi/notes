@@ -9,7 +9,7 @@ import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queri
 import { useCreateTag, useDeleteTag } from '@/hooks/queries/useTags'
 import { useCreateNote } from '@/hooks/queries/useNotes'
 import { useUiStore } from '@/stores/uiStore'
-import { useIsPhone } from './AppShell'
+import { useIsPhone } from '@/hooks/useIsPhone'
 
 export function Sidebar() {
   const { folders, tags, counts } = useBootstrap()

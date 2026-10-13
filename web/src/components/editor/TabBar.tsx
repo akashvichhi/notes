@@ -3,7 +3,7 @@ import { IconPlus, IconX } from '@tabler/icons-react'
 
 import { useTabsStore } from '@/stores/tabsStore'
 import { useCreateNote } from '@/hooks/queries/useNotes'
-import { useIsPhone } from '../layout/AppShell'
+import { useIsPhone } from '@/hooks/useIsPhone'
 
 export function TabBar() {
   const isPhone = useIsPhone()
@@ -28,7 +28,7 @@ export function TabBar() {
             const isActive = tab.uuid === activeUuid
 
             return (
-              <Menu key={tab.uuid} trigger="context-menu" position="bottom-start" shadow="md">
+              <Menu key={tab.uuid} position="bottom-start" shadow="md">
                 <Menu.Target>
                   <UnstyledButton
                     onClick={() => activate(tab.uuid)}

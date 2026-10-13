@@ -4,7 +4,7 @@ import {
 } from '@tabler/icons-react'
 import { spotlight } from '@mantine/spotlight'
 
-import { useIsPhone } from './AppShell'
+import { useIsPhone } from '@/hooks/useIsPhone'
 import { AccountMenu } from './AccountMenu'
 import { useUiStore } from '@/stores/uiStore'
 

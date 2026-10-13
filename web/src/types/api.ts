@@ -1,3 +1,5 @@
+import type { JSONContent } from '@tiptap/core'
+
 export type UUID = string
 export type ISODate = string
 
@@ -41,10 +43,7 @@ export interface NoteListItem {
 }
 
 /** A ProseMirror document. Opaque to everything outside the editor. */
-export interface ProseMirrorDoc {
-  type: 'doc'
-  content: unknown[]
-}
+export type ProseMirrorDoc = JSONContent
 
 export interface Note extends NoteListItem {
   body: ProseMirrorDoc | null

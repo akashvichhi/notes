@@ -2,7 +2,7 @@ import { RichTextEditor, useRichTextEditorContext } from '@mantine/tiptap'
 import { SegmentedControl } from '@mantine/core'
 import { IconTable } from '@tabler/icons-react'
 
-import { useIsPhone } from '../layout/AppShell'
+import { useIsPhone } from '@/hooks/useIsPhone'
 
 export function EditorToolbar({ mode, onMode }: { mode: 'rich' | 'source'; onMode: (m: 'rich' | 'source') => void }) {
   const { editor } = useRichTextEditorContext()

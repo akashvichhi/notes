@@ -30,7 +30,7 @@ import { patchNote } from '@/api/notes'
 import { filterNotes } from '@/lib/filterNotes'
 import { useUiStore } from '@/stores/uiStore'
 import type { NoteListItem, UUID } from '@/types/api'
-import { useIsPhone } from '../layout/AppShell'
+import { useIsPhone } from '@/hooks/useIsPhone'
 
 export function NoteList({
   activeUuid,

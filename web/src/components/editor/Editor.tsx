@@ -4,7 +4,7 @@ import { useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import { useEffect, useState } from 'react'
 
-import { useIsPhone } from '../layout/AppShell'
+import { useIsPhone } from '@/hooks/useIsPhone'
 import { EditorToolbar } from './EditorToolbar'
 import { TableBar } from './TableBar'
 import { TagStrip } from './TagStrip'

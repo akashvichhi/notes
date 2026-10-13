@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BootstrapController;
 use App\Http\Controllers\Api\V1\FolderController;
 use App\Http\Controllers\Api\V1\NoteController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Models\Note;
 use Illuminate\Http\Request;
@@ -42,5 +44,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/notes', [NoteController::class, 'index']);
         Route::post('/notes', [NoteController::class, 'store']);
         Route::get('/notes/{note}', [NoteController::class, 'show']);
+        Route::patch('/notes/{note}', [NoteController::class, 'update'])->middleware('throttle:240,1');
+        Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
+        Route::post('/notes/{note}/restore', [NoteController::class, 'restore']);
+        Route::post('/notes/{note}/duplicate', [NoteController::class, 'duplicate']);
+        Route::put('/notes/{note}/tags', [NoteController::class, 'syncTags']);
+        Route::delete('/trash', [NoteController::class, 'emptyTrash']);
+
+        Route::get('/search', SearchController::class)->middleware('throttle:60,1');
+        Route::get('/bootstrap', BootstrapController::class);
     });
 });

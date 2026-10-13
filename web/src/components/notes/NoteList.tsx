@@ -124,14 +124,21 @@ export const NoteList = memo(function NoteList({
     setRenameTitle('')
   }, [])
 
-  const handleConfirmRename = useCallback(async () => {
-    if (!renameModalNote) return
-    await renameNote.mutateAsync({
-      uuid:  renameModalNote.uuid,
-      title: renameTitle.trim(),
-    })
-    handleCloseRename()
-  }, [renameModalNote, renameNote, renameTitle, handleCloseRename])
+  const handleConfirmRename = useCallback(
+    (e?: React.FormEvent) => {
+      if (e) e.preventDefault()
+      if (!renameModalNote) return
+      const title = renameTitle.trim()
+      if (title !== renameModalNote.title) {
+        renameNote.mutate({
+          uuid: renameModalNote.uuid,
+          title,
+        })
+      }
+      handleCloseRename()
+    },
+    [renameModalNote, renameNote, renameTitle, handleCloseRename],
+  )
 
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -300,12 +307,7 @@ export const NoteList = memo(function NoteList({
         title="Rename note"
         onClose={handleCloseRename}
       >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            void handleConfirmRename()
-          }}
-        >
+        <form onSubmit={handleConfirmRename}>
           <Stack gap="sm">
             <TextInput
               autoFocus
@@ -319,7 +321,7 @@ export const NoteList = memo(function NoteList({
               <Button variant="default" onClick={handleCloseRename}>
                 Cancel
               </Button>
-              <Button loading={renameNote.isPending} type="submit">
+              <Button type="submit">
                 Save
               </Button>
             </Group>

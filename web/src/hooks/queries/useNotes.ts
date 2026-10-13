@@ -507,7 +507,132 @@ export function useDuplicateNote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: notesApi.duplicateNote,
-    onSuccess:  () => {
+    onMutate:   async (sourceUuid: string) => {
+      await qc.cancelQueries({ queryKey: NOTES_KEY })
+      await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+
+      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevSingle = qc.getQueryData<Note>([...NOTE_KEY, sourceUuid])
+
+      // Find the source note in cached queries if not in single query
+      let sourceItem: NoteListItem | Note | undefined = prevSingle
+      if (!sourceItem && prevNotes) {
+        for (const [, data] of prevNotes) {
+          const pages = (data as { pages?: notesApi.NotesPage[] })?.pages
+          if (pages) {
+            for (const page of pages) {
+              const found = page.data.find((n) => n.uuid === sourceUuid)
+              if (found) {
+                sourceItem = found
+                break
+              }
+            }
+          }
+          if (sourceItem) break
+        }
+      }
+
+      const tempUuid = crypto.randomUUID()
+      const title = sourceItem ? (sourceItem.title === '' ? '' : `${sourceItem.title} (copy)`) : 'Untitled (copy)'
+      const folder = sourceItem?.folder ?? null
+      const tags = sourceItem?.tags ?? []
+      const excerpt = sourceItem?.excerpt ?? ''
+
+      const optimisticListItem: NoteListItem = {
+        uuid:       tempUuid,
+        title,
+        excerpt,
+        is_starred: false,
+        folder,
+        tags,
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+      }
+
+      // If we have single note data for the source note, also pre-populate single note query
+      if (prevSingle) {
+        const optimisticNote: Note = {
+          ...prevSingle,
+          uuid:         tempUuid,
+          title,
+          version:      1,
+          title_locked: sourceItem ? sourceItem.title !== '' : true,
+          updated_at:   new Date().toISOString(),
+          deleted_at:   null,
+        }
+        qc.setQueryData([...NOTE_KEY, tempUuid], optimisticNote)
+      }
+
+      // Prepend to note list queries
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+        if (!old?.pages?.length || !old.pages[0]) return old
+        const first = old.pages[0]
+        return {
+          ...old,
+          pages: [
+            {
+              ...first,
+              data: [optimisticListItem, ...first.data],
+              meta: {
+                ...first.meta,
+                total: (first.meta?.total ?? 0) + 1,
+              },
+            },
+            ...old.pages.slice(1),
+          ],
+        }
+      })
+
+      // Update bootstrap counts
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          counts: {
+            ...old.counts,
+            all:     (old.counts?.all ?? 0) + 1,
+            folders: folder?.uuid
+              ? {
+                ...old.counts?.folders,
+                [folder.uuid]: (old.counts?.folders?.[folder.uuid] ?? 0) + 1,
+              }
+              : old.counts?.folders,
+          },
+        }
+      })
+
+      return { prevNotes, prevBootstrap, tempUuid }
+    },
+    onError: (_err, _v, ctx) => {
+      if (ctx?.tempUuid) {
+        qc.removeQueries({ queryKey: [...NOTE_KEY, ctx.tempUuid] })
+      }
+      if (ctx?.prevNotes) {
+        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+      }
+      if (ctx?.prevBootstrap) {
+        qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      notifications.show({ color: 'red', message: "Couldn't duplicate note." })
+    },
+    onSuccess: (realNote, _v, ctx) => {
+      qc.setQueryData([...NOTE_KEY, realNote.uuid], realNote)
+      if (ctx?.tempUuid) {
+        qc.removeQueries({ queryKey: [...NOTE_KEY, ctx.tempUuid] })
+        qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
+          if (!old?.pages?.length) return old
+          return {
+            ...old,
+            pages: old.pages.map((p) => ({
+              ...p,
+              data: p.data.map((n) => (n.uuid === ctx.tempUuid ? realNote : n)),
+            })),
+          }
+        })
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },

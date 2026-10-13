@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import * as foldersApi from '@/api/folders'
 import type { NotesPage } from '@/api/notes'
+import { useUiStore } from '@/stores/uiStore'
 import type { Bootstrap, Folder, NoteListItem, UUID } from '@/types/api'
 
 import { BOOTSTRAP_KEY } from './useBootstrap'
@@ -81,6 +82,13 @@ export function useRenameFolder() {
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
 
+      const currentScope = useUiStore.getState().scope
+      const wasActiveScope = currentScope.kind === 'folder' && currentScope.uuid === uuid
+      const prevScope = wasActiveScope ? currentScope : null
+      if (wasActiveScope) {
+        useUiStore.getState().setScope({ kind: 'folder', uuid, label: name })
+      }
+
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
         if (!old) return old
         const current = getFoldersArray(old.folders)
@@ -103,9 +111,12 @@ export function useRenameFolder() {
         }
       })
 
-      return { prevBootstrap, prevNotes }
+      return { prevBootstrap, prevNotes, prevScope }
     },
     onError: (_err, _v, ctx) => {
+      if (ctx?.prevScope) {
+        useUiStore.getState().setScope(ctx.prevScope)
+      }
       if (ctx?.prevBootstrap) qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
@@ -128,6 +139,13 @@ export function useDeleteFolder() {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+
+      const currentScope = useUiStore.getState().scope
+      const wasActiveScope = currentScope.kind === 'folder' && currentScope.uuid === uuid
+      const prevScope = wasActiveScope ? currentScope : null
+      if (wasActiveScope) {
+        useUiStore.getState().setScope({ kind: 'all', label: 'All notes' })
+      }
 
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
         if (!old) return old
@@ -157,9 +175,12 @@ export function useDeleteFolder() {
         }
       })
 
-      return { prevBootstrap, prevNotes }
+      return { prevBootstrap, prevNotes, prevScope }
     },
     onError: (_err, _v, ctx) => {
+      if (ctx?.prevScope) {
+        useUiStore.getState().setScope(ctx.prevScope)
+      }
       if (ctx?.prevBootstrap) qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))

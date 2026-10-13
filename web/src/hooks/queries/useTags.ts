@@ -2,6 +2,7 @@ import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import * as tagsApi from '@/api/tags'
+import { useUiStore } from '@/stores/uiStore'
 import type { Bootstrap, Note, Tag, UUID } from '@/types/api'
 
 import { BOOTSTRAP_KEY } from './useBootstrap'
@@ -87,6 +88,15 @@ export function useRenameTag() {
       const oldTag = prevBootstrap ? getTagsArray(prevBootstrap.tags).find((t) => t.uuid === uuid) : null
       const oldSlug = oldTag?.slug
 
+      const currentScope = useUiStore.getState().scope
+      const wasActiveScope =
+        currentScope.kind === 'tag'
+        && (currentScope.slug === oldSlug || currentScope.label === oldTag?.name)
+      const prevScope = wasActiveScope ? currentScope : null
+      if (wasActiveScope) {
+        useUiStore.getState().setScope({ kind: 'tag', slug: newSlug, label: name })
+      }
+
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
         if (!old) return old
         const current = getTagsArray(old.tags)
@@ -105,9 +115,12 @@ export function useRenameTag() {
         }
       })
 
-      return { prevBootstrap, prevNotes }
+      return { prevBootstrap, prevNotes, prevScope }
     },
     onError: (_err, _v, ctx) => {
+      if (ctx?.prevScope) {
+        useUiStore.getState().setScope(ctx.prevScope)
+      }
       if (ctx?.prevBootstrap) qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
@@ -133,6 +146,15 @@ export function useDeleteTag() {
 
       const currentTags = prevBootstrap ? getTagsArray(prevBootstrap.tags) : []
       const tagToDelete = currentTags.find((t) => t.uuid === uuid)
+
+      const currentScope = useUiStore.getState().scope
+      const wasActiveScope =
+        currentScope.kind === 'tag'
+        && (currentScope.slug === tagToDelete?.slug || currentScope.label === tagToDelete?.name)
+      const prevScope = wasActiveScope ? currentScope : null
+      if (wasActiveScope) {
+        useUiStore.getState().setScope({ kind: 'all', label: 'All notes' })
+      }
 
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
         if (!old) return old
@@ -162,9 +184,12 @@ export function useDeleteTag() {
         })
       }
 
-      return { prevBootstrap, prevNotes }
+      return { prevBootstrap, prevNotes, prevScope }
     },
     onError: (_err, _v, ctx) => {
+      if (ctx?.prevScope) {
+        useUiStore.getState().setScope(ctx.prevScope)
+      }
       if (ctx?.prevBootstrap) qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))

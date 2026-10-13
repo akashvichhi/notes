@@ -13,7 +13,7 @@ class UserResource extends JsonResource
             'uuid' => $this->uuid,
             'name' => $this->name,
             'email' => $this->email,
-            'preferences' => $this->preferences ?? [],
+            'preferences' => (object) ($this->preferences ?: []),
         ];
     }
 }

@@ -1,4 +1,4 @@
-import { Box, Button, Center, Stack, Text } from '@mantine/core'
+import { Box, Button, Center, Stack, Text, ThemeIcon } from '@mantine/core'
 import { IconNotes, IconPlus } from '@tabler/icons-react'
 
 import { EditorSkeleton } from '@/components/common/Skeletons'
@@ -76,19 +76,9 @@ export function AppPage() {
             ) : (
               <Center style={{ flex: 1 }} p="xl">
                 <Stack align="center" gap="sm">
-                  <Box
-                    w={48}
-                    h={48}
-                    bg="blue.light"
-                    style={{
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <IconNotes size={26} color="var(--mantine-color-blue-6)" />
-                  </Box>
+                  <ThemeIcon size={48} radius="xl" variant="light" color="blue">
+                    <IconNotes size={26} />
+                  </ThemeIcon>
                   <Text fw={600} size="md">No note selected</Text>
                   <Text size="sm" c="dimmed" ta="center" maw={300}>
                     Choose a note from the list, or create a new one to begin writing.

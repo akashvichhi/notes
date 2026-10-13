@@ -41,12 +41,12 @@ class BuildBootstrapPayload
                 'all' => (int) $byFolder->sum(),
                 'starred' => Note::ownedBy($user)->where('is_starred', true)->count(),
                 'trashed' => Note::ownedBy($user)->onlyTrashed()->count(),
-                'folders' => $folders->mapWithKeys(
+                'folders' => (object) $folders->mapWithKeys(
                     fn ($f) => [$f->uuid => (int) ($byFolder[$f->id] ?? 0)]
-                ),
-                'tags' => $tags->mapWithKeys(
+                )->all(),
+                'tags' => (object) $tags->mapWithKeys(
                     fn ($t) => [$t->slug => (int) ($byTag[$t->id] ?? 0)]
-                ),
+                )->all(),
             ],
             'notes' => NoteListResource::collection($notes),
         ];

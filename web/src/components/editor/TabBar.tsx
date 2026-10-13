@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react'
 
-import { ActionIcon, Box, Group, Menu, ScrollArea, Text, UnstyledButton } from '@mantine/core'
+import { ActionIcon, Group, Loader, Menu, ScrollArea, Text, UnstyledButton } from '@mantine/core'
 import { IconPlus, IconX } from '@tabler/icons-react'
 
 
@@ -8,6 +8,7 @@ import { useCreateNote } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useTabsStore } from '@/stores/tabsStore'
 import type { Tab } from '@/stores/tabsStore'
+import { useUiStore } from '@/stores/uiStore'
 
 interface TabItemProps {
   tab: Tab
@@ -58,6 +59,9 @@ const TabItem = memo(function TabItem({
     [handleActivate]
   )
 
+  const saveStatus = useUiStore((s) => s.saveStatus)
+  const isSaving = tab.dirty || (isActive && saveStatus === 'saving')
+
   return (
     <Menu position="bottom-start" shadow="md">
       <Menu.Target>
@@ -82,13 +86,8 @@ const TabItem = memo(function TabItem({
           onClick={handleActivate}
           onKeyDown={handleKeyDown}
         >
-          {tab.dirty && (
-            <Box
-              bg="yellow.6"
-              h={6}
-              style={{ borderRadius: '50%', flexShrink: 0 }}
-              w={6}
-            />
+          {isSaving && (
+            <Loader size={10} style={{ flexShrink: 0 }} />
           )}
           <Text truncate fw={isActive ? 600 : 400} maw={140} size="xs">
             {tab.title || 'Untitled'}

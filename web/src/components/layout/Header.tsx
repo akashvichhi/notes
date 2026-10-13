@@ -1,12 +1,14 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useState } from 'react'
 
 import { ActionIcon, Center, Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core'
 import { spotlight } from '@mantine/spotlight'
 import {
-  IconChevronLeft, IconMenu2, IconMoon, IconNotes, IconSearch, IconSun,
+  IconChevronLeft, IconMenu2, IconMoon, IconNotes, IconRefresh, IconSearch, IconSun,
 } from '@tabler/icons-react'
+import { useQueryClient } from '@tanstack/react-query'
 
-
+import { BOOTSTRAP_KEY } from '@/hooks/queries/useBootstrap'
+import { NOTE_KEY, NOTES_KEY } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -27,6 +29,26 @@ export const Header = memo(function Header() {
   const handleOpenSpotlight = useCallback(() => {
     spotlight.open()
   }, [])
+
+  const qc = useQueryClient()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      setIsRefreshing(true)
+      const activeUuid = useTabsStore.getState().activeUuid
+      const promises: Promise<unknown>[] = [
+        qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY }),
+        qc.invalidateQueries({ queryKey: NOTES_KEY }),
+      ]
+      if (activeUuid) {
+        promises.push(qc.invalidateQueries({ queryKey: [...NOTE_KEY, activeUuid] }))
+      }
+      await Promise.all(promises)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [qc])
 
   return (
     <Group gap="sm" h={52} px="sm" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
@@ -82,6 +104,15 @@ export const Header = memo(function Header() {
       )}
 
       <Group gap={4} ml="auto">
+        <ActionIcon
+          aria-label="Refresh"
+          loading={isRefreshing}
+          size="lg"
+          variant="subtle"
+          onClick={handleRefresh}
+        >
+          <IconRefresh size={18} />
+        </ActionIcon>
         <ActionIcon aria-label="Toggle colour scheme" size="lg" variant="subtle" onClick={toggleColorScheme}>
           {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
         </ActionIcon>

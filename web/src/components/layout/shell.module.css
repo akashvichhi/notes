@@ -14,23 +14,34 @@
 .app[data-nav-collapsed='true'] .panes { grid-template-columns: 0 300px 1fr; }
 .app[data-list-collapsed='true'] .panes { grid-template-columns: 232px 0 1fr; }
 
-.nav { border-right: 1px solid var(--mantine-color-default-border); overflow-y: auto; }
+.nav { border-right: 1px solid var(--mantine-color-default-border); overflow-y: auto; min-width: 0; }
 .list { border-right: 1px solid var(--mantine-color-default-border); display: flex;
-        flex-direction: column; min-height: 0; }
+        flex-direction: column; min-width: 0; min-height: 0; }
 .editor { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 
 /* The scrim must never be a grid child, or it claims the 1fr row. */
 .scrim { display: none; }
 
 /* ---- Tablet 768–1099px: two panes, sidebar becomes a drawer ---- */
-@media (max-width: 1099px) {
-  .panes, .app[data-nav-collapsed='true'] .panes { grid-template-columns: 0 minmax(250px, 34%) 1fr; }
+@media (min-width: 768px) and (max-width: 1099px) {
+  .panes,
+  .app[data-nav-collapsed='true'] .panes,
+  .app[data-nav-open='true'] .panes {
+    grid-template-columns: minmax(260px, 320px) 1fr;
+  }
+
+  .app[data-list-collapsed='true'] .panes,
+  .app[data-nav-collapsed='true'][data-list-collapsed='true'] .panes,
+  .app[data-nav-open='true'][data-list-collapsed='true'] .panes {
+    grid-template-columns: 0 1fr;
+  }
 
   .nav {
     position: fixed; left: 0; top: 52px; bottom: 28px; width: 232px; z-index: 30;
     background: var(--mantine-color-body);
     transform: translateX(-100%); transition: transform 0.2s ease;
     padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: var(--mantine-shadow-md);
   }
   .app[data-nav-open='true'] .nav { transform: none; }
 
@@ -44,7 +55,12 @@
 
 /* ---- Phone ≤767px: one pane at a time ---- */
 @media (max-width: 767px) {
-  .panes { grid-template-columns: 1fr !important; }
+  .panes,
+  .app[data-nav-collapsed='true'] .panes,
+  .app[data-nav-open='true'] .panes,
+  .app[data-list-collapsed='true'] .panes {
+    grid-template-columns: 1fr !important;
+  }
   .nav, .list, .editor { display: none; }
   .nav { position: static; transform: none; border-right: 0; }
   .scrim { display: none; }

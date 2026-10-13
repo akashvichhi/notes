@@ -8,6 +8,7 @@ import { EditorToolbar } from './EditorToolbar'
 import { TableBar } from './TableBar'
 import { TagStrip } from './TagStrip'
 import { editorExtensions } from './extensions'
+import { useAbandonedNote } from '@/hooks/useAbandonedNote'
 import { useAutosave } from '@/hooks/useAutosave'
 import type { Note } from '@/types/api'
 
@@ -26,6 +27,7 @@ export function Editor({ note }: { note: Note }) {
   )
 
   const { onChange } = useAutosave(note, editor)
+  useAbandonedNote(note, editor)
 
   useEffect(() => {
     if (!editor) return

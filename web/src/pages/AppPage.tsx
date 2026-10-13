@@ -21,7 +21,7 @@ import { useUiStore } from '@/stores/uiStore'
 export const AppPage = memo(function AppPage() {
   const { uuid: routeUuid } = useParams<{ uuid: string }>()
   const isPhone = useIsPhone()
-  const { setView } = useUiStore()
+  const { setView, scope } = useUiStore()
   const { activeUuid, open: openTab } = useTabsStore()
   const createNote = useCreateNote()
 
@@ -82,24 +82,28 @@ export const AppPage = memo(function AppPage() {
               </ThemeIcon>
               <Text fw={600} size="md">No note selected</Text>
               <Text size="sm" c="dimmed" ta="center" maw={300}>
-                Choose a note from the list, or create a new one to begin writing.
+                {scope.kind === 'trash'
+                  ? 'Choose a note from Trash to view or restore it.'
+                  : 'Choose a note from the list, or create a new one to begin writing.'}
               </Text>
-              <Button
-                size="sm"
-                variant="light"
-                leftSection={<IconPlus size={16} />}
-                loading={createNote.isPending}
-                onClick={handleCreateNote}
-                mt="xs"
-              >
-                New note
-              </Button>
+              {scope.kind !== 'trash' && (
+                <Button
+                  size="sm"
+                  variant="light"
+                  leftSection={<IconPlus size={16} />}
+                  loading={createNote.isPending}
+                  onClick={handleCreateNote}
+                  mt="xs"
+                >
+                  New note
+                </Button>
+              )}
             </Stack>
           </Center>
         )}
       </Box>
     ),
-    [isLoading, note, createNote.isPending, handleCreateNote]
+    [isLoading, note, createNote.isPending, handleCreateNote, scope.kind]
   )
 
   const statusSlot = useMemo(

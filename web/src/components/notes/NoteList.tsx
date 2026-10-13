@@ -126,15 +126,19 @@ export const NoteList = memo(function NoteList({
         ) : filtered.length === 0 ? (
           <Center h={180}>
             <Stack align="center" gap="xs">
-              <Text size="sm" c="dimmed">No notes found</Text>
-              <Button
-                size="xs"
-                variant="light"
-                leftSection={<IconPlus size={14} />}
-                onClick={handleCreateNote}
-              >
-                Create note
-              </Button>
+              <Text size="sm" c="dimmed">
+                {scope.kind === 'trash' ? 'Trash is empty' : 'No notes found'}
+              </Text>
+              {scope.kind !== 'trash' && (
+                <Button
+                  size="xs"
+                  variant="light"
+                  leftSection={<IconPlus size={14} />}
+                  onClick={handleCreateNote}
+                >
+                  Create note
+                </Button>
+              )}
             </Stack>
           </Center>
         ) : (

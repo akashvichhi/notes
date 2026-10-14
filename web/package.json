@@ -8,6 +8,7 @@
     "clean": "node -e \"import('node:fs').then(fs => { fs.rmSync('../api/public/assets', { recursive: true, force: true }); fs.rmSync('../api/public/index.html', { force: true }); })\"",
     "build": "tsc -b && vite build",
     "build:prod": "npm run clean && npm run build",
+    "deploy": "cd .. && git add . && git commit -m \"Prod: release\" && git push origin master",
     "lint": "eslint . --fix",
     "tsc": "tsc -b --noEmit",
     "check": "npm run lint && npm run tsc",

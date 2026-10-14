@@ -7,14 +7,14 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(import.meta.dirname, './src'),
+      '@':    path.resolve(import.meta.dirname, './src'),
       '@src': path.resolve(import.meta.dirname, './src'),
     },
   },
   build: {
     // Output directly to Laravel's public folder
-    outDir: path.resolve(import.meta.dirname, '../api/public'),
-    emptyOutDir: false, // Prevents deleting index.php and Laravel assets
+    outDir:        path.resolve(import.meta.dirname, '../api/public'),
+    emptyOutDir:   false, // Prevents deleting index.php and Laravel assets
     rollupOptions: {
       output: {
         assetFileNames: 'assets/[hash].[ext]',
@@ -46,10 +46,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port:  5173,
     // Same-origin in development, so there is no cross-site cookie at all.
     proxy: {
-      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/api':     { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/sanctum': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     },
   },

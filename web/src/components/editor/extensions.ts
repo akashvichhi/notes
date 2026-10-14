@@ -1,3 +1,4 @@
+import { Link, getTaskListExtension, getUploadImageExtension } from '@mantine/tiptap'
 import { CharacterCount } from '@tiptap/extension-character-count'
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
 import { Color } from '@tiptap/extension-color'
@@ -17,6 +18,7 @@ import { TaskList } from '@tiptap/extension-task-list'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Typography } from '@tiptap/extension-typography'
+import { Underline } from '@tiptap/extension-underline'
 import { StarterKit } from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 
@@ -27,23 +29,35 @@ import { common, createLowlight } from 'lowlight'
 export const editorExtensions = [
   StarterKit.configure({
     codeBlock: false,
-    link:      { openOnClick: false, autolink: true },
+    link:      false,
   }),
+  Link.configure({ openOnClick: false, autolink: true }),
+  Underline,
   Highlight,
   TextStyle,
   Color,
   Subscript,
   Superscript,
   TextAlign.configure({ types: ['heading', 'paragraph'] }),
-  TaskList,
+  getTaskListExtension(TaskList),
   TaskItem.configure({ nested: true }),
-  // Merged cells cannot be represented if a markdown export is ever added,
-  // and node selection is what exposes merging in the UI.
-  Table.configure({ resizable: true, allowTableNodeSelection: false }),
+  Table.configure({ resizable: true }),
   TableRow,
   TableHeader,
   TableCell,
-  Image,
+  getUploadImageExtension(
+    Image.configure({
+      allowBase64: true,
+    }),
+    {
+      onImageUpload: (file: File) =>
+        new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(file)
+        }),
+    },
+  ),
   Details,
   DetailsSummary,
   DetailsContent,

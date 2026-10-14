@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo } from 'react'
 
 import { Box } from '@mantine/core'
 import { RichTextEditor } from '@mantine/tiptap'
@@ -21,12 +21,7 @@ import { TagStrip } from './TagStrip'
 export const Editor = memo(function Editor({ note }: { note: Note }) {
   const isPhone = useIsPhone()
   const keyboardInset = useKeyboardInset()
-  const [mode, setMode] = useState<'rich' | 'source'>('rich')
   const setEditorStats = useUiStore((s) => s.setEditorStats)
-
-  const handleModeChange = useCallback((m: 'rich' | 'source') => {
-    setMode(m)
-  }, [])
 
   const sanitizedContent = useMemo(() => {
     return sanitizeProseMirrorDoc(note.body)
@@ -37,7 +32,9 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
       extensions:  editorExtensions,
       content:     sanitizedContent,
       // ProseMirror's schema is a strict whitelist; anything unrecognised is dropped.
-      editorProps: { attributes: { 'aria-label': 'Note body' } },
+      editorProps: {
+        attributes: { 'aria-label': 'Note body' },
+      },
     },
     [note.uuid],
   )
@@ -96,7 +93,7 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
     <Box className={mobile.editorRoot} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
       <RichTextEditor editor={editor} style={{ display: 'contents' }}>
         <Box className={mobile.toolbar} style={{ transform: keyboardInset ? `translateY(-${keyboardInset}px)` : undefined }}>
-          <EditorToolbar mode={mode} onMode={handleModeChange} />
+          <EditorToolbar />
         </Box>
         <TableBar editor={editor} />
 
@@ -104,8 +101,8 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
         {!isPhone && editor && (
           <BubbleMenu editor={editor}>
             <RichTextEditor.ControlsGroup>
-              <RichTextEditor.Bold /><RichTextEditor.Italic />
-              <RichTextEditor.Strikethrough /><RichTextEditor.Link />
+              <RichTextEditor.Bold /><RichTextEditor.Italic /><RichTextEditor.Underline />
+              <RichTextEditor.Strikethrough /><RichTextEditor.Highlight /><RichTextEditor.Link />
               <RichTextEditor.H2 />
             </RichTextEditor.ControlsGroup>
           </BubbleMenu>

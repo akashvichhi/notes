@@ -1,50 +1,65 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useRef } from 'react'
 
-import { Button, Group, Text } from '@mantine/core'
+import { Group, ScrollArea, Text } from '@mantine/core'
+import { RichTextEditor } from '@mantine/tiptap'
 import type { Editor } from '@tiptap/react'
 
-
 /**
- * Only rendered while the cursor is inside a table. Eleven more buttons in the
- * permanent toolbar would make it unusable.
+ * Only rendered while the cursor is inside a table.
  */
 export const TableBar = memo(function TableBar({ editor }: { editor: Editor | null }) {
-  const addColBefore = useCallback(() => editor?.chain().focus().addColumnBefore().run(), [editor])
-  const addColAfter = useCallback(() => editor?.chain().focus().addColumnAfter().run(), [editor])
-  const deleteCol = useCallback(() => editor?.chain().focus().deleteColumn().run(), [editor])
-  const addRowBefore = useCallback(() => editor?.chain().focus().addRowBefore().run(), [editor])
-  const addRowAfter = useCallback(() => editor?.chain().focus().addRowAfter().run(), [editor])
-  const deleteRow = useCallback(() => editor?.chain().focus().deleteRow().run(), [editor])
-  const toggleHeaderRow = useCallback(() => editor?.chain().focus().toggleHeaderRow().run(), [editor])
-  const toggleHeaderCol = useCallback(() => editor?.chain().focus().toggleHeaderColumn().run(), [editor])
-  const deleteTable = useCallback(() => editor?.chain().focus().deleteTable().run(), [editor])
+  const viewportRef = useRef<HTMLDivElement>(null)
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (e.deltaY && !e.deltaX && viewportRef.current) {
+      viewportRef.current.scrollLeft += e.deltaY
+    }
+  }, [])
 
   if (!editor?.isActive('table')) return null
 
   return (
-    <Group bg="var(--mantine-color-blue-light)" gap="xs" p={6} wrap="wrap">
-      <Text c="blue" fw={700} size="xs" tt="uppercase">Table</Text>
+    <ScrollArea
+      bg="var(--mantine-color-blue-light)"
+      offsetScrollbars="x"
+      scrollbars="x"
+      scrollbarSize={4}
+      style={{ overflow: 'hidden' }}
+      type="hover"
+      viewportRef={viewportRef}
+      onWheel={handleWheel}
+    >
+      <Group align="center" gap="xs" p={6} style={{ minWidth: 'max-content' }} wrap="nowrap">
+        <Text c="blue" fw={700} px={4} size="xs" tt="uppercase">
+          Table
+        </Text>
 
-      <Button.Group>
-        <Button size="compact-xs" variant="default" onClick={addColBefore}>+ Col ←</Button>
-        <Button size="compact-xs" variant="default" onClick={addColAfter}>+ Col →</Button>
-        <Button size="compact-xs" variant="default" onClick={deleteCol}>− Col</Button>
-      </Button.Group>
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.TableColumnBefore />
+          <RichTextEditor.TableColumnAfter />
+          <RichTextEditor.TableColumnDelete />
+        </RichTextEditor.ControlsGroup>
 
-      <Button.Group>
-        <Button size="compact-xs" variant="default" onClick={addRowBefore}>+ Row ↑</Button>
-        <Button size="compact-xs" variant="default" onClick={addRowAfter}>+ Row ↓</Button>
-        <Button size="compact-xs" variant="default" onClick={deleteRow}>− Row</Button>
-      </Button.Group>
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.TableRowBefore />
+          <RichTextEditor.TableRowAfter />
+          <RichTextEditor.TableRowDelete />
+        </RichTextEditor.ControlsGroup>
 
-      <Button.Group>
-        <Button size="compact-xs" variant="default" onClick={toggleHeaderRow}>Header row</Button>
-        <Button size="compact-xs" variant="default" onClick={toggleHeaderCol}>Header col</Button>
-      </Button.Group>
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.TableToggleHeaderRow />
+          <RichTextEditor.TableToggleHeaderColumn />
+        </RichTextEditor.ControlsGroup>
 
-      <Button color="red" size="compact-xs" variant="default" onClick={deleteTable}>
-        Delete table
-      </Button>
-    </Group>
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.TableMergeCells />
+          <RichTextEditor.TableSplitCell />
+        </RichTextEditor.ControlsGroup>
+
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.TableDelete />
+        </RichTextEditor.ControlsGroup>
+      </Group>
+    </ScrollArea>
   )
 })

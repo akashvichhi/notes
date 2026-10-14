@@ -252,3 +252,13 @@ html, body, #root { height: 100dvh; margin: 0; }
 [data-mantine-color-scheme="dark"] .tiptap pre .hljs-property {
   color: #79c0ff;
 }
+
+/* Responsive Image Styling in Editor */
+.tiptap img,
+.mantine-RichTextEditor-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--mantine-radius-md);
+  margin: 0.75rem 0;
+  display: block;
+}

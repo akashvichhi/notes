@@ -1,0 +1,1 @@
+function e(e){return/^\S+@\S+$/.test(e)?null:`Enter a valid email address`}function t(e){return e.length>=8?null:`Password must be at least 8 characters`}function n(e,t){return e===t.password?null:`Passwords do not match`}export{t as n,n as r,e as t};

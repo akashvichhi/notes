@@ -7,6 +7,7 @@ import { useForm } from '@mantine/form'
 
 import { normalizeError } from '@/api/client'
 import { useLogin } from '@/hooks/queries/useAuth'
+import { validateEmail } from '@/lib/validation'
 
 export const LoginPage = memo(function LoginPage() {
   const navigate = useNavigate()
@@ -15,7 +16,7 @@ export const LoginPage = memo(function LoginPage() {
   const form = useForm({
     initialValues: { email: '', password: '' },
     validate:      {
-      email:    (v) => (/^\S+@\S+$/.test(v) ? null : 'Enter a valid email address'),
+      email:    validateEmail,
       password: (v) => (v.length > 0 ? null : 'Enter your password'),
     },
   })

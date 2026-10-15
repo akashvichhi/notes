@@ -68,7 +68,7 @@ class NoteController extends Controller
 
     public function restore(RestoreNoteRequest $request, Note $note, RestoreNote $restoreNote)
     {
-        $this->authorize('delete', $note);
+        $this->authorize('restore', $note);
 
         return new NoteResource(
             $restoreNote($request->user(), $note, $request->validated('folder_id')),

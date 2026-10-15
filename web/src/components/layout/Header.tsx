@@ -7,8 +7,7 @@ import {
 } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { BOOTSTRAP_KEY } from '@/hooks/queries/useBootstrap'
-import { NOTE_KEY, NOTES_KEY } from '@/hooks/queries/useNotes'
+import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'

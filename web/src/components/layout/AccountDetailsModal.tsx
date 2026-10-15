@@ -1,10 +1,9 @@
-import { memo, type SyntheticEvent, useCallback, useState } from 'react'
+import { memo, type SyntheticEvent, useCallback, useEffect, useState } from 'react'
 
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
-import { notifications } from '@mantine/notifications'
-
 
 import { useMe, useUpdateProfile } from '@/hooks/queries/useAuth'
+import { showErrorToast, showSuccessToast } from '@/lib/notifications'
 
 export const AccountDetailsModal = memo(function AccountDetailsModal({
   onClose,
@@ -16,6 +15,13 @@ export const AccountDetailsModal = memo(function AccountDetailsModal({
 
   const [name, setName] = useState(user?.name ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name)
+      setEmail(user.email)
+    }
+  }, [user])
 
   const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.currentTarget.value)
@@ -32,14 +38,14 @@ export const AccountDetailsModal = memo(function AccountDetailsModal({
         { name, email },
         {
           onSuccess: () => {
-            notifications.show({ color: 'green', message: 'Account details updated successfully' })
+            showSuccessToast('Account details updated successfully')
             onClose()
           },
           onError: (err: unknown) => {
             const msg =
               (err as { response?: { data?: { message?: string } } })?.response?.data?.message
               ?? 'Failed to update account details'
-            notifications.show({ color: 'red', message: msg })
+            showErrorToast(msg)
           },
         },
       )

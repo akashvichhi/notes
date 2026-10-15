@@ -3,20 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import * as tagsApi from '@/api/tags'
 import { ALL_NOTES_LABEL } from '@/constants/labels'
+import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { getTagsArray } from '@/lib/bootstrap'
+import { slugify } from '@/lib/slugify'
 import { useUiStore } from '@/stores/uiStore'
 import type { Bootstrap, Note, Tag, UUID } from '@/types/api'
-
-import { BOOTSTRAP_KEY } from './useBootstrap'
-import { NOTE_KEY, NOTES_KEY } from './useNotes'
-
-function getTagsArray(tags: Bootstrap['tags'] | undefined): Tag[] {
-  if (!tags) return []
-  return Array.isArray(tags) ? tags : (tags.data ?? [])
-}
-
-function slugify(text: string): string {
-  return text.toLowerCase().trim().replace(/[\s\W-]+/g, '-')
-}
 
 export function useCreateTag() {
   const qc = useQueryClient()

@@ -1,10 +1,10 @@
 import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
-import { notifications } from '@mantine/notifications'
 
-
+import { MIN_PASSWORD_LENGTH } from '@/constants/limits'
 import { useUpdatePassword } from '@/hooks/queries/useAuth'
+import { showErrorToast, showSuccessToast } from '@/lib/notifications'
 
 export const ChangePasswordModal = memo(function ChangePasswordModal({
   onClose,
@@ -33,12 +33,12 @@ export const ChangePasswordModal = memo(function ChangePasswordModal({
     (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault()
       if (newPassword !== confirmPassword) {
-        notifications.show({ color: 'red', message: 'New passwords do not match' })
+        showErrorToast('Passwords do not match')
         return
       }
 
-      if (newPassword.length < 8) {
-        notifications.show({ color: 'red', message: 'Password must be at least 8 characters long' })
+      if (newPassword.length < MIN_PASSWORD_LENGTH) {
+        showErrorToast(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
         return
       }
 
@@ -50,14 +50,14 @@ export const ChangePasswordModal = memo(function ChangePasswordModal({
         },
         {
           onSuccess: () => {
-            notifications.show({ color: 'green', message: 'Password updated successfully' })
+            showSuccessToast('Password updated successfully')
             onClose()
           },
           onError: (err: unknown) => {
             const msg =
               (err as { response?: { data?: { message?: string } } })?.response?.data?.message
               ?? 'Failed to change password'
-            notifications.show({ color: 'red', message: msg })
+            showErrorToast(msg)
           },
         },
       )

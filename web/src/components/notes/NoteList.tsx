@@ -16,9 +16,9 @@ import {
 import { IconFolder, IconPlus } from '@tabler/icons-react'
 
 
-import { patchNote } from '@/api/notes'
 import { ListSkeleton } from '@/components/common/Skeletons'
 import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
+import { MAX_NOTE_TITLE_LENGTH } from '@/constants/limits'
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import {
   useCreateNote,
@@ -91,10 +91,10 @@ export const NoteList = memo(function NoteList({
       setRestoreModalNote(null)
       await restoreNote.mutateAsync(uuid)
       if (folderId !== null) {
-        await patchNote(uuid, { folder_id: folderId })
+        await moveNoteFolder.mutateAsync({ uuid, folder_id: folderId })
       }
     },
-    [restoreModalNote, restoreNote],
+    [restoreModalNote, restoreNote, moveNoteFolder],
   )
 
   const handleMoveToFolder = useCallback(
@@ -338,6 +338,7 @@ export const NoteList = memo(function NoteList({
               autoFocus
               data-autofocus
               label="Note title"
+              maxLength={MAX_NOTE_TITLE_LENGTH}
               placeholder="Enter note title"
               value={renameTitle}
               onChange={(e) => setRenameTitle(e.currentTarget.value)}

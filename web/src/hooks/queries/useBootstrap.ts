@@ -4,12 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 
 
 import { fetchBootstrap } from '@/api/bootstrap'
-import type { Folder, NoteListItem, Tag, User } from '@/types/api'
+import { BOOTSTRAP_KEY } from '@/constants/queryKeys'
+import { getFoldersArray, getTagsArray } from '@/lib/bootstrap'
+import type { NoteListItem, User } from '@/types/api'
 
-export const BOOTSTRAP_KEY = ['bootstrap'] as const
+export { BOOTSTRAP_KEY }
 
-const EMPTY_FOLDERS: Folder[] = []
-const EMPTY_TAGS: Tag[] = []
 const EMPTY_NOTES: NoteListItem[] = []
 
 export function useBootstrap() {
@@ -22,17 +22,8 @@ export function useBootstrap() {
     return 'data' in raw ? raw.data : raw
   }, [data?.user])
 
-  const folders = useMemo<Folder[]>(() => {
-    const raw = data?.folders
-    if (!raw) return EMPTY_FOLDERS
-    return Array.isArray(raw) ? raw : raw.data ?? EMPTY_FOLDERS
-  }, [data?.folders])
-
-  const tags = useMemo<Tag[]>(() => {
-    const raw = data?.tags
-    if (!raw) return EMPTY_TAGS
-    return Array.isArray(raw) ? raw : raw.data ?? EMPTY_TAGS
-  }, [data?.tags])
+  const folders = useMemo(() => getFoldersArray(data?.folders), [data?.folders])
+  const tags = useMemo(() => getTagsArray(data?.tags), [data?.tags])
 
   const counts = useMemo(() => data?.counts ?? null, [data?.counts])
 

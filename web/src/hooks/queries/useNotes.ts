@@ -3,28 +3,14 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 
 import * as notesApi from '@/api/notes'
 import { COPY_NOTE_SUFFIX, DEFAULT_NOTE_TITLE } from '@/constants/labels'
+import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { getFoldersArray, getTagsArray } from '@/lib/bootstrap'
+import { slugify } from '@/lib/slugify'
 import { useTabsStore } from '@/stores/tabsStore'
 import type { Scope } from '@/stores/uiStore'
-import type { Bootstrap, Folder, Note, NoteListItem, Tag, UUID } from '@/types/api'
+import type { Bootstrap, Note, NoteListItem, Tag, UUID } from '@/types/api'
 
-import { BOOTSTRAP_KEY } from './useBootstrap'
-
-export const NOTES_KEY = ['notes'] as const
-export const NOTE_KEY = ['note'] as const
-
-function getFoldersArray(folders: Bootstrap['folders'] | undefined): Folder[] {
-  if (!folders) return []
-  return Array.isArray(folders) ? folders : (folders.data ?? [])
-}
-
-function getTagsArray(tags: Bootstrap['tags'] | undefined): Tag[] {
-  if (!tags) return []
-  return Array.isArray(tags) ? tags : (tags.data ?? [])
-}
-
-function slugify(text: string): string {
-  return text.toLowerCase().trim().replace(/[\s\W-]+/g, '-')
-}
+export { NOTE_KEY, NOTES_KEY }
 
 export function useNote(uuid?: UUID | null) {
   const closeTab = useTabsStore((s) => s.close)

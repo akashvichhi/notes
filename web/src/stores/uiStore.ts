@@ -31,6 +31,7 @@ interface UiState {
   saveStatus: SaveStatus
   savedAt: number | null
   editorStats: EditorStats | null
+  retrySave: (() => void) | null
   setView: (v: View) => void
   toggleNav: () => void
   closeNav: () => void
@@ -39,6 +40,7 @@ interface UiState {
   setFilter: (f: string) => void
   setSaveStatus: (saveStatus: SaveStatus, savedAt?: number | null) => void
   setEditorStats: (editorStats: EditorStats | null) => void
+  setRetrySave: (retrySave: (() => void) | null) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -50,6 +52,7 @@ export const useUiStore = create<UiState>((set) => ({
   saveStatus:    'idle',
   savedAt:       null,
   editorStats:   null,
+  retrySave:     null,
   setView:       (view) => set({ view }),
   toggleNav:     () => set((s) => ({ navOpen: !s.navOpen })),
   closeNav:      () => set({ navOpen: false }),
@@ -61,4 +64,5 @@ export const useUiStore = create<UiState>((set) => ({
   setSaveStatus: (saveStatus, savedAt) =>
     set((s) => ({ saveStatus, savedAt: savedAt !== undefined ? savedAt : s.savedAt })),
   setEditorStats: (editorStats) => set({ editorStats }),
+  setRetrySave:   (retrySave) => set({ retrySave }),
 }))

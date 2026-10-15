@@ -21,4 +21,9 @@ class NotePolicy
     {
         return $note->user_id === $user->id;
     }
+
+    public function restore(User $user, Note $note): bool
+    {
+        return $note->user_id === $user->id;
+    }
 }

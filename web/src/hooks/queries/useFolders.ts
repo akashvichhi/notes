@@ -4,16 +4,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as foldersApi from '@/api/folders'
 import type { NotesPage } from '@/api/notes'
 import { ALL_NOTES_LABEL } from '@/constants/labels'
+import { BOOTSTRAP_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { getFoldersArray } from '@/lib/bootstrap'
 import { useUiStore } from '@/stores/uiStore'
 import type { Bootstrap, Folder, NoteListItem, UUID } from '@/types/api'
-
-import { BOOTSTRAP_KEY } from './useBootstrap'
-import { NOTES_KEY } from './useNotes'
-
-function getFoldersArray(folders: Bootstrap['folders'] | undefined): Folder[] {
-  if (!folders) return []
-  return Array.isArray(folders) ? folders : (folders.data ?? [])
-}
 
 export function useCreateFolder() {
   const qc = useQueryClient()

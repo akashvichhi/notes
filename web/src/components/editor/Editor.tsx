@@ -5,6 +5,7 @@ import { RichTextEditor } from '@mantine/tiptap'
 import { useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 
+import { ConflictSheet } from '@/components/common/ConflictSheet'
 import { useAutosave } from '@/hooks/useAutosave'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useKeyboardInset } from '@/hooks/useVisualViewport'
@@ -81,7 +82,14 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
     }
   }, [editor, setEditorStats])
 
-  const { onChange } = useAutosave(note, editor)
+  const {
+    onChange,
+    conflict,
+    clearConflict,
+    resolveKeepMine,
+    resolveKeepTheirs,
+    resolveSaveCopy,
+  } = useAutosave(note, editor)
 
   useEffect(() => {
     if (!editor) return
@@ -91,6 +99,15 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
 
   return (
     <Box className={mobile.editorRoot} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+      {conflict && (
+        <ConflictSheet
+          serverCopy={conflict}
+          onClose={clearConflict}
+          onKeepMine={resolveKeepMine}
+          onKeepTheirs={resolveKeepTheirs}
+          onSaveCopy={resolveSaveCopy}
+        />
+      )}
       <RichTextEditor editor={editor} style={{ display: 'contents' }}>
         <Box className={mobile.toolbar} style={{ transform: keyboardInset ? `translateY(-${keyboardInset}px)` : undefined }}>
           <EditorToolbar />

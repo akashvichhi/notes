@@ -5,6 +5,7 @@ namespace App\Services\Notes;
 use App\Models\Note;
 use App\Models\User;
 use App\Services\Tags\UpsertTags;
+use Illuminate\Support\Facades\DB;
 
 class SyncNoteTags
 {
@@ -13,9 +14,11 @@ class SyncNoteTags
     /** Replaces the whole set, creating any tag names that do not exist yet. */
     public function __invoke(User $user, Note $note, array $names): Note
     {
-        $tags = ($this->upsertTags)($user, $names);
-        $note->tags()->sync($tags->pluck('id'));
+        return DB::transaction(function () use ($user, $note, $names) {
+            $tags = ($this->upsertTags)($user, $names);
+            $note->tags()->sync($tags->pluck('id'));
 
-        return $note->fresh()->load(['folder', 'tags']);
+            return $note->fresh()->load(['folder', 'tags']);
+        });
     }
 }

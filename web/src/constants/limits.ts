@@ -1,0 +1,6 @@
+export const MAX_TAG_NAME_LENGTH = 60
+export const MAX_FOLDER_NAME_LENGTH = 120
+export const MAX_NOTE_TITLE_LENGTH = 255
+export const MIN_SEARCH_QUERY_LENGTH = 3
+export const MAX_SEARCH_QUERY_LENGTH = 120
+export const MIN_PASSWORD_LENGTH = 8

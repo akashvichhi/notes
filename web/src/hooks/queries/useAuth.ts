@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import * as authApi from '@/api/auth'
+import { AUTH_KEY } from '@/constants/queryKeys'
 import type { User } from '@/types/api'
 
-export const AUTH_KEY = ['me'] as const
+export { AUTH_KEY }
 
 export function useMe() {
   return useQuery<User | null>({
@@ -41,11 +42,7 @@ export function useLogout() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: authApi.logout,
-    onSuccess:  () => {
-      qc.setQueryData(AUTH_KEY, null)
-      qc.clear()
-    },
-    onError: () => {
+    onSettled:  () => {
       qc.setQueryData(AUTH_KEY, null)
       qc.clear()
     },

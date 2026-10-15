@@ -5,9 +5,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/react'
 
 import { normalizeError } from '@/api/client'
+import * as notesApi from '@/api/notes'
 import { type NotesPage, patchNote } from '@/api/notes'
-import { NOTE_KEY, NOTES_KEY } from '@/hooks/queries/useNotes'
+import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
 import { clearDraft, saveDraft } from '@/lib/drafts'
+import { showErrorToast, showSuccessToast } from '@/lib/notifications'
 import { useTabsStore } from '@/stores/tabsStore'
 import { type SaveStatus, useUiStore } from '@/stores/uiStore'
 import type { Note, NoteListItem } from '@/types/api'
@@ -21,6 +23,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
   const qc = useQueryClient()
   const setDirty = useTabsStore((s) => s.setDirty)
   const setSaveStatus = useUiStore((s) => s.setSaveStatus)
+  const setRetrySave = useUiStore((s) => s.setRetrySave)
 
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -175,7 +178,57 @@ export function useAutosave(note: Note, editor: Editor | null) {
     return () => window.removeEventListener('keydown', onKey, true)
   }, [])
 
+  useEffect(() => {
+    setRetrySave(() => () => { void save(true) })
+    return () => { setRetrySave(null) }
+  }, [save, setRetrySave])
+
   const clearConflict = useCallback(() => setConflict(null), [])
 
-  return { status, savedAt, conflict, clearConflict, onChange, saveNow: save }
+  const resolveKeepMine = useCallback(async () => {
+    if (!conflict) return
+    version.current = conflict.version
+    setConflict(null)
+    await save(true)
+  }, [conflict, save])
+
+  const resolveKeepTheirs = useCallback(() => {
+    if (!conflict || !editor) return
+    version.current = conflict.version
+    editor.commands.setContent(conflict.body, { emitUpdate: false })
+    void clearDraft(note.uuid)
+    setDirty(note.uuid, false)
+    qc.setQueryData([...NOTE_KEY, note.uuid], conflict)
+    setStatus('saved')
+    setSaveStatus('saved', Date.now())
+    setConflict(null)
+  }, [conflict, editor, note.uuid, qc, setDirty, setSaveStatus])
+
+  const resolveSaveCopy = useCallback(async () => {
+    if (!conflict || !editor) return
+    const body = editor.getJSON() as Note['body']
+    if (!body) return
+    try {
+      const newNote = await notesApi.createNote({ folder_id: note.folder?.uuid })
+      await notesApi.patchNote(newNote.uuid, { body, version: newNote.version })
+      resolveKeepTheirs()
+      qc.invalidateQueries({ queryKey: NOTES_KEY })
+      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      showSuccessToast('Saved your changes as a new note.')
+    } catch {
+      showErrorToast("Couldn't save copy of note.")
+    }
+  }, [conflict, editor, note.folder, qc, resolveKeepTheirs])
+
+  return {
+    status,
+    savedAt,
+    conflict,
+    clearConflict,
+    resolveKeepMine,
+    resolveKeepTheirs,
+    resolveSaveCopy,
+    onChange,
+    saveNow: save,
+  }
 }

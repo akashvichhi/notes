@@ -2,10 +2,8 @@ import { memo, useCallback, useState } from 'react'
 
 import {
   ActionIcon,
-  Button,
   Group,
   Menu,
-  Modal,
   NavLink,
   Stack,
   Text,
@@ -21,15 +19,18 @@ import {
   IconTrash,
 } from '@tabler/icons-react'
 
+import { RenameItemModal } from '@/components/common/RenameItemModal'
 import {
   ALL_NOTES_LABEL,
   STARRED_LABEL,
   TRASH_LABEL,
 } from '@/constants/labels'
+import { MAX_FOLDER_NAME_LENGTH, MAX_TAG_NAME_LENGTH } from '@/constants/limits'
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'
 import { useCreateTag, useDeleteTag, useRenameTag } from '@/hooks/queries/useTags'
 import { useIsPhone } from '@/hooks/useIsPhone'
+import { stopEventPropagation } from '@/lib/events'
 import { useUiStore } from '@/stores/uiStore'
 import type { Folder, Tag } from '@/types/api'
 
@@ -51,10 +52,7 @@ export const Sidebar = memo(function Sidebar() {
 
   // Rename modals for Folder and Tag
   const [renameFolderTarget, setRenameFolderTarget] = useState<Folder | null>(null)
-  const [renameFolderName, setRenameFolderName] = useState('')
-
   const [renameTagTarget, setRenameTagTarget] = useState<Tag | null>(null)
-  const [renameTagName, setRenameTagName] = useState('')
 
   const pick = useCallback(
     (next: Parameters<typeof setScope>[0]) => {
@@ -76,54 +74,6 @@ export const Sidebar = memo(function Sidebar() {
     setCreating(null)
     setDraftName('')
   }, [draftName, creating, createFolder, createTag])
-
-
-
-  const handleOpenRenameFolder = useCallback((folder: Folder) => {
-    setRenameFolderTarget(folder)
-    setRenameFolderName(folder.name)
-  }, [])
-
-  const handleCloseRenameFolder = useCallback(() => {
-    setRenameFolderTarget(null)
-    setRenameFolderName('')
-  }, [])
-
-  const handleConfirmRenameFolder = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault()
-      if (!renameFolderTarget) return
-      const name = renameFolderName.trim()
-      if (name && name !== renameFolderTarget.name) {
-        renameFolder.mutate({ uuid: renameFolderTarget.uuid, name })
-      }
-      handleCloseRenameFolder()
-    },
-    [renameFolderTarget, renameFolderName, renameFolder, handleCloseRenameFolder],
-  )
-
-  const handleOpenRenameTag = useCallback((tag: Tag) => {
-    setRenameTagTarget(tag)
-    setRenameTagName(tag.name)
-  }, [])
-
-  const handleCloseRenameTag = useCallback(() => {
-    setRenameTagTarget(null)
-    setRenameTagName('')
-  }, [])
-
-  const handleConfirmRenameTag = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault()
-      if (!renameTagTarget) return
-      const name = renameTagName.trim()
-      if (name && name !== renameTagTarget.name) {
-        renameTag.mutate({ uuid: renameTagTarget.uuid, name })
-      }
-      handleCloseRenameTag()
-    },
-    [renameTagTarget, renameTagName, renameTag, handleCloseRenameTag],
-  )
 
   return (
     <>
@@ -166,6 +116,7 @@ export const Sidebar = memo(function Sidebar() {
         {creating === 'folder' && (
           <TextInput
             autoFocus
+            maxLength={MAX_FOLDER_NAME_LENGTH}
             placeholder="Folder name"
             size="xs"
             value={draftName}
@@ -189,11 +140,9 @@ export const Sidebar = memo(function Sidebar() {
                 data-folder-actions="true"
                 gap={4}
                 wrap="nowrap"
-                onClick={(e) => {
-                  e.stopPropagation()
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
+                onClick={stopEventPropagation}
+                onMouseDown={stopEventPropagation}
+                onPointerDown={stopEventPropagation}
               >
                 <Text c="dimmed" size="xs">
                   {counts?.folders[f.uuid] ?? 0}
@@ -204,17 +153,15 @@ export const Sidebar = memo(function Sidebar() {
                       aria-label="Folder actions"
                       size="sm"
                       variant="subtle"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={stopEventPropagation}
+                      onMouseDown={stopEventPropagation}
+                      onPointerDown={stopEventPropagation}
                     >
                       <IconDots size={14} />
                     </ActionIcon>
                   </Menu.Target>
                   <Menu.Dropdown>
-                    <Menu.Item onClick={() => handleOpenRenameFolder(f)}>
+                    <Menu.Item onClick={() => setRenameFolderTarget(f)}>
                       Rename folder
                     </Menu.Item>
                     <Menu.Divider />
@@ -255,6 +202,7 @@ export const Sidebar = memo(function Sidebar() {
         {creating === 'tag' && (
           <TextInput
             autoFocus
+            maxLength={MAX_TAG_NAME_LENGTH}
             placeholder="Tag name"
             size="xs"
             value={draftName}
@@ -300,13 +248,13 @@ export const Sidebar = memo(function Sidebar() {
                     color="gray"
                     size="xs"
                     variant="subtle"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={stopEventPropagation}
                   >
                     <IconDots size={12} />
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
-                  <Menu.Item onClick={() => handleOpenRenameTag(t)}>
+                  <Menu.Item onClick={() => setRenameTagTarget(t)}>
                     Rename tag
                   </Menu.Item>
                   <Menu.Divider />
@@ -329,59 +277,33 @@ export const Sidebar = memo(function Sidebar() {
         />
       </Stack>
 
-      <Modal
-        centered
+      <RenameItemModal
+        initialValue={renameFolderTarget?.name ?? ''}
+        label="Folder name"
+        maxLength={MAX_FOLDER_NAME_LENGTH}
         opened={Boolean(renameFolderTarget)}
-        size="sm"
         title="Rename folder"
-        onClose={handleCloseRenameFolder}
-      >
-        <form onSubmit={handleConfirmRenameFolder}>
-          <Stack gap="sm">
-            <TextInput
-              autoFocus
-              data-autofocus
-              label="Folder name"
-              placeholder="Folder name"
-              value={renameFolderName}
-              onChange={(e) => setRenameFolderName(e.currentTarget.value)}
-            />
-            <Group justify="flex-end">
-              <Button variant="default" onClick={handleCloseRenameFolder}>
-                Cancel
-              </Button>
-              <Button type="submit">Rename</Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
+        onClose={() => setRenameFolderTarget(null)}
+        onConfirm={(name) => {
+          if (renameFolderTarget) {
+            renameFolder.mutate({ uuid: renameFolderTarget.uuid, name })
+          }
+        }}
+      />
 
-      <Modal
-        centered
+      <RenameItemModal
+        initialValue={renameTagTarget?.name ?? ''}
+        label="Tag name"
+        maxLength={MAX_TAG_NAME_LENGTH}
         opened={Boolean(renameTagTarget)}
-        size="sm"
         title="Rename tag"
-        onClose={handleCloseRenameTag}
-      >
-        <form onSubmit={handleConfirmRenameTag}>
-          <Stack gap="sm">
-            <TextInput
-              autoFocus
-              data-autofocus
-              label="Tag name"
-              placeholder="Tag name"
-              value={renameTagName}
-              onChange={(e) => setRenameTagName(e.currentTarget.value)}
-            />
-            <Group justify="flex-end">
-              <Button variant="default" onClick={handleCloseRenameTag}>
-                Cancel
-              </Button>
-              <Button type="submit">Rename</Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
+        onClose={() => setRenameTagTarget(null)}
+        onConfirm={(name) => {
+          if (renameTagTarget) {
+            renameTag.mutate({ uuid: renameTagTarget.uuid, name })
+          }
+        }}
+      />
     </>
   )
 })

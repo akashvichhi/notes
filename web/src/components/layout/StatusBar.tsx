@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react'
 
-import { Group, Text } from '@mantine/core'
+import { Group, Text, UnstyledButton } from '@mantine/core'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -14,7 +14,7 @@ export const StatusBar = memo(function StatusBar({
   savedAt: propSavedAt,
   words = 0,
   folderPath = null,
-  onRetry = () => {},
+  onRetry,
 }: {
   status?: SaveStatus
   savedAt?: number | null
@@ -25,6 +25,9 @@ export const StatusBar = memo(function StatusBar({
   const storeStatus = useUiStore((s) => s.saveStatus)
   const storeSavedAt = useUiStore((s) => s.savedAt)
   const editorStats = useUiStore((s) => s.editorStats)
+  const storeRetry = useUiStore((s) => s.retrySave)
+
+  const handleRetry = onRetry ?? (storeRetry ? () => storeRetry() : undefined)
 
   const status = propStatus ?? storeStatus
   const savedAt = propSavedAt ?? storeSavedAt
@@ -51,9 +54,11 @@ export const StatusBar = memo(function StatusBar({
         <Text c="dimmed" size="xs">Saved · {savedAtText}</Text>
       )}
       {status === 'error' && (
-        <Text c="orange" size="xs" style={{ cursor: 'pointer' }} onClick={onRetry}>
-          Couldn&apos;t save · retrying — Retry now
-        </Text>
+        <UnstyledButton aria-label="Retry saving note" style={{ cursor: 'pointer' }} onClick={handleRetry}>
+          <Text c="orange" size="xs">
+            Couldn&apos;t save · retrying — Retry now
+          </Text>
+        </UnstyledButton>
       )}
 
       <Text c="dimmed" size="xs" visibleFrom="sm">{statsText}</Text>

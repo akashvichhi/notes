@@ -7,6 +7,11 @@ import { useForm } from '@mantine/form'
 
 import { normalizeError } from '@/api/client'
 import { useRegister } from '@/hooks/queries/useAuth'
+import {
+  validateEmail,
+  validatePassword,
+  validatePasswordConfirmation,
+} from '@/lib/validation'
 
 export const RegisterPage = memo(function RegisterPage() {
   const navigate = useNavigate()
@@ -16,10 +21,9 @@ export const RegisterPage = memo(function RegisterPage() {
     initialValues: { name: '', email: '', password: '', password_confirmation: '' },
     validate:      {
       name:                  (v) => (v.trim().length > 0 ? null : 'Enter your name'),
-      email:                 (v) => (/^\S+@\S+$/.test(v) ? null : 'Enter a valid email address'),
-      password:              (v) => (v.length >= 8 ? null : 'Password must be at least 8 characters'),
-      password_confirmation: (v, values) =>
-        v === values.password ? null : 'Passwords do not match',
+      email:                 validateEmail,
+      password:              validatePassword,
+      password_confirmation: validatePasswordConfirmation,
     },
   })
 

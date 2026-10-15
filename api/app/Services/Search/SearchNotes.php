@@ -19,7 +19,6 @@ class SearchNotes
         $terms = SearchTerms::parse($q);
 
         $notes = $terms === [] ? collect() : Note::ownedBy($user)
-            ->whereNull('deleted_at')
             // Boolean mode with a trailing wildcard gives search-as-you-type and
             // partly compensates for MySQL having no stemming.
             ->whereRaw(

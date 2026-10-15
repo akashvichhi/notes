@@ -407,7 +407,8 @@ export function useTrashNote() {
       }
       notifications.show({ color: 'red', message: "Couldn't move note to trash." })
     },
-    onSettled: () => {
+    onSettled: (_data, _err, uuid) => {
+      qc.removeQueries({ queryKey: [...NOTE_KEY, uuid] })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },
@@ -515,7 +516,8 @@ export function useForceDeleteNote() {
       }
       notifications.show({ color: 'red', message: "Couldn't permanently delete note." })
     },
-    onSettled: () => {
+    onSettled: (_data, _err, uuid) => {
+      qc.removeQueries({ queryKey: [...NOTE_KEY, uuid] })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },

@@ -44,7 +44,12 @@ export const useTabsStore = create<TabsState>()(
       close: (uuid) => {
         const { tabs, activeUuid, closed } = get()
         const index = tabs.findIndex((t) => t.uuid === uuid)
-        if (index === -1) return
+        if (index === -1) {
+          if (activeUuid === uuid) {
+            set({ activeUuid: null })
+          }
+          return
+        }
 
         const removed = tabs[index]!
         const next = tabs.filter((t) => t.uuid !== uuid)

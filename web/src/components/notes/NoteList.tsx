@@ -18,6 +18,7 @@ import { IconFolder, IconPlus } from '@tabler/icons-react'
 
 import { patchNote } from '@/api/notes'
 import { ListSkeleton } from '@/components/common/Skeletons'
+import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import {
   useCreateNote,
@@ -32,6 +33,7 @@ import {
 } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { filterNotes } from '@/lib/filterNotes'
+import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'
 import type { NoteListItem, UUID } from '@/types/api'
 
@@ -47,6 +49,7 @@ export const NoteList = memo(function NoteList({
 }) {
   const { scope, filter, setView } = useUiStore()
   const isPhone = useIsPhone()
+  const closeTab = useTabsStore((s) => s.close)
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotes(scope)
   const { folders } = useBootstrap()
@@ -105,8 +108,23 @@ export const NoteList = memo(function NoteList({
   )
 
   const handleCreateNote = useCallback(() => {
-    createNote.mutate(scope.kind === 'folder' ? { folder_id: scope.uuid } : {})
-  }, [createNote, scope])
+    const uuid = crypto.randomUUID()
+    createNote.mutate(
+      { ...(scope.kind === 'folder' ? { folder_id: scope.uuid } : {}), uuid },
+      {
+        onSuccess: (newNote) => {
+          onSelectNote(newNote.uuid, newNote.title || DEFAULT_NOTE_TITLE)
+          if (isPhone) {
+            setView('editor')
+          }
+        },
+      },
+    )
+    onSelectNote(uuid, DEFAULT_NOTE_TITLE)
+    if (isPhone) {
+      setView('editor')
+    }
+  }, [createNote, scope, onSelectNote, isPhone, setView])
 
   const handleCloseRestoreModal = useCallback(() => {
     setRestoreModalNote(null)
@@ -168,11 +186,27 @@ export const NoteList = memo(function NoteList({
 
   return (
     <Stack gap="xs" h="100%" p="sm">
-      <Group justify="space-between">
-        <Text fw={700} size="sm">{scope.label}</Text>
-        <Group gap="xs">
-          <Text c="dimmed" size="xs">{totalCount} notes</Text>
+      <Group align="center" justify="space-between" wrap="nowrap">
+        <Group align="baseline" gap="xs" style={{ minWidth: 0, flex: 1 }} wrap="nowrap">
+          <Text truncate fw={700} size="sm">
+            {scope.label}
+          </Text>
+          <Text c="dimmed" size="xs" style={{ flexShrink: 0 }}>
+            {totalCount} {totalCount === 1 ? 'note' : 'notes'}
+          </Text>
         </Group>
+        {scope.kind !== 'trash' && (
+          <Button
+            aria-label="Create note"
+            leftSection={<IconPlus size={14} />}
+            loading={createNote.isPending}
+            size="xs"
+            variant="light"
+            onClick={handleCreateNote}
+          >
+            Create note
+          </Button>
+        )}
       </Group>
 
       <FilterInput
@@ -212,14 +246,20 @@ export const NoteList = memo(function NoteList({
                 active={note.uuid === activeUuid}
                 note={note}
                 onDuplicate={() => duplicateNote.mutate(note.uuid)}
-                onForceDelete={() => forceDeleteNote.mutate(note.uuid)}
+                onForceDelete={() => {
+                  closeTab(note.uuid)
+                  forceDeleteNote.mutate(note.uuid)
+                }}
                 onMoveToFolder={() => setMoveModalNote(note)}
                 onOpen={() => handleOpen(note.uuid, note.title)}
                 onRename={() => handleOpenRename(note)}
                 onRestore={() => restoreNote.mutate(note.uuid)}
                 onRestoreTo={() => setRestoreModalNote(note)}
                 onStar={() => starNote.mutate({ uuid: note.uuid, is_starred: !note.is_starred })}
-                onTrash={() => trashNote.mutate(note.uuid)}
+                onTrash={() => {
+                  closeTab(note.uuid)
+                  trashNote.mutate(note.uuid)
+                }}
               />
             ))}
             {hasNextPage && (

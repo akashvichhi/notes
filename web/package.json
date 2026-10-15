@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "build:prod": "npm run clean && npm run build",
     "deploy": "cd .. && git add . && git commit -m \"Prod: release\" && git push origin master",
+    "release": "npm run build:prod && npm run deploy",
     "lint": "eslint . --fix",
     "tsc": "tsc -b --noEmit",
     "check": "npm run lint && npm run tsc",

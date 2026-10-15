@@ -23,13 +23,11 @@ import {
 
 import {
   ALL_NOTES_LABEL,
-  DEFAULT_NOTE_TITLE,
   STARRED_LABEL,
   TRASH_LABEL,
 } from '@/constants/labels'
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'
-import { useCreateNote } from '@/hooks/queries/useNotes'
 import { useCreateTag, useDeleteTag, useRenameTag } from '@/hooks/queries/useTags'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useUiStore } from '@/stores/uiStore'
@@ -46,7 +44,6 @@ export const Sidebar = memo(function Sidebar() {
   const createTag = useCreateTag()
   const renameTag = useRenameTag()
   const deleteTag = useDeleteTag()
-  const createNote = useCreateNote()
 
   // Inline create, not a modal: naming a folder is one field.
   const [creating, setCreating] = useState<'folder' | 'tag' | null>(null)
@@ -80,9 +77,7 @@ export const Sidebar = memo(function Sidebar() {
     setDraftName('')
   }, [draftName, creating, createFolder, createTag])
 
-  const handleCreateNote = useCallback(() => {
-    createNote.mutate(scope.kind === 'folder' ? { folder_id: scope.uuid } : {})
-  }, [createNote, scope])
+
 
   const handleOpenRenameFolder = useCallback((folder: Folder) => {
     setRenameFolderTarget(folder)
@@ -133,15 +128,7 @@ export const Sidebar = memo(function Sidebar() {
   return (
     <>
       <Stack gap={2} h="100%" p="xs">
-        <Button
-          leftSection={<IconPlus size={16} />}
-          loading={createNote.isPending}
-          onClick={handleCreateNote}
-        >
-          {DEFAULT_NOTE_TITLE}
-        </Button>
-
-        <Text c="dimmed" fw={700} mt="md" px="xs" size="xs" tt="uppercase">
+        <Text c="dimmed" fw={700} px="xs" size="xs" tt="uppercase">
           Library
         </Text>
         <NavLink

@@ -18,7 +18,6 @@ import { TaskList } from '@tiptap/extension-task-list'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Typography } from '@tiptap/extension-typography'
-import { Underline } from '@tiptap/extension-underline'
 import { StarterKit } from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 
@@ -32,7 +31,6 @@ export const editorExtensions = [
     link:      false,
   }),
   Link.configure({ openOnClick: false, autolink: true }),
-  Underline,
   Highlight,
   TextStyle,
   Color,

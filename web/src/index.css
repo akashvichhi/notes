@@ -1,4 +1,10 @@
-html, body, #root { height: 100dvh; margin: 0; }
+html,
+body,
+#root {
+  height: 100dvh;
+  margin: 0;
+  overscroll-behavior: none;
+}
 
 /* ==========================================================================
    Code Blocks & Inline Code Styling (Light & Dark Mode)
@@ -80,10 +86,10 @@ html, body, #root { height: 100dvh; margin: 0; }
 }
 
 /* Light Mode Inline Code */
-[data-mantine-color-scheme="light"] .mantine-RichTextEditor-content :not(pre) > code,
-:root:not([data-mantine-color-scheme="dark"]) .mantine-RichTextEditor-content :not(pre) > code,
-[data-mantine-color-scheme="light"] .tiptap :not(pre) > code,
-:root:not([data-mantine-color-scheme="dark"]) .tiptap :not(pre) > code {
+[data-mantine-color-scheme="light"] .mantine-RichTextEditor-content :not(pre)>code,
+:root:not([data-mantine-color-scheme="dark"]) .mantine-RichTextEditor-content :not(pre)>code,
+[data-mantine-color-scheme="light"] .tiptap :not(pre)>code,
+:root:not([data-mantine-color-scheme="dark"]) .tiptap :not(pre)>code {
   font-family: var(--mantine-font-family-monospace);
   font-size: 0.85em;
   padding: 0.15em 0.45em;
@@ -190,8 +196,8 @@ html, body, #root { height: 100dvh; margin: 0; }
 }
 
 /* Dark Mode Inline Code */
-[data-mantine-color-scheme="dark"] .mantine-RichTextEditor-content :not(pre) > code,
-[data-mantine-color-scheme="dark"] .tiptap :not(pre) > code {
+[data-mantine-color-scheme="dark"] .mantine-RichTextEditor-content :not(pre)>code,
+[data-mantine-color-scheme="dark"] .tiptap :not(pre)>code {
   font-family: var(--mantine-font-family-monospace);
   font-size: 0.85em;
   padding: 0.15em 0.45em;
@@ -284,4 +290,3 @@ mark {
   padding: 1px 3px;
   border-radius: 3px;
 }
-

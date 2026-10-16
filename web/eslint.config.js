@@ -8,7 +8,7 @@ import importPlugin from 'eslint-plugin-import'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'src-tauri/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

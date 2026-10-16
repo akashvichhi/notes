@@ -1,9 +1,9 @@
 import { memo, useCallback, useState } from 'react'
 
-import { ActionIcon, Center, Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core'
+import { ActionIcon, Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core'
 import { spotlight } from '@mantine/spotlight'
 import {
-  IconChevronLeft, IconMenu2, IconMoon, IconNotes, IconRefresh, IconSearch, IconSun,
+  IconChevronLeft, IconMenu2, IconMoon, IconRefresh, IconSearch, IconSun,
 } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -12,6 +12,7 @@ import { BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY } from '@/constan
 import { getDb } from '@/db/connection'
 import { notesRepo } from '@/db/notesRepo'
 import { tagsRepo } from '@/db/tagsRepo'
+import { useMe } from '@/hooks/queries/useAuth'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { clearDraft } from '@/lib/drafts'
 import { showErrorToast, showSuccessToast } from '@/lib/notifications'
@@ -25,6 +26,7 @@ import { AccountMenu } from './AccountMenu'
 
 export const Header = memo(function Header() {
   const isPhone = useIsPhone()
+  const { data: user } = useMe()
   const { view, setView, toggleNav, scope } = useUiStore()
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const activeTab = useTabsStore((s) => s.tabs.find((t) => t.uuid === s.activeUuid))
@@ -193,14 +195,6 @@ export const Header = memo(function Header() {
         </ActionIcon>
       )}
 
-      {/* Brand mark: the favicon's shape, drawn with the icon set already
-          installed. No image asset, so it stays crisp and follows the theme. */}
-      <Group gap={8} visibleFrom="sm" wrap="nowrap">
-        <Center bg="blue.6" h={26} style={{ borderRadius: 7, flex: 'none' }} w={26}>
-          <IconNotes color="white" size={16} stroke={2} />
-        </Center>
-        <Text fw={600} size="sm">Notes</Text>
-      </Group>
       {isPhone && (
         <Text truncate fw={600} size="md" style={{ flex: 1 }}>
           {view === 'editor' && activeTitle ? activeTitle : scope.label}
@@ -230,7 +224,7 @@ export const Header = memo(function Header() {
       )}
 
       <Group gap={4} ml="auto">
-        <ActionIcon
+        {!!user && <ActionIcon
           aria-label="Refresh"
           loading={isRefreshing}
           size="lg"
@@ -238,7 +232,7 @@ export const Header = memo(function Header() {
           onClick={handleRefresh}
         >
           <IconRefresh size={18} />
-        </ActionIcon>
+        </ActionIcon>}
         <ActionIcon aria-label="Toggle colour scheme" size="lg" variant="subtle" onClick={toggleColorScheme}>
           {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
         </ActionIcon>

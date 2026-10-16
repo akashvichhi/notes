@@ -1,6 +1,5 @@
 import axios, { type AxiosInstance } from 'axios'
 
-import { NATIVE_API_BASE_URL, PRODUCTION_API_URL } from '@/constants/api'
 import { isNative } from '@/platform/isNative'
 import { loadToken } from '@/platform/secureStore'
 import type { Note } from '@/types/api'
@@ -13,15 +12,11 @@ export interface ApiError {
 }
 
 const getBaseUrl = (): string => {
-  if (isNative()) {
-    // Desktop and mobile app use notes.codespan.in in both development and production
-    return NATIVE_API_BASE_URL
-  }
-  return import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? PRODUCTION_API_URL : '/api/v1')
+  return import.meta.env.VITE_API_URL
 }
 
 export const api: AxiosInstance = axios.create({
-  baseURL:         getBaseUrl(),
+  baseURL:         getBaseUrl() + '/api/v1',
   headers:         { Accept: 'application/json' },
   // Cookies are for the browser build only. A packaged app is a different
   // origin, so SameSite cookies are never sent and these flags do nothing.
@@ -48,7 +43,7 @@ let csrfPrimed = false
 
 export async function ensureCsrf(): Promise<void> {
   if (isNative() || csrfPrimed) return
-  await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
+  await axios.get(getBaseUrl() + '/sanctum/csrf-cookie', { withCredentials: true })
   csrfPrimed = true
 }
 

@@ -47,9 +47,8 @@ export default defineConfig({
   },
   clearScreen: false,
   server:      {
-    port:       5173,
-    strictPort: true,
-    watch:      {
+    port:  5173,
+    watch: {
       ignored: ['**/src-tauri/**'],
     },
     // Same-origin in development, so there is no cross-site cookie at all.

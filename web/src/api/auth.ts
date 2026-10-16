@@ -28,6 +28,19 @@ export async function logout(): Promise<void> {
   await api.post('/logout')
 }
 
+export async function issueToken(payload: {
+  email: string
+  password: string
+  device_name: string
+}): Promise<string> {
+  const { data } = await api.post<{ token: string }>('/tokens', payload)
+  return data.token
+}
+
+export async function revokeToken(): Promise<void> {
+  await api.delete('/tokens/current')
+}
+
 export async function updateProfile(payload: { name?: string; email?: string }): Promise<User> {
   const { data } = await api.patch<{ data: User }>('/me', payload)
   return data.data

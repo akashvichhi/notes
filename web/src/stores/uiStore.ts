@@ -1,19 +1,21 @@
 import { create } from 'zustand'
 
 import { ALL_NOTES_LABEL } from '@/constants/labels'
+import { isNative } from '@/platform/isNative'
 import type { UUID } from '@/types/api'
 
 
 export type View = 'folders' | 'list' | 'editor'
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+export type Container = 'cloud' | 'local'
 
 export type Scope =
-  | { kind: 'all'; label: string }
-  | { kind: 'starred'; label: string }
-  | { kind: 'trash'; label: string }
-  | { kind: 'folder'; uuid: UUID; label: string }
-  | { kind: 'tag'; slug: string; label: string }
-  | { kind: 'search'; q: string; label: string }
+  | { kind: 'all'; container?: Container; label: string }
+  | { kind: 'starred'; container?: Container; label: string }
+  | { kind: 'trash'; container?: Container; label: string }
+  | { kind: 'folder'; container?: Container; uuid: UUID; label: string }
+  | { kind: 'tag'; container?: Container; slug: string; label: string }
+  | { kind: 'search'; container?: Container; q: string; label: string }
 
 export interface EditorStats {
   words: number
@@ -47,7 +49,7 @@ export const useUiStore = create<UiState>((set) => ({
   view:          'list',
   navOpen:       false,
   listCollapsed: false,
-  scope:         { kind: 'all', label: ALL_NOTES_LABEL },
+  scope:         { kind: 'all', container: isNative() ? 'local' : 'cloud', label: ALL_NOTES_LABEL },
   filter:        '',
   saveStatus:    'idle',
   savedAt:       null,
@@ -59,7 +61,14 @@ export const useUiStore = create<UiState>((set) => ({
   toggleList:    () => set((s) => ({ listCollapsed: !s.listCollapsed })),
   // Changing scope always clears the filter: a sticky filter makes notes
   // look deleted.
-  setScope:      (scope) => set({ scope, filter: '' }),
+  setScope:      (scope) =>
+    set((s) => ({
+      scope: {
+        ...scope,
+        container: scope.container ?? (s.scope as { container?: Container }).container ?? 'cloud',
+      } as Scope,
+      filter: '',
+    })),
   setFilter:     (filter) => set({ filter }),
   setSaveStatus: (saveStatus, savedAt) =>
     set((s) => ({ saveStatus, savedAt: savedAt !== undefined ? savedAt : s.savedAt })),

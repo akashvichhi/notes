@@ -1,5 +1,8 @@
 import axios, { type AxiosInstance } from 'axios'
 
+import { NATIVE_API_BASE_URL, PRODUCTION_API_URL } from '@/constants/api'
+import { isNative } from '@/platform/isNative'
+import { loadToken } from '@/platform/secureStore'
 import type { Note } from '@/types/api'
 
 export interface ApiError {
@@ -9,19 +12,37 @@ export interface ApiError {
   serverCopy?: Note
 }
 
+const getBaseUrl = (): string => {
+  if (isNative()) {
+    // Desktop and mobile app use notes.codespan.in in both development and production
+    return NATIVE_API_BASE_URL
+  }
+  return import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? PRODUCTION_API_URL : '/api/v1')
+}
+
 export const api: AxiosInstance = axios.create({
-  baseURL:         import.meta.env.VITE_API_URL ?? '/api/v1',
-  withCredentials: true,
-  // Required since axios 1.6: without it the X-XSRF-TOKEN header is not
-  // attached and every write returns 419 CSRF token mismatch.
-  withXSRFToken:   true,
+  baseURL:         getBaseUrl(),
   headers:         { Accept: 'application/json' },
+  // Cookies are for the browser build only. A packaged app is a different
+  // origin, so SameSite cookies are never sent and these flags do nothing.
+  withCredentials: !isNative(),
+  withXSRFToken:   !isNative(),
+})
+
+api.interceptors.request.use(async (config) => {
+  if (isNative()) {
+    const token = await loadToken()
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+  }
+  return config
 })
 
 let csrfPrimed = false
 
 export async function ensureCsrf(): Promise<void> {
-  if (csrfPrimed) return
+  if (isNative() || csrfPrimed) return
   await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
   csrfPrimed = true
 }

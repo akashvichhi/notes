@@ -23,10 +23,12 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/tokens', [AuthController::class, 'issueToken'])->middleware('throttle:5,1');
     Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:5,1');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1');
 
     Route::middleware('auth:sanctum')->group(function () {
+        Route::delete('/tokens/current', [AuthController::class, 'revokeToken']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::patch('/me', [ProfileController::class, 'update']);

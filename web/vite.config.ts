@@ -45,8 +45,13 @@ export default defineConfig({
       },
     },
   },
-  server: {
-    port:  5173,
+  clearScreen: false,
+  server:      {
+    port:       5173,
+    strictPort: true,
+    watch:      {
+      ignored: ['**/src-tauri/**'],
+    },
     // Same-origin in development, so there is no cross-site cookie at all.
     proxy: {
       '/api':     { target: 'http://127.0.0.1:8000', changeOrigin: true },

@@ -5,6 +5,7 @@ export const BOOTSTRAP_KEY = ['bootstrap'] as const
 export const NOTES_KEY = ['notes'] as const
 export const NOTE_KEY = ['note'] as const
 export const AUTH_KEY = ['me'] as const
+export const LOCAL_SIDEBAR_KEY = ['local-sidebar'] as const
 
 export const queryKeys = {
   bootstrap: BOOTSTRAP_KEY,

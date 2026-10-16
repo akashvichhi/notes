@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { hostname, platform } from '@tauri-apps/plugin-os'
 
 import * as authApi from '@/api/auth'
 import { AUTH_KEY } from '@/constants/queryKeys'
+import { isNative } from '@/platform/isNative'
+import { deleteToken, saveToken } from '@/platform/secureStore'
 import type { User } from '@/types/api'
 
 export { AUTH_KEY }
@@ -25,24 +28,78 @@ export function useMe() {
 export function useLogin() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: authApi.login,
-    onSuccess:  (user) => qc.setQueryData(AUTH_KEY, user),
+    mutationFn: async (creds: { email: string; password: string }) => {
+      if (isNative()) {
+        const host = await hostname().catch(() => 'Desktop')
+        let plat = 'desktop'
+        try {
+          plat = platform()
+        } catch {
+          // ignore
+        }
+        const token = await authApi.issueToken({
+          ...creds,
+          device_name: `${host ?? 'Device'} · ${plat}`,
+        })
+        await saveToken(token)
+        return authApi.fetchMe()
+      }
+
+      return authApi.login(creds)
+    },
+    onSuccess: (user) => qc.setQueryData(AUTH_KEY, user),
   })
 }
 
 export function useRegister() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: authApi.register,
-    onSuccess:  (user) => qc.setQueryData(AUTH_KEY, user),
+    mutationFn: async (creds: {
+      name: string
+      email: string
+      password: string
+      password_confirmation: string
+    }) => {
+      if (isNative()) {
+        await authApi.register(creds)
+        const host = await hostname().catch(() => 'Desktop')
+        let plat = 'desktop'
+        try {
+          plat = platform()
+        } catch {
+          // ignore
+        }
+        const token = await authApi.issueToken({
+          email:       creds.email,
+          password:    creds.password,
+          device_name: `${host ?? 'Device'} · ${plat}`,
+        })
+        await saveToken(token)
+        return authApi.fetchMe()
+      }
+
+      return authApi.register(creds)
+    },
+    onSuccess: (user) => qc.setQueryData(AUTH_KEY, user),
   })
 }
 
 export function useLogout() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: authApi.logout,
-    onSettled:  () => {
+    mutationFn: async () => {
+      if (isNative()) {
+        try {
+          await authApi.revokeToken()
+        } finally {
+          await deleteToken()
+        }
+        return
+      }
+
+      return authApi.logout()
+    },
+    onSettled: () => {
       qc.setQueryData(AUTH_KEY, null)
       qc.clear()
     },

@@ -31,7 +31,7 @@ window.addEventListener('vite:preloadError', (event) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider defaultColorScheme="auto" theme={theme}>
+    <MantineProvider defaultColorScheme="dark" theme={theme}>
       <ModalsProvider>
         <Notifications position="bottom-center" />
         <App />

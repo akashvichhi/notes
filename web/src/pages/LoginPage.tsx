@@ -54,6 +54,10 @@ export const LoginPage = memo(function LoginPage() {
             <Button component={Link} to="/register" variant="white">
               Create an account
             </Button>
+
+            <Button component={Link} to="/" variant="subtle">
+              Continue without signing in (local notes)
+            </Button>
           </Stack>
         </form>
       </Paper>

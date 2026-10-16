@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-import { Avatar, Loader, Menu, Overlay, Stack, Text } from '@mantine/core'
+import { Avatar, Button, Loader, Menu, Overlay, Stack, Text } from '@mantine/core'
 import { IconLock, IconLogout, IconUser } from '@tabler/icons-react'
 
 
@@ -48,6 +48,14 @@ export const AccountMenu = memo(function AccountMenu() {
       onSettled: () => navigate('/login'),
     })
   }, [logout, navigate])
+
+  if (!user) {
+    return (
+      <Button size="xs" variant="light" onClick={() => navigate('/login')}>
+        Sign in
+      </Button>
+    )
+  }
 
   return (
     <>

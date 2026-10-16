@@ -1,43 +1,27 @@
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback } from 'react'
 
-import {
-  ActionIcon,
-  Group,
-  Menu,
-  NavLink,
-  Stack,
-  Text,
-  TextInput,
-  UnstyledButton,
-} from '@mantine/core'
-import {
-  IconDots,
-  IconFolder,
-  IconNote,
-  IconPlus,
-  IconStar,
-  IconTrash,
-} from '@tabler/icons-react'
+import { ScrollArea, Stack } from '@mantine/core'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { RenameItemModal } from '@/components/common/RenameItemModal'
-import {
-  ALL_NOTES_LABEL,
-  STARRED_LABEL,
-  TRASH_LABEL,
-} from '@/constants/labels'
-import { MAX_FOLDER_NAME_LENGTH, MAX_TAG_NAME_LENGTH } from '@/constants/limits'
+import { ContainerSection } from '@/components/layout/ContainerSection'
+import { LOCAL_SIDEBAR_KEY } from '@/constants/queryKeys'
+import { foldersRepo } from '@/db/foldersRepo'
+import { notesRepo } from '@/db/notesRepo'
+import { tagsRepo } from '@/db/tagsRepo'
+import { useMe } from '@/hooks/queries/useAuth'
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'
 import { useCreateTag, useDeleteTag, useRenameTag } from '@/hooks/queries/useTags'
-import { useIsPhone } from '@/hooks/useIsPhone'
-import { stopEventPropagation } from '@/lib/events'
-import { useUiStore } from '@/stores/uiStore'
-import type { Folder, Tag } from '@/types/api'
+import { slugify } from '@/lib/slugify'
+import { isNative } from '@/platform/isNative'
+import type { Container } from '@/types/api'
 
 export const Sidebar = memo(function Sidebar() {
+  const qc = useQueryClient()
+  const { data: user } = useMe()
   const { folders, tags, counts } = useBootstrap()
-  const { scope, setScope, setView } = useUiStore()
-  const isPhone = useIsPhone()
+  const native = isNative()
+  const signedIn = Boolean(user)
 
   const createFolder = useCreateFolder()
   const renameFolder = useRenameFolder()
@@ -46,264 +30,173 @@ export const Sidebar = memo(function Sidebar() {
   const renameTag = useRenameTag()
   const deleteTag = useDeleteTag()
 
-  // Inline create, not a modal: naming a folder is one field.
-  const [creating, setCreating] = useState<'folder' | 'tag' | null>(null)
-  const [draftName, setDraftName] = useState('')
-
-  // Rename modals for Folder and Tag
-  const [renameFolderTarget, setRenameFolderTarget] = useState<Folder | null>(null)
-  const [renameTagTarget, setRenameTagTarget] = useState<Tag | null>(null)
-
-  const pick = useCallback(
-    (next: Parameters<typeof setScope>[0]) => {
-      setScope(next)
-      if (isPhone) setView('list')
+  const { data: localData } = useQuery({
+    queryKey: LOCAL_SIDEBAR_KEY,
+    queryFn:  async () => {
+      if (!native) return null
+      const [f, t, notes, trashed] = await Promise.all([
+        foldersRepo.list('local'),
+        tagsRepo.list('local'),
+        notesRepo.list('local'),
+        notesRepo.list('local', { trashed: true }),
+      ])
+      const folderCounts: Record<string, number> = {}
+      notes.forEach((n) => {
+        if (n.folder?.uuid) {
+          folderCounts[n.folder.uuid] = (folderCounts[n.folder.uuid] ?? 0) + 1
+        }
+      })
+      const starred = notes.filter((n) => n.is_starred).length
+      const tagCounts: Record<string, number> = {}
+      notes.forEach((n) => {
+        n.tags?.forEach((tagName) => {
+          const slug = slugify(tagName)
+          tagCounts[slug] = (tagCounts[slug] ?? 0) + 1
+        })
+      })
+      return {
+        folders: f,
+        tags:    t,
+        counts:  {
+          all:     notes.length,
+          starred,
+          trashed: trashed.length,
+          folders: folderCounts,
+          tags:    tagCounts,
+        },
+      }
     },
-    [setScope, isPhone, setView],
+    enabled: native,
+  })
+
+  const localFolders = localData?.folders ?? []
+  const localTags = localData?.tags ?? []
+  const localCounts = localData?.counts ?? {
+    all:     0,
+    starred: 0,
+    trashed: 0,
+    folders: {},
+    tags:    {},
+  }
+
+  const refreshLocal = useCallback(() => {
+    qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
+  }, [qc])
+
+  const handleCreateFolder = useCallback(
+    async (name: string, container: Container) => {
+      if (container === 'cloud' && !signedIn) {
+        return
+      }
+      if (container === 'local') {
+        const uuid = crypto.randomUUID()
+        await foldersRepo.upsert({
+          uuid,
+          container:       'local',
+          parent_uuid:     null,
+          name,
+          color:           null,
+          position:        localFolders.length,
+          deleted_at:      null,
+          dirty:           false,
+          server_revision: null,
+        })
+        refreshLocal()
+      } else {
+        createFolder.mutate({ name })
+      }
+    },
+    [createFolder, localFolders.length, refreshLocal, signedIn],
   )
 
-  const commitInline = useCallback(() => {
-    const name = draftName.trim()
-    if (name) {
-      if (creating === 'folder') {
-        createFolder.mutate({ name })
+  const handleCreateTag = useCallback(
+    async (name: string, container: Container) => {
+      if (container === 'cloud' && !signedIn) {
+        return
+      }
+      if (container === 'local') {
+        const uuid = crypto.randomUUID()
+        await tagsRepo.upsert({
+          uuid,
+          container:       'local',
+          name,
+          slug:            slugify(name),
+          deleted_at:      null,
+          dirty:           false,
+          server_revision: null,
+        })
+        refreshLocal()
       } else {
         createTag.mutate({ name })
       }
-    }
-    setCreating(null)
-    setDraftName('')
-  }, [draftName, creating, createFolder, createTag])
+    },
+    [createTag, refreshLocal, signedIn],
+  )
 
   return (
-    <>
-      <Stack gap={2} h="100%" p="xs">
-        <Text c="dimmed" fw={700} px="xs" size="xs" tt="uppercase">
-          Library
-        </Text>
-        <NavLink
-          active={scope.kind === 'all'}
-          label={ALL_NOTES_LABEL}
-          leftSection={<IconNote size={16} />}
-          rightSection={<Text c="dimmed" size="xs">{counts?.all ?? 0}</Text>}
-          onClick={() => pick({ kind: 'all', label: ALL_NOTES_LABEL })}
-        />
-        <NavLink
-          active={scope.kind === 'starred'}
-          label={STARRED_LABEL}
-          leftSection={<IconStar size={16} />}
-          rightSection={<Text c="dimmed" size="xs">{counts?.starred ?? 0}</Text>}
-          onClick={() => pick({ kind: 'starred', label: STARRED_LABEL })}
+    <ScrollArea h="100%">
+      <Stack gap="xs" p="xs">
+        <ContainerSection
+          container="cloud"
+          counts={counts ?? undefined}
+          folders={folders}
+          signedIn={signedIn}
+          tags={tags}
+          title="Cloud"
+          onCreateFolder={(name) => handleCreateFolder(name, 'cloud')}
+          onCreateTag={(name) => handleCreateTag(name, 'cloud')}
+          onDeleteFolder={(uuid) => deleteFolder.mutate(uuid)}
+          onDeleteTag={(uuid) => deleteTag.mutate(uuid)}
+          onRenameFolder={(uuid, name) => renameFolder.mutate({ uuid, name })}
+          onRenameTag={(uuid, name) => renameTag.mutate({ uuid, name })}
         />
 
-        <Group justify="space-between" mt="md" px="xs">
-          <Text c="dimmed" fw={700} size="xs" tt="uppercase">
-            Folders
-          </Text>
-          <ActionIcon
-            aria-label="New folder"
-            size="sm"
-            variant="subtle"
-            onClick={() => {
-              setCreating('folder')
-              setDraftName('')
+        {native && (
+          <ContainerSection
+            container="local"
+            counts={localCounts}
+            folders={localFolders}
+            tags={localTags}
+            title="On This Device"
+            onCreateFolder={(name) => handleCreateFolder(name, 'local')}
+            onCreateTag={(name) => handleCreateTag(name, 'local')}
+            onDeleteFolder={async (uuid) => {
+              await foldersRepo.softDelete(uuid, 'local')
+              refreshLocal()
             }}
-          >
-            <IconPlus size={14} />
-          </ActionIcon>
-        </Group>
-
-        {creating === 'folder' && (
-          <TextInput
-            autoFocus
-            maxLength={MAX_FOLDER_NAME_LENGTH}
-            placeholder="Folder name"
-            size="xs"
-            value={draftName}
-            onBlur={commitInline}
-            onChange={(e) => setDraftName(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitInline()
-              if (e.key === 'Escape') setCreating(null)
+            onDeleteTag={async (uuid) => {
+              await tagsRepo.softDelete(uuid, 'local')
+              refreshLocal()
+            }}
+            onRenameFolder={async (uuid, name) => {
+              const f = await foldersRepo.get(uuid, 'local')
+              if (f) {
+                await foldersRepo.upsert({
+                  ...f,
+                  container:       'local',
+                  name,
+                  deleted_at:      null,
+                  dirty:           false,
+                  server_revision: null,
+                })
+                refreshLocal()
+              }
+            }}
+            onRenameTag={async (uuid, name) => {
+              await tagsRepo.upsert({
+                uuid,
+                container:       'local',
+                name,
+                slug:            slugify(name),
+                deleted_at:      null,
+                dirty:           false,
+                server_revision: null,
+              })
+              refreshLocal()
             }}
           />
         )}
-
-        {folders.map((f) => (
-          <NavLink
-            key={f.uuid}
-            active={scope.kind === 'folder' && scope.uuid === f.uuid}
-            label={f.name}
-            leftSection={<IconFolder size={16} />}
-            rightSection={
-              <Group
-                data-folder-actions="true"
-                gap={4}
-                wrap="nowrap"
-                onClick={stopEventPropagation}
-                onMouseDown={stopEventPropagation}
-                onPointerDown={stopEventPropagation}
-              >
-                <Text c="dimmed" size="xs">
-                  {counts?.folders[f.uuid] ?? 0}
-                </Text>
-                <Menu withinPortal position="bottom-end">
-                  <Menu.Target>
-                    <ActionIcon
-                      aria-label="Folder actions"
-                      size="sm"
-                      variant="subtle"
-                      onClick={stopEventPropagation}
-                      onMouseDown={stopEventPropagation}
-                      onPointerDown={stopEventPropagation}
-                    >
-                      <IconDots size={14} />
-                    </ActionIcon>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item onClick={() => setRenameFolderTarget(f)}>
-                      Rename folder
-                    </Menu.Item>
-                    <Menu.Divider />
-                    <Menu.Item color="red" onClick={() => deleteFolder.mutate(f.uuid)}>
-                      Delete folder
-                    </Menu.Item>
-                    <Text c="dimmed" pb="xs" px="sm" size="xs">
-                      Notes inside move to All notes — nothing is deleted.
-                    </Text>
-                  </Menu.Dropdown>
-                </Menu>
-              </Group>
-            }
-            onClick={(e) => {
-              if ((e.target as HTMLElement).closest('[data-folder-actions]')) return
-              pick({ kind: 'folder', uuid: f.uuid, label: f.name })
-            }}
-          />
-        ))}
-
-        <Group justify="space-between" mt="md" px="xs">
-          <Text c="dimmed" fw={700} size="xs" tt="uppercase">
-            Tags
-          </Text>
-          <ActionIcon
-            aria-label="New tag"
-            size="sm"
-            variant="subtle"
-            onClick={() => {
-              setCreating('tag')
-              setDraftName('')
-            }}
-          >
-            <IconPlus size={14} />
-          </ActionIcon>
-        </Group>
-
-        {creating === 'tag' && (
-          <TextInput
-            autoFocus
-            maxLength={MAX_TAG_NAME_LENGTH}
-            placeholder="Tag name"
-            size="xs"
-            value={draftName}
-            onBlur={commitInline}
-            onChange={(e) => setDraftName(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitInline()
-              if (e.key === 'Escape') setCreating(null)
-            }}
-          />
-        )}
-
-        <Group gap={6} px="xs" wrap="wrap">
-          {tags.map((t) => (
-            <Group
-              key={t.uuid}
-              gap={2}
-              style={{
-                borderRadius: 'var(--mantine-radius-xl)',
-                background:   scope.kind === 'tag' && scope.slug === t.slug
-                  ? 'var(--mantine-color-blue-light)'
-                  : 'var(--mantine-color-default-hover)',
-                padding: '2px 4px 2px 8px',
-                border:  '1px solid var(--mantine-color-default-border)',
-              }}
-              wrap="nowrap"
-            >
-              <UnstyledButton
-                onClick={() => pick({ kind: 'tag', slug: t.slug, label: `#${t.name}` })}
-              >
-                <Text fw={500} size="xs" style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  #{t.name}{' '}
-                  <Text span c="dimmed" size="xs">
-                    {counts?.tags[t.slug] ?? 0}
-                  </Text>
-                </Text>
-              </UnstyledButton>
-
-              <Menu withinPortal position="bottom-start" shadow="md">
-                <Menu.Target>
-                  <ActionIcon
-                    aria-label={`Tag ${t.name} actions`}
-                    color="gray"
-                    size="xs"
-                    variant="subtle"
-                    onClick={stopEventPropagation}
-                  >
-                    <IconDots size={12} />
-                  </ActionIcon>
-                </Menu.Target>
-                <Menu.Dropdown>
-                  <Menu.Item onClick={() => setRenameTagTarget(t)}>
-                    Rename tag
-                  </Menu.Item>
-                  <Menu.Divider />
-                  <Menu.Item color="red" onClick={() => deleteTag.mutate(t.uuid)}>
-                    Delete tag
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-            </Group>
-          ))}
-        </Group>
-
-        <NavLink
-          active={scope.kind === 'trash'}
-          label={TRASH_LABEL}
-          leftSection={<IconTrash size={16} />}
-          mt="auto"
-          rightSection={<Text c="dimmed" size="xs">{counts?.trashed ?? 0}</Text>}
-          onClick={() => pick({ kind: 'trash', label: TRASH_LABEL })}
-        />
       </Stack>
-
-      <RenameItemModal
-        initialValue={renameFolderTarget?.name ?? ''}
-        label="Folder name"
-        maxLength={MAX_FOLDER_NAME_LENGTH}
-        opened={Boolean(renameFolderTarget)}
-        title="Rename folder"
-        onClose={() => setRenameFolderTarget(null)}
-        onConfirm={(name) => {
-          if (renameFolderTarget) {
-            renameFolder.mutate({ uuid: renameFolderTarget.uuid, name })
-          }
-        }}
-      />
-
-      <RenameItemModal
-        initialValue={renameTagTarget?.name ?? ''}
-        label="Tag name"
-        maxLength={MAX_TAG_NAME_LENGTH}
-        opened={Boolean(renameTagTarget)}
-        title="Rename tag"
-        onClose={() => setRenameTagTarget(null)}
-        onConfirm={(name) => {
-          if (renameTagTarget) {
-            renameTag.mutate({ uuid: renameTagTarget.uuid, name })
-          }
-        }}
-      />
-    </>
+    </ScrollArea>
   )
 })

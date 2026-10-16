@@ -3,12 +3,16 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 
 import * as notesApi from '@/api/notes'
 import { COPY_NOTE_SUFFIX, DEFAULT_NOTE_TITLE } from '@/constants/labels'
-import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { AUTH_KEY, BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { notesSource } from '@/data/notesSource'
+import { notesRepo } from '@/db/notesRepo'
+import { tagsRepo } from '@/db/tagsRepo'
 import { getFoldersArray, getTagsArray } from '@/lib/bootstrap'
 import { slugify } from '@/lib/slugify'
+import { isNative } from '@/platform/isNative'
 import { useTabsStore } from '@/stores/tabsStore'
-import type { Scope } from '@/stores/uiStore'
-import type { Bootstrap, Note, NoteListItem, Tag, UUID } from '@/types/api'
+import { useUiStore, type Scope } from '@/stores/uiStore'
+import type { Bootstrap, Container, Note, NoteListItem, Tag, UUID } from '@/types/api'
 
 export { NOTE_KEY, NOTES_KEY }
 
@@ -19,6 +23,14 @@ export function useNote(uuid?: UUID | null) {
     queryKey: [...NOTE_KEY, uuid],
     queryFn:  async () => {
       if (!uuid) return null
+      if (isNative()) {
+        const local = await notesRepo.get(uuid)
+        if (!local) {
+          closeTab(uuid)
+          return null
+        }
+        return local
+      }
       try {
         return await notesApi.fetchNote(uuid)
       } catch (err: unknown) {
@@ -64,13 +76,32 @@ function scopeKey(scope: Scope): string {
 }
 
 export function useNotes(scope: Scope) {
+  const native = isNative()
+  const container = scope.container ?? (native ? 'local' : 'cloud')
+
   return useInfiniteQuery({
-    queryKey: [...NOTES_KEY, scopeKey(scope)],
-    queryFn:  ({ pageParam }) =>
-      notesApi.fetchNotes({
+    queryKey: [...NOTES_KEY, container, scopeKey(scope)],
+    queryFn:  async ({ pageParam }) => {
+      if (native) {
+        const rows = await notesSource.list({ ...scope, container })
+        return {
+          data: rows,
+          meta: {
+            current_page: 1,
+            from:         1,
+            last_page:    1,
+            path:         '',
+            per_page:     rows.length,
+            to:           rows.length,
+            total:        rows.length,
+          },
+        }
+      }
+      return notesApi.fetchNotes({
         ...scopeParams(scope),
         page: pageParam ? String(pageParam) : undefined,
-      }),
+      })
+    },
     initialPageParam: 1,
     getNextPageParam: (last) =>
       last.meta.current_page < last.meta.last_page
@@ -85,8 +116,31 @@ export function useStarNote(_scope?: Scope) {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ uuid, is_starred }: { uuid: string; is_starred: boolean }) =>
-      notesApi.patchNote(uuid, { is_starred }),
+    mutationFn: async ({ uuid, is_starred }: { uuid: string; is_starred: boolean }) => {
+      if (isNative()) {
+        const note = await notesRepo.get(uuid)
+        const isLocal = !note || note.container === 'local'
+        if (note) {
+          await notesRepo.upsert({
+            ...note,
+            container:       note.container ?? 'local',
+            folder_uuid:     note.folder?.uuid ?? null,
+            plain_text:      (note as { plain_text?: string }).plain_text ?? '',
+            is_starred,
+            updated_at:      new Date().toISOString(),
+            server_version:  note.version,
+            server_revision: null,
+            dirty:           !isLocal,
+          })
+        }
+        if (isLocal) {
+          return note ? { ...note, is_starred } : null
+        }
+        const user = qc.getQueryData(AUTH_KEY)
+        if (!user) throw new Error('Sign in required for cloud notes')
+      }
+      return notesApi.patchNote(uuid, { is_starred })
+    },
     onMutate: async ({ uuid, is_starred }) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
@@ -145,6 +199,7 @@ export function useStarNote(_scope?: Scope) {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
@@ -154,8 +209,32 @@ export function useRenameNote() {
   const setTitle = useTabsStore((s) => s.setTitle)
 
   return useMutation({
-    mutationFn: ({ uuid, title }: { uuid: string; title: string }) =>
-      notesApi.patchNote(uuid, { title }),
+    mutationFn: async ({ uuid, title }: { uuid: string; title: string }) => {
+      if (isNative()) {
+        const note = await notesRepo.get(uuid)
+        const isLocal = !note || note.container === 'local'
+        if (note) {
+          await notesRepo.upsert({
+            ...note,
+            container:       note.container ?? 'local',
+            folder_uuid:     note.folder?.uuid ?? null,
+            title,
+            title_locked:    true,
+            plain_text:      (note as { plain_text?: string }).plain_text ?? '',
+            updated_at:      new Date().toISOString(),
+            server_version:  note.version,
+            server_revision: null,
+            dirty:           !isLocal,
+          })
+        }
+        if (isLocal) {
+          return note ? { ...note, title } : null
+        }
+        const user = qc.getQueryData(AUTH_KEY)
+        if (!user) throw new Error('Sign in required for cloud notes')
+      }
+      return notesApi.patchNote(uuid, { title })
+    },
     onMutate: async ({ uuid, title }) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
@@ -204,6 +283,7 @@ export function useRenameNote() {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
@@ -213,8 +293,34 @@ export function useCreateNote() {
   const openTab = useTabsStore((s) => s.open)
 
   return useMutation({
-    mutationFn: (payload: { folder_id?: UUID; uuid?: UUID }) => {
+    mutationFn: async (payload: { folder_id?: UUID; uuid?: UUID; container?: Container }) => {
       const uuid = payload.uuid || crypto.randomUUID()
+      const scope = useUiStore.getState().scope
+      const container: Container = payload.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
+
+      if (isNative()) {
+        await notesRepo.upsert({
+          uuid,
+          container,
+          folder_uuid:     payload.folder_id ?? null,
+          title:           DEFAULT_NOTE_TITLE,
+          title_locked:    false,
+          body:            { type: 'doc', content: [] },
+          plain_text:      '',
+          excerpt:         '',
+          is_starred:      false,
+          word_count:      0,
+          updated_at:      new Date().toISOString(),
+          deleted_at:      null,
+          server_version:  null,
+          server_revision: null,
+          dirty:           container === 'cloud',
+        })
+        const created = await notesRepo.get(uuid)
+        if (!created) throw new Error('Failed to create note')
+        return created
+      }
+
       return notesApi.createNote({ ...payload, uuid })
     },
     onMutate: async (payload) => {
@@ -321,6 +427,7 @@ export function useCreateNote() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
@@ -328,8 +435,20 @@ export function useCreateNote() {
 export function useTrashNote() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: notesApi.trashNote,
-    onMutate:   async (uuid: string) => {
+    mutationFn: async (uuid: string) => {
+      if (isNative()) {
+        const note = await notesRepo.get(uuid)
+        const isLocal = !note || note.container === 'local'
+        await notesRepo.softDelete(uuid)
+        if (isLocal) {
+          return
+        }
+        const user = qc.getQueryData(AUTH_KEY)
+        if (!user) throw new Error('Sign in required for cloud notes')
+      }
+      return notesApi.trashNote(uuid)
+    },
+    onMutate: async (uuid: string) => {
       // Close open tab immediately
       useTabsStore.getState().close(uuid)
 
@@ -404,8 +523,20 @@ export function useTrashNote() {
 export function useRestoreNote() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: notesApi.restoreNote,
-    onMutate:   async (uuid: string) => {
+    mutationFn: async (uuid: string) => {
+      if (isNative()) {
+        const note = await notesRepo.get(uuid)
+        const isLocal = !note || note.container === 'local'
+        await notesRepo.restore(uuid)
+        if (isLocal) {
+          return
+        }
+        const user = qc.getQueryData(AUTH_KEY)
+        if (!user) throw new Error('Sign in required for cloud notes')
+      }
+      return notesApi.restoreNote(uuid)
+    },
+    onMutate: async (uuid: string) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
 
@@ -451,6 +582,7 @@ export function useRestoreNote() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
@@ -458,8 +590,20 @@ export function useRestoreNote() {
 export function useForceDeleteNote() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: notesApi.forceDeleteNote,
-    onMutate:   async (uuid: string) => {
+    mutationFn: async (uuid: string) => {
+      if (isNative()) {
+        const note = await notesRepo.get(uuid)
+        const isLocal = !note || note.container === 'local'
+        await notesRepo.hardDelete(uuid)
+        if (isLocal) {
+          return
+        }
+        const user = qc.getQueryData(AUTH_KEY)
+        if (!user) throw new Error('Sign in required for cloud notes')
+      }
+      return notesApi.forceDeleteNote(uuid)
+    },
+    onMutate: async (uuid: string) => {
       // Close open tab immediately
       useTabsStore.getState().close(uuid)
 
@@ -506,6 +650,7 @@ export function useForceDeleteNote() {
       qc.removeQueries({ queryKey: [...NOTE_KEY, uuid] })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
@@ -513,8 +658,46 @@ export function useForceDeleteNote() {
 export function useDuplicateNote() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: notesApi.duplicateNote,
-    onMutate:   async (sourceUuid: string) => {
+    mutationFn: async (sourceUuid: string) => {
+      if (isNative()) {
+        const source = await notesRepo.get(sourceUuid)
+        const isLocal = !source || source.container === 'local'
+        if (isLocal) {
+          const newUuid = crypto.randomUUID()
+          const copyTitle = source?.title ? `${source.title}${COPY_NOTE_SUFFIX}` : `${DEFAULT_NOTE_TITLE}${COPY_NOTE_SUFFIX}`
+          const now = new Date().toISOString()
+          if (source) {
+            await notesRepo.upsert({
+              uuid:            newUuid,
+              container:       'local',
+              folder_uuid:     source.folder?.uuid ?? null,
+              title:           copyTitle,
+              title_locked:    source.title_locked,
+              body:            source.body,
+              plain_text:      (source as { plain_text?: string }).plain_text ?? '',
+              excerpt:         source.excerpt,
+              is_starred:      false,
+              word_count:      source.word_count,
+              deleted_at:      null,
+              updated_at:      now,
+              server_version:  null,
+              server_revision: null,
+              dirty:           false,
+            })
+            if (source.tags?.length) {
+              await tagsRepo.setNoteTags(newUuid, source.tags, 'local')
+            }
+          }
+          const created = await notesRepo.get(newUuid)
+          if (!created) throw new Error('Failed to duplicate note')
+          return created
+        }
+        const user = qc.getQueryData(AUTH_KEY)
+        if (!user) throw new Error('Sign in required for cloud notes')
+      }
+      return notesApi.duplicateNote(sourceUuid)
+    },
+    onMutate: async (sourceUuid: string) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
 
@@ -644,6 +827,7 @@ export function useDuplicateNote() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
@@ -653,8 +837,31 @@ export function useSyncNoteTags() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ uuid, names }: { uuid: UUID; names: string[] }) =>
-      notesApi.syncNoteTags(uuid, names),
+    mutationFn: async ({ uuid, names }: { uuid: UUID; names: string[] }) => {
+      if (isNative()) {
+        const note = await notesRepo.get(uuid)
+        const isLocal = !note || note.container === 'local'
+        if (note) {
+          await tagsRepo.setNoteTags(uuid, names, note.container ?? 'local')
+          await notesRepo.upsert({
+            ...note,
+            container:       note.container ?? 'local',
+            folder_uuid:     note.folder?.uuid ?? null,
+            plain_text:      (note as { plain_text?: string }).plain_text ?? '',
+            updated_at:      new Date().toISOString(),
+            server_version:  note.version,
+            server_revision: null,
+            dirty:           !isLocal,
+          })
+        }
+        if (isLocal) {
+          return
+        }
+        const user = qc.getQueryData(AUTH_KEY)
+        if (!user) throw new Error('Sign in required for cloud notes')
+      }
+      return notesApi.syncNoteTags(uuid, names)
+    },
     onMutate: async ({ uuid, names }) => {
       await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
@@ -725,6 +932,7 @@ export function useSyncNoteTags() {
       qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
@@ -734,8 +942,30 @@ export function useMoveNoteFolder() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ uuid, folder_id }: { uuid: UUID; folder_id: UUID | null }) =>
-      notesApi.patchNote(uuid, { folder_id }),
+    mutationFn: async ({ uuid, folder_id }: { uuid: UUID; folder_id: UUID | null }) => {
+      if (isNative()) {
+        const note = await notesRepo.get(uuid)
+        const isLocal = !note || note.container === 'local'
+        if (note) {
+          await notesRepo.upsert({
+            ...note,
+            container:       note.container ?? 'local',
+            folder_uuid:     folder_id,
+            plain_text:      (note as { plain_text?: string }).plain_text ?? '',
+            updated_at:      new Date().toISOString(),
+            server_version:  note.version,
+            server_revision: null,
+            dirty:           !isLocal,
+          })
+        }
+        if (isLocal) {
+          return
+        }
+        const user = qc.getQueryData(AUTH_KEY)
+        if (!user) throw new Error('Sign in required for cloud notes')
+      }
+      return notesApi.patchNote(uuid, { folder_id })
+    },
     onMutate: async ({ uuid, folder_id }) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
@@ -806,6 +1036,7 @@ export function useMoveNoteFolder() {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }

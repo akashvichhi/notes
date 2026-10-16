@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 
 import {
   Box,
@@ -13,12 +14,13 @@ import {
   Text,
   TextInput,
 } from '@mantine/core'
-import { IconFolder, IconPlus } from '@tabler/icons-react'
+import { IconCloud, IconFolder, IconPlus } from '@tabler/icons-react'
 
 
 import { ListSkeleton } from '@/components/common/Skeletons'
 import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
 import { MAX_NOTE_TITLE_LENGTH } from '@/constants/limits'
+import { useMe } from '@/hooks/queries/useAuth'
 import { useBootstrap } from '@/hooks/queries/useBootstrap'
 import {
   useCreateNote,
@@ -47,7 +49,10 @@ export const NoteList = memo(function NoteList({
   activeUuid?: string | null
   onSelectNote: (uuid: string, title?: string) => void
 }) {
+  const navigate = useNavigate()
+  const { data: user } = useMe()
   const { scope, filter, setView } = useUiStore()
+  const isCloudSignedOut = scope.container === 'cloud' && !user
   const isPhone = useIsPhone()
   const closeTab = useTabsStore((s) => s.close)
 
@@ -195,7 +200,7 @@ export const NoteList = memo(function NoteList({
             {totalCount} {totalCount === 1 ? 'note' : 'notes'}
           </Text>
         </Group>
-        {scope.kind !== 'trash' && (
+        {scope.kind !== 'trash' && !isCloudSignedOut && (
           <Button
             aria-label="Create note"
             leftSection={<IconPlus size={14} />}
@@ -217,7 +222,22 @@ export const NoteList = memo(function NoteList({
       />
 
       <ScrollArea style={{ flex: 1 }} onBottomReached={handleBottomReached}>
-        {isLoading ? (
+        {isCloudSignedOut ? (
+          <Center h={240}>
+            <Stack align="center" gap="xs" maw={280} ta="center">
+              <IconCloud opacity={0.4} size={36} />
+              <Text fw={600} size="sm">
+                Cloud sync is inactive
+              </Text>
+              <Text c="dimmed" size="xs">
+                Sign in to access, create, and sync Cloud notes across devices.
+              </Text>
+              <Button size="xs" variant="light" onClick={() => navigate('/login')}>
+                Sign in to Cloud
+              </Button>
+            </Stack>
+          </Center>
+        ) : isLoading ? (
           <ListSkeleton />
         ) : filtered.length === 0 ? (
           <Center h={180}>

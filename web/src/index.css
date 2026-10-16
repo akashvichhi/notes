@@ -262,3 +262,26 @@ html, body, #root { height: 100dvh; margin: 0; }
   margin: 0.75rem 0;
   display: block;
 }
+
+/* ==========================================================================
+   Spotlight Search & Highlights Styling (Subtle selection, no blue flash)
+   ========================================================================== */
+.mantine-Spotlight-action:where([data-selected]),
+.mantine-Spotlight-action[data-selected="true"] {
+  background-color: var(--mantine-color-default-hover) !important;
+  color: var(--mantine-color-text) !important;
+  --action-description-color: var(--mantine-color-dimmed) !important;
+  --action-description-opacity: 1 !important;
+}
+
+.mantine-Spotlight-action:hover {
+  background-color: var(--mantine-color-default-hover);
+}
+
+mark {
+  background-color: rgba(250, 176, 5, 0.35);
+  color: inherit;
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+

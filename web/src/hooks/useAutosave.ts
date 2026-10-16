@@ -8,8 +8,10 @@ import { normalizeError } from '@/api/client'
 import * as notesApi from '@/api/notes'
 import { type NotesPage, patchNote } from '@/api/notes'
 import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { notesRepo } from '@/db/notesRepo'
 import { clearDraft, saveDraft } from '@/lib/drafts'
 import { showErrorToast, showSuccessToast } from '@/lib/notifications'
+import { isNative } from '@/platform/isNative'
 import { useTabsStore } from '@/stores/tabsStore'
 import { type SaveStatus, useUiStore } from '@/stores/uiStore'
 import type { Note, NoteListItem } from '@/types/api'
@@ -55,8 +57,62 @@ export function useAutosave(note: Note, editor: Editor | null) {
       setSaveStatus('saving')
 
       try {
-        const updated = await patchNote(note.uuid, { body, version: version.current })
-        version.current = updated.version
+        let updated: Note
+        const isLocal = note.container === 'local' || (!note.container && isNative())
+
+        if (isNative()) {
+          const plainText = editor.getText()
+          const excerpt = plainText.slice(0, 150)
+          const wordCount = plainText.trim() ? plainText.trim().split(/\s+/).length : 0
+          const nowStr = new Date().toISOString()
+          const existing = await notesRepo.get(note.uuid)
+          const title = existing?.title ?? note.title
+
+          await notesRepo.upsert({
+            uuid:            note.uuid,
+            container:       note.container ?? 'local',
+            folder_uuid:     note.folder?.uuid ?? null,
+            title,
+            title_locked:    Boolean(note.title_locked),
+            body,
+            plain_text:      plainText,
+            excerpt,
+            is_starred:      Boolean(note.is_starred),
+            word_count:      wordCount,
+            updated_at:      nowStr,
+            deleted_at:      null,
+            server_version:  note.version,
+            server_revision: null,
+            dirty:           !isLocal,
+          })
+
+          if (!isLocal) {
+            try {
+              updated = await patchNote(note.uuid, { body, version: version.current })
+              version.current = updated.version
+            } catch {
+              updated = {
+                ...note,
+                body,
+                excerpt,
+                word_count: wordCount,
+                updated_at: nowStr,
+              }
+            }
+          } else {
+            updated = {
+              ...note,
+              body,
+              excerpt,
+              word_count: wordCount,
+              updated_at: nowStr,
+            }
+          }
+        } else {
+          updated = await patchNote(note.uuid, { body, version: version.current })
+          version.current = updated.version
+        }
+
         retries.current = 0
 
         await clearDraft(note.uuid)
@@ -121,7 +177,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
         timer.current = setTimeout(() => void saveRef.current(), backoff)
       }
     },
-    [editor, note.uuid, qc, setDirty, setSaveStatus]
+    [editor, note, qc, setDirty, setSaveStatus]
   )
 
   useEffect(() => {

@@ -239,7 +239,7 @@ export const notesRepo = {
 
       if (match) {
         const rows = await db.select<Record<string, unknown>[]>(
-          `SELECT n.*, f.name AS folder_name,
+          `SELECT n.*, fld.name AS folder_name,
             (SELECT json_group_array(t.name) FROM note_tag nt JOIN tags t ON t.uuid = nt.tag_uuid WHERE nt.note_uuid = n.uuid) AS tags_json
            FROM notes_fts f
            JOIN notes n ON n.uuid = f.uuid
@@ -273,5 +273,28 @@ export const notesRepo = {
       container ? [likePattern, container] : [likePattern],
     )
     return rows.map(rowToListItem)
+  },
+
+  async getDirtyCloudNotes(): Promise<Note[]> {
+    const db = await getDb()
+    const query = `
+      SELECT n.*, f.name AS folder_name,
+        (SELECT json_group_array(t.name) FROM note_tag nt JOIN tags t ON t.uuid = nt.tag_uuid WHERE nt.note_uuid = n.uuid) AS tags_json
+      FROM notes n
+      LEFT JOIN folders f ON f.uuid = n.folder_uuid
+      WHERE n.container = 'cloud' AND n.dirty = 1
+    `
+    const rows = await db.select<Record<string, unknown>[]>(query)
+    return rows.map(rowToNote)
+  },
+
+  async clearContainer(container: Container): Promise<void> {
+    const db = await getDb()
+    try {
+      await db.execute('DELETE FROM notes_fts WHERE container = $1', [container])
+    } catch {
+      // Ignore if FTS table does not exist
+    }
+    await db.execute('DELETE FROM notes WHERE container = $1', [container])
   },
 }

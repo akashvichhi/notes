@@ -33,11 +33,16 @@ api.interceptors.request.use(async (config) => {
   if (isNative()) {
     const token = await loadToken()
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      if (typeof config.headers?.set === 'function') {
+        config.headers.set('Authorization', `Bearer ${token}`)
+      } else {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
   }
   return config
 })
+
 
 let csrfPrimed = false
 

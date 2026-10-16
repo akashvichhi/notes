@@ -2,7 +2,6 @@
 node_modules/
 vendor/
 target/
-src-tauri/
-web/src-tauri/
-
+src-tauri/target/
+web/src-tauri/target/
 

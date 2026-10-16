@@ -23,8 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
-# Tauri / Rust desktop files & build outputs
-src-tauri/
+# Tauri / Rust build outputs
+src-tauri/target/
 target/
+
 
 

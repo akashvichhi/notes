@@ -2,9 +2,10 @@ import { memo, useCallback } from 'react'
 
 import { ActionIcon, Group, Loader, Menu, ScrollArea, Text, UnstyledButton } from '@mantine/core'
 import { IconPlus, IconX } from '@tabler/icons-react'
-
+import { useQueryClient } from '@tanstack/react-query'
 
 import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
+import { NOTE_KEY } from '@/constants/queryKeys'
 import { useCreateNote } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useTabsStore } from '@/stores/tabsStore'
@@ -120,8 +121,14 @@ export const TabBar = memo(function TabBar() {
   const isPhone = useIsPhone()
   const { tabs, activeUuid, activate, close, closeOthers, closeAll, reopen } = useTabsStore()
   const createNote = useCreateNote()
-
-  const handleActivate = useCallback((uuid: string) => activate(uuid), [activate])
+  const qc = useQueryClient()
+  const handleActivate = useCallback(
+    (uuid: string) => {
+      activate(uuid)
+      void qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+    },
+    [activate, qc],
+  )
   const handleClose = useCallback((uuid: string) => close(uuid), [close])
   const handleCloseOthers = useCallback((uuid: string) => closeOthers(uuid), [closeOthers])
   const handleCreateNote = useCallback(() => {

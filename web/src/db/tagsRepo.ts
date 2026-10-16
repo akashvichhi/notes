@@ -94,4 +94,13 @@ export const tagsRepo = {
       await db.execute('INSERT OR IGNORE INTO note_tag (note_uuid, tag_uuid) VALUES ($1, $2)', [noteUuid, tagUuid])
     }
   },
+
+  async clearContainer(container: Container): Promise<void> {
+    const db = await getDb()
+    await db.execute(
+      'DELETE FROM note_tag WHERE note_uuid IN (SELECT uuid FROM notes WHERE container = $1)',
+      [container],
+    )
+    await db.execute('DELETE FROM tags WHERE container = $1', [container])
+  },
 }

@@ -12,7 +12,9 @@ import { slugify } from '@/lib/slugify'
 import { isNative } from '@/platform/isNative'
 import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore, type Scope } from '@/stores/uiStore'
-import type { Bootstrap, Container, Note, NoteListItem, Tag, UUID } from '@/types/api'
+import { syncEngine } from '@/sync/engine'
+import { outbox } from '@/sync/outbox'
+import type { Bootstrap, Container, Counts, Folder, Note, NoteListItem, Tag, UUID } from '@/types/api'
 
 export { NOTE_KEY, NOTES_KEY }
 
@@ -23,14 +25,69 @@ export function useNote(uuid?: UUID | null) {
     queryKey: [...NOTE_KEY, uuid],
     queryFn:  async () => {
       if (!uuid) return null
+
       if (isNative()) {
         const local = await notesRepo.get(uuid)
-        if (!local) {
-          closeTab(uuid)
-          return null
+        const isLocalContainer = local?.container === 'local' || (!local && useUiStore.getState().scope.container === 'local')
+
+        // Local notes stay strictly on the local machine
+        if (isLocalContainer) {
+          if (!local) {
+            closeTab(uuid)
+            return null
+          }
+          return local
         }
-        return local
+
+        // For cloud notes: if online, always fetch latest note content from server
+        if (navigator.onLine) {
+          try {
+            const remote = await notesApi.fetchNote(uuid)
+            if (remote) {
+              await notesRepo.upsert({
+                uuid:            remote.uuid,
+                container:       'cloud',
+                folder_uuid:     remote.folder?.uuid ?? null,
+                title:           remote.title,
+                title_locked:    Boolean(remote.title_locked),
+                body:            remote.body,
+                plain_text:      remote.plain_text ?? '',
+                excerpt:         remote.excerpt,
+                is_starred:      Boolean(remote.is_starred),
+                word_count:      remote.word_count,
+                updated_at:      remote.updated_at,
+                deleted_at:      remote.deleted_at,
+                server_version:  remote.version,
+                server_revision: null,
+                dirty:           false,
+              })
+              if (remote.tags) {
+                await tagsRepo.setNoteTags(remote.uuid, remote.tags, 'cloud')
+              }
+              return remote
+            }
+          } catch (err: unknown) {
+            const error = err as { response?: { status?: number }; status?: number }
+            if (error.response?.status === 404 || error.status === 404) {
+              closeTab(uuid)
+              return null
+            }
+            // If network fails (e.g. server down or timeout), fall back to local cached copy
+            if (local) return local
+            throw err
+          }
+        }
+
+        // Offline: return local copy
+        if (local) {
+          return local
+        }
+
+        closeTab(uuid)
+        return null
       }
+
+      // Web platform (not native): fetch directly from API
       try {
         return await notesApi.fetchNote(uuid)
       } catch (err: unknown) {
@@ -42,8 +99,10 @@ export function useNote(uuid?: UUID | null) {
         throw err
       }
     },
-    enabled: Boolean(uuid),
-    retry:   (failureCount, err) => {
+    enabled:        Boolean(uuid),
+    staleTime:      0,
+    refetchOnMount: 'always',
+    retry:          (failureCount, err) => {
       const error = err as { response?: { status?: number }; status?: number }
       if (error.response?.status === 404 || error.status === 404) {
         return false
@@ -132,12 +191,17 @@ export function useStarNote(_scope?: Scope) {
             server_revision: null,
             dirty:           !isLocal,
           })
+          if (!isLocal) {
+            await outbox.enqueue({
+              kind:      'meta',
+              uuid,
+              changes:   { is_starred },
+              container: 'cloud',
+            })
+            void syncEngine.run()
+          }
         }
-        if (isLocal) {
-          return note ? { ...note, is_starred } : null
-        }
-        const user = qc.getQueryData(AUTH_KEY)
-        if (!user) throw new Error('Sign in required for cloud notes')
+        return note ? { ...note, is_starred } : null
       }
       return notesApi.patchNote(uuid, { is_starred })
     },
@@ -145,10 +209,15 @@ export function useStarNote(_scope?: Scope) {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+      await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevSingleNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevLocal = qc.getQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY)
+
+      const noteContainer = prevSingleNote?.container ?? useUiStore.getState().scope.container ?? 'local'
+      const isLocal = noteContainer === 'local'
 
       // 1. Update all cached note lists
       qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
@@ -167,21 +236,35 @@ export function useStarNote(_scope?: Scope) {
         qc.setQueryData<Note>([...NOTE_KEY, uuid], { ...prevSingleNote, is_starred })
       }
 
-      // 3. Update sidebar starred count
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
-        if (!old) return old
-        const currentStarred = old.counts?.starred ?? 0
-        const delta = is_starred ? 1 : -1
-        return {
-          ...old,
-          counts: {
-            ...old.counts,
-            starred: Math.max(0, currentStarred + delta),
-          },
-        }
-      })
+      // 3. Update sidebar starred count in matching container only
+      const delta = is_starred ? 1 : -1
+      if (isLocal) {
+        qc.setQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY, (old) => {
+          if (!old) return old
+          const currentStarred = old.counts?.starred ?? 0
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              starred: Math.max(0, currentStarred + delta),
+            },
+          }
+        })
+      } else {
+        qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+          if (!old) return old
+          const currentStarred = old.counts?.starred ?? 0
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              starred: Math.max(0, currentStarred + delta),
+            },
+          }
+        })
+      }
 
-      return { prevNotes, prevSingleNote, prevBootstrap }
+      return { prevNotes, prevSingleNote, prevBootstrap, prevLocal }
     },
     onError: (_e, { uuid }, ctx) => {
       if (ctx?.prevNotes) {
@@ -192,6 +275,9 @@ export function useStarNote(_scope?: Scope) {
       }
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      if (ctx?.prevLocal) {
+        qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
       notifications.show({ color: 'red', message: "Couldn't update that note." })
     },
@@ -226,12 +312,17 @@ export function useRenameNote() {
             server_revision: null,
             dirty:           !isLocal,
           })
+          if (!isLocal) {
+            await outbox.enqueue({
+              kind:      'meta',
+              uuid,
+              changes:   { title, title_locked: true },
+              container: 'cloud',
+            })
+            void syncEngine.run()
+          }
         }
-        if (isLocal) {
-          return note ? { ...note, title } : null
-        }
-        const user = qc.getQueryData(AUTH_KEY)
-        if (!user) throw new Error('Sign in required for cloud notes')
+        return note ? { ...note, title, title_locked: true } : null
       }
       return notesApi.patchNote(uuid, { title })
     },
@@ -316,6 +407,15 @@ export function useCreateNote() {
           server_revision: null,
           dirty:           container === 'cloud',
         })
+        if (container === 'cloud') {
+          await outbox.enqueue({
+            kind:      'create',
+            uuid,
+            folder_id: payload.folder_id ?? undefined,
+            container: 'cloud',
+          })
+          void syncEngine.run()
+        }
         const created = await notesRepo.get(uuid)
         if (!created) throw new Error('Failed to create note')
         return created
@@ -329,21 +429,36 @@ export function useCreateNote() {
 
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+      await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevLocal = qc.getQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY)
+
+      const scope = useUiStore.getState().scope
+      const container: Container = payload.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
+      const isLocal = container === 'local'
 
       // 1. Open tab immediately
       openTab(uuid, DEFAULT_NOTE_TITLE)
 
       // 2. Populate single note cache optimistically
-      const foldersList = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
-      const currentFolder = payload.folder_id
-        ? foldersList.find((f) => f.uuid === payload.folder_id) ?? null
-        : null
+      let currentFolder: { uuid: UUID; name: string } | null = null
+      if (payload.folder_id) {
+        if (isLocal) {
+          const localFoldersList = prevLocal?.folders ?? []
+          const found = localFoldersList.find((f) => f.uuid === payload.folder_id)
+          currentFolder = found ? { uuid: found.uuid, name: found.name } : null
+        } else {
+          const foldersList = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
+          const found = foldersList.find((f) => f.uuid === payload.folder_id)
+          currentFolder = found ? { uuid: found.uuid, name: found.name } : null
+        }
+      }
 
       const optimisticNote: Note = {
         uuid,
+        container,
         title:        DEFAULT_NOTE_TITLE,
         title_locked: false,
         body:         { type: 'doc', content: [] },
@@ -361,6 +476,7 @@ export function useCreateNote() {
       // 3. Prepend to note list queries
       const optimisticListItem: NoteListItem = {
         uuid,
+        container,
         title:      DEFAULT_NOTE_TITLE,
         excerpt:    '',
         is_starred: false,
@@ -389,25 +505,44 @@ export function useCreateNote() {
         }
       })
 
-      // 4. Update bootstrap counts
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          counts: {
-            ...old.counts,
-            all:     (old.counts?.all ?? 0) + 1,
-            folders: payload.folder_id
-              ? {
-                ...old.counts?.folders,
-                [payload.folder_id]: (old.counts?.folders?.[payload.folder_id] ?? 0) + 1,
-              }
-              : old.counts?.folders,
-          },
-        }
-      })
+      // 4. Update counts strictly in matching container
+      if (isLocal) {
+        qc.setQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              all:     (old.counts?.all ?? 0) + 1,
+              folders: payload.folder_id
+                ? {
+                  ...old.counts?.folders,
+                  [payload.folder_id]: (old.counts?.folders?.[payload.folder_id] ?? 0) + 1,
+                }
+                : old.counts?.folders,
+            },
+          }
+        })
+      } else {
+        qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              all:     (old.counts?.all ?? 0) + 1,
+              folders: payload.folder_id
+                ? {
+                  ...old.counts?.folders,
+                  [payload.folder_id]: (old.counts?.folders?.[payload.folder_id] ?? 0) + 1,
+                }
+                : old.counts?.folders,
+            },
+          }
+        })
+      }
 
-      return { prevNotes, prevBootstrap, uuid }
+      return { prevNotes, prevBootstrap, prevLocal, uuid }
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.uuid) {
@@ -418,6 +553,9 @@ export function useCreateNote() {
       }
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      if (ctx?.prevLocal) {
+        qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
       notifications.show({ color: 'red', message: "Couldn't create note." })
     },
@@ -438,13 +576,18 @@ export function useTrashNote() {
     mutationFn: async (uuid: string) => {
       if (isNative()) {
         const note = await notesRepo.get(uuid)
-        const isLocal = !note || note.container === 'local'
-        await notesRepo.softDelete(uuid)
-        if (isLocal) {
-          return
+        const currentContainer = note?.container ?? (useUiStore.getState().scope.container ?? 'local')
+        const isLocal = currentContainer === 'local'
+        await notesRepo.softDelete(uuid, currentContainer)
+        if (!isLocal) {
+          await outbox.enqueue({
+            kind:      'trash',
+            uuid,
+            container: 'cloud',
+          })
+          void syncEngine.run()
         }
-        const user = qc.getQueryData(AUTH_KEY)
-        if (!user) throw new Error('Sign in required for cloud notes')
+        return
       }
       return notesApi.trashNote(uuid)
     },
@@ -454,9 +597,11 @@ export function useTrashNote() {
 
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+      await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevLocal = qc.getQueryData(LOCAL_SIDEBAR_KEY)
 
       // Find note in cached pages to get starred / folder info
       let trashedItem: NoteListItem | undefined
@@ -481,27 +626,51 @@ export function useTrashNote() {
         }
       })
 
-      // Update bootstrap counts
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
-        if (!old) return old
-        const nextFolderCounts = { ...old.counts?.folders }
-        const folderUuid = trashedItem?.folder?.uuid
-        if (folderUuid && nextFolderCounts[folderUuid] !== undefined) {
-          nextFolderCounts[folderUuid] = Math.max(0, nextFolderCounts[folderUuid] - 1)
-        }
-        return {
-          ...old,
-          counts: {
-            ...old.counts,
-            all:     Math.max(0, (old.counts?.all ?? 1) - 1),
-            trashed: (old.counts?.trashed ?? 0) + 1,
-            starred: trashedItem?.is_starred ? Math.max(0, (old.counts?.starred ?? 1) - 1) : (old.counts?.starred ?? 0),
-            folders: nextFolderCounts,
-          },
-        }
-      })
+      // Update counts strictly in matching container
+      const noteContainer = trashedItem?.container ?? useUiStore.getState().scope.container ?? 'local'
+      const isLocal = noteContainer === 'local'
 
-      return { prevNotes, prevBootstrap }
+      if (isLocal) {
+        qc.setQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY, (old) => {
+          if (!old) return old
+          const nextFolderCounts = { ...old.counts?.folders }
+          const folderUuid = trashedItem?.folder?.uuid
+          if (folderUuid && nextFolderCounts[folderUuid] !== undefined) {
+            nextFolderCounts[folderUuid] = Math.max(0, nextFolderCounts[folderUuid] - 1)
+          }
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              all:     Math.max(0, (old.counts?.all ?? 1) - 1),
+              trashed: (old.counts?.trashed ?? 0) + 1,
+              starred: trashedItem?.is_starred ? Math.max(0, (old.counts?.starred ?? 1) - 1) : (old.counts?.starred ?? 0),
+              folders: nextFolderCounts,
+            },
+          }
+        })
+      } else {
+        qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+          if (!old) return old
+          const nextFolderCounts = { ...old.counts?.folders }
+          const folderUuid = trashedItem?.folder?.uuid
+          if (folderUuid && nextFolderCounts[folderUuid] !== undefined) {
+            nextFolderCounts[folderUuid] = Math.max(0, nextFolderCounts[folderUuid] - 1)
+          }
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              all:     Math.max(0, (old.counts?.all ?? 1) - 1),
+              trashed: (old.counts?.trashed ?? 0) + 1,
+              starred: trashedItem?.is_starred ? Math.max(0, (old.counts?.starred ?? 1) - 1) : (old.counts?.starred ?? 0),
+              folders: nextFolderCounts,
+            },
+          }
+        })
+      }
+
+      return { prevNotes, prevBootstrap, prevLocal }
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.prevNotes) {
@@ -510,12 +679,16 @@ export function useTrashNote() {
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       }
+      if (ctx?.prevLocal) {
+        qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
+      }
       notifications.show({ color: 'red', message: "Couldn't move note to trash." })
     },
     onSettled: (_data, _err, uuid) => {
       qc.removeQueries({ queryKey: [...NOTE_KEY, uuid] })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+      qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
@@ -526,22 +699,29 @@ export function useRestoreNote() {
     mutationFn: async (uuid: string) => {
       if (isNative()) {
         const note = await notesRepo.get(uuid)
-        const isLocal = !note || note.container === 'local'
-        await notesRepo.restore(uuid)
-        if (isLocal) {
-          return
+        const currentContainer = note?.container ?? (useUiStore.getState().scope.container ?? 'local')
+        const isLocal = currentContainer === 'local'
+        await notesRepo.restore(uuid, currentContainer)
+        if (!isLocal) {
+          await outbox.enqueue({
+            kind:      'restore',
+            uuid,
+            container: 'cloud',
+          })
+          void syncEngine.run()
         }
-        const user = qc.getQueryData(AUTH_KEY)
-        if (!user) throw new Error('Sign in required for cloud notes')
+        return
       }
       return notesApi.restoreNote(uuid)
     },
     onMutate: async (uuid: string) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+      await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevLocal = qc.getQueryData(LOCAL_SIDEBAR_KEY)
 
       // Remove from trash list
       qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
@@ -555,20 +735,36 @@ export function useRestoreNote() {
         }
       })
 
-      // Update bootstrap counts
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          counts: {
-            ...old.counts,
-            trashed: Math.max(0, (old.counts?.trashed ?? 1) - 1),
-            all:     (old.counts?.all ?? 0) + 1,
-          },
-        }
-      })
+      // Update counts strictly in matching container
+      const isLocal = useUiStore.getState().scope.container === 'local'
 
-      return { prevNotes, prevBootstrap }
+      if (isLocal) {
+        qc.setQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              trashed: Math.max(0, (old.counts?.trashed ?? 1) - 1),
+              all:     (old.counts?.all ?? 0) + 1,
+            },
+          }
+        })
+      } else {
+        qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              trashed: Math.max(0, (old.counts?.trashed ?? 1) - 1),
+              all:     (old.counts?.all ?? 0) + 1,
+            },
+          }
+        })
+      }
+
+      return { prevNotes, prevBootstrap, prevLocal }
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.prevNotes) {
@@ -576,6 +772,9 @@ export function useRestoreNote() {
       }
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      if (ctx?.prevLocal) {
+        qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
       notifications.show({ color: 'red', message: "Couldn't restore note." })
     },
@@ -593,13 +792,18 @@ export function useForceDeleteNote() {
     mutationFn: async (uuid: string) => {
       if (isNative()) {
         const note = await notesRepo.get(uuid)
-        const isLocal = !note || note.container === 'local'
-        await notesRepo.hardDelete(uuid)
-        if (isLocal) {
-          return
+        const currentContainer = note?.container ?? (useUiStore.getState().scope.container ?? 'local')
+        const isLocal = currentContainer === 'local'
+        await notesRepo.hardDelete(uuid, currentContainer)
+        if (!isLocal) {
+          await outbox.enqueue({
+            kind:      'force',
+            uuid,
+            container: 'cloud',
+          })
+          void syncEngine.run()
         }
-        const user = qc.getQueryData(AUTH_KEY)
-        if (!user) throw new Error('Sign in required for cloud notes')
+        return
       }
       return notesApi.forceDeleteNote(uuid)
     },
@@ -609,9 +813,11 @@ export function useForceDeleteNote() {
 
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+      await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevLocal = qc.getQueryData(LOCAL_SIDEBAR_KEY)
 
       qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
@@ -624,18 +830,34 @@ export function useForceDeleteNote() {
         }
       })
 
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          counts: {
-            ...old.counts,
-            trashed: Math.max(0, (old.counts?.trashed ?? 1) - 1),
-          },
-        }
-      })
+      // Update counts strictly in matching container
+      const isLocal = useUiStore.getState().scope.container === 'local'
 
-      return { prevNotes, prevBootstrap }
+      if (isLocal) {
+        qc.setQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              trashed: Math.max(0, (old.counts?.trashed ?? 1) - 1),
+            },
+          }
+        })
+      } else {
+        qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              trashed: Math.max(0, (old.counts?.trashed ?? 1) - 1),
+            },
+          }
+        })
+      }
+
+      return { prevNotes, prevBootstrap, prevLocal }
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.prevNotes) {
@@ -643,6 +865,9 @@ export function useForceDeleteNote() {
       }
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      if (ctx?.prevLocal) {
+        qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
       notifications.show({ color: 'red', message: "Couldn't permanently delete note." })
     },
@@ -700,9 +925,11 @@ export function useDuplicateNote() {
     onMutate: async (sourceUuid: string) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+      await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevLocal = qc.getQueryData(LOCAL_SIDEBAR_KEY)
       const prevSingle = qc.getQueryData<Note>([...NOTE_KEY, sourceUuid])
 
       // Find the source note in cached queries if not in single query
@@ -723,6 +950,8 @@ export function useDuplicateNote() {
         }
       }
 
+      const isLocal = sourceItem?.container === 'local' || (!sourceItem?.container && useUiStore.getState().scope.container === 'local')
+
       const tempUuid = crypto.randomUUID()
       const title = sourceItem
         ? (sourceItem.title === '' ? '' : `${sourceItem.title}${COPY_NOTE_SUFFIX}`)
@@ -733,6 +962,7 @@ export function useDuplicateNote() {
 
       const optimisticListItem: NoteListItem = {
         uuid:       tempUuid,
+        container:  isLocal ? 'local' : 'cloud',
         title,
         excerpt,
         is_starred: false,
@@ -747,6 +977,7 @@ export function useDuplicateNote() {
         const optimisticNote: Note = {
           ...prevSingle,
           uuid:         tempUuid,
+          container:    isLocal ? 'local' : 'cloud',
           title,
           version:      1,
           title_locked: sourceItem ? sourceItem.title !== '' : true,
@@ -776,25 +1007,44 @@ export function useDuplicateNote() {
         }
       })
 
-      // Update bootstrap counts
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          counts: {
-            ...old.counts,
-            all:     (old.counts?.all ?? 0) + 1,
-            folders: folder?.uuid
-              ? {
-                ...old.counts?.folders,
-                [folder.uuid]: (old.counts?.folders?.[folder.uuid] ?? 0) + 1,
-              }
-              : old.counts?.folders,
-          },
-        }
-      })
+      // Update sidebar counts strictly in matching container
+      if (isLocal) {
+        qc.setQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              all:     (old.counts?.all ?? 0) + 1,
+              folders: folder?.uuid
+                ? {
+                  ...old.counts?.folders,
+                  [folder.uuid]: (old.counts?.folders?.[folder.uuid] ?? 0) + 1,
+                }
+                : old.counts?.folders,
+            },
+          }
+        })
+      } else {
+        qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              all:     (old.counts?.all ?? 0) + 1,
+              folders: folder?.uuid
+                ? {
+                  ...old.counts?.folders,
+                  [folder.uuid]: (old.counts?.folders?.[folder.uuid] ?? 0) + 1,
+                }
+                : old.counts?.folders,
+            },
+          }
+        })
+      }
 
-      return { prevNotes, prevBootstrap, tempUuid }
+      return { prevNotes, prevBootstrap, prevLocal, tempUuid }
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.tempUuid) {
@@ -806,10 +1056,34 @@ export function useDuplicateNote() {
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       }
+      if (ctx?.prevLocal) {
+        qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
+      }
       notifications.show({ color: 'red', message: "Couldn't duplicate note." })
     },
-    onSuccess: (realNote, _v, ctx) => {
+    onSuccess: async (realNote, _v, ctx) => {
       qc.setQueryData([...NOTE_KEY, realNote.uuid], realNote)
+      if (isNative()) {
+        const noteContainer = realNote.container ?? (useUiStore.getState().scope.container ?? 'local')
+        const isLocal = noteContainer === 'local'
+        await notesRepo.upsert({
+          uuid:            realNote.uuid,
+          container:       noteContainer,
+          folder_uuid:     realNote.folder?.uuid ?? null,
+          title:           realNote.title,
+          title_locked:    Boolean(realNote.title_locked),
+          body:            realNote.body,
+          plain_text:      realNote.plain_text ?? '',
+          excerpt:         realNote.excerpt,
+          is_starred:      Boolean(realNote.is_starred),
+          word_count:      realNote.word_count,
+          updated_at:      realNote.updated_at,
+          deleted_at:      realNote.deleted_at,
+          server_version:  realNote.version,
+          server_revision: null,
+          dirty:           !isLocal,
+        })
+      }
       if (ctx?.tempUuid) {
         qc.removeQueries({ queryKey: [...NOTE_KEY, ctx.tempUuid] })
         qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
@@ -853,71 +1127,120 @@ export function useSyncNoteTags() {
             server_revision: null,
             dirty:           !isLocal,
           })
+          if (!isLocal) {
+            await outbox.enqueue({
+              kind:      'tags',
+              uuid,
+              names,
+              container: 'cloud',
+            })
+            void syncEngine.run()
+          }
         }
-        if (isLocal) {
-          return
-        }
-        const user = qc.getQueryData(AUTH_KEY)
-        if (!user) throw new Error('Sign in required for cloud notes')
+        return
       }
       return notesApi.syncNoteTags(uuid, names)
     },
     onMutate: async ({ uuid, names }) => {
       await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+      await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevLocal = qc.getQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY)
+
+      const isLocal = prevNote?.container === 'local' || (!prevNote?.container && useUiStore.getState().scope.container === 'local')
 
       // 1. Update single note query tags immediately
       if (prevNote) {
         qc.setQueryData<Note>([...NOTE_KEY, uuid], { ...prevNote, tags: names })
       }
 
-      // 2. Update bootstrap tags and tag counts immediately
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
-        if (!old) return old
-        const currentTags = getTagsArray(old.tags)
-        const currentNames = currentTags.map((t) => t.name)
+      // 2. Update tags and tag counts strictly in matching container
+      if (isLocal) {
+        qc.setQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY, (old) => {
+          if (!old) return old
+          const currentTags = old.tags ?? []
+          const currentNames = currentTags.map((t) => t.name)
 
-        // Add any brand new tags optimistically
-        const addedTags: Tag[] = names
-          .filter((name) => !currentNames.includes(name))
-          .map((name) => ({
-            uuid: crypto.randomUUID(),
-            name,
-            slug: slugify(name),
-          }))
+          const addedTags: Tag[] = names
+            .filter((name) => !currentNames.includes(name))
+            .map((name) => ({
+              uuid: crypto.randomUUID(),
+              name,
+              slug: slugify(name),
+            }))
 
-        const nextTags = [...currentTags, ...addedTags]
-        const nextTagCounts = { ...old.counts?.tags }
+          const nextTags = [...currentTags, ...addedTags]
+          const nextTagCounts = { ...old.counts?.tags }
 
-        // Recalculate delta for old tags vs new tags on this note
-        const prevNames = prevNote?.tags ?? []
-        for (const added of names) {
-          if (!prevNames.includes(added)) {
-            const slug = slugify(added)
-            nextTagCounts[slug] = (nextTagCounts[slug] ?? 0) + 1
+          const prevNames = prevNote?.tags ?? []
+          for (const added of names) {
+            if (!prevNames.includes(added)) {
+              const slug = slugify(added)
+              nextTagCounts[slug] = (nextTagCounts[slug] ?? 0) + 1
+            }
           }
-        }
-        for (const removed of prevNames) {
-          if (!names.includes(removed)) {
-            const slug = slugify(removed)
-            nextTagCounts[slug] = Math.max(0, (nextTagCounts[slug] ?? 1) - 1)
+          for (const removed of prevNames) {
+            if (!names.includes(removed)) {
+              const slug = slugify(removed)
+              nextTagCounts[slug] = Math.max(0, (nextTagCounts[slug] ?? 1) - 1)
+            }
           }
-        }
 
-        return {
-          ...old,
-          tags:   nextTags,
-          counts: {
-            ...old.counts,
-            tags: nextTagCounts,
-          },
-        }
-      })
+          return {
+            ...old,
+            tags:   nextTags,
+            counts: {
+              ...old.counts,
+              tags: nextTagCounts,
+            },
+          }
+        })
+      } else {
+        qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+          if (!old) return old
+          const currentTags = getTagsArray(old.tags)
+          const currentNames = currentTags.map((t) => t.name)
 
-      return { prevNote, prevBootstrap }
+          const addedTags: Tag[] = names
+            .filter((name) => !currentNames.includes(name))
+            .map((name) => ({
+              uuid: crypto.randomUUID(),
+              name,
+              slug: slugify(name),
+            }))
+
+          const nextTags = [...currentTags, ...addedTags]
+          const nextTagCounts = { ...old.counts?.tags }
+
+          const prevNames = prevNote?.tags ?? []
+          for (const added of names) {
+            if (!prevNames.includes(added)) {
+              const slug = slugify(added)
+              nextTagCounts[slug] = (nextTagCounts[slug] ?? 0) + 1
+            }
+          }
+          for (const removed of prevNames) {
+            if (!names.includes(removed)) {
+              const slug = slugify(removed)
+              nextTagCounts[slug] = Math.max(0, (nextTagCounts[slug] ?? 1) - 1)
+            }
+          }
+
+          return {
+            ...old,
+            tags:   nextTags,
+            counts: {
+              ...old.counts,
+              tags: nextTagCounts,
+            },
+          }
+        })
+      }
+
+      return { prevNote, prevBootstrap, prevLocal }
     },
     onError: (_err, { uuid }, ctx) => {
       if (ctx?.prevNote) {
@@ -925,6 +1248,9 @@ export function useSyncNoteTags() {
       }
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      if (ctx?.prevLocal) {
+        qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
       notifications.show({ color: 'red', message: "Couldn't update tags on note." })
     },
@@ -957,12 +1283,17 @@ export function useMoveNoteFolder() {
             server_revision: null,
             dirty:           !isLocal,
           })
+          if (!isLocal) {
+            await outbox.enqueue({
+              kind:      'meta',
+              uuid,
+              changes:   { folder_id },
+              container: 'cloud',
+            })
+            void syncEngine.run()
+          }
         }
-        if (isLocal) {
-          return
-        }
-        const user = qc.getQueryData(AUTH_KEY)
-        if (!user) throw new Error('Sign in required for cloud notes')
+        return
       }
       return notesApi.patchNote(uuid, { folder_id })
     },
@@ -970,13 +1301,29 @@ export function useMoveNoteFolder() {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
+      await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevSingleNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevLocal = qc.getQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY)
 
-      const foldersList = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
-      const targetFolder = folder_id ? foldersList.find((f) => f.uuid === folder_id) ?? null : null
+      const noteContainer = prevSingleNote?.container ?? useUiStore.getState().scope.container ?? 'local'
+      const isLocal = noteContainer === 'local'
+
+      let targetFolder: { uuid: UUID; name: string } | null = null
+      if (folder_id) {
+        if (isLocal) {
+          const localFoldersList = prevLocal?.folders ?? []
+          const found = localFoldersList.find((f) => f.uuid === folder_id)
+          targetFolder = found ? { uuid: found.uuid, name: found.name } : null
+        } else {
+          const cloudFoldersList = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
+          const found = cloudFoldersList.find((f) => f.uuid === folder_id)
+          targetFolder = found ? { uuid: found.uuid, name: found.name } : null
+        }
+      }
+
       const prevFolderUuid = prevSingleNote?.folder?.uuid
 
       // 1. Update single note query
@@ -999,26 +1346,46 @@ export function useMoveNoteFolder() {
         }
       })
 
-      // 3. Update bootstrap counts
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
-        if (!old) return old
-        const nextFolderCounts = { ...old.counts?.folders }
-        if (prevFolderUuid && nextFolderCounts[prevFolderUuid] !== undefined) {
-          nextFolderCounts[prevFolderUuid] = Math.max(0, nextFolderCounts[prevFolderUuid] - 1)
-        }
-        if (folder_id && nextFolderCounts[folder_id] !== undefined) {
-          nextFolderCounts[folder_id] = nextFolderCounts[folder_id] + 1
-        }
-        return {
-          ...old,
-          counts: {
-            ...old.counts,
-            folders: nextFolderCounts,
-          },
-        }
-      })
+      // 3. Update folder counts (strictly in matching container)
+      if (isLocal) {
+        qc.setQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY, (old) => {
+          if (!old) return old
+          const nextFolderCounts = { ...old.counts?.folders }
+          if (prevFolderUuid && nextFolderCounts[prevFolderUuid] !== undefined) {
+            nextFolderCounts[prevFolderUuid] = Math.max(0, nextFolderCounts[prevFolderUuid] - 1)
+          }
+          if (folder_id) {
+            nextFolderCounts[folder_id] = (nextFolderCounts[folder_id] ?? 0) + 1
+          }
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              folders: nextFolderCounts,
+            },
+          }
+        })
+      } else {
+        qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+          if (!old) return old
+          const nextFolderCounts = { ...old.counts?.folders }
+          if (prevFolderUuid && nextFolderCounts[prevFolderUuid] !== undefined) {
+            nextFolderCounts[prevFolderUuid] = Math.max(0, nextFolderCounts[prevFolderUuid] - 1)
+          }
+          if (folder_id) {
+            nextFolderCounts[folder_id] = (nextFolderCounts[folder_id] ?? 0) + 1
+          }
+          return {
+            ...old,
+            counts: {
+              ...old.counts,
+              folders: nextFolderCounts,
+            },
+          }
+        })
+      }
 
-      return { prevNotes, prevSingleNote, prevBootstrap }
+      return { prevNotes, prevSingleNote, prevBootstrap, prevLocal }
     },
     onError: (_err, { uuid }, ctx) => {
       if (ctx?.prevSingleNote) {
@@ -1029,6 +1396,9 @@ export function useMoveNoteFolder() {
       }
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
+      }
+      if (ctx?.prevLocal) {
+        qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
       notifications.show({ color: 'red', message: "Couldn't move note to folder." })
     },

@@ -4,8 +4,12 @@ import { Group, Text, UnstyledButton } from '@mantine/core'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+import { useSyncStatus } from '@/hooks/useSyncStatus'
+import { deviceKind } from '@/platform/deviceKind'
+import { isNative } from '@/platform/isNative'
 import type { SaveStatus } from '@/stores/uiStore'
 import { useUiStore } from '@/stores/uiStore'
+import type { Container } from '@/types/api'
 
 dayjs.extend(relativeTime)
 
@@ -14,18 +18,22 @@ export const StatusBar = memo(function StatusBar({
   savedAt: propSavedAt,
   words = 0,
   folderPath = null,
+  container,
   onRetry,
 }: {
   status?: SaveStatus
   savedAt?: number | null
   words?: number
   folderPath?: string | null
+  container?: Container
   onRetry?: () => void
 }) {
   const storeStatus = useUiStore((s) => s.saveStatus)
   const storeSavedAt = useUiStore((s) => s.savedAt)
   const editorStats = useUiStore((s) => s.editorStats)
   const storeRetry = useUiStore((s) => s.retrySave)
+  const syncStatus = useSyncStatus()
+  const native = isNative()
 
   const handleRetry = onRetry ?? (storeRetry ? () => storeRetry() : undefined)
 
@@ -47,6 +55,30 @@ export const StatusBar = memo(function StatusBar({
     return `${words} words`
   }, [editorStats, words])
 
+  const syncText = useMemo(() => {
+    if (!native) return 'Autosave on'
+    if (container === 'local') {
+      return `On ${deviceKind().noun} — not backed up`
+    }
+    if (syncStatus.state === 'syncing') {
+      return 'Syncing…'
+    }
+    if (syncStatus.state === 'offline') {
+      return syncStatus.pendingCount > 0
+        ? `Offline — ${syncStatus.pendingCount} changes pending`
+        : 'Offline'
+    }
+    if (syncStatus.state === 'conflict') {
+      return `${syncStatus.conflicts.length} note(s) need attention`
+    }
+    if (syncStatus.state === 'synced') {
+      return syncStatus.lastSyncedAt
+        ? `Synced ${dayjs(syncStatus.lastSyncedAt).fromNow()}`
+        : 'Synced'
+    }
+    return 'Autosave on'
+  }, [native, container, syncStatus])
+
   return (
     <Group gap="lg" h={28} px="sm" style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}>
       {status === 'saving' && <Text c="dimmed" size="xs">Saving…</Text>}
@@ -63,7 +95,7 @@ export const StatusBar = memo(function StatusBar({
 
       <Text c="dimmed" size="xs" visibleFrom="sm">{statsText}</Text>
       {folderPath && <Text c="dimmed" size="xs" visibleFrom="sm">{folderPath}</Text>}
-      <Text c="dimmed" ml="auto" size="xs">Autosave on</Text>
+      <Text c="dimmed" ml="auto" size="xs">{syncText}</Text>
     </Group>
   )
 })

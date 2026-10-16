@@ -5,7 +5,9 @@ import * as foldersApi from '@/api/folders'
 import type { NotesPage } from '@/api/notes'
 import { ALL_NOTES_LABEL } from '@/constants/labels'
 import { BOOTSTRAP_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { foldersRepo } from '@/db/foldersRepo'
 import { getFoldersArray } from '@/lib/bootstrap'
+import { isNative } from '@/platform/isNative'
 import { useUiStore } from '@/stores/uiStore'
 import type { Bootstrap, Folder, NoteListItem, UUID } from '@/types/api'
 
@@ -52,7 +54,20 @@ export function useCreateFolder() {
       if (ctx?.previous) qc.setQueryData(BOOTSTRAP_KEY, ctx.previous)
       notifications.show({ color: 'red', message: "Couldn't create folder." })
     },
-    onSuccess: (realFolder, _v, ctx) => {
+    onSuccess: async (realFolder, _v, ctx) => {
+      if (isNative()) {
+        await foldersRepo.upsert({
+          uuid:            realFolder.uuid,
+          container:       'cloud',
+          parent_uuid:     realFolder.parent_uuid ?? null,
+          name:            realFolder.name,
+          color:           realFolder.color ?? null,
+          position:        realFolder.position ?? 0,
+          deleted_at:      null,
+          dirty:           false,
+          server_revision: null,
+        })
+      }
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
         if (!old) return old
         const current = getFoldersArray(old.folders)
@@ -117,6 +132,21 @@ export function useRenameFolder() {
       }
       notifications.show({ color: 'red', message: "Couldn't rename folder." })
     },
+    onSuccess: async (realFolder) => {
+      if (isNative()) {
+        const existing = await foldersRepo.get(realFolder.uuid, 'cloud')
+        if (existing) {
+          await foldersRepo.upsert({
+            ...existing,
+            container:       'cloud',
+            name:            realFolder.name,
+            deleted_at:      null,
+            dirty:           false,
+            server_revision: null,
+          })
+        }
+      }
+    },
   })
 }
 
@@ -176,6 +206,11 @@ export function useDeleteFolder() {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
       }
       notifications.show({ color: 'red', message: "Couldn't delete folder." })
+    },
+    onSuccess: async (_data, uuid) => {
+      if (isNative()) {
+        await foldersRepo.hardDelete(uuid, 'cloud')
+      }
     },
   })
 }

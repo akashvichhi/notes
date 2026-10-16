@@ -81,4 +81,9 @@ export const foldersRepo = {
       await db.execute('DELETE FROM folders WHERE uuid = $1', [uuid])
     }
   },
+
+  async clearContainer(container: Container): Promise<void> {
+    const db = await getDb()
+    await db.execute('DELETE FROM folders WHERE container = $1', [container])
+  },
 }

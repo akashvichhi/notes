@@ -14,6 +14,8 @@ import { showErrorToast, showSuccessToast } from '@/lib/notifications'
 import { isNative } from '@/platform/isNative'
 import { useTabsStore } from '@/stores/tabsStore'
 import { type SaveStatus, useUiStore } from '@/stores/uiStore'
+import { syncEngine } from '@/sync/engine'
+import { outbox } from '@/sync/outbox'
 import type { Note, NoteListItem } from '@/types/api'
 
 export type { SaveStatus }
@@ -26,6 +28,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
   const setDirty = useTabsStore((s) => s.setDirty)
   const setSaveStatus = useUiStore((s) => s.setSaveStatus)
   const setRetrySave = useUiStore((s) => s.setRetrySave)
+  const setCancelPendingSave = useUiStore((s) => s.setCancelPendingSave)
 
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -87,17 +90,20 @@ export function useAutosave(note: Note, editor: Editor | null) {
           })
 
           if (!isLocal) {
-            try {
-              updated = await patchNote(note.uuid, { body, version: version.current })
-              version.current = updated.version
-            } catch {
-              updated = {
-                ...note,
-                body,
-                excerpt,
-                word_count: wordCount,
-                updated_at: nowStr,
-              }
+            await outbox.enqueue({
+              kind:      'body',
+              uuid:      note.uuid,
+              body,
+              version:   version.current,
+              container: 'cloud',
+            })
+            setTimeout(() => void syncEngine.run(), 2000)
+            updated = {
+              ...note,
+              body,
+              excerpt,
+              word_count: wordCount,
+              updated_at: nowStr,
             }
           } else {
             updated = {
@@ -235,9 +241,26 @@ export function useAutosave(note: Note, editor: Editor | null) {
   }, [])
 
   useEffect(() => {
-    setRetrySave(() => () => { void save(true) })
+    setRetrySave(() => save(true))
     return () => { setRetrySave(null) }
   }, [save, setRetrySave])
+
+  const cancelPending = useCallback(() => {
+    if (timer.current) {
+      clearTimeout(timer.current)
+      timer.current = null
+    }
+    retries.current = 0
+    setStatus('idle')
+    setSaveStatus('idle')
+    void clearDraft(note.uuid)
+    setDirty(note.uuid, false)
+  }, [note.uuid, setDirty, setSaveStatus])
+
+  useEffect(() => {
+    setCancelPendingSave(cancelPending)
+    return () => { setCancelPendingSave(null) }
+  }, [cancelPending, setCancelPendingSave])
 
   const clearConflict = useCallback(() => setConflict(null), [])
 

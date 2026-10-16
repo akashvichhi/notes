@@ -65,7 +65,7 @@ export const useTabsStore = create<TabsState>()(
       closeOthers: (uuid) =>
         set((s) => ({ tabs: s.tabs.filter((t) => t.uuid === uuid), activeUuid: uuid })),
 
-      closeAll: () => set({ tabs: [], activeUuid: null }),
+      closeAll: () => set({ tabs: [], activeUuid: null, closed: [] }),
 
       reopen: () => {
         const { closed } = get()

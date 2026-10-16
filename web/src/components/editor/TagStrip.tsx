@@ -3,12 +3,19 @@ import { memo, useCallback, useMemo, useState } from 'react'
 import { ActionIcon, Badge, Button, Group, Popover, Stack, TextInput } from '@mantine/core'
 import { IconCheck, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 
-import { useBootstrap } from '@/hooks/queries/useBootstrap'
+import { useBootstrap, useLocalSidebar } from '@/hooks/queries/useBootstrap'
 import { useSyncNoteTags } from '@/hooks/queries/useNotes'
+import { isNative } from '@/platform/isNative'
+import { useUiStore } from '@/stores/uiStore'
 import type { Note } from '@/types/api'
 
 export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
-  const { tags } = useBootstrap()
+  const { tags: cloudTags } = useBootstrap()
+  const { data: localData } = useLocalSidebar()
+  const localTags = localData?.tags ?? []
+
+  const isLocal = note.container === 'local' || (!note.container && isNative() && useUiStore.getState().scope.container === 'local')
+  const tags = isLocal ? localTags : cloudTags
   const syncTags = useSyncNoteTags()
   const [opened, setOpened] = useState(false)
   const [query, setQuery] = useState('')

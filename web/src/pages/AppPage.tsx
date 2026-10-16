@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 
 import { Box, Button, Center, Stack, Text, ThemeIcon } from '@mantine/core'
 import { IconNotes, IconPlus } from '@tabler/icons-react'
-
+import { useQueryClient } from '@tanstack/react-query'
 
 import { EditorSkeleton } from '@/components/common/Skeletons'
 import { TopProgress } from '@/components/common/TopProgress'
@@ -16,12 +16,14 @@ import { StatusBar } from '@/components/layout/StatusBar'
 import { NoteList } from '@/components/notes/NoteList'
 import { SpotlightSearch } from '@/components/search/SpotlightSearch'
 import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
+import { NOTE_KEY } from '@/constants/queryKeys'
 import { useCreateNote, useNote } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'
 
 export const AppPage = memo(function AppPage() {
+  const qc = useQueryClient()
   const { uuid: routeUuid } = useParams<{ uuid: string }>()
   const isPhone = useIsPhone()
   const { setView, scope } = useUiStore()
@@ -46,11 +48,12 @@ export const AppPage = memo(function AppPage() {
   const handleSelectNote = useCallback(
     (uuid: string, title?: string) => {
       openTab(uuid, title || DEFAULT_NOTE_TITLE)
+      void qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
       if (isPhone) {
         setView('editor')
       }
     },
-    [isPhone, openTab, setView]
+    [isPhone, openTab, qc, setView],
   )
 
   const handleCreateNote = useCallback(() => {
@@ -119,11 +122,12 @@ export const AppPage = memo(function AppPage() {
   const statusSlot = useMemo(
     () => (
       <StatusBar
+        container={note?.container ?? scope.container}
         folderPath={note?.folder?.name ?? null}
         words={note?.word_count ?? 0}
       />
     ),
-    [note?.word_count, note?.folder?.name]
+    [note?.word_count, note?.folder?.name, note?.container, scope.container]
   )
 
   return (

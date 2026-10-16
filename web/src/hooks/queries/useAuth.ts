@@ -2,9 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { hostname, platform } from '@tauri-apps/plugin-os'
 
 import * as authApi from '@/api/auth'
-import { AUTH_KEY } from '@/constants/queryKeys'
+import { AUTH_KEY, BOOTSTRAP_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { foldersRepo } from '@/db/foldersRepo'
+import { notesRepo } from '@/db/notesRepo'
+import { tagsRepo } from '@/db/tagsRepo'
+import { clearAllDrafts } from '@/lib/drafts'
 import { isNative } from '@/platform/isNative'
-import { deleteToken, saveToken } from '@/platform/secureStore'
+import { deleteToken, loadToken, saveToken } from '@/platform/secureStore'
+import { useTabsStore } from '@/stores/tabsStore'
+import { useUiStore } from '@/stores/uiStore'
+import { syncEngine } from '@/sync/engine'
+import { outbox } from '@/sync/outbox'
 import type { User } from '@/types/api'
 
 export { AUTH_KEY }
@@ -14,10 +22,19 @@ export function useMe() {
     queryKey: AUTH_KEY,
     queryFn:  async () => {
       try {
+        if (isNative()) {
+          const token = await loadToken()
+          if (!token) return null
+        }
         return await authApi.fetchMe()
       } catch (e) {
-        // Signed out is a normal state, not an error the UI should surface.
-        if ((e as { response?: { status: number } })?.response?.status === 401) return null
+        // Signed out or expired token is a normal state, not an error the UI should surface.
+        if ((e as { response?: { status: number } })?.response?.status === 401) {
+          if (isNative()) {
+            await deleteToken()
+          }
+          return null
+        }
         throw e
       }
     },
@@ -42,12 +59,31 @@ export function useLogin() {
           device_name: `${host ?? 'Device'} · ${plat}`,
         })
         await saveToken(token)
-        return authApi.fetchMe()
+        const user = await authApi.fetchMe()
+        useUiStore.getState().setScope({
+          kind:      'all',
+          container: 'cloud',
+          label:     'All notes',
+        })
+        await syncEngine.run().catch(() => {})
+        return user
       }
 
       return authApi.login(creds)
     },
-    onSuccess: (user) => qc.setQueryData(AUTH_KEY, user),
+    onSuccess: (user) => {
+      useTabsStore.getState().closeAll()
+      try {
+        localStorage.removeItem('notes.tabs')
+      } catch {
+        // ignore
+      }
+      qc.setQueryData(AUTH_KEY, user)
+      if (isNative()) {
+        void qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+        void qc.invalidateQueries({ queryKey: NOTES_KEY })
+      }
+    },
   })
 }
 
@@ -75,14 +111,34 @@ export function useRegister() {
           device_name: `${host ?? 'Device'} · ${plat}`,
         })
         await saveToken(token)
-        return authApi.fetchMe()
+        const user = await authApi.fetchMe()
+        useUiStore.getState().setScope({
+          kind:      'all',
+          container: 'cloud',
+          label:     'All notes',
+        })
+        await syncEngine.run().catch(() => {})
+        return user
       }
 
       return authApi.register(creds)
     },
-    onSuccess: (user) => qc.setQueryData(AUTH_KEY, user),
+    onSuccess: (user) => {
+      useTabsStore.getState().closeAll()
+      try {
+        localStorage.removeItem('notes.tabs')
+      } catch {
+        // ignore
+      }
+      qc.setQueryData(AUTH_KEY, user)
+      if (isNative()) {
+        void qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+        void qc.invalidateQueries({ queryKey: NOTES_KEY })
+      }
+    },
   })
 }
+
 
 export function useLogout() {
   const qc = useQueryClient()
@@ -93,18 +149,49 @@ export function useLogout() {
           await authApi.revokeToken()
         } finally {
           await deleteToken()
+          await Promise.all([
+            notesRepo.clearContainer('cloud'),
+            foldersRepo.clearContainer('cloud'),
+            tagsRepo.clearContainer('cloud'),
+            outbox.clear(),
+          ]).catch(() => {})
+          const currentScope = useUiStore.getState().scope
+          if (currentScope.container === 'cloud') {
+            useUiStore.getState().setScope({
+              kind:      'all',
+              container: 'local',
+              label:     'All notes',
+            })
+          }
         }
         return
       }
 
       return authApi.logout()
     },
-    onSettled: () => {
-      qc.setQueryData(AUTH_KEY, null)
+    onSettled: async () => {
+      useTabsStore.getState().closeAll()
+      try {
+        localStorage.removeItem('notes.tabs')
+      } catch {
+        // ignore
+      }
+      try {
+        await clearAllDrafts()
+      } catch {
+        // ignore
+      }
+      useUiStore.getState().setFilter('')
+      useUiStore.getState().setView('list')
+
+      await qc.cancelQueries()
+      qc.removeQueries()
       qc.clear()
+      qc.setQueryData(AUTH_KEY, null)
     },
   })
 }
+
 
 export function useUpdateProfile() {
   const qc = useQueryClient()

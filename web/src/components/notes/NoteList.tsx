@@ -21,7 +21,7 @@ import { ListSkeleton } from '@/components/common/Skeletons'
 import { DEFAULT_NOTE_TITLE } from '@/constants/labels'
 import { MAX_NOTE_TITLE_LENGTH } from '@/constants/limits'
 import { useMe } from '@/hooks/queries/useAuth'
-import { useBootstrap } from '@/hooks/queries/useBootstrap'
+import { useBootstrap, useLocalSidebar } from '@/hooks/queries/useBootstrap'
 import {
   useCreateNote,
   useDuplicateNote,
@@ -35,6 +35,7 @@ import {
 } from '@/hooks/queries/useNotes'
 import { useIsPhone } from '@/hooks/useIsPhone'
 import { filterNotes } from '@/lib/filterNotes'
+import { isNative } from '@/platform/isNative'
 import { useTabsStore } from '@/stores/tabsStore'
 import { useUiStore } from '@/stores/uiStore'
 import type { NoteListItem, UUID } from '@/types/api'
@@ -57,7 +58,9 @@ export const NoteList = memo(function NoteList({
   const closeTab = useTabsStore((s) => s.close)
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotes(scope)
-  const { folders } = useBootstrap()
+  const { folders: cloudFolders } = useBootstrap()
+  const { data: localData } = useLocalSidebar()
+  const localFolders = localData?.folders ?? []
 
   const starNote = useStarNote(scope)
   const trashNote = useTrashNote()
@@ -72,6 +75,12 @@ export const NoteList = memo(function NoteList({
   const [moveModalNote, setMoveModalNote] = useState<NoteListItem | null>(null)
   const [renameModalNote, setRenameModalNote] = useState<NoteListItem | null>(null)
   const [renameTitle, setRenameTitle] = useState('')
+
+  const moveModalContainer = moveModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
+  const moveModalFolders = moveModalContainer === 'local' ? localFolders : cloudFolders
+
+  const restoreModalContainer = restoreModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
+  const restoreModalFolders = restoreModalContainer === 'local' ? localFolders : cloudFolders
 
   const allNotes = useMemo(() => {
     return data?.pages.flatMap((page) => page.data) ?? []
@@ -309,7 +318,7 @@ export const NoteList = memo(function NoteList({
             leftSection={<IconFolder size={16} />}
             onClick={() => handleMoveToFolder(null)}
           />
-          {folders.map((folder) => (
+          {moveModalFolders.map((folder) => (
             <NavLink
               key={folder.uuid}
               active={moveModalNote?.folder?.uuid === folder.uuid}
@@ -334,7 +343,7 @@ export const NoteList = memo(function NoteList({
             leftSection={<IconFolder size={16} />}
             onClick={() => handleRestoreToFolder(null)}
           />
-          {folders.map((folder) => (
+          {restoreModalFolders.map((folder) => (
             <NavLink
               key={folder.uuid}
               label={folder.name}

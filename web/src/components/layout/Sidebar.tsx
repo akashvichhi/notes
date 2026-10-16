@@ -1,17 +1,17 @@
 import { memo, useCallback } from 'react'
 
 import { ScrollArea, Stack } from '@mantine/core'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { ContainerSection } from '@/components/layout/ContainerSection'
 import { LOCAL_SIDEBAR_KEY } from '@/constants/queryKeys'
 import { foldersRepo } from '@/db/foldersRepo'
-import { notesRepo } from '@/db/notesRepo'
 import { tagsRepo } from '@/db/tagsRepo'
 import { useMe } from '@/hooks/queries/useAuth'
-import { useBootstrap } from '@/hooks/queries/useBootstrap'
+import { useBootstrap, useLocalSidebar } from '@/hooks/queries/useBootstrap'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@/hooks/queries/useFolders'
 import { useCreateTag, useDeleteTag, useRenameTag } from '@/hooks/queries/useTags'
+import { useSyncStatus } from '@/hooks/useSyncStatus'
 import { slugify } from '@/lib/slugify'
 import { isNative } from '@/platform/isNative'
 import type { Container } from '@/types/api'
@@ -20,6 +20,8 @@ export const Sidebar = memo(function Sidebar() {
   const qc = useQueryClient()
   const { data: user } = useMe()
   const { folders, tags, counts } = useBootstrap()
+  const { data: localData } = useLocalSidebar()
+  const syncStatus = useSyncStatus()
   const native = isNative()
   const signedIn = Boolean(user)
 
@@ -29,45 +31,6 @@ export const Sidebar = memo(function Sidebar() {
   const createTag = useCreateTag()
   const renameTag = useRenameTag()
   const deleteTag = useDeleteTag()
-
-  const { data: localData } = useQuery({
-    queryKey: LOCAL_SIDEBAR_KEY,
-    queryFn:  async () => {
-      if (!native) return null
-      const [f, t, notes, trashed] = await Promise.all([
-        foldersRepo.list('local'),
-        tagsRepo.list('local'),
-        notesRepo.list('local'),
-        notesRepo.list('local', { trashed: true }),
-      ])
-      const folderCounts: Record<string, number> = {}
-      notes.forEach((n) => {
-        if (n.folder?.uuid) {
-          folderCounts[n.folder.uuid] = (folderCounts[n.folder.uuid] ?? 0) + 1
-        }
-      })
-      const starred = notes.filter((n) => n.is_starred).length
-      const tagCounts: Record<string, number> = {}
-      notes.forEach((n) => {
-        n.tags?.forEach((tagName) => {
-          const slug = slugify(tagName)
-          tagCounts[slug] = (tagCounts[slug] ?? 0) + 1
-        })
-      })
-      return {
-        folders: f,
-        tags:    t,
-        counts:  {
-          all:     notes.length,
-          starred,
-          trashed: trashed.length,
-          folders: folderCounts,
-          tags:    tagCounts,
-        },
-      }
-    },
-    enabled: native,
-  })
 
   const localFolders = localData?.folders ?? []
   const localTags = localData?.tags ?? []
@@ -141,6 +104,7 @@ export const Sidebar = memo(function Sidebar() {
           counts={counts ?? undefined}
           folders={folders}
           signedIn={signedIn}
+          syncState={native && signedIn ? syncStatus.state : undefined}
           tags={tags}
           title="Cloud"
           onCreateFolder={(name) => handleCreateFolder(name, 'cloud')}

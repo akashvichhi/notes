@@ -43,6 +43,7 @@ interface ContainerSectionProps {
   tags: Tag[]
   counts?: Counts
   signedIn?: boolean
+  syncState?: 'synced' | 'syncing' | 'offline' | 'conflict' | 'error'
   onCreateFolder?: (name: string, container: Container) => void
   onRenameFolder?: (uuid: string, name: string) => void
   onDeleteFolder?: (uuid: string) => void
@@ -58,6 +59,7 @@ export const ContainerSection = memo(function ContainerSection({
   tags,
   counts,
   signedIn = true,
+  syncState,
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
@@ -130,6 +132,24 @@ export const ContainerSection = memo(function ContainerSection({
             Not signed in
           </Badge>
         )}
+        {container === 'cloud' && signedIn && syncState && (
+          <Badge
+            color={
+              syncState === 'synced' ? 'green'
+                : syncState === 'syncing' ? 'blue'
+                  : syncState === 'offline' ? 'yellow'
+                    : syncState === 'conflict' ? 'red' : 'gray'
+            }
+            size="xs"
+            variant="light"
+          >
+            {syncState === 'synced' && 'Synced'}
+            {syncState === 'syncing' && 'Syncing…'}
+            {syncState === 'offline' && 'Offline'}
+            {syncState === 'conflict' && 'Attention'}
+            {syncState === 'error' && 'Sync error'}
+          </Badge>
+        )}
       </Group>
 
       {container === 'cloud' && !signedIn && (
@@ -168,15 +188,13 @@ export const ContainerSection = memo(function ContainerSection({
             onClick={() => pick({ kind: 'all', container, label: ALL_NOTES_LABEL })}
           />
 
-          {container === 'cloud' && (
-            <NavLink
-              active={isScopeActive('starred')}
-              label={STARRED_LABEL}
-              leftSection={<IconStar size={16} />}
-              rightSection={<Text c="dimmed" size="xs">{counts?.starred ?? 0}</Text>}
-              onClick={() => pick({ kind: 'starred', container, label: STARRED_LABEL })}
-            />
-          )}
+          <NavLink
+            active={isScopeActive('starred')}
+            label={STARRED_LABEL}
+            leftSection={<IconStar size={16} />}
+            rightSection={<Text c="dimmed" size="xs">{counts?.starred ?? 0}</Text>}
+            onClick={() => pick({ kind: 'starred', container, label: STARRED_LABEL })}
+          />
 
           {/* Folders heading */}
           <Group justify="space-between" mt="xs" px="xs">

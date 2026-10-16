@@ -33,7 +33,8 @@ interface UiState {
   saveStatus: SaveStatus
   savedAt: number | null
   editorStats: EditorStats | null
-  retrySave: (() => void) | null
+  retrySave: (() => Promise<void> | void) | null
+  cancelPendingSave: (() => void) | null
   setView: (v: View) => void
   toggleNav: () => void
   closeNav: () => void
@@ -42,26 +43,40 @@ interface UiState {
   setFilter: (f: string) => void
   setSaveStatus: (saveStatus: SaveStatus, savedAt?: number | null) => void
   setEditorStats: (editorStats: EditorStats | null) => void
-  setRetrySave: (retrySave: (() => void) | null) => void
+  setRetrySave: (retrySave: (() => Promise<void> | void) | null) => void
+  setCancelPendingSave: (cancelPendingSave: (() => void) | null) => void
+}
+
+function getInitialContainer(): Container {
+  if (!isNative()) return 'cloud'
+  try {
+    if (typeof window !== 'undefined' && localStorage.getItem('notes_desktop_token')) {
+      return 'cloud'
+    }
+  } catch {
+    // Ignore
+  }
+  return 'local'
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  view:          'list',
-  navOpen:       false,
-  listCollapsed: false,
-  scope:         { kind: 'all', container: isNative() ? 'local' : 'cloud', label: ALL_NOTES_LABEL },
-  filter:        '',
-  saveStatus:    'idle',
-  savedAt:       null,
-  editorStats:   null,
-  retrySave:     null,
-  setView:       (view) => set({ view }),
-  toggleNav:     () => set((s) => ({ navOpen: !s.navOpen })),
-  closeNav:      () => set({ navOpen: false }),
-  toggleList:    () => set((s) => ({ listCollapsed: !s.listCollapsed })),
+  view:              'list',
+  navOpen:           false,
+  listCollapsed:     false,
+  scope:             { kind: 'all', container: getInitialContainer(), label: ALL_NOTES_LABEL },
+  filter:            '',
+  saveStatus:        'idle',
+  savedAt:           null,
+  editorStats:       null,
+  retrySave:         null,
+  cancelPendingSave: null,
+  setView:           (view) => set({ view }),
+  toggleNav:         () => set((s) => ({ navOpen: !s.navOpen })),
+  closeNav:          () => set({ navOpen: false }),
+  toggleList:        () => set((s) => ({ listCollapsed: !s.listCollapsed })),
   // Changing scope always clears the filter: a sticky filter makes notes
   // look deleted.
-  setScope:      (scope) =>
+  setScope:          (scope) =>
     set((s) => ({
       scope: {
         ...scope,
@@ -72,6 +87,7 @@ export const useUiStore = create<UiState>((set) => ({
   setFilter:     (filter) => set({ filter }),
   setSaveStatus: (saveStatus, savedAt) =>
     set((s) => ({ saveStatus, savedAt: savedAt !== undefined ? savedAt : s.savedAt })),
-  setEditorStats: (editorStats) => set({ editorStats }),
-  setRetrySave:   (retrySave) => set({ retrySave }),
+  setEditorStats:       (editorStats) => set({ editorStats }),
+  setRetrySave:         (retrySave) => set({ retrySave }),
+  setCancelPendingSave: (cancelPendingSave) => set({ cancelPendingSave }),
 }))

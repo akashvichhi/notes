@@ -4,8 +4,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as tagsApi from '@/api/tags'
 import { ALL_NOTES_LABEL } from '@/constants/labels'
 import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
+import { tagsRepo } from '@/db/tagsRepo'
 import { getTagsArray } from '@/lib/bootstrap'
 import { slugify } from '@/lib/slugify'
+import { isNative } from '@/platform/isNative'
 import { useUiStore } from '@/stores/uiStore'
 import type { Bootstrap, Note, Tag, UUID } from '@/types/api'
 
@@ -51,7 +53,18 @@ export function useCreateTag() {
       if (ctx?.previous) qc.setQueryData(BOOTSTRAP_KEY, ctx.previous)
       notifications.show({ color: 'red', message: "Couldn't create tag." })
     },
-    onSuccess: (realTag, _v, ctx) => {
+    onSuccess: async (realTag, _v, ctx) => {
+      if (isNative()) {
+        await tagsRepo.upsert({
+          uuid:            realTag.uuid,
+          container:       'cloud',
+          name:            realTag.name,
+          slug:            realTag.slug,
+          deleted_at:      null,
+          dirty:           false,
+          server_revision: null,
+        })
+      }
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
         if (!old) return old
         const current = getTagsArray(old.tags)
@@ -118,6 +131,19 @@ export function useRenameTag() {
       }
       notifications.show({ color: 'red', message: "Couldn't rename tag." })
     },
+    onSuccess: async (realTag) => {
+      if (isNative()) {
+        await tagsRepo.upsert({
+          uuid:            realTag.uuid,
+          container:       'cloud',
+          name:            realTag.name,
+          slug:            realTag.slug,
+          deleted_at:      null,
+          dirty:           false,
+          server_revision: null,
+        })
+      }
+    },
   })
 }
 
@@ -182,6 +208,11 @@ export function useDeleteTag() {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
       }
       notifications.show({ color: 'red', message: "Couldn't delete tag." })
+    },
+    onSuccess: async (_data, uuid) => {
+      if (isNative()) {
+        await tagsRepo.hardDelete(uuid, 'cloud')
+      }
     },
   })
 }

@@ -1,4 +1,4 @@
-import { del, get, set } from 'idb-keyval'
+import { clear, del, get, set } from 'idb-keyval'
 
 import type { ProseMirrorDoc, UUID } from '@/types/api'
 
@@ -27,3 +27,8 @@ export async function loadDraft(uuid: UUID): Promise<Draft | null> {
 export async function clearDraft(uuid: UUID): Promise<void> {
   try { await del(key(uuid)) } catch { /* ignore */ }
 }
+
+export async function clearAllDrafts(): Promise<void> {
+  try { await clear() } catch { /* ignore */ }
+}
+

@@ -18,12 +18,13 @@ class UpsertTags
     {
         return collect($names)
             ->map(fn (string $name) => trim($name))
-            ->filter()
+            ->filter(fn (string $name) => Str::slug($name) !== '')
             ->unique(fn (string $name) => Str::slug($name))
-            ->map(fn (string $name) => Tag::firstOrCreate(
-                ['user_id' => $user->id, 'slug' => Str::slug($name)],
+            ->map(fn (string $name) => $user->tags()->firstOrCreate(
+                ['slug' => Str::slug($name)],
                 ['name' => $name],
             ))
             ->values();
     }
+
 }

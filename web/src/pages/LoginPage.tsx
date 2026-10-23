@@ -8,10 +8,12 @@ import { useForm } from '@mantine/form'
 import { normalizeError } from '@/api/client'
 import { useLogin } from '@/hooks/queries/useAuth'
 import { validateEmail } from '@/lib/validation'
+import { isNative } from '@/platform/isNative'
 
 export const LoginPage = memo(function LoginPage() {
   const navigate = useNavigate()
   const login = useLogin()
+  const native = isNative()
 
   const form = useForm({
     initialValues: { email: '', password: '' },
@@ -55,9 +57,11 @@ export const LoginPage = memo(function LoginPage() {
               Create an account
             </Button>
 
-            <Button component={Link} to="/" variant="subtle">
-              Continue without signing in (local notes)
-            </Button>
+            {native && (
+              <Button component={Link} to="/" variant="subtle">
+                Continue without signing in (local notes)
+              </Button>
+            )}
           </Stack>
         </form>
       </Paper>

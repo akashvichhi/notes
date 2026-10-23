@@ -12,10 +12,12 @@ import {
   validatePassword,
   validatePasswordConfirmation,
 } from '@/lib/validation'
+import { isNative } from '@/platform/isNative'
 
 export const RegisterPage = memo(function RegisterPage() {
   const navigate = useNavigate()
   const register = useRegister()
+  const native = isNative()
 
   const form = useForm({
     initialValues: { name: '', email: '', password: '', password_confirmation: '' },
@@ -66,9 +68,11 @@ export const RegisterPage = memo(function RegisterPage() {
               Already have an account? Sign in
             </Button>
 
-            <Button component={Link} to="/" variant="subtle">
-              Continue without signing in (local notes)
-            </Button>
+            {native && (
+              <Button component={Link} to="/" variant="subtle">
+                Continue without signing in (local notes)
+              </Button>
+            )}
           </Stack>
         </form>
       </Paper>

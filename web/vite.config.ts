@@ -12,14 +12,14 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     resolve: {
       alias: {
-        '@': path.resolve(import.meta.dirname, './src'),
+        '@':    path.resolve(import.meta.dirname, './src'),
         '@src': path.resolve(import.meta.dirname, './src'),
       },
     },
     build: {
       // Output directly to Laravel's public folder
-      outDir: path.resolve(import.meta.dirname, '../api/public'),
-      emptyOutDir: false, // Prevents deleting index.php and Laravel assets
+      outDir:        path.resolve(import.meta.dirname, '../api/public'),
+      emptyOutDir:   false, // Prevents deleting index.php and Laravel assets
       rollupOptions: {
         output: {
           assetFileNames: 'assets/[hash].[ext]',
@@ -51,17 +51,17 @@ export default defineConfig(({ mode }) => {
       },
     },
     clearScreen: false,
-    server: {
-      port: 5173,
+    server:      {
+      port:  5173,
       watch: {
         ignored: ['**/src-tauri/**'],
       },
       // Proxy API and Sanctum requests to avoid cross-origin cookie and CORS issues in local development.
       proxy: {
         '/api': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: true,
+          target:              apiTarget,
+          changeOrigin:        true,
+          secure:              true,
           cookieDomainRewrite: {
             '*': '',
           },
@@ -73,9 +73,9 @@ export default defineConfig(({ mode }) => {
           },
         },
         '/sanctum': {
-          target: apiTarget,
-          changeOrigin: true,
-          secure: true,
+          target:              apiTarget,
+          changeOrigin:        true,
+          secure:              true,
           cookieDomainRewrite: {
             '*': '',
           },

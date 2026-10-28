@@ -3,7 +3,7 @@ import { memo, useCallback, useState } from 'react'
 import { ActionIcon, Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core'
 import { spotlight } from '@mantine/spotlight'
 import {
-  IconChevronLeft, IconMenu2, IconMoon, IconRefresh, IconSearch, IconSun,
+  IconChevronLeft, IconDeviceFloppy, IconMenu2, IconMoon, IconRefresh, IconSearch, IconSun,
 } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -30,7 +30,19 @@ export const Header = memo(function Header() {
   const { view, setView, toggleNav, scope } = useUiStore()
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const activeTab = useTabsStore((s) => s.tabs.find((t) => t.uuid === s.activeUuid))
+  const isDirty = activeTab?.dirty ?? false
   const activeTitle = activeTab?.title
+  const saveStatus = useUiStore((s) => s.saveStatus)
+  const isNoteOpen = isPhone ? view === 'editor' && Boolean(activeTab) : Boolean(activeTab)
+
+  const handleSave = useCallback(async () => {
+    const retrySave = useUiStore.getState().retrySave
+    if (retrySave) {
+      await retrySave()
+    } else {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, bubbles: true }))
+    }
+  }, [])
 
   const handleBack = useCallback(() => {
     setView(view === 'editor' ? 'list' : 'folders')
@@ -224,6 +236,20 @@ export const Header = memo(function Header() {
       )}
 
       <Group gap={4} ml="auto">
+        {isNoteOpen && (
+          <ActionIcon
+            aria-label="Save note"
+            color={isDirty ? 'blue' : undefined}
+            disabled={saveStatus === 'saving'}
+            loading={saveStatus === 'saving'}
+            size="lg"
+            title={isDirty ? 'Save note (Ctrl+S)' : 'Saved'}
+            variant={isDirty ? 'light' : 'subtle'}
+            onClick={handleSave}
+          >
+            <IconDeviceFloppy size={18} />
+          </ActionIcon>
+        )}
         {!!user && <ActionIcon
           aria-label="Refresh"
           loading={isRefreshing}

@@ -93,8 +93,8 @@ export const StatusBar = memo(function StatusBar({
         </UnstyledButton>
       )}
 
-      <Text c="dimmed" size="xs" visibleFrom="sm">{statsText}</Text>
-      {folderPath && <Text c="dimmed" size="xs" visibleFrom="sm">{folderPath}</Text>}
+      <Text c="dimmed" size="xs">{statsText}</Text>
+      {folderPath && <Text c="dimmed" size="xs">{folderPath}</Text>}
       <Text c="dimmed" ml="auto" size="xs">{syncText}</Text>
     </Group>
   )

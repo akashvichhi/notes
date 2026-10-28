@@ -12,7 +12,14 @@ export interface ApiError {
 }
 
 const getBaseUrl = (): string => {
-  return import.meta.env.VITE_API_URL
+  // In browser development, always route through Vite's proxy (relative path)
+  // so requests are same-origin and proxy to whatever VITE_API_URL is configured to.
+  if (import.meta.env.DEV && !isNative()) {
+    return ''
+  }
+  const url = import.meta.env.VITE_API_URL
+  if (!url) return ''
+  return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
 export const api: AxiosInstance = axios.create({

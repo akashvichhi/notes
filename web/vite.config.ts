@@ -17,10 +17,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      chunkSizeWarningLimit: 600,
       // Output directly to Laravel's public folder
-      outDir:        path.resolve(import.meta.dirname, '../api/public'),
-      emptyOutDir:   false, // Prevents deleting index.php and Laravel assets
-      rollupOptions: {
+      outDir:                path.resolve(import.meta.dirname, '../api/public'),
+      emptyOutDir:           false, // Prevents deleting index.php and Laravel assets
+      rollupOptions:         {
         output: {
           assetFileNames: 'assets/[hash].[ext]',
           chunkFileNames: 'assets/[hash].js',

@@ -1,0 +1,9 @@
+.wrapper {
+    position: relative;
+
+    .copy {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+    }
+}

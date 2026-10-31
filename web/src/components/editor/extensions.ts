@@ -18,8 +18,17 @@ import { TaskList } from '@tiptap/extension-task-list'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Typography } from '@tiptap/extension-typography'
+import { ReactNodeViewRenderer } from '@tiptap/react'
 import { StarterKit } from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
+
+import { CodeBlockWithCopy } from './CodeBlockWithCopy'
+
+export const CodeBlockView = CodeBlockLowlight.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CodeBlockWithCopy)
+  },
+})
 
 /**
  * Every extension here is MIT. Do not add @tiptap-pro/* — the project has no
@@ -64,4 +73,5 @@ export const editorExtensions = [
   Typography,
   CharacterCount,
   Placeholder.configure({ placeholder: 'Start writing…' }),
+  CodeBlockView.configure({ lowlight: createLowlight(common) }),
 ]

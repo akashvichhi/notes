@@ -61,7 +61,7 @@ function getInitialContainer(): Container {
 
 export const useUiStore = create<UiState>((set) => ({
   view:              'list',
-  navOpen:           true,
+  navOpen:           false,
   listCollapsed:     false,
   scope:             { kind: 'all', container: getInitialContainer(), label: ALL_NOTES_LABEL },
   filter:            '',

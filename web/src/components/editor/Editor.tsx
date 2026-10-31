@@ -127,7 +127,6 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
 
         <Box className={mobile.content} px={{ base: 12, sm: 16 }} py="md" style={{ overflowY: 'auto', minHeight: 0, flex: 1 }}>
           <TagStrip note={note} />
-          {/* Full width: no max-width column. */}
           <RichTextEditor.Content />
         </Box>
       </RichTextEditor>

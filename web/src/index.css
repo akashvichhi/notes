@@ -287,3 +287,8 @@ mark {
   padding: 1px 3px;
   border-radius: 3px;
 }
+
+.mantine-RichTextEditor-content pre::before,
+.mantine-RichTextEditor-content pre::after {
+  display: none;
+}

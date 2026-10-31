@@ -60,7 +60,6 @@ export const EditorToolbar = memo(function EditorToolbar() {
           <RichTextEditor.ControlsGroup>
             <RichTextEditor.BulletList /><RichTextEditor.OrderedList />
             <RichTextEditor.TaskList /><RichTextEditor.TaskListLift /><RichTextEditor.TaskListSink />
-            <RichTextEditor.Blockquote />
             <RichTextEditor.Subscript /><RichTextEditor.Superscript />
           </RichTextEditor.ControlsGroup>
 
@@ -70,7 +69,6 @@ export const EditorToolbar = memo(function EditorToolbar() {
             <RichTextEditor.ImageUpload />
             <RichTextEditor.TableInsert />
             <RichTextEditor.Details />
-            <RichTextEditor.InvisibleCharacters />
           </RichTextEditor.ControlsGroup>
 
           <RichTextEditor.ControlsGroup>

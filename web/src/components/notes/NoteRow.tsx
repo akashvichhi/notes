@@ -47,7 +47,6 @@ export const NoteRow = memo(function NoteRow({
         display:      'block',
         width:        '100%',
         borderRadius: 'var(--mantine-radius-md)',
-        borderLeft:   `3px solid ${active ? 'var(--mantine-color-blue-6)' : 'transparent'}`,
         background:   active ? 'var(--mantine-color-blue-light)' : undefined,
         minHeight:    44,
       }}

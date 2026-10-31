@@ -72,7 +72,6 @@ body,
   background-color: #f6f8fa;
   color: #1f2328;
   border: 1px solid #d0d7de;
-  border-left: 4px solid #228be6;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -181,10 +180,8 @@ body,
    -------------------------------------------------------------------------- */
 [data-mantine-color-scheme="dark"] .mantine-RichTextEditor-content pre,
 [data-mantine-color-scheme="dark"] .tiptap pre {
-  background-color: #161b22;
   color: #e6edf3;
   border: 1px solid #30363d;
-  border-left: 4px solid #38bdf8;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 

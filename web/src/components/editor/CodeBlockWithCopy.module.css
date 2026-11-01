@@ -1,9 +1,25 @@
 .wrapper {
     position: relative;
+    max-width: 100%;
+    min-width: 0;
+
+    pre,
+    pre * {
+        white-space: pre !important;
+        overflow-wrap: normal !important;
+        word-break: normal !important;
+    }
+
+    pre code {
+        display: block;
+        width: max-content;
+        min-width: 100%;
+    }
 
     .copy {
         position: absolute;
         top: 8px;
         right: 8px;
+        z-index: 1;
     }
 }

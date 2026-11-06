@@ -7,6 +7,77 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Using with Claude
+
+The API serves an MCP endpoint at `<APP_URL>/mcp` (HTTP transport). Claude can search,
+read and write your Cloud notes through it, with note bodies as markdown. It **cannot delete**
+anything: there are no delete, trash or restore tools, and access tokens cannot reach those
+routes. Notes in the Trash and notes stored "On This Device" are not visible to it.
+
+### 1. Create an access token
+
+In the web app, open **Settings → Access tokens**, choose a name, the scopes and an expiry,
+and copy the token. It starts with `notes_pat_` and is shown **once**.
+
+- `notes:read`: search, list and read notes, folders and tags.
+- `notes:write`: also create and edit notes, folders and tags. It includes `notes:read`.
+
+The same can be done through the API while signed in (`expires_in_days` is 30, 90, 365 or
+`null` for no expiry):
+
+```sh
+curl -X POST "$APP_URL/api/v1/me/access-tokens" \
+  -H "Authorization: Bearer <your sign-in token>" -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Claude Code","abilities":["notes:read","notes:write"],"expires_in_days":90}'
+```
+
+You can have up to 20 active tokens. Expired tokens stop working at once. The scheduler
+removes them daily (`php artisan notes:prune-pats`).
+
+### 2. Claude Code
+
+```sh
+claude mcp add --transport http notes <APP_URL>/mcp --header "Authorization: Bearer <token>"
+```
+
+Or share it with a project in `.mcp.json`, keeping the token out of the file:
+
+```json
+{
+  "mcpServers": {
+    "notes": {
+      "type": "http",
+      "url": "https://notes.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${NOTES_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+Then `export NOTES_TOKEN=notes_pat_…` before starting `claude`.
+
+### 3. Claude web, desktop and mobile
+
+Anthropic's servers make the calls, so the API must be **public over HTTPS**. `localhost`
+and private addresses won't work. If a firewall sits in front of it, allowlist Anthropic's
+published IP ranges.
+
+1. On claude.ai, go to **Customize → Connectors → Add custom connector**.
+2. Enter the URL `https://<your-domain>/mcp`.
+3. Choose **no sign-in** (no OAuth), and add the request header
+   `Authorization: Bearer <token>`.
+
+The connector then appears in Claude Desktop and in the mobile apps too.
+
+### Revoking a token
+
+Revoke it under **Settings → Access tokens**, or with
+`DELETE /api/v1/me/access-tokens/{id}`. It stops working immediately. Remove it from Claude
+too (`claude mcp remove notes`, or delete the connector).
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

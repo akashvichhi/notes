@@ -51,7 +51,8 @@ class UpdateNoteRequest extends FormRequest
         ];
     }
 
-    private static function depth(mixed $node, int $level = 0): int
+    /** Also used by the MCP tools, which write bodies without this request. */
+    public static function depth(mixed $node, int $level = 0): int
     {
         if ($level > self::MAX_DEPTH || ! is_array($node)) {
             return $level;

@@ -8,8 +8,11 @@
     "require": {
         "php": "^8.3",
         "laravel/framework": "^13.17",
+        "laravel/mcp": "^1.1",
         "laravel/sanctum": "^4.0",
-        "laravel/tinker": "^3.0"
+        "laravel/tinker": "^3.0",
+        "league/commonmark": "^2.10",
+        "ueberdosis/tiptap-php": "^2.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

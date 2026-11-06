@@ -124,3 +124,15 @@ export interface SearchResults {
   folders: { uuid: UUID; name: string }[]
   tags: Tag[]
 }
+
+export type AccessTokenAbility = 'notes:read' | 'notes:write'
+
+/** A personal access token, for Claude and other MCP clients. The token itself is never listed. */
+export interface AccessToken {
+  id: number
+  name: string
+  abilities: AccessTokenAbility[]
+  created_at: ISODate
+  last_used_at: ISODate | null
+  expires_at: ISODate | null
+}

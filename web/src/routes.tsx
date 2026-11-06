@@ -10,6 +10,9 @@ import { RequireAuth } from '@/components/RequireAuth'
 
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import('@/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
+const AccessTokensPage = lazy(() =>
+  import('@/pages/AccessTokensPage').then((m) => ({ default: m.AccessTokensPage }))
+)
 const AppPage = lazy(() => import('@/pages/AppPage').then((m) => ({ default: m.AppPage })))
 
 const AuthFallback = (
@@ -56,6 +59,17 @@ export const router = createBrowserRouter([
       <RequireAuth>
         <Suspense fallback={AppFallback}>
           <AppPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path:    '/settings/access-tokens',
+    element: (
+      <RequireAuth>
+        <Suspense fallback={AuthFallback}>
+          <AccessTokensPage />
         </Suspense>
       </RequireAuth>
     ),

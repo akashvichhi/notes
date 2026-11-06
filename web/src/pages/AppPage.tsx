@@ -1,5 +1,5 @@
-import { memo, useCallback, useEffect, useMemo } from 'react'
-import { useParams } from 'react-router'
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router'
 
 import { Box, Button, Center, Stack, Text, ThemeIcon } from '@mantine/core'
 import { IconNotes, IconPlus } from '@tabler/icons-react'
@@ -25,16 +25,33 @@ import { useUiStore } from '@/stores/uiStore'
 export const AppPage = memo(function AppPage() {
   const qc = useQueryClient()
   const { uuid: routeUuid } = useParams<{ uuid: string }>()
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
   const isPhone = useIsPhone()
   const { setView, scope } = useUiStore()
   const { activeUuid, open: openTab } = useTabsStore()
   const createNote = useCreateNote()
 
+  // The URL and the active tab follow each other. A route that changed (a link,
+  // a refresh, back/forward) opens its note; otherwise the URL follows the
+  // active tab, however it was chosen: list, tabs, search, closing a tab. It
+  // replaces rather than pushes, so switching notes adds no history, and on
+  // phones Back keeps moving between the list and the editor.
+  const lastRouteUuid = useRef<string | undefined>(undefined)
   useEffect(() => {
-    if (routeUuid) {
-      openTab(routeUuid, '')
+    if (routeUuid !== lastRouteUuid.current) {
+      lastRouteUuid.current = routeUuid
+      if (routeUuid && routeUuid !== activeUuid) {
+        openTab(routeUuid, '')
+        return
+      }
     }
-  }, [routeUuid, openTab])
+
+    const target = activeUuid ? `/notes/${activeUuid}` : '/'
+    if (pathname !== target) {
+      void navigate(target, { replace: true })
+    }
+  }, [routeUuid, activeUuid, pathname, navigate, openTab])
 
   const { data: note, isLoading } = useNote(activeUuid)
 

@@ -69,9 +69,9 @@ export const editorExtensions = [
   DetailsSummary,
   DetailsContent,
   InvisibleCharacters.configure({ visible: false }),
-  CodeBlockLowlight.configure({ lowlight: createLowlight(common) }),
   Typography,
   CharacterCount,
   Placeholder.configure({ placeholder: 'Start writing…' }),
+  // The one codeBlock node: lowlight highlighting plus the copy button.
   CodeBlockView.configure({ lowlight: createLowlight(common) }),
 ]

@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Avatar, Button, Loader, Menu, Overlay, Stack, Text } from '@mantine/core'
-import { IconLock, IconLogout, IconUser } from '@tabler/icons-react'
+import { IconKey, IconLock, IconLogout, IconUser } from '@tabler/icons-react'
 
 
 import { useLogout, useMe } from '@/hooks/queries/useAuth'
@@ -41,6 +41,10 @@ export const AccountMenu = memo(function AccountMenu() {
   const handleCloseChangePassword = useCallback(() => {
     setChangePasswordOpen(false)
   }, [])
+
+  const handleOpenAccessTokens = useCallback(() => {
+    navigate('/settings/access-tokens')
+  }, [navigate])
 
   const handleLogout = useCallback(() => {
     if (logout.isPending) return
@@ -87,6 +91,12 @@ export const AccountMenu = memo(function AccountMenu() {
             onClick={handleOpenChangePassword}
           >
             Change password
+          </Menu.Item>
+          <Menu.Item
+            leftSection={<IconKey size={16} />}
+            onClick={handleOpenAccessTokens}
+          >
+            Access tokens
           </Menu.Item>
           <Menu.Divider />
           <Menu.Item

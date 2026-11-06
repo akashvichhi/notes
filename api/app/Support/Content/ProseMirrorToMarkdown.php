@@ -72,7 +72,7 @@ class ProseMirrorToMarkdown
         return match ($node['type']) {
             'paragraph' => $this->paragraph($node),
             'heading' => $this->heading($node),
-            'blockquote' => $this->prefix($this->blocks($content) ?: '<p></p>', '> ', '> ', '>'),
+            'blockquote' => $this->blockquote($content),
             'bulletList', 'taskList' => $this->list($node, $alternate ? '*' : '-'),
             'orderedList' => $this->list($node, $alternate ? ')' : '.'),
             'codeBlock' => $this->codeBlock($node),
@@ -82,6 +82,13 @@ class ProseMirrorToMarkdown
             'details' => $this->details($node),
             default => $content === [] ? null : $this->blocks($content),
         };
+    }
+
+    private function blockquote(array $content): string
+    {
+        $body = $this->blocks($content);
+
+        return $this->prefix($body === '' ? '<p></p>' : $body, '> ', '> ', '>');
     }
 
     private function paragraph(array $node): string
@@ -507,7 +514,10 @@ class ProseMirrorToMarkdown
     {
         preg_match_all('/`+/', $text, $runs);
         $ticks = str_repeat('`', max(array_map('strlen', $runs[0] ?: [''])) + 1);
-        $pad = (str_starts_with($text, '`') || str_ends_with($text, '`')) ? ' ' : '';
+        // A code span strips one space from each end when both ends have one, and
+        // cannot start or end with a backtick: padding with a space covers both.
+        $spaced = strlen($text) > 1 && str_starts_with($text, ' ') && str_ends_with($text, ' ') && trim($text, ' ') !== '';
+        $pad = ($spaced || str_starts_with($text, '`') || str_ends_with($text, '`')) ? ' ' : '';
 
         return $ticks.$pad.$text.$pad.$ticks;
     }

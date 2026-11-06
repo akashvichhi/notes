@@ -6,6 +6,7 @@ import { Center, Loader } from '@mantine/core'
 
 import { RouteErrorBoundary } from '@/components/common/RouteErrorBoundary'
 import { AppSkeleton } from '@/components/common/Skeletons'
+import { GuestOnly } from '@/components/GuestOnly'
 import { RequireAuth } from '@/components/RequireAuth'
 
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
@@ -27,18 +28,22 @@ export const router = createBrowserRouter([
   {
     path:    '/login',
     element: (
-      <Suspense fallback={AuthFallback}>
-        <LoginPage />
-      </Suspense>
+      <GuestOnly>
+        <Suspense fallback={AuthFallback}>
+          <LoginPage />
+        </Suspense>
+      </GuestOnly>
     ),
     errorElement: <RouteErrorBoundary />,
   },
   {
     path:    '/register',
     element: (
-      <Suspense fallback={AuthFallback}>
-        <RegisterPage />
-      </Suspense>
+      <GuestOnly>
+        <Suspense fallback={AuthFallback}>
+          <RegisterPage />
+        </Suspense>
+      </GuestOnly>
     ),
     errorElement: <RouteErrorBoundary />,
   },

@@ -34,9 +34,10 @@ export const AppPage = memo(function AppPage() {
 
   // The URL and the active tab follow each other. A route that changed (a link,
   // a refresh, back/forward) opens its note; otherwise the URL follows the
-  // active tab, however it was chosen: list, tabs, search, closing a tab. It
-  // replaces rather than pushes, so switching notes adds no history, and on
-  // phones Back keeps moving between the list and the editor.
+  // active tab, however it was chosen: list, tabs, search, closing a tab. Each
+  // note opened is a history entry, so Back and Forward step through them.
+  // Landing on `/` is replaced instead: otherwise Back would return to `/`,
+  // which would forward straight to the saved tab again.
   const lastRouteUuid = useRef<string | undefined>(undefined)
   useEffect(() => {
     if (routeUuid !== lastRouteUuid.current) {
@@ -49,7 +50,7 @@ export const AppPage = memo(function AppPage() {
 
     const target = activeUuid ? `/notes/${activeUuid}` : '/'
     if (pathname !== target) {
-      void navigate(target, { replace: true })
+      void navigate(target, { replace: pathname === '/' })
     }
   }, [routeUuid, activeUuid, pathname, navigate, openTab])
 

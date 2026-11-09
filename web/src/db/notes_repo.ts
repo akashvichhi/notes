@@ -4,6 +4,8 @@ import { getDb } from './connection'
 
 
 
+export type DirtyCloudNote = Note & { server_version: number | null }
+
 function rowToListItem(r: Record<string, unknown>): NoteListItem {
   let tags: string[] = []
   if (typeof r.tags_json === 'string') {
@@ -277,7 +279,8 @@ export const notesRepo = {
     return rows.map(rowToListItem)
   },
 
-  async getDirtyCloudNotes(): Promise<Note[]> {
+  /** `server_version` is null for a note the server has never seen. */
+  async getDirtyCloudNotes(): Promise<DirtyCloudNote[]> {
     const db = await getDb()
     const query = `
       SELECT n.*, f.name AS folder_name,
@@ -287,7 +290,7 @@ export const notesRepo = {
       WHERE n.container = 'cloud' AND n.dirty = 1
     `
     const rows = await db.select<Record<string, unknown>[]>(query)
-    return rows.map(rowToNote)
+    return rows.map((r) => ({ ...rowToNote(r), server_version: (r.server_version as number | null) ?? null }))
   },
 
   async clearContainer(container: Container): Promise<void> {

@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from 'react'
 
+import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
 import { queryClient } from '@src/queries/query_client'
 import { isNative } from '@src/platform/is_native'
 import { loadToken } from '@src/platform/secure_store'
+import { showErrorToast } from '@src/utils/notifications'
 import { outbox } from './outbox'
 import { pull } from './pull'
 import { push } from './push'
@@ -18,6 +20,8 @@ export interface SyncSnapshot {
   conflicts:    Note[]
   lastSyncedAt: number | null
 }
+
+const SYNC_REJECTED_TOAST_ID: string = 'sync-rejected'
 
 let currentRunPromise: Promise<void> | null = null
 let queuedRunPromise: Promise<void> | null = null
@@ -53,7 +57,11 @@ async function doRun(): Promise<void> {
     const pending = await outbox.count().catch(() => 0)
     updateSnapshot({ state: 'syncing', pendingCount: pending })
 
-    const { conflicts } = await push()
+    const { conflicts, rejected } = await push()
+
+    if (rejected.length > 0) {
+      showErrorToast(MESSAGES.SYNC_CHANGE_REJECTED, SYNC_REJECTED_TOAST_ID)
+    }
 
     if (conflicts.length > 0) {
       updateSnapshot({

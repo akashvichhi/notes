@@ -1,3 +1,5 @@
+import { HttpStatusCode } from 'axios'
+
 import { normalizeError } from '@src/api/api_client'
 import {
   createNote,
@@ -33,8 +35,25 @@ function toLocalNote(n: Note, overrides: { server_version?: number | null; dirty
   }
 }
 
-export async function push(): Promise<{ pushed: number; conflicts: Note[] }> {
+export interface PushResult {
+  pushed:    number
+  conflicts: Note[]
+  /** Notes whose change the server refused; that change was dropped. */
+  rejected:  string[]
+}
+
+/** Worth another try on the next run: offline, signed out, throttled, or a server fault. */
+function isRetryable(status: number): boolean {
+  return status === 0
+    || status === HttpStatusCode.Unauthorized
+    || status === HttpStatusCode.RequestTimeout
+    || status === HttpStatusCode.TooManyRequests
+    || status >= HttpStatusCode.InternalServerError
+}
+
+export async function push(): Promise<PushResult> {
   const conflicts: Note[] = []
+  const rejected: string[] = []
   let pushed = 0
 
   if (isNative()) {
@@ -46,7 +65,7 @@ export async function push(): Promise<{ pushed: number; conflicts: Note[] }> {
         if (!pendingUuids.has(dn.uuid)) {
           if (dn.deleted_at) {
             await outbox.enqueue({ kind: 'trash', uuid: dn.uuid, container: 'cloud' })
-          } else if (dn.version === null) {
+          } else if (dn.server_version === null) {
             await outbox.enqueue({ kind: 'create', uuid: dn.uuid, folder_id: dn.folder?.uuid ?? undefined, container: 'cloud' })
             if (dn.body) {
               await outbox.enqueue({ kind: 'body', uuid: dn.uuid, body: dn.body, version: 1, container: 'cloud' })
@@ -101,19 +120,23 @@ export async function push(): Promise<{ pushed: number; conflicts: Note[] }> {
           ? op.version
           : (existing?.version && existing.version >= 1 ? existing.version : 1)
         const updated = await patchNote(op.uuid, { body: op.body ?? undefined, version: versionToPush })
+        // An edit merged in while this save was in flight keeps the row, and the note stays dirty.
+        const done = await outbox.complete(op, updated.version)
         if (isNative()) {
           const current = await notesRepo.get(op.uuid, 'cloud')
           if (current) {
-            await notesRepo.upsert(toLocalNote(current, { server_version: updated.version, dirty: false }))
+            await notesRepo.upsert(toLocalNote(current, { server_version: updated.version, dirty: !done }))
           }
         }
+        pushed++
+        continue
       } else if (op.kind === 'meta') {
         if (op.changes && 'deleted_at' in op.changes && op.changes.deleted_at === null) {
           try {
             await restoreNote(op.uuid)
           } catch (err) {
             const norm = normalizeError(err)
-            if (norm.status !== 404) throw err
+            if (norm.status !== HttpStatusCode.NotFound) throw err
           }
         } else {
           await patchNote(op.uuid, op.changes)
@@ -129,7 +152,7 @@ export async function push(): Promise<{ pushed: number; conflicts: Note[] }> {
           await restoreNote(op.uuid)
         } catch (err) {
           const norm = normalizeError(err)
-          if (norm.status !== 404) throw err
+          if (norm.status !== HttpStatusCode.NotFound) throw err
         }
         if (isNative()) {
           const existing = await notesRepo.get(op.uuid, 'cloud')
@@ -150,7 +173,7 @@ export async function push(): Promise<{ pushed: number; conflicts: Note[] }> {
           await trashNote(op.uuid)
         } catch (err) {
           const norm = normalizeError(err)
-          if (norm.status !== 404) throw err
+          if (norm.status !== HttpStatusCode.NotFound) throw err
         }
         if (isNative()) {
           const existing = await notesRepo.get(op.uuid, 'cloud')
@@ -163,34 +186,33 @@ export async function push(): Promise<{ pushed: number; conflicts: Note[] }> {
           await forceDeleteNote(op.uuid)
         } catch (err) {
           const norm = normalizeError(err)
-          if (norm.status !== 404) throw err
+          if (norm.status !== HttpStatusCode.NotFound) throw err
         }
         if (isNative()) {
           await notesRepo.hardDelete(op.uuid, 'cloud')
         }
       }
 
-      await outbox.shift()
+      await outbox.complete(op)
       pushed++
     } catch (e) {
       const err = normalizeError(e)
 
-      if (err.status === 409 && err.serverCopy) {
+      if (err.status === HttpStatusCode.Conflict && err.serverCopy) {
         conflicts.push(err.serverCopy)
         break // later ops may depend on this note
       }
 
-      // If the client error is unrecoverable (4xx, except 409 conflict and 401 unauth),
-      // discard the op rather than blocking the queue indefinitely.
-      if (err.status >= 400 && err.status < 500 && err.status !== 401) {
-        await outbox.shift()
-        continue
+      if (isRetryable(err.status)) {
+        break
       }
 
-      // Network error, 401 unauthenticated, or server 5xx: halt and retry next sync run
-      break
+      // Any other 4xx will fail the same way every time: drop it rather than block
+      // the queue, and report it so the user hears that the change was not saved.
+      await outbox.remove(op.id)
+      rejected.push(op.uuid)
     }
   }
 
-  return { pushed, conflicts }
+  return { pushed, conflicts, rejected }
 }

@@ -24,6 +24,49 @@ async function withLock<T>(fn: () => Promise<T>): Promise<T> {
 let webOps: OutboxItem[] = []
 let webNextId = 1
 
+function serialize(item: OutboxItem): string {
+  const { id: _id, ...op } = item
+  return JSON.stringify(op)
+}
+
+function parseRow(row: { id: number; kind: string; note_uuid: string; payload: string }): OutboxItem {
+  try {
+    return { ...(JSON.parse(row.payload) as QueuedOp), id: row.id }
+  } catch {
+    return { id: row.id, kind: row.kind, uuid: row.note_uuid } as OutboxItem
+  }
+}
+
+async function readOp(id: number): Promise<OutboxItem | null> {
+  if (!isNative()) {
+    return webOps.find((o) => o.id === id) ?? null
+  }
+  const db = await getDb()
+  const rows = await db.select<{ id: number; kind: string; note_uuid: string; payload: string }[]>(
+    'SELECT id, kind, note_uuid, payload FROM outbox WHERE id = $1',
+    [id],
+  )
+  return rows[0] ? parseRow(rows[0]) : null
+}
+
+async function writeOp(item: OutboxItem): Promise<void> {
+  if (!isNative()) {
+    webOps = webOps.map((o) => (o.id === item.id ? item : o))
+    return
+  }
+  const db = await getDb()
+  await db.execute('UPDATE outbox SET payload = $1 WHERE id = $2', [serialize(item), item.id])
+}
+
+async function deleteOp(id: number): Promise<void> {
+  if (!isNative()) {
+    webOps = webOps.filter((o) => o.id !== id)
+    return
+  }
+  const db = await getDb()
+  await db.execute('DELETE FROM outbox WHERE id = $1', [id])
+}
+
 export const outbox = {
   async enqueue(op: QueuedOp): Promise<void> {
     if (op.container === 'local') {
@@ -98,49 +141,36 @@ export const outbox = {
         'SELECT id, kind, note_uuid, payload FROM outbox ORDER BY id ASC',
       )
 
-      return rows.map((r) => {
-        try {
-          const parsed = JSON.parse(r.payload) as QueuedOp
-          return { ...parsed, id: r.id }
-        } catch {
-          return {
-            id:   r.id,
-            kind: r.kind,
-            uuid: r.note_uuid,
-          } as OutboxItem
-        }
-      })
+      return rows.map(parseRow)
     })
   },
 
-  async shift(): Promise<OutboxItem | null> {
+  /**
+   * Marks a sent op done. A body edit can be merged into the same row while
+   * its save is in flight; that row then holds newer text, so it stays,
+   * rebased onto `nextVersion` (the version the server just returned).
+   * Returns true when the row was removed.
+   */
+  async complete(sent: OutboxItem, nextVersion?: number): Promise<boolean> {
     return withLock(async () => {
-      if (!isNative()) {
-        const item = webOps.shift()
-        return item ?? null
+      const current = await readOp(sent.id)
+      if (current === null) return true
+
+      if (serialize(current) === serialize(sent)) {
+        await deleteOp(sent.id)
+        return true
       }
 
-      const db = await getDb()
-      const rows = await db.select<{ id: number; kind: string; note_uuid: string; payload: string }[]>(
-        'SELECT id, kind, note_uuid, payload FROM outbox ORDER BY id ASC LIMIT 1',
-      )
-
-      if (rows.length === 0 || !rows[0]) return null
-      const first = rows[0]
-
-      await db.execute('DELETE FROM outbox WHERE id = $1', [first.id])
-
-      try {
-        const parsed = JSON.parse(first.payload) as QueuedOp
-        return { ...parsed, id: first.id }
-      } catch {
-        return {
-          id:   first.id,
-          kind: first.kind,
-          uuid: first.note_uuid,
-        } as OutboxItem
+      if (current.kind === 'body' && nextVersion !== undefined) {
+        await writeOp({ ...current, version: nextVersion })
       }
+      return false
     })
+  },
+
+  /** Drops an op without sending it again (the server rejected it). */
+  async remove(id: number): Promise<void> {
+    return withLock(() => deleteOp(id))
   },
 
   async count(): Promise<number> {

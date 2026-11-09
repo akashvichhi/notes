@@ -37,9 +37,9 @@ class SearchNotes
 
         return [
             'notes' => $notes->values(),
-            'folders' => $user->folders()->where('name', 'like', $q.'%')->limit(5)->get()
+            'folders' => $user->folders()->whereRaw(SearchTerms::PREFIX_LIKE, [SearchTerms::prefixPattern($q)])->limit(5)->get()
                 ->map(fn ($f) => ['uuid' => $f->uuid, 'name' => $f->name])->values(),
-            'tags' => $user->tags()->where('name', 'like', $q.'%')->limit(5)->get()
+            'tags' => $user->tags()->whereRaw(SearchTerms::PREFIX_LIKE, [SearchTerms::prefixPattern($q)])->limit(5)->get()
                 ->map(fn ($t) => ['uuid' => $t->uuid, 'name' => $t->name, 'slug' => $t->slug])->values(),
         ];
     }

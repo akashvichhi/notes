@@ -7,6 +7,23 @@ class SearchTerms
     /** MySQL's innodb_ft_min_token_size. Shorter terms can never match. */
     public const MIN_TOKEN = 3;
 
+    /**
+     * A name prefix match. `!` is the escape character because MySQL and
+     * SQLite disagree on backslash; it keeps `%` and `_` in a query literal.
+     */
+    public const PREFIX_LIKE = "name LIKE ? ESCAPE '!'";
+
+    private const LIKE_ESCAPE = '!';
+
+    public static function prefixPattern(string $q): string
+    {
+        return str_replace(
+            [self::LIKE_ESCAPE, '%', '_'],
+            [self::LIKE_ESCAPE.self::LIKE_ESCAPE, self::LIKE_ESCAPE.'%', self::LIKE_ESCAPE.'_'],
+            $q,
+        ).'%';
+    }
+
     /** @return string[] */
     public static function parse(string $q): array
     {

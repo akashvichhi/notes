@@ -9,6 +9,7 @@ class UpdateNoteRequest extends FormRequest
 {
     /** Bodies larger than this are rejected before they reach MySQL. */
     public const MAX_BODY_BYTES = 2_000_000;
+
     public const MAX_DEPTH = 100;
 
     public function authorize(): bool

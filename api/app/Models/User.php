@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -12,7 +13,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasUuids;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable;
 
     public function uniqueIds(): array
     {
@@ -37,17 +38,17 @@ class User extends Authenticatable
         ];
     }
 
-    public function folders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function folders(): HasMany
     {
         return $this->hasMany(Folder::class);
     }
 
-    public function tags(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tags(): HasMany
     {
         return $this->hasMany(Tag::class);
     }
 
-    public function notes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function notes(): HasMany
     {
         return $this->hasMany(Note::class);
     }

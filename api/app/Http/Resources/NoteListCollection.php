@@ -11,11 +11,6 @@ class NoteListCollection extends ResourceCollection
 
     /**
      * Customize the pagination information for the resource.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  array  $paginated
-     * @param  array  $default
-     * @return array
      */
     public function paginationInformation(Request $request, array $paginated, array $default): array
     {

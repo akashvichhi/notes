@@ -321,7 +321,7 @@ class DocumentNormalizer
         if (($number = NoteImages::placeholderNumber($src)) !== null) {
             if (! isset($this->embeddedImages[$number - 1])) {
                 throw new ContentException(
-                    "Unknown image placeholder ".NoteImages::placeholder($number).'. Keep the placeholders exactly as get_note returned them.'
+                    'Unknown image placeholder '.NoteImages::placeholder($number).'. Keep the placeholders exactly as get_note returned them.'
                 );
             }
             $src = $this->embeddedImages[$number - 1];

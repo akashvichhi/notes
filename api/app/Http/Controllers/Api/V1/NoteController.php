@@ -10,7 +10,6 @@ use App\Http\Requests\StoreNoteRequest;
 use App\Http\Requests\SyncNoteTagsRequest;
 use App\Http\Requests\UpdateNoteRequest;
 use App\Http\Resources\NoteListCollection;
-use App\Http\Resources\NoteListResource;
 use App\Http\Resources\NoteResource;
 use App\Models\Note;
 use App\Queries\NotesQuery;

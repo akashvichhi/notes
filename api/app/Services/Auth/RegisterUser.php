@@ -8,12 +8,18 @@ use Illuminate\Support\Facades\Auth;
 
 class RegisterUser
 {
-    public function __invoke(array $data, Session $session): User
+    /**
+     * A browser gets a session straight away. A native app has no session: it
+     * signs in afterwards through POST /tokens.
+     */
+    public function __invoke(array $data, ?Session $session): User
     {
         $user = User::create($data);
 
-        Auth::login($user);
-        $session->regenerate();
+        if ($session !== null) {
+            Auth::login($user);
+            $session->regenerate();
+        }
 
         return $user;
     }

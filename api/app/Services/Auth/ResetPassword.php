@@ -17,6 +17,8 @@ class ResetPassword
                 'password' => Hash::make($password),
                 'remember_token' => Str::random(60),
             ])->save();
+            // A reset follows a lost or stolen password: no existing sign-in survives it.
+            $user->tokens()->delete();
 
             event(new PasswordReset($user));
         });

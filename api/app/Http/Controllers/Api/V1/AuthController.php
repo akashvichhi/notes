@@ -18,7 +18,7 @@ class AuthController extends Controller
 {
     public function register(RegisterRequest $request, RegisterUser $register)
     {
-        $user = $register($request->validated(), $request->session());
+        $user = $register($request->validated(), $request->hasSession() ? $request->session() : null);
 
         return (new UserResource($user))->response()->setStatusCode(201);
     }

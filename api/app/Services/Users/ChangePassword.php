@@ -7,10 +7,21 @@ use Illuminate\Contracts\Session\Session;
 
 class ChangePassword
 {
-    public function __invoke(User $user, string $password, Session $session): void
+    /**
+     * Every other sign-in ends: other browser sessions fail Sanctum's
+     * AuthenticateSession password-hash check, and every token except the one
+     * making this request is revoked. A native app sends a bearer token and
+     * has no session.
+     */
+    public function __invoke(User $user, string $password, ?Session $session): void
     {
         $user->update(['password' => $password]);
-        // Keep this session alive while invalidating the others.
-        $session->regenerate();
+
+        $currentTokenId = $user->currentAccessToken()?->getKey();
+        $user->tokens()
+            ->when($currentTokenId !== null, fn ($tokens) => $tokens->whereKeyNot($currentTokenId))
+            ->delete();
+
+        $session?->regenerate();
     }
 }

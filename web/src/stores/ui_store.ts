@@ -47,16 +47,10 @@ interface UiState {
   setCancelPendingSave: (cancelPendingSave: (() => void) | null) => void
 }
 
+// The token is read asynchronously from the OS secure store, so a native app
+// starts on its device notes; chooseStartingContainer() switches once it is known.
 function getInitialContainer(): Container {
-  if (!isNative()) return 'cloud'
-  try {
-    if (typeof window !== 'undefined' && localStorage.getItem('notes_desktop_token')) {
-      return 'cloud'
-    }
-  } catch {
-    // Ignore
-  }
-  return 'local'
+  return isNative() ? 'local' : 'cloud'
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -91,3 +85,10 @@ export const useUiStore = create<UiState>((set) => ({
   setRetrySave:         (retrySave) => set({ retrySave }),
   setCancelPendingSave: (cancelPendingSave) => set({ cancelPendingSave }),
 }))
+
+/** Opens a signed-in native app on its Cloud notes, unless the user already picked a view. */
+export function chooseStartingContainer(signedIn: boolean): void {
+  const { scope, setScope } = useUiStore.getState()
+  if (!signedIn || scope.kind !== 'all' || scope.container === 'cloud') return
+  setScope({ ...scope, container: 'cloud' })
+}

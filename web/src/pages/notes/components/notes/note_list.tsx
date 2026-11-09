@@ -1,0 +1,391 @@
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
+
+import {
+  Box,
+  Button,
+  Center,
+  Group,
+  Loader,
+  Modal,
+  NavLink,
+  ScrollArea,
+  Stack,
+  Text,
+  TextInput,
+} from '@mantine/core'
+import { IconCloud, IconFolder, IconPlus } from '@tabler/icons-react'
+
+
+
+import { ListSkeleton } from '@src/ui/skeletons/skeletons'
+import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
+import { MAX_NOTE_TITLE_LENGTH } from '@src/constants/limits'
+import { useMe } from '@src/queries/auth_queries'
+import { useBootstrap, useLocalSidebar } from '@src/queries/bootstrap_queries'
+import {
+  useCreateNote,
+  useDuplicateNote,
+  useForceDeleteNote,
+  useMoveNoteFolder,
+  useNotes,
+  useRenameNote,
+  useRestoreNote,
+  useStarNote,
+  useTrashNote,
+} from '@src/queries/notes_queries'
+import { useIsPhone } from '@src/hooks/use_is_phone'
+import { filterNotes } from '@src/utils/filter_notes'
+import { isNative } from '@src/platform/is_native'
+import { ROUTE_PATHS } from '@src/routes/route_paths'
+import { useTabsStore } from '@src/stores/tabs_store'
+import { useUiStore } from '@src/stores/ui_store'
+import type { NoteListItem, UUID } from '@src/types/api'
+
+import { FilterInput } from './filter_input'
+import { NoteRow } from './note_row'
+
+
+export const NoteList = memo(function NoteList({
+  activeUuid,
+  onSelectNote,
+}: {
+  activeUuid?:  string | null
+  onSelectNote: (uuid: string, title?: string) => void
+}) {
+  const navigate = useNavigate()
+  const { data: user } = useMe()
+  const { scope, filter, setView } = useUiStore()
+  const isCloudSignedOut = scope.container === 'cloud' && !user
+  const isPhone = useIsPhone()
+  const closeTab = useTabsStore((s) => s.close)
+
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotes(scope)
+  const { folders: cloudFolders } = useBootstrap()
+  const { data: localData } = useLocalSidebar()
+  const localFolders = localData?.folders ?? []
+
+  const starNote = useStarNote(scope)
+  const trashNote = useTrashNote()
+  const duplicateNote = useDuplicateNote()
+  const createNote = useCreateNote()
+  const restoreNote = useRestoreNote()
+  const forceDeleteNote = useForceDeleteNote()
+  const renameNote = useRenameNote()
+  const moveNoteFolder = useMoveNoteFolder()
+
+  const [restoreModalNote, setRestoreModalNote] = useState<NoteListItem | null>(null)
+  const [moveModalNote, setMoveModalNote] = useState<NoteListItem | null>(null)
+  const [renameModalNote, setRenameModalNote] = useState<NoteListItem | null>(null)
+  const [renameTitle, setRenameTitle] = useState('')
+
+  const moveModalContainer = moveModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
+  const moveModalFolders = moveModalContainer === 'local' ? localFolders : cloudFolders
+
+  const restoreModalContainer = restoreModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
+  const restoreModalFolders = restoreModalContainer === 'local' ? localFolders : cloudFolders
+
+  const allNotes = useMemo(() => {
+    return data?.pages.flatMap((page) => page.data) ?? []
+  }, [data])
+
+  const filtered = useMemo(() => {
+    return filterNotes(allNotes, filter)
+  }, [allNotes, filter])
+
+  const handleOpen = useCallback(
+    (uuid: string, title?: string) => {
+      onSelectNote(uuid, title)
+      if (isPhone) setView('editor')
+    },
+    [onSelectNote, isPhone, setView],
+  )
+
+  const handleRestoreToFolder = useCallback(
+    async (folderId: UUID | null) => {
+      if (!restoreModalNote) return
+      const uuid = restoreModalNote.uuid
+      setRestoreModalNote(null)
+      await restoreNote.mutateAsync(uuid)
+      if (folderId !== null) {
+        await moveNoteFolder.mutateAsync({ uuid, folder_id: folderId })
+      }
+    },
+    [restoreModalNote, restoreNote, moveNoteFolder],
+  )
+
+  const handleMoveToFolder = useCallback(
+    (folderId: UUID | null) => {
+      if (!moveModalNote) return
+      const uuid = moveModalNote.uuid
+      setMoveModalNote(null)
+      moveNoteFolder.mutate({ uuid, folder_id: folderId })
+    },
+    [moveModalNote, moveNoteFolder],
+  )
+
+  const handleCreateNote = useCallback(() => {
+    const uuid = crypto.randomUUID()
+    createNote.mutate(
+      { ...(scope.kind === 'folder' ? { folder_id: scope.uuid } : {}), uuid },
+      {
+        onSuccess: (newNote) => {
+          onSelectNote(newNote.uuid, newNote.title || DEFAULT_NOTE_TITLE)
+          if (isPhone) {
+            setView('editor')
+          }
+        },
+      },
+    )
+    onSelectNote(uuid, DEFAULT_NOTE_TITLE)
+    if (isPhone) {
+      setView('editor')
+    }
+  }, [createNote, scope, onSelectNote, isPhone, setView])
+
+  const handleCloseRestoreModal = useCallback(() => {
+    setRestoreModalNote(null)
+  }, [])
+
+  const handleOpenRename = useCallback((note: NoteListItem) => {
+    setRenameModalNote(note)
+    setRenameTitle(note.title || '')
+  }, [])
+
+  const handleCloseRename = useCallback(() => {
+    setRenameModalNote(null)
+    setRenameTitle('')
+  }, [])
+
+  const handleConfirmRename = useCallback(
+    (e?: React.FormEvent) => {
+      if (e) e.preventDefault()
+      if (!renameModalNote) return
+      const title = renameTitle.trim()
+      if (title !== renameModalNote.title) {
+        renameNote.mutate({
+          uuid: renameModalNote.uuid,
+          title,
+        })
+      }
+      handleCloseRename()
+    },
+    [renameModalNote, renameNote, renameTitle, handleCloseRename],
+  )
+
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const handleBottomReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage()
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || !hasNextPage) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage()
+        }
+      },
+      { rootMargin: '150px' },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  const totalCount = data?.pages[0]?.meta.total ?? allNotes.length
+
+  return (
+    <Stack gap="xs" h="100%" p="sm">
+      <Group align="center" justify="space-between" wrap="nowrap">
+        <Group align="baseline" gap="xs" style={{ minWidth: 0, flex: 1 }} wrap="nowrap">
+          <Text truncate fw={700} size="sm">
+            {scope.label}
+          </Text>
+          <Text c="dimmed" size="xs" style={{ flexShrink: 0 }}>
+            {totalCount} {totalCount === 1 ? 'note' : 'notes'}
+          </Text>
+        </Group>
+        {scope.kind !== 'trash' && !isCloudSignedOut && (
+          <Button
+            aria-label="Create note"
+            leftSection={<IconPlus size={14} />}
+            loading={createNote.isPending}
+            size="xs"
+            variant="light"
+            onClick={handleCreateNote}
+          >
+            Create note
+          </Button>
+        )}
+      </Group>
+
+      <FilterInput
+        hasMore={Boolean(hasNextPage)}
+        localCount={filtered.length}
+        params={{}}
+        totalCount={totalCount}
+      />
+
+      <ScrollArea style={{ flex: 1 }} onBottomReached={handleBottomReached}>
+        {isCloudSignedOut ? (
+          <Center h={240}>
+            <Stack align="center" gap="xs" maw={280} ta="center">
+              <IconCloud opacity={0.4} size={36} />
+              <Text fw={600} size="sm">
+                Cloud sync is inactive
+              </Text>
+              <Text c="dimmed" size="xs">
+                Sign in to access, create, and sync Cloud notes across devices.
+              </Text>
+              <Button size="xs" variant="light" onClick={() => navigate(ROUTE_PATHS.LOGIN)}>
+                Sign in to Cloud
+              </Button>
+            </Stack>
+          </Center>
+        ) : isLoading ? (
+          <ListSkeleton />
+        ) : filtered.length === 0 ? (
+          <Center h={180}>
+            <Stack align="center" gap="xs">
+              <Text c="dimmed" size="sm">
+                {scope.kind === 'trash' ? 'Trash is empty' : 'No notes found'}
+              </Text>
+              {scope.kind !== 'trash' && (
+                <Button
+                  leftSection={<IconPlus size={14} />}
+                  loading={createNote.isPending}
+                  size="xs"
+                  variant="light"
+                  onClick={handleCreateNote}
+                >
+                  Create note
+                </Button>
+              )}
+            </Stack>
+          </Center>
+        ) : (
+          <Stack gap={4}>
+            {filtered.map((note) => (
+              <NoteRow
+                key={note.uuid}
+                active={note.uuid === activeUuid}
+                note={note}
+                onDuplicate={() => duplicateNote.mutate(note.uuid)}
+                onForceDelete={() => {
+                  closeTab(note.uuid)
+                  forceDeleteNote.mutate(note.uuid)
+                }}
+                onMoveToFolder={() => setMoveModalNote(note)}
+                onOpen={() => handleOpen(note.uuid, note.title)}
+                onRename={() => handleOpenRename(note)}
+                onRestore={() => restoreNote.mutate(note.uuid)}
+                onRestoreTo={() => setRestoreModalNote(note)}
+                onStar={() => starNote.mutate({ uuid: note.uuid, is_starred: !note.is_starred })}
+                onTrash={() => {
+                  closeTab(note.uuid)
+                  trashNote.mutate(note.uuid)
+                }}
+              />
+            ))}
+            {hasNextPage && (
+              <Box ref={sentinelRef} py="xs">
+                {isFetchingNextPage && (
+                  <Center>
+                    <Loader size="xs" />
+                  </Center>
+                )}
+              </Box>
+            )}
+          </Stack>
+        )}
+      </ScrollArea>
+
+      <Modal
+        centered
+        opened={Boolean(moveModalNote)}
+        size="sm"
+        title="Move note to folder"
+        onClose={() => setMoveModalNote(null)}
+      >
+        <Stack gap="xs">
+          <NavLink
+            active={!moveModalNote?.folder}
+            label="Root (No folder)"
+            leftSection={<IconFolder size={16} />}
+            onClick={() => handleMoveToFolder(null)}
+          />
+          {moveModalFolders.map((folder) => (
+            <NavLink
+              key={folder.uuid}
+              active={moveModalNote?.folder?.uuid === folder.uuid}
+              label={folder.name}
+              leftSection={<IconFolder size={16} />}
+              onClick={() => handleMoveToFolder(folder.uuid)}
+            />
+          ))}
+        </Stack>
+      </Modal>
+
+      <Modal
+        centered
+        opened={Boolean(restoreModalNote)}
+        size="sm"
+        title="Restore note to folder"
+        onClose={handleCloseRestoreModal}
+      >
+        <Stack gap="xs">
+          <NavLink
+            label="Root (No folder)"
+            leftSection={<IconFolder size={16} />}
+            onClick={() => handleRestoreToFolder(null)}
+          />
+          {restoreModalFolders.map((folder) => (
+            <NavLink
+              key={folder.uuid}
+              label={folder.name}
+              leftSection={<IconFolder size={16} />}
+              onClick={() => handleRestoreToFolder(folder.uuid)}
+            />
+          ))}
+        </Stack>
+      </Modal>
+
+      <Modal
+        centered
+        opened={Boolean(renameModalNote)}
+        size="sm"
+        title="Rename note"
+        onClose={handleCloseRename}
+      >
+        <form onSubmit={handleConfirmRename}>
+          <Stack gap="sm">
+            <TextInput
+              autoFocus
+              data-autofocus
+              label="Note title"
+              maxLength={MAX_NOTE_TITLE_LENGTH}
+              placeholder="Enter note title"
+              value={renameTitle}
+              onChange={(e) => setRenameTitle(e.currentTarget.value)}
+            />
+            <Group gap="xs" justify="flex-end">
+              <Button variant="default" onClick={handleCloseRename}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                Save
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+      </Modal>
+    </Stack>
+  )
+})

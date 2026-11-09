@@ -1,10 +1,10 @@
-import { fetchBootstrap } from '@/api/bootstrap'
-import { fetchNotes } from '@/api/notes'
-import { foldersRepo } from '@/db/foldersRepo'
-import { notesRepo } from '@/db/notesRepo'
-import { tagsRepo } from '@/db/tagsRepo'
-import { getFoldersArray, getTagsArray } from '@/lib/bootstrap'
-import type { LocalFolder, LocalNote, LocalTag, NoteListItem } from '@/types/api'
+import { fetchBootstrap } from '@src/api/bootstrap_api'
+import { fetchNotes } from '@src/api/notes_api'
+import { foldersRepo } from '@src/db/folders_repo'
+import { notesRepo } from '@src/db/notes_repo'
+import { tagsRepo } from '@src/db/tags_repo'
+import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
+import type { LocalFolder, LocalNote, LocalTag, NoteListItem } from '@src/types/api'
 
 export async function pull(): Promise<{ applied: number }> {
   let applied = 0

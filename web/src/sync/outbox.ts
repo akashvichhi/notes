@@ -1,6 +1,6 @@
-import { getDb } from '@/db/connection'
-import { isNative } from '@/platform/isNative'
-import type { Container, Note, UUID } from '@/types/api'
+import { getDb } from '@src/db/connection'
+import { isNative } from '@src/platform/is_native'
+import type { Container, Note, UUID } from '@src/types/api'
 
 export type QueuedOp =
   | { kind: 'create'; uuid: UUID; folder_id?: UUID | null; container?: Container }

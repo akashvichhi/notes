@@ -1,6 +1,6 @@
 export interface Migration {
   version: number
-  sql: string
+  sql:     string
 }
 
 export const MIGRATIONS: Migration[] = [

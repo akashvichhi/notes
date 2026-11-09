@@ -2,7 +2,7 @@ import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import '@mantine/spotlight/styles.css'
 import '@mantine/tiptap/styles.css'
-import './index.css'
+import '@src/styles/global.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -12,8 +12,8 @@ import { ModalsProvider } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
 
 
-import { App } from './App'
-import { theme } from './theme'
+import { App } from './app'
+import { theme } from '@src/styles/theme'
 
 // Automatically reload the page when a chunk 404s after a new release
 window.addEventListener('vite:preloadError', (event) => {

@@ -1,21 +1,21 @@
 import { useSyncExternalStore } from 'react'
 
-import { BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY } from '@/constants/queryKeys'
-import { queryClient } from '@/lib/queryClient'
-import { isNative } from '@/platform/isNative'
-import { loadToken } from '@/platform/secureStore'
-import { outbox } from '@/sync/outbox'
-import { pull } from '@/sync/pull'
-import { push } from '@/sync/push'
-import type { Note } from '@/types/api'
+import { BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
+import { queryClient } from '@src/queries/query_client'
+import { isNative } from '@src/platform/is_native'
+import { loadToken } from '@src/platform/secure_store'
+import { outbox } from './outbox'
+import { pull } from './pull'
+import { push } from './push'
+import type { Note } from '@src/types/api'
 
 
 export type SyncState = 'synced' | 'syncing' | 'offline' | 'conflict' | 'error'
 
 export interface SyncSnapshot {
-  state: SyncState
+  state:        SyncState
   pendingCount: number
-  conflicts: Note[]
+  conflicts:    Note[]
   lastSyncedAt: number | null
 }
 

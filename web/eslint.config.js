@@ -1,64 +1,66 @@
+// ESLint flat config. The rules it enforces are described in web/CLAUDE.md (Tooling).
+// This file is the source of truth for linting.
+//
+// Dev dependencies (tested together; pinned in package.json):
+//   eslint 9.39.5, @eslint/js 9.39.5, typescript-eslint 8.72.1,
+//   eslint-plugin-react 7.37.5, eslint-plugin-react-hooks 7.1.1,
+//   eslint-plugin-import 2.32.0, @stylistic/eslint-plugin 5.10.0, globals 17.14.0
+// ESLint stays on 9 until every plugin's peer range supports 10.
 import js from '@eslint/js'
-import react from 'eslint-plugin-react'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
+import stylistic from '@stylistic/eslint-plugin'
 import importPlugin from 'eslint-plugin-import'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import react from 'eslint-plugin-react'
+import reactHooks from 'eslint-plugin-react-hooks'
+import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
-export default defineConfig([
-  globalIgnores(['dist', 'src-tauri/**']),
+export default tseslint.config(
+  // src-tauri holds the Rust shell and its generated files, not frontend code.
+  { ignores: ['dist', 'coverage', 'node_modules', 'src-tauri'] },
   {
-    files: ['**/*.{ts,tsx}'],
+    files:   ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
-      tseslint.configs.recommended,
+      ...tseslint.configs.recommended,
       react.configs.flat.recommended,
       react.configs.flat['jsx-runtime'],
-      reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
       importPlugin.flatConfigs.recommended,
       importPlugin.flatConfigs.typescript,
     ],
     languageOptions: {
-      ecmaVersion: 'latest',
-      globals: globals.browser,
-      parserOptions: {
-        ecmaFeatures: { jsx: true },
-      },
+      ecmaVersion: 2023,
+      globals:     globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      '@stylistic':  stylistic,
     },
     settings: {
-      react: {
-        version: 'detect',
-      },
-      'import/resolver': {
-        typescript: {
-          alwaysTryTypes: true,
-          project: './tsconfig.json',
-        },
-        node: true,
-      },
+      react: { version: 'detect' },
     },
     rules: {
       // ── TypeScript ────────────────────────────────────────────────
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars':       ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-use-before-define': ['error'],
-      'no-unused-vars': 'off', // use @typescript-eslint version instead
-      'no-use-before-define': 'off', // use @typescript-eslint version instead
+      '@typescript-eslint/no-explicit-any':      'error',
+      // Enforce explicit types (useState<T> generics have no lint rule; code review covers them)
+      '@typescript-eslint/explicit-function-return-type':  'error',
+      '@typescript-eslint/explicit-module-boundary-types': 'error',
+      '@typescript-eslint/typedef':                        ['error', { variableDeclaration: true, arrowParameter: true, parameter: true }],
+      'no-unused-vars':                                    'off',
+      'no-use-before-define':                              'off',
 
       // ── Imports ───────────────────────────────────────────────────
-      'import/no-unresolved': 'off',
+      'import/no-unresolved':              'off',
       'import/no-named-as-default-member': 'off',
-      // Disallow deep relative imports like ../../
       'import/no-relative-parent-imports': 'off', // handled by no-restricted-imports below
-      'no-restricted-imports': [
+      'no-restricted-imports':             [
         'error',
         {
           patterns: [
             {
-              group: ['../*'],
-              message: 'Relative parent imports (../) are not allowed. Use @src/* path alias instead.',
+              group:   ['../*'],
+              message: 'Relative parent imports (../) are not allowed. Use the @src/* path alias instead.',
             },
           ],
         },
@@ -66,69 +68,53 @@ export default defineConfig([
       'import/order': [
         'error',
         {
-          groups: [
-            'builtin',    // node built-ins
-            'external',   // npm packages
-            'internal',   // @src/* aliases
-            'sibling',    // ./ imports
-            'unknown',    // css/scss (caught by pathGroups below)
-          ],
+          groups:     ['builtin', 'external', 'internal', 'sibling', 'unknown'],
           pathGroups: [
             {
-              pattern: '{react,react/**,react-dom,react-dom/**,react-router,react-router/**,react-router-dom}',
-              group: 'external',
+              pattern:  '{react,react/**,react-dom,react-dom/**,react-router,react-router/**,react-router-dom}',
+              group:    'external',
               position: 'before',
             },
-            {
-              pattern: '{@src/**,@/**}',
-              group: 'internal',
-            },
-            {
-              pattern: '**/*.{css,scss}',
-              group: 'unknown',
-              position: 'after',
-            },
+            { pattern: '@src/**', group: 'internal' },
+            { pattern: '**/*.{css,scss}', group: 'unknown', position: 'after' },
           ],
           pathGroupsExcludedImportTypes: ['builtin'],
-          'newlines-between': 'always',
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
+          'newlines-between':            'always',
+          alphabetize:                   { order: 'asc', caseInsensitive: true },
         },
       ],
 
+      // ── React ─────────────────────────────────────────────────────
       'react/jsx-boolean-value': ['error', 'never'],
-      'react/jsx-sort-props': [
+      'react/jsx-sort-props':    [
         'error',
         {
-          // Sort all props alphabetically
-          // Shorthand boolean props (isOpen) come before callbacks (onClick)
-          // Callbacks (on*) come last
-          // Reserved props (key, ref) come first
-          ignoreCase: true,
-          callbacksLast: true,
-          shorthandFirst: true,
-          shorthandLast: false,
-          reservedFirst: true,
+          ignoreCase:           true,
+          callbacksLast:        true,
+          shorthandFirst:       true,
+          shorthandLast:        false,
+          reservedFirst:        true,
           noSortAlphabetically: false,
         },
       ],
-
       'react/require-default-props': 'off',
-      'react-hooks/exhaustive-deps': ['warn'],
+      'react-hooks/rules-of-hooks':  'error',
+      'react-hooks/exhaustive-deps': 'warn',
 
-      'arrow-body-style': 'off',
-      'key-spacing': ['error', { align: 'value' }],
-      'no-param-reassign': ['error', { props: false }],
-      'object-curly-newline': ['error', { consistent: true }],
-      'operator-linebreak': ['error', 'before', { overrides: { '=': 'after' } }],
-      'prefer-destructuring': ['error', { array: false }],
+      // ── General ───────────────────────────────────────────────────
+      'arrow-body-style':      'off',
+      'no-param-reassign':     ['error', { props: false }],
+      'prefer-destructuring':  ['error', { array: false }],
       'no-restricted-exports': 'off',
-      'quote-props': ['error', 'consistent-as-needed'],
+      'no-console':            ['warn', { allow: ['error'] }],
 
-      'linebreak-style': ['error', 'unix'],
-      indent: ['error', 2],
+      // ── Formatting (@stylistic) ───────────────────────────────────
+      '@stylistic/indent':               ['error', 2],
+      '@stylistic/key-spacing':          ['error', { align: 'value' }],
+      '@stylistic/object-curly-newline': ['error', { consistent: true }],
+      '@stylistic/operator-linebreak':   ['error', 'before', { overrides: { '=': 'after' } }],
+      '@stylistic/quote-props':          ['error', 'consistent-as-needed'],
+      '@stylistic/linebreak-style':      ['error', 'unix'],
     },
   },
-])
+)

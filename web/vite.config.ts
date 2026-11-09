@@ -1,93 +1,99 @@
+// Vite + Vitest config. Build, chunking and alias rules are described in web/CLAUDE.md.
+//
+// Dev dependencies (tested together): vite 8.3.5, @vitejs/plugin-react 6.2.1, vitest 5.1.0, jsdom 31.0.0.
+// tsconfig.app.json must match the alias: "paths": { "@src/*": ["./src/*"] }.
+//
+// Build output: every file name is a content hash under assets/, so the server can cache
+// /assets/* forever (immutable) while index.html is served with no-cache.
+
 import path from 'node:path'
 
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv } from 'vite'
+import { loadEnv, type ProxyOptions } from 'vite'
+import { defineConfig } from 'vitest/config'
+
+const DEV_SERVER_PORT: number = 5173
+const DEFAULT_API_TARGET: string = 'http://127.0.0.1:8000'
+
+// Each vendor gets its own long-cached chunk, so an app change doesn't re-download them.
+// Order matters: the editor and highlighting packages are checked first, and
+// '@tabler/icons-react' and '@tanstack/react-query' contain "react", so they are
+// checked before the generic React check.
+function vendorChunkName(id: string): string | null {
+  if (!id.includes('node_modules')) return null
+  if (id.includes('lowlight') || id.includes('highlight.js')) return 'vendor-highlight'
+  if (id.includes('@tiptap') || id.includes('prosemirror') || id.includes('@mantine/tiptap')) return 'vendor-tiptap'
+  if (id.includes('@tabler/icons-react')) return 'vendor-icons'
+  if (id.includes('@mantine')) return 'vendor-mantine'
+  if (id.includes('@tanstack')) return 'vendor-query'
+  if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-react'
+  return null
+}
+
+// Proxies a path to the API, so the dev server is same-origin with it: Sanctum's
+// cookies and CSRF checks then work exactly as in production.
+function apiProxy(target: string): ProxyOptions {
+  const origin: string = new URL(target).origin
+
+  return {
+    target,
+    changeOrigin:        true,
+    secure:              true,
+    cookieDomainRewrite: { '*': '' },
+    configure:           (proxy): void => {
+      proxy.on('proxyReq', (proxyReq): void => {
+        proxyReq.setHeader('Origin', origin)
+        proxyReq.setHeader('Referer', `${origin}/`)
+      })
+    },
+  }
+}
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
-  const apiTarget = env.VITE_API_URL || 'http://127.0.0.1:8000'
-  const targetOrigin = new URL(apiTarget).origin
+  const env: Record<string, string> = loadEnv(mode, process.cwd(), '')
+  const apiTarget: string = env.VITE_API_URL || DEFAULT_API_TARGET
 
   return {
     plugins: [react()],
     resolve: {
       alias: {
-        '@':    path.resolve(import.meta.dirname, './src'),
         '@src': path.resolve(import.meta.dirname, './src'),
       },
     },
     build: {
-      chunkSizeWarningLimit: 600,
-      // Output directly to Laravel's public folder
+      // The web build is served by Laravel: write straight into its public folder,
+      // without emptying it (index.php and Laravel's own files live there).
       outDir:                path.resolve(import.meta.dirname, '../api/public'),
-      emptyOutDir:           false, // Prevents deleting index.php and Laravel assets
-      rollupOptions:         {
+      emptyOutDir:           false,
+      chunkSizeWarningLimit: 600,
+      // Vite 8 bundles with Rolldown: `codeSplitting.groups` replaces Rollup's `manualChunks`.
+      rolldownOptions:       {
         output: {
           assetFileNames: 'assets/[hash].[ext]',
           chunkFileNames: 'assets/[hash].js',
           entryFileNames: 'assets/[hash].js',
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('lowlight') || id.includes('highlight.js')) {
-                return 'vendor-highlight'
-              }
-              if (id.includes('@tiptap') || id.includes('prosemirror') || id.includes('@mantine/tiptap')) {
-                return 'vendor-tiptap'
-              }
-              if (id.includes('@tabler/icons-react')) {
-                return 'vendor-icons'
-              }
-              if (id.includes('@mantine')) {
-                return 'vendor-mantine'
-              }
-              if (id.includes('@tanstack')) {
-                return 'vendor-query'
-              }
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-                return 'vendor-react'
-              }
-            }
+          codeSplitting:  {
+            groups: [{ name: vendorChunkName, debugName: 'vendor' }],
           },
         },
       },
     },
+    // Tauri prints its own output in the same terminal.
     clearScreen: false,
     server:      {
-      port:  5173,
-      watch: {
-        ignored: ['**/src-tauri/**'],
-      },
-      // Proxy API and Sanctum requests to avoid cross-origin cookie and CORS issues in local development.
+      port:  DEV_SERVER_PORT,
+      watch: { ignored: ['**/src-tauri/**'] },
       proxy: {
-        '/api': {
-          target:              apiTarget,
-          changeOrigin:        true,
-          secure:              true,
-          cookieDomainRewrite: {
-            '*': '',
-          },
-          configure: (proxy) => {
-            proxy.on('proxyReq', (proxyReq) => {
-              proxyReq.setHeader('Origin', targetOrigin)
-              proxyReq.setHeader('Referer', `${targetOrigin}/`)
-            })
-          },
-        },
-        '/sanctum': {
-          target:              apiTarget,
-          changeOrigin:        true,
-          secure:              true,
-          cookieDomainRewrite: {
-            '*': '',
-          },
-          configure: (proxy) => {
-            proxy.on('proxyReq', (proxyReq) => {
-              proxyReq.setHeader('Origin', targetOrigin)
-              proxyReq.setHeader('Referer', `${targetOrigin}/`)
-            })
-          },
-        },
+        '/api':     apiProxy(apiTarget),
+        '/sanctum': apiProxy(apiTarget),
       },
+    },
+    test: {
+      environment: 'jsdom',
+      setupFiles:  ['./vitest.setup.ts'],
+      // Vitest reads web/.env too. Blank every VITE_* variable that changes behaviour,
+      // so every test gives the same result on any machine.
+      env:         { VITE_API_URL: '' },
     },
   }
 })

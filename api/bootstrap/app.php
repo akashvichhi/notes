@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -34,4 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*', 'mcp') || $request->expectsJson(),
         );
+        // The default message names the model class ("No query results for model [App\Models\Note]").
+        $exceptions->render(fn (NotFoundHttpException $e, Request $request) => $request->is('api/*')
+            ? response()->json(['message' => __('Not found.')], 404)
+            : null);
     })->create();

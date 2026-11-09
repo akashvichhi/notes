@@ -35,7 +35,10 @@ return new class extends Migration
 
         // FULLTEXT must be added separately: the Blueprint helper is fine, but keep it
         // in its own statement so the index name is predictable.
-        DB::statement('ALTER TABLE notes ADD FULLTEXT ft_notes (title, plain_text)');
+        // The tests run on SQLite, which has no FULLTEXT; search tests that need it run on MySQL.
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE notes ADD FULLTEXT ft_notes (title, plain_text)');
+        }
     }
 
     /**

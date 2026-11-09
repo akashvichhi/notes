@@ -61,7 +61,8 @@ export function normalizeError(e: unknown): ApiError {
   }
 
   const data = err.response.data ?? {}
-  const serverCopy = (data.server_copy as { data?: Note } | undefined)?.data
+  // The API sends the conflicting note unwrapped: `{ message, server_copy: {...note} }`.
+  const serverCopy = data.server_copy as Note | undefined
 
   return {
     status:  err.response.status,

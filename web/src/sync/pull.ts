@@ -4,6 +4,7 @@ import { foldersRepo } from '@src/db/folders_repo'
 import { notesRepo } from '@src/db/notes_repo'
 import { tagsRepo } from '@src/db/tags_repo'
 import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
+import { outbox } from './outbox'
 import type { LocalFolder, LocalNote, LocalTag, NoteListItem } from '@src/types/api'
 
 export async function pull(): Promise<{ applied: number }> {
@@ -67,19 +68,22 @@ export async function pull(): Promise<{ applied: number }> {
   let lastPage = 1
   const allActiveNotes: NoteListItem[] = []
 
+  // A failed page throws: pruning against a partial list would delete notes that still exist.
   do {
-    try {
-      const page = await fetchNotes({ per_page: '100', page: String(currentPage) })
-      const activeNotes: NoteListItem[] = page.data ?? []
-      allActiveNotes.push(...activeNotes)
-      lastPage = page.meta?.last_page ?? 1
-      currentPage++
-    } catch {
-      break
-    }
+    const page = await fetchNotes({ per_page: '100', page: String(currentPage) })
+    allActiveNotes.push(...(page.data ?? []))
+    lastPage = page.meta?.last_page ?? 1
+    currentPage++
   } while (currentPage <= lastPage)
 
+  // Notes with changes not yet on the server keep their local copy.
+  const unsent = new Set<string>([
+    ...(await notesRepo.getDirtyCloudNotes()).map((n) => n.uuid),
+    ...(await outbox.pending()).map((op) => op.uuid),
+  ])
+
   for (const n of allActiveNotes) {
+    if (unsent.has(n.uuid)) continue
     const existing = await notesRepo.get(n.uuid, 'cloud')
     const isRemoteUpdated = existing && existing.updated_at !== n.updated_at
     const localNote: LocalNote = {
@@ -116,18 +120,14 @@ export async function pull(): Promise<{ applied: number }> {
   const trashedNotes: NoteListItem[] = []
 
   do {
-    try {
-      const trashPage = await fetchNotes({ trashed: '1', per_page: '100', page: String(currentTrashPage) })
-      const notes: NoteListItem[] = trashPage.data ?? []
-      trashedNotes.push(...notes)
-      lastTrashPage = trashPage.meta?.last_page ?? 1
-      currentTrashPage++
-    } catch {
-      break
-    }
+    const trashPage = await fetchNotes({ trashed: '1', per_page: '100', page: String(currentTrashPage) })
+    trashedNotes.push(...(trashPage.data ?? []))
+    lastTrashPage = trashPage.meta?.last_page ?? 1
+    currentTrashPage++
   } while (currentTrashPage <= lastTrashPage)
 
   for (const n of trashedNotes) {
+    if (unsent.has(n.uuid)) continue
     const existing = await notesRepo.get(n.uuid, 'cloud')
     const localNote: LocalNote = {
       uuid:            n.uuid,
@@ -159,7 +159,7 @@ export async function pull(): Promise<{ applied: number }> {
     const localActive = await notesRepo.list('cloud')
     const localTrashed = await notesRepo.list('cloud', { trashed: true })
     for (const ln of [...localActive, ...localTrashed]) {
-      if (!remoteAllUuids.has(ln.uuid)) {
+      if (!remoteAllUuids.has(ln.uuid) && !unsent.has(ln.uuid)) {
         await notesRepo.hardDelete(ln.uuid, 'cloud')
       }
     }

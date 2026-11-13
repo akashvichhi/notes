@@ -22,3 +22,10 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 - **Options:** our own class component; `react-error-boundary` (6.1.6).
 - **Decision:** `react-error-boundary`. It adds `resetKeys`, `onError` and a `FallbackComponent` prop, which our own class would have to rebuild and test, for a few kilobytes.
 - **Consequences:** every boundary is an `ErrorBoundary` from that package; fallbacks never show the error.
+
+## 4. Styles are SCSS modules compiled by sass
+
+- **Context:** the styling rules keep every raw spacing, font, colour, breakpoint and layer value in token files that modules load with `@use`, and Stylelint rejects literals elsewhere. Plain CSS has no `@use` and no build-time variables.
+- **Options:** CSS custom properties defined in a global sheet; SCSS with `sass` (1.107.1, dev only).
+- **Decision:** SCSS. Tokens are checked at build time, a misspelt one fails the build instead of silently resolving to nothing, and mixins keep the light and dark selector lists in one place.
+- **Consequences:** `sass` is a dev dependency; Vite compiles `*.scss` and resolves `@src` in `@use`. Its optional `@parcel/watcher` install script stays unapproved, because only `sass --watch` uses it.

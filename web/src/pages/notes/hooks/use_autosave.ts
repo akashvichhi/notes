@@ -7,16 +7,16 @@ import type { Editor } from '@tiptap/react'
 import { normalizeError } from '@src/api/api_client'
 import * as notesApi from '@src/api/notes_api'
 import { type NotesPage, patchNote } from '@src/api/notes_api'
-import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
-import { notesRepo } from '@src/db/notes_repo'
+import { BOOTSTRAP_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { clearDraft, saveDraft } from '@src/db/drafts_store'
-import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
+import { notesRepo } from '@src/db/notes_repo'
 import { isNative } from '@src/platform/is_native'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { type SaveStatus, useUiStore } from '@src/stores/ui_store'
 import { syncEngine } from '@src/sync/engine'
 import { outbox } from '@src/sync/outbox'
 import type { Note, NoteListItem } from '@src/types/api'
+import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
 export type { SaveStatus }
 
@@ -124,7 +124,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
         await clearDraft(note.uuid)
         setDirty(note.uuid, false)
 
-        qc.setQueryData([...NOTE_KEY, note.uuid], updated)
+        qc.setQueryData(queryKeys.notes.detail(note.uuid), updated)
         if (updated.title) {
           useTabsStore.getState().setTitle(note.uuid, updated.title)
         }
@@ -277,7 +277,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
     editor.commands.setContent(conflict.body, { emitUpdate: false })
     void clearDraft(note.uuid)
     setDirty(note.uuid, false)
-    qc.setQueryData([...NOTE_KEY, note.uuid], conflict)
+    qc.setQueryData(queryKeys.notes.detail(note.uuid), conflict)
     setStatus('saved')
     setSaveStatus('saved', Date.now())
     setConflict(null)

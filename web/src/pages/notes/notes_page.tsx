@@ -16,7 +16,7 @@ import { StatusBar } from '@src/pages/notes/components/layout/status_bar'
 import { NoteList } from '@src/pages/notes/components/notes/note_list'
 import { SpotlightSearch } from '@src/pages/notes/components/search/spotlight_search'
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
-import { NOTE_KEY } from '@src/constants/query_keys'
+import { queryKeys } from '@src/constants/query_keys'
 import { useCreateNote, useNote } from '@src/queries/notes_queries'
 import { useIsPhone } from '@src/hooks/use_is_phone'
 import { notePath, ROUTE_PATHS } from '@src/routes/route_paths'
@@ -67,7 +67,7 @@ export const AppPage = memo(function AppPage() {
   const handleSelectNote = useCallback(
     (uuid: string, title?: string) => {
       openTab(uuid, title || DEFAULT_NOTE_TITLE)
-      void qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      void qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
       if (isPhone) {
         setView('editor')
       }

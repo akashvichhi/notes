@@ -5,9 +5,9 @@ import { IconPlus, IconX } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
-import { NOTE_KEY } from '@src/constants/query_keys'
-import { useCreateNote } from '@src/queries/notes_queries'
+import { queryKeys } from '@src/constants/query_keys'
 import { useIsPhone } from '@src/hooks/use_is_phone'
+import { useCreateNote } from '@src/queries/notes_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
 import type { Tab } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
@@ -125,7 +125,7 @@ export const TabBar = memo(function TabBar() {
   const handleActivate = useCallback(
     (uuid: string) => {
       activate(uuid)
-      void qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      void qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
     },
     [activate, qc],
   )

@@ -1,5 +1,5 @@
 import type { Scope } from '@src/stores/ui_store'
-import type { UUID } from '@src/types/api'
+import type { Container, UUID } from '@src/types/api'
 
 export const BOOTSTRAP_KEY = ['bootstrap'] as const
 export const NOTES_KEY = ['notes'] as const
@@ -14,9 +14,9 @@ export const queryKeys = {
   accessTokens: ACCESS_TOKENS_KEY,
   notes:        {
     all:    NOTES_KEY,
-    list:   (scopeKey: string) => [...NOTES_KEY, scopeKey] as const,
+    list:   (container: Container | undefined, scopeKey: string) => [...NOTES_KEY, container, scopeKey] as const,
     detail: (uuid?: UUID | null) => [...NOTE_KEY, uuid] as const,
     filter: (scope: Scope, query: string) => ['notes-filter', scope, query] as const,
   },
-  search: (query: string) => ['search', query] as const,
+  search: (query: string, container: Container | undefined) => ['search', query, container] as const,
 } as const

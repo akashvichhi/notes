@@ -1,9 +1,9 @@
 import { notifications } from '@mantine/notifications'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type UseQueryResult, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import * as notesApi from '@src/api/notes_api'
 import { COPY_NOTE_SUFFIX, DEFAULT_NOTE_TITLE } from '@src/constants/labels'
-import { AUTH_KEY, BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
+import { AUTH_KEY, BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { notesSource } from '@src/data/notes_source'
 import { notesRepo } from '@src/db/notes_repo'
 import { tagsRepo } from '@src/db/tags_repo'
@@ -22,7 +22,7 @@ export function useNote(uuid?: UUID | null) {
   const closeTab = useTabsStore((s) => s.close)
 
   return useQuery({
-    queryKey: [...NOTE_KEY, uuid],
+    queryKey: queryKeys.notes.detail(uuid),
     queryFn:  async () => {
       if (!uuid) return null
 
@@ -139,7 +139,7 @@ export function useNotes(scope: Scope) {
   const container = scope.container ?? (native ? 'local' : 'cloud')
 
   return useInfiniteQuery({
-    queryKey: [...NOTES_KEY, container, scopeKey(scope)],
+    queryKey: queryKeys.notes.list(container, scopeKey(scope)),
     queryFn:  async ({ pageParam }) => {
       if (native) {
         const rows = await notesSource.list({ ...scope, container })
@@ -207,12 +207,12 @@ export function useStarNote(_scope?: Scope) {
     },
     onMutate: async ({ uuid, is_starred }) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
-      await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
+      await qc.cancelQueries({ queryKey: queryKeys.notes.detail(uuid) })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
       await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
-      const prevSingleNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
+      const prevSingleNote = qc.getQueryData<Note>(queryKeys.notes.detail(uuid))
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
       const prevLocal = qc.getQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY)
 
@@ -233,7 +233,7 @@ export function useStarNote(_scope?: Scope) {
 
       // 2. Update single note query if open
       if (prevSingleNote) {
-        qc.setQueryData<Note>([...NOTE_KEY, uuid], { ...prevSingleNote, is_starred })
+        qc.setQueryData<Note>(queryKeys.notes.detail(uuid), { ...prevSingleNote, is_starred })
       }
 
       // 3. Update sidebar starred count in matching container only
@@ -271,7 +271,7 @@ export function useStarNote(_scope?: Scope) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
       }
       if (ctx?.prevSingleNote) {
-        qc.setQueryData([...NOTE_KEY, uuid], ctx.prevSingleNote)
+        qc.setQueryData(queryKeys.notes.detail(uuid), ctx.prevSingleNote)
       }
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
@@ -283,7 +283,7 @@ export function useStarNote(_scope?: Scope) {
     },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
-      qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
@@ -328,11 +328,11 @@ export function useRenameNote() {
     },
     onMutate: async ({ uuid, title }) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
-      await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
+      await qc.cancelQueries({ queryKey: queryKeys.notes.detail(uuid) })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
-      const prevSingleNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
+      const prevSingleNote = qc.getQueryData<Note>(queryKeys.notes.detail(uuid))
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
 
       // 1. Instantly update tab title in UI
@@ -352,7 +352,7 @@ export function useRenameNote() {
 
       // 3. Instantly update single note query
       if (prevSingleNote) {
-        qc.setQueryData<Note>([...NOTE_KEY, uuid], { ...prevSingleNote, title })
+        qc.setQueryData<Note>(queryKeys.notes.detail(uuid), { ...prevSingleNote, title })
       }
 
       return { prevNotes, prevSingleNote, prevBootstrap }
@@ -360,7 +360,7 @@ export function useRenameNote() {
     onError: (_err, { uuid }, ctx) => {
       if (ctx?.prevSingleNote) {
         setTitle(uuid, ctx.prevSingleNote.title || DEFAULT_NOTE_TITLE)
-        qc.setQueryData([...NOTE_KEY, uuid], ctx.prevSingleNote)
+        qc.setQueryData(queryKeys.notes.detail(uuid), ctx.prevSingleNote)
       }
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
@@ -372,7 +372,7 @@ export function useRenameNote() {
     },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
-      qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
@@ -471,7 +471,7 @@ export function useCreateNote() {
         updated_at:   new Date().toISOString(),
         deleted_at:   null,
       }
-      qc.setQueryData([...NOTE_KEY, uuid], optimisticNote)
+      qc.setQueryData(queryKeys.notes.detail(uuid), optimisticNote)
 
       // 3. Prepend to note list queries
       const optimisticListItem: NoteListItem = {
@@ -560,7 +560,7 @@ export function useCreateNote() {
       notifications.show({ color: 'red', message: "Couldn't create note." })
     },
     onSuccess: (newNote) => {
-      qc.setQueryData([...NOTE_KEY, newNote.uuid], newNote)
+      qc.setQueryData(queryKeys.notes.detail(newNote.uuid), newNote)
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
@@ -685,7 +685,7 @@ export function useTrashNote() {
       notifications.show({ color: 'red', message: "Couldn't move note to trash." })
     },
     onSettled: (_data, _err, uuid) => {
-      qc.removeQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.removeQueries({ queryKey: queryKeys.notes.detail(uuid) })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
@@ -872,7 +872,7 @@ export function useForceDeleteNote() {
       notifications.show({ color: 'red', message: "Couldn't permanently delete note." })
     },
     onSettled: (_data, _err, uuid) => {
-      qc.removeQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.removeQueries({ queryKey: queryKeys.notes.detail(uuid) })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
@@ -930,7 +930,7 @@ export function useDuplicateNote() {
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
       const prevLocal = qc.getQueryData(LOCAL_SIDEBAR_KEY)
-      const prevSingle = qc.getQueryData<Note>([...NOTE_KEY, sourceUuid])
+      const prevSingle = qc.getQueryData<Note>(queryKeys.notes.detail(sourceUuid))
 
       // Find the source note in cached queries if not in single query
       let sourceItem: NoteListItem | Note | undefined = prevSingle
@@ -984,7 +984,7 @@ export function useDuplicateNote() {
           updated_at:   new Date().toISOString(),
           deleted_at:   null,
         }
-        qc.setQueryData([...NOTE_KEY, tempUuid], optimisticNote)
+        qc.setQueryData(queryKeys.notes.detail(tempUuid), optimisticNote)
       }
 
       // Prepend to note list queries
@@ -1048,7 +1048,7 @@ export function useDuplicateNote() {
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.tempUuid) {
-        qc.removeQueries({ queryKey: [...NOTE_KEY, ctx.tempUuid] })
+        qc.removeQueries({ queryKey: queryKeys.notes.detail(ctx.tempUuid) })
       }
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
@@ -1062,7 +1062,7 @@ export function useDuplicateNote() {
       notifications.show({ color: 'red', message: "Couldn't duplicate note." })
     },
     onSuccess: async (realNote, _v, ctx) => {
-      qc.setQueryData([...NOTE_KEY, realNote.uuid], realNote)
+      qc.setQueryData(queryKeys.notes.detail(realNote.uuid), realNote)
       if (isNative()) {
         const noteContainer = realNote.container ?? (useUiStore.getState().scope.container ?? 'local')
         const isLocal = noteContainer === 'local'
@@ -1085,7 +1085,7 @@ export function useDuplicateNote() {
         })
       }
       if (ctx?.tempUuid) {
-        qc.removeQueries({ queryKey: [...NOTE_KEY, ctx.tempUuid] })
+        qc.removeQueries({ queryKey: queryKeys.notes.detail(ctx.tempUuid) })
         qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.NotesPage[] } | undefined) => {
           if (!old?.pages?.length) return old
           return {
@@ -1142,11 +1142,11 @@ export function useSyncNoteTags() {
       return notesApi.syncNoteTags(uuid, names)
     },
     onMutate: async ({ uuid, names }) => {
-      await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
+      await qc.cancelQueries({ queryKey: queryKeys.notes.detail(uuid) })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
       await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
-      const prevNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
+      const prevNote = qc.getQueryData<Note>(queryKeys.notes.detail(uuid))
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
       const prevLocal = qc.getQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY)
 
@@ -1154,7 +1154,7 @@ export function useSyncNoteTags() {
 
       // 1. Update single note query tags immediately
       if (prevNote) {
-        qc.setQueryData<Note>([...NOTE_KEY, uuid], { ...prevNote, tags: names })
+        qc.setQueryData<Note>(queryKeys.notes.detail(uuid), { ...prevNote, tags: names })
       }
 
       // 2. Update tags and tag counts strictly in matching container
@@ -1244,7 +1244,7 @@ export function useSyncNoteTags() {
     },
     onError: (_err, { uuid }, ctx) => {
       if (ctx?.prevNote) {
-        qc.setQueryData([...NOTE_KEY, uuid], ctx.prevNote)
+        qc.setQueryData(queryKeys.notes.detail(uuid), ctx.prevNote)
       }
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
@@ -1255,7 +1255,7 @@ export function useSyncNoteTags() {
       notifications.show({ color: 'red', message: "Couldn't update tags on note." })
     },
     onSettled: (_data, _err, { uuid }) => {
-      qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
@@ -1299,12 +1299,12 @@ export function useMoveNoteFolder() {
     },
     onMutate: async ({ uuid, folder_id }) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
-      await qc.cancelQueries({ queryKey: [...NOTE_KEY, uuid] })
+      await qc.cancelQueries({ queryKey: queryKeys.notes.detail(uuid) })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
       await qc.cancelQueries({ queryKey: LOCAL_SIDEBAR_KEY })
 
       const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
-      const prevSingleNote = qc.getQueryData<Note>([...NOTE_KEY, uuid])
+      const prevSingleNote = qc.getQueryData<Note>(queryKeys.notes.detail(uuid))
       const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
       const prevLocal = qc.getQueryData<{ folders: Folder[]; tags: Tag[]; counts: Counts }>(LOCAL_SIDEBAR_KEY)
 
@@ -1328,7 +1328,7 @@ export function useMoveNoteFolder() {
 
       // 1. Update single note query
       if (prevSingleNote) {
-        qc.setQueryData<Note>([...NOTE_KEY, uuid], {
+        qc.setQueryData<Note>(queryKeys.notes.detail(uuid), {
           ...prevSingleNote,
           folder: targetFolder,
         })
@@ -1389,7 +1389,7 @@ export function useMoveNoteFolder() {
     },
     onError: (_err, { uuid }, ctx) => {
       if (ctx?.prevSingleNote) {
-        qc.setQueryData([...NOTE_KEY, uuid], ctx.prevSingleNote)
+        qc.setQueryData(queryKeys.notes.detail(uuid), ctx.prevSingleNote)
       }
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
@@ -1404,10 +1404,26 @@ export function useMoveNoteFolder() {
     },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
-      qc.invalidateQueries({ queryKey: [...NOTE_KEY, uuid] })
+      qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
       qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
     },
   })
 }
 
+/**
+ * Tops up the filter box from the server when the scope has more pages than are
+ * loaded, so a filter never silently misses notes.
+ */
+export function useNotesFilterQuery(
+  scope: Scope,
+  query: string,
+  params: Record<string, string | undefined>,
+  enabled: boolean,
+): UseQueryResult<notesApi.NotesPage> {
+  return useQuery({
+    queryKey: queryKeys.notes.filter(scope, query),
+    queryFn:  (): Promise<notesApi.NotesPage> => notesApi.fetchNotes({ ...params, q: query }),
+    enabled,
+  })
+}

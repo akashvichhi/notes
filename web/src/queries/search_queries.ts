@@ -19,7 +19,7 @@ export function useSearch(q: string) {
   const container: Container = scope.container ?? (isNative() ? 'local' : 'cloud')
 
   return useQuery({
-    queryKey: [...queryKeys.search(trimmed), container],
+    queryKey: queryKeys.search(trimmed, container),
     queryFn:  async ({ signal }): Promise<SearchResults> => {
       if (isNative()) {
         const terms = trimmed.split(/\s+/).filter(Boolean)

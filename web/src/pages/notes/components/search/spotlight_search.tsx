@@ -6,10 +6,10 @@ import { IconFolder, IconNote, IconPlus, IconSearch } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
 
 
-import { NOTE_KEY } from '@src/constants/query_keys'
+import { queryKeys } from '@src/constants/query_keys'
+import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
 import { useCreateNote } from '@src/queries/notes_queries'
 import { MIN_QUERY, useSearch } from '@src/queries/search_queries'
-import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
 
@@ -57,7 +57,7 @@ export const SpotlightSearch = memo(function SpotlightSearch() {
           <Spotlight.Action key={hit.uuid} leftSection={<IconNote size={18} />}
             onClick={() => {
               openTab(hit.uuid, hit.title)
-              void qc.invalidateQueries({ queryKey: [...NOTE_KEY, hit.uuid] })
+              void qc.invalidateQueries({ queryKey: queryKeys.notes.detail(hit.uuid) })
             }}>
             <div>
               <Text fw={500} size="sm"><HighlightTerms terms={hit.terms} text={hit.title} /></Text>

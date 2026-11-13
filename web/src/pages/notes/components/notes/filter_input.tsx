@@ -3,11 +3,10 @@ import { memo, useCallback, useMemo } from 'react'
 import { Loader, Text, TextInput } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { IconFilter } from '@tabler/icons-react'
-import { useQuery } from '@tanstack/react-query'
 
 
-import { fetchNotes } from '@src/api/notes_api'
 import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
+import { useNotesFilterQuery } from '@src/queries/notes_queries'
 import { useUiStore } from '@src/stores/ui_store'
 
 /**
@@ -24,11 +23,7 @@ export const FilterInput = memo(function FilterInput({
   const { filter, setFilter, scope } = useUiStore()
   const [debounced] = useDebouncedValue(filter, 250)
 
-  const server = useQuery({
-    queryKey: ['notes-filter', scope, debounced],
-    queryFn:  () => fetchNotes({ ...params, q: debounced }),
-    enabled:  hasMore && debounced.trim().length > 0,
-  })
+  const server = useNotesFilterQuery(scope, debounced, params, hasMore && debounced.trim().length > 0)
 
   const showSpinner = useDelayedLoading(server.isFetching)
 

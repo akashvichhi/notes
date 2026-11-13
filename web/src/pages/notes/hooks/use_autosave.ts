@@ -4,6 +4,7 @@ import { notifications } from '@mantine/notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/react'
 
+import { MESSAGES } from '@src/constants/messages'
 import { normalizeError } from '@src/api/api_client'
 import * as notesApi from '@src/api/notes_api'
 import { type NotesPage, patchNote } from '@src/api/notes_api'
@@ -176,7 +177,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
         if (isExplicit) {
           notifications.show({
             id:        'explicit-save-error',
-            message:   "Couldn't save note.",
+            message:   MESSAGES.NOTE_SAVE_FAILED,
             color:     'red',
             autoClose: 2500,
           })
@@ -320,9 +321,9 @@ export function useAutosave(note: Note, editor: Editor | null) {
       resolveKeepTheirs()
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
-      showSuccessToast('Saved your changes as a new note.')
+      showSuccessToast(MESSAGES.COPY_SAVED)
     } catch {
-      showErrorToast("Couldn't save copy of note.")
+      showErrorToast(MESSAGES.COPY_SAVE_FAILED)
     }
   }, [conflict, editor, note.folder, qc, resolveKeepTheirs])
 

@@ -1,6 +1,6 @@
-import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { MESSAGES } from '@src/constants/messages'
 import * as tagsApi from '@src/api/tags_api'
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
 import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
@@ -10,6 +10,7 @@ import { slugify } from '@src/utils/slugify'
 import { isNative } from '@src/platform/is_native'
 import { useUiStore } from '@src/stores/ui_store'
 import type { Bootstrap, Note, Tag, UUID } from '@src/types/api'
+import { showErrorToast } from '@src/utils/notifications'
 
 export function useCreateTag() {
   const qc = useQueryClient()
@@ -51,7 +52,7 @@ export function useCreateTag() {
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.previous) qc.setQueryData(BOOTSTRAP_KEY, ctx.previous)
-      notifications.show({ color: 'red', message: "Couldn't create tag." })
+      showErrorToast(MESSAGES.TAG_CREATE_FAILED)
     },
     onSuccess: async (realTag, _v, ctx) => {
       if (isNative()) {
@@ -129,7 +130,7 @@ export function useRenameTag() {
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
       }
-      notifications.show({ color: 'red', message: "Couldn't rename tag." })
+      showErrorToast(MESSAGES.TAG_RENAME_FAILED)
     },
     onSuccess: async (realTag) => {
       if (isNative()) {
@@ -207,7 +208,7 @@ export function useDeleteTag() {
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
       }
-      notifications.show({ color: 'red', message: "Couldn't delete tag." })
+      showErrorToast(MESSAGES.TAG_DELETE_FAILED)
     },
     onSuccess: async (_data, uuid) => {
       if (isNative()) {

@@ -1,7 +1,7 @@
-import { notifications } from '@mantine/notifications'
 import { type UseQueryResult, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { HttpStatusCode } from 'axios'
 
+import { MESSAGES } from '@src/constants/messages'
 import { normalizeError } from '@src/api/api_client'
 import * as notesApi from '@src/api/notes_api'
 import { COPY_NOTE_SUFFIX, DEFAULT_NOTE_TITLE } from '@src/constants/labels'
@@ -17,6 +17,7 @@ import { useUiStore, type Scope } from '@src/stores/ui_store'
 import { syncEngine } from '@src/sync/engine'
 import { outbox } from '@src/sync/outbox'
 import type { Bootstrap, Container, Counts, Folder, Note, NoteListItem, Tag, UUID } from '@src/types/api'
+import { showErrorToast } from '@src/utils/notifications'
 
 export { NOTE_KEY, NOTES_KEY }
 
@@ -278,7 +279,7 @@ export function useStarNote(_scope?: Scope) {
       if (ctx?.prevLocal) {
         qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
-      notifications.show({ color: 'red', message: "Couldn't update that note." })
+      showErrorToast(MESSAGES.NOTE_UPDATE_FAILED)
     },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
@@ -367,7 +368,7 @@ export function useRenameNote() {
       if (ctx?.prevBootstrap) {
         qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       }
-      notifications.show({ color: 'red', message: "Couldn't rename note." })
+      showErrorToast(MESSAGES.NOTE_RENAME_FAILED)
     },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
@@ -556,7 +557,7 @@ export function useCreateNote() {
       if (ctx?.prevLocal) {
         qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
-      notifications.show({ color: 'red', message: "Couldn't create note." })
+      showErrorToast(MESSAGES.NOTE_CREATE_FAILED)
     },
     onSuccess: (newNote) => {
       qc.setQueryData(queryKeys.notes.detail(newNote.uuid), newNote)
@@ -681,7 +682,7 @@ export function useTrashNote() {
       if (ctx?.prevLocal) {
         qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
-      notifications.show({ color: 'red', message: "Couldn't move note to trash." })
+      showErrorToast(MESSAGES.NOTE_TRASH_FAILED)
     },
     onSettled: (_data, _err, uuid) => {
       qc.removeQueries({ queryKey: queryKeys.notes.detail(uuid) })
@@ -775,7 +776,7 @@ export function useRestoreNote() {
       if (ctx?.prevLocal) {
         qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
-      notifications.show({ color: 'red', message: "Couldn't restore note." })
+      showErrorToast(MESSAGES.NOTE_RESTORE_FAILED)
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
@@ -868,7 +869,7 @@ export function useForceDeleteNote() {
       if (ctx?.prevLocal) {
         qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
-      notifications.show({ color: 'red', message: "Couldn't permanently delete note." })
+      showErrorToast(MESSAGES.NOTE_DELETE_FAILED)
     },
     onSettled: (_data, _err, uuid) => {
       qc.removeQueries({ queryKey: queryKeys.notes.detail(uuid) })
@@ -1058,7 +1059,7 @@ export function useDuplicateNote() {
       if (ctx?.prevLocal) {
         qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
-      notifications.show({ color: 'red', message: "Couldn't duplicate note." })
+      showErrorToast(MESSAGES.NOTE_DUPLICATE_FAILED)
     },
     onSuccess: async (realNote, _v, ctx) => {
       qc.setQueryData(queryKeys.notes.detail(realNote.uuid), realNote)
@@ -1251,7 +1252,7 @@ export function useSyncNoteTags() {
       if (ctx?.prevLocal) {
         qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
-      notifications.show({ color: 'red', message: "Couldn't update tags on note." })
+      showErrorToast(MESSAGES.NOTE_TAGS_FAILED)
     },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
@@ -1399,7 +1400,7 @@ export function useMoveNoteFolder() {
       if (ctx?.prevLocal) {
         qc.setQueryData(LOCAL_SIDEBAR_KEY, ctx.prevLocal)
       }
-      notifications.show({ color: 'red', message: "Couldn't move note to folder." })
+      showErrorToast(MESSAGES.NOTE_MOVE_FAILED)
     },
     onSettled: (_data, _err, { uuid }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })

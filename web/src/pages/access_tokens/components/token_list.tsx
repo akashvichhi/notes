@@ -5,6 +5,7 @@ import { modals } from '@mantine/modals'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+import { MESSAGES } from '@src/constants/messages'
 import type { ApiError } from '@src/api/api_client'
 import { useAccessTokens, useRevokeAccessToken } from '@src/queries/access_tokens_queries'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
@@ -29,7 +30,7 @@ const TokenRow = memo(function TokenRow({ token }: { token: AccessToken }) {
       onConfirm:    () => {
         revoke.mutate(token.id, {
           onSuccess: () => showSuccessToast(`Revoked “${token.name}”`),
-          onError:   (err: ApiError) => showErrorToast(err.message || 'Failed to revoke token'),
+          onError:   (err: ApiError) => showErrorToast(err.message || MESSAGES.TOKEN_REVOKE_FAILED),
         })
       },
     })

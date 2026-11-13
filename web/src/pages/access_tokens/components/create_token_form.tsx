@@ -2,6 +2,7 @@ import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Checkbox, Group, Select, Stack, Text, TextInput } from '@mantine/core'
 
+import { MESSAGES } from '@src/constants/messages'
 import type { ApiError } from '@src/api/api_client'
 import { useCreateAccessToken } from '@src/queries/access_tokens_queries'
 import { showErrorToast } from '@src/utils/notifications'
@@ -57,7 +58,7 @@ export const CreateTokenForm = memo(function CreateTokenForm({
       if (canWrite) abilities.push('notes:write')
 
       if (abilities.length === 0) {
-        showErrorToast('Choose at least one scope')
+        showErrorToast(MESSAGES.TOKEN_SCOPE_REQUIRED)
         return
       }
 
@@ -69,7 +70,7 @@ export const CreateTokenForm = memo(function CreateTokenForm({
         },
         {
           onSuccess: ({ token, access_token }) => onCreated(token, access_token.name),
-          onError:   (err: ApiError) => showErrorToast(err.message || 'Failed to create token'),
+          onError:   (err: ApiError) => showErrorToast(err.message || MESSAGES.TOKEN_CREATE_FAILED),
         },
       )
     },

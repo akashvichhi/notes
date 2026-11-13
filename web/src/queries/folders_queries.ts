@@ -1,6 +1,6 @@
-import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { MESSAGES } from '@src/constants/messages'
 import * as foldersApi from '@src/api/folders_api'
 import type { NotesPage } from '@src/api/notes_api'
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
@@ -10,6 +10,7 @@ import { getFoldersArray } from '@src/utils/bootstrap_lists'
 import { isNative } from '@src/platform/is_native'
 import { useUiStore } from '@src/stores/ui_store'
 import type { Bootstrap, Folder, NoteListItem, UUID } from '@src/types/api'
+import { showErrorToast } from '@src/utils/notifications'
 
 export function useCreateFolder() {
   const qc = useQueryClient()
@@ -52,7 +53,7 @@ export function useCreateFolder() {
     },
     onError: (_err, _v, ctx) => {
       if (ctx?.previous) qc.setQueryData(BOOTSTRAP_KEY, ctx.previous)
-      notifications.show({ color: 'red', message: "Couldn't create folder." })
+      showErrorToast(MESSAGES.FOLDER_CREATE_FAILED)
     },
     onSuccess: async (realFolder, _v, ctx) => {
       if (isNative()) {
@@ -130,7 +131,7 @@ export function useRenameFolder() {
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
       }
-      notifications.show({ color: 'red', message: "Couldn't rename folder." })
+      showErrorToast(MESSAGES.FOLDER_RENAME_FAILED)
     },
     onSuccess: async (realFolder) => {
       if (isNative()) {
@@ -205,7 +206,7 @@ export function useDeleteFolder() {
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
       }
-      notifications.show({ color: 'red', message: "Couldn't delete folder." })
+      showErrorToast(MESSAGES.FOLDER_DELETE_FAILED)
     },
     onSuccess: async (_data, uuid) => {
       if (isNative()) {

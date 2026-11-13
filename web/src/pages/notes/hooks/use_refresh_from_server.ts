@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { type Query, type QueryClient, useQueryClient } from '@tanstack/react-query'
 import { HttpStatusCode } from 'axios'
 
+import { MESSAGES } from '@src/constants/messages'
 import { normalizeError } from '@src/api/api_client'
 import { fetchNote } from '@src/api/notes_api'
 import { BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
@@ -52,7 +53,7 @@ export function useRefreshFromServer(): IRefreshFromServer {
 
       if (isNative()) {
         if (!navigator.onLine) {
-          showErrorToast('Offline. Cannot sync with remote server.')
+          showErrorToast(MESSAGES.REFRESH_OFFLINE)
           return
         }
 
@@ -121,7 +122,7 @@ export function useRefreshFromServer(): IRefreshFromServer {
       } else {
       // Web platform: fetch latest from server for all cached notes
         if (!navigator.onLine) {
-          showErrorToast('Offline. Cannot sync with remote server.')
+          showErrorToast(MESSAGES.REFRESH_OFFLINE)
           return
         }
 
@@ -151,9 +152,9 @@ export function useRefreshFromServer(): IRefreshFromServer {
         qc.refetchQueries({ queryKey: NOTE_KEY, type: 'all' }),
       ])
 
-      showSuccessToast('All notes and data refreshed from server')
+      showSuccessToast(MESSAGES.REFRESH_DONE)
     } catch {
-      showErrorToast('Could not sync with remote server. Check your connection.')
+      showErrorToast(MESSAGES.REFRESH_FAILED)
     } finally {
       setIsRefreshing(false)
     }

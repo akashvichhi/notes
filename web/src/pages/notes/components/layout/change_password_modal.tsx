@@ -2,6 +2,7 @@ import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
 
+import { MESSAGES } from '@src/constants/messages'
 import type { ApiError } from '@src/api/api_client'
 import { MIN_PASSWORD_LENGTH } from '@src/constants/limits'
 import { useUpdatePassword } from '@src/queries/auth_queries'
@@ -34,7 +35,7 @@ export const ChangePasswordModal = memo(function ChangePasswordModal({
     (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault()
       if (newPassword !== confirmPassword) {
-        showErrorToast('Passwords do not match')
+        showErrorToast(MESSAGES.PASSWORDS_DIFFER)
         return
       }
 
@@ -51,10 +52,10 @@ export const ChangePasswordModal = memo(function ChangePasswordModal({
         },
         {
           onSuccess: () => {
-            showSuccessToast('Password updated successfully')
+            showSuccessToast(MESSAGES.PASSWORD_CHANGED)
             onClose()
           },
-          onError: (err: ApiError) => showErrorToast(err.message || 'Failed to change password'),
+          onError: (err: ApiError) => showErrorToast(err.message || MESSAGES.PASSWORD_CHANGE_FAILED),
         },
       )
     },

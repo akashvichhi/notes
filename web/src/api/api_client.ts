@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig, isAxiosError } from 'axios'
 
 import { API_URL, IS_DEV } from '@src/config/env'
+import { MESSAGES } from '@src/constants/messages'
 import { isNative } from '@src/platform/is_native'
 import { loadToken } from '@src/platform/secure_store'
 import type { Note } from '@src/types/api'
@@ -56,6 +57,10 @@ export async function ensureCsrf(): Promise<void> {
   csrfPrimed = true
 }
 
+interface IErrorWithResponse {
+  response?: { status: number; data?: Record<string, unknown> }
+}
+
 function isApiError(e: unknown): e is ApiError {
   return typeof e === 'object' && e !== null && !('response' in e) && !('isAxiosError' in e)
     && typeof (e as ApiError).status === 'number' && typeof (e as ApiError).message === 'string'
@@ -68,10 +73,12 @@ function isApiError(e: unknown): e is ApiError {
 export function normalizeError(e: unknown): ApiError {
   if (isApiError(e)) return e
 
-  const err: { response?: { status: number; data?: Record<string, unknown>; }; message?: string; } = e as { response?: { status: number; data?: Record<string, unknown> }; message?: string }
+  const err: IErrorWithResponse = e as IErrorWithResponse
 
+  // Without a response the text comes from axios or our own code (SQLite, the
+  // secure store) and may hold internals, so the user gets a fixed message.
   if (!err.response) {
-    return { status: 0, message: err.message ?? 'Network error' }
+    return { status: 0, message: isAxiosError(e) ? MESSAGES.NETWORK_ERROR : MESSAGES.UNEXPECTED_ERROR }
   }
 
   const data: Record<string, unknown> = err.response.data ?? {}
@@ -80,7 +87,7 @@ export function normalizeError(e: unknown): ApiError {
 
   return {
     status:  err.response.status,
-    message: (data.message as string) ?? 'Request failed',
+    message: typeof data.message === 'string' ? data.message : MESSAGES.REQUEST_FAILED,
     errors:  data.errors as Record<string, string[]> | undefined,
     serverCopy,
   }

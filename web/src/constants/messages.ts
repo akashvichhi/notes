@@ -7,6 +7,8 @@ type TMessageKey =
   | 'NEW_RELEASE_TITLE'
   | 'NEW_RELEASE_BODY'
   | 'UNEXPECTED_ERROR'
+  | 'NETWORK_ERROR'
+  | 'REQUEST_FAILED'
   | 'TOKEN_SCOPE_REQUIRED'
   | 'TOKEN_CREATE_FAILED'
   | 'TOKEN_REVOKE_FAILED'
@@ -47,6 +49,8 @@ export const MESSAGES: Readonly<Record<TMessageKey, string>> = {
   NEW_RELEASE_TITLE:      'A new version is available',
   NEW_RELEASE_BODY:       'Reload to start using it.',
   UNEXPECTED_ERROR:       'Something went wrong. If it keeps happening, reload the app.',
+  NETWORK_ERROR:          "Couldn't reach the server. Check your connection and try again.",
+  REQUEST_FAILED:         'The request failed. Please try again.',
   TOKEN_SCOPE_REQUIRED:   'Choose at least one scope',
   TOKEN_CREATE_FAILED:    'Failed to create token',
   TOKEN_REVOKE_FAILED:    'Failed to revoke token',

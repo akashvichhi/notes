@@ -6,10 +6,11 @@
 // Build output: every file name is a content hash under assets/, so the server can cache
 // /assets/* forever (immutable) while index.html is served with no-cache.
 
+import type { ClientRequest } from 'node:http'
 import path from 'node:path'
 
 import react from '@vitejs/plugin-react'
-import { loadEnv, type ProxyOptions } from 'vite'
+import { type ConfigEnv, loadEnv, type ProxyOptions, type UserConfig } from 'vite'
 import { defineConfig } from 'vitest/config'
 
 const DEV_SERVER_PORT: number = 5173
@@ -32,6 +33,8 @@ function vendorChunkName(id: string): string | null {
 
 // Proxies a path to the API, so the dev server is same-origin with it: Sanctum's
 // cookies and CSRF checks then work exactly as in production.
+type TProxyServer = Parameters<NonNullable<ProxyOptions['configure']>>[0]
+
 function apiProxy(target: string): ProxyOptions {
   const origin: string = new URL(target).origin
 
@@ -40,8 +43,8 @@ function apiProxy(target: string): ProxyOptions {
     changeOrigin:        true,
     secure:              true,
     cookieDomainRewrite: { '*': '' },
-    configure:           (proxy): void => {
-      proxy.on('proxyReq', (proxyReq): void => {
+    configure:           (proxy: TProxyServer): void => {
+      proxy.on('proxyReq', (proxyReq: ClientRequest): void => {
         proxyReq.setHeader('Origin', origin)
         proxyReq.setHeader('Referer', `${origin}/`)
       })
@@ -49,7 +52,7 @@ function apiProxy(target: string): ProxyOptions {
   }
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   const env: Record<string, string> = loadEnv(mode, process.cwd(), '')
   const apiTarget: string = env.VITE_API_URL || DEFAULT_API_TARGET
 

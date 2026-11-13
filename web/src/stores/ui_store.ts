@@ -1,13 +1,13 @@
 import { create } from 'zustand'
+import type { StoreApi, UseBoundStore } from 'zustand'
 
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
 import { isNative } from '@src/platform/is_native'
-import type { UUID } from '@src/types/api'
+import type { Container, UUID } from '@src/types/api'
 
 
 export type View = 'folders' | 'list' | 'editor'
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
-export type Container = 'cloud' | 'local'
 
 export type Scope =
   | { kind: 'all'; container?: Container; label: string }
@@ -24,7 +24,7 @@ export interface EditorStats {
   selectedCharacters: number
 }
 
-interface UiState {
+export interface UiState {
   view:                 View
   navOpen:              boolean
   listCollapsed:        boolean
@@ -53,7 +53,7 @@ function getInitialContainer(): Container {
   return isNative() ? 'local' : 'cloud'
 }
 
-export const useUiStore = create<UiState>((set) => ({
+export const useUiStore: UseBoundStore<StoreApi<UiState>> = create<UiState>((set: StoreApi<UiState>['setState']): UiState => ({
   view:              'list',
   navOpen:           false,
   listCollapsed:     false,
@@ -64,26 +64,26 @@ export const useUiStore = create<UiState>((set) => ({
   editorStats:       null,
   retrySave:         null,
   cancelPendingSave: null,
-  setView:           (view) => set({ view }),
-  toggleNav:         () => set((s) => ({ navOpen: !s.navOpen })),
+  setView:           (view: View) => set({ view }),
+  toggleNav:         () => set((s: UiState) => ({ navOpen: !s.navOpen })),
   closeNav:          () => set({ navOpen: false }),
-  toggleList:        () => set((s) => ({ listCollapsed: !s.listCollapsed })),
+  toggleList:        () => set((s: UiState) => ({ listCollapsed: !s.listCollapsed })),
   // Changing scope always clears the filter: a sticky filter makes notes
   // look deleted.
-  setScope:          (scope) =>
-    set((s) => ({
+  setScope:          (scope: Scope) =>
+    set((s: UiState) => ({
       scope: {
         ...scope,
         container: scope.container ?? (s.scope as { container?: Container }).container ?? 'cloud',
       } as Scope,
       filter: '',
     })),
-  setFilter:     (filter) => set({ filter }),
-  setSaveStatus: (saveStatus, savedAt) =>
-    set((s) => ({ saveStatus, savedAt: savedAt !== undefined ? savedAt : s.savedAt })),
-  setEditorStats:       (editorStats) => set({ editorStats }),
-  setRetrySave:         (retrySave) => set({ retrySave }),
-  setCancelPendingSave: (cancelPendingSave) => set({ cancelPendingSave }),
+  setFilter:     (filter: string) => set({ filter }),
+  setSaveStatus: (saveStatus: SaveStatus, savedAt: number | null | undefined) =>
+    set((s: UiState) => ({ saveStatus, savedAt: savedAt !== undefined ? savedAt : s.savedAt })),
+  setEditorStats:       (editorStats: EditorStats | null) => set({ editorStats }),
+  setRetrySave:         (retrySave: (() => Promise<void> | void) | null) => set({ retrySave }),
+  setCancelPendingSave: (cancelPendingSave: (() => void) | null) => set({ cancelPendingSave }),
 }))
 
 /** Opens a signed-in native app on its Cloud notes, unless the user already picked a view. */

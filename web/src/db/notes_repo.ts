@@ -1,3 +1,5 @@
+import type Database from '@tauri-apps/plugin-sql'
+
 import type { Container, LocalNote, Note, NoteListItem } from '@src/types/api'
 
 import { getDb } from './connection'
@@ -30,10 +32,10 @@ function rowToListItem(r: Record<string, unknown>): NoteListItem {
 }
 
 function rowToNote(r: Record<string, unknown>): Note {
-  let body = null
+  let body: Note['body'] = null
   if (typeof r.body === 'string' && r.body) {
     try {
-      body = JSON.parse(r.body)
+      body = JSON.parse(r.body) as Note['body']
     } catch {
       body = null
     }
@@ -49,7 +51,27 @@ function rowToNote(r: Record<string, unknown>): Note {
   }
 }
 
-export const notesRepo = {
+export interface INoteListFilter {
+  folderUuid?: string
+  tag?:        string
+  starred?:    boolean
+  trashed?:    boolean
+}
+
+export interface INotesRepo {
+  list(container: Container, opts?: INoteListFilter): Promise<NoteListItem[]>
+  get(uuid: string, container?: Container): Promise<Note | null>
+  upsert(note: LocalNote): Promise<void>
+  softDelete(uuid: string, container?: Container): Promise<void>
+  restore(uuid: string, container?: Container): Promise<void>
+  hardDelete(uuid: string, container?: Container): Promise<void>
+  markDirty(uuid: string, dirty?: boolean): Promise<void>
+  search(query: string, container?: Container): Promise<NoteListItem[]>
+  getDirtyCloudNotes(): Promise<DirtyCloudNote[]>
+  clearContainer(container: Container): Promise<void>
+}
+
+export const notesRepo: INotesRepo = {
   async list(
     container: Container,
     opts: {
@@ -59,8 +81,8 @@ export const notesRepo = {
       trashed?:    boolean
     } = {},
   ): Promise<NoteListItem[]> {
-    const db = await getDb()
-    const where = ['n.container = $1', opts.trashed ? 'n.deleted_at IS NOT NULL' : 'n.deleted_at IS NULL']
+    const db: Database = await getDb()
+    const where: string[] = ['n.container = $1', opts.trashed ? 'n.deleted_at IS NOT NULL' : 'n.deleted_at IS NULL']
     const args: unknown[] = [container]
 
     if (opts.folderUuid) {
@@ -81,7 +103,7 @@ export const notesRepo = {
       )`)
     }
 
-    const query = `
+    const query: string = `
       SELECT n.*, f.name AS folder_name,
         (SELECT json_group_array(t.name) FROM note_tag nt JOIN tags t ON t.uuid = nt.tag_uuid WHERE nt.note_uuid = n.uuid) AS tags_json
       FROM notes n
@@ -90,13 +112,13 @@ export const notesRepo = {
       ORDER BY n.updated_at DESC
     `
 
-    const rows = await db.select<Record<string, unknown>[]>(query, args)
+    const rows: Record<string, unknown>[] = await db.select<Record<string, unknown>[]>(query, args)
     return rows.map(rowToListItem)
   },
 
   async get(uuid: string, container?: Container): Promise<Note | null> {
-    const db = await getDb()
-    const where = ['n.uuid = $1']
+    const db: Database = await getDb()
+    const where: string[] = ['n.uuid = $1']
     const args: unknown[] = [uuid]
 
     if (container) {
@@ -104,7 +126,7 @@ export const notesRepo = {
       where.push(`n.container = $${args.length}`)
     }
 
-    const query = `
+    const query: string = `
       SELECT n.*, f.name AS folder_name,
         (SELECT json_group_array(t.name) FROM note_tag nt JOIN tags t ON t.uuid = nt.tag_uuid WHERE nt.note_uuid = n.uuid) AS tags_json
       FROM notes n
@@ -113,14 +135,14 @@ export const notesRepo = {
       LIMIT 1
     `
 
-    const rows = await db.select<Record<string, unknown>[]>(query, args)
+    const rows: Record<string, unknown>[] = await db.select<Record<string, unknown>[]>(query, args)
     if (!rows[0]) return null
     return rowToNote(rows[0])
   },
 
   async upsert(note: LocalNote): Promise<void> {
-    const db = await getDb()
-    const bodyStr = note.body ? JSON.stringify(note.body) : null
+    const db: Database = await getDb()
+    const bodyStr: string | null = note.body ? JSON.stringify(note.body) : null
 
     await db.execute(
       `INSERT INTO notes (
@@ -172,8 +194,8 @@ export const notesRepo = {
   },
 
   async softDelete(uuid: string, container?: Container): Promise<void> {
-    const db = await getDb()
-    const now = new Date().toISOString()
+    const db: Database = await getDb()
+    const now: string = new Date().toISOString()
     if (container) {
       await db.execute(
         'UPDATE notes SET deleted_at = $1, dirty = 1, updated_at = $1 WHERE uuid = $2 AND container = $3',
@@ -189,8 +211,8 @@ export const notesRepo = {
   },
 
   async restore(uuid: string, container?: Container): Promise<void> {
-    const db = await getDb()
-    const now = new Date().toISOString()
+    const db: Database = await getDb()
+    const now: string = new Date().toISOString()
     if (container) {
       await db.execute(
         'UPDATE notes SET deleted_at = NULL, dirty = 1, updated_at = $1 WHERE uuid = $2 AND container = $3',
@@ -202,7 +224,7 @@ export const notesRepo = {
         [now, uuid],
       )
     }
-    const note = await this.get(uuid, container)
+    const note: Note | null = await this.get(uuid, container)
     if (note) {
       await db.execute(
         'INSERT OR REPLACE INTO notes_fts (uuid, title, plain_text, container) VALUES ($1,$2,$3,$4)',
@@ -212,7 +234,7 @@ export const notesRepo = {
   },
 
   async hardDelete(uuid: string, container?: Container): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     if (container) {
       await db.execute('DELETE FROM notes WHERE uuid = $1 AND container = $2', [uuid, container])
     } else {
@@ -222,27 +244,27 @@ export const notesRepo = {
     await db.execute('DELETE FROM notes_fts WHERE uuid = $1', [uuid])
   },
 
-  async markDirty(uuid: string, dirty = true): Promise<void> {
-    const db = await getDb()
+  async markDirty(uuid: string, dirty: boolean = true): Promise<void> {
+    const db: Database = await getDb()
     await db.execute('UPDATE notes SET dirty = $1 WHERE uuid = $2', [dirty ? 1 : 0, uuid])
   },
 
   /** Offline full-text search. Spans both containers when none is given. */
   async search(query: string, container?: Container): Promise<NoteListItem[]> {
-    const db = await getDb()
-    const rawTrim = query.trim()
+    const db: Database = await getDb()
+    const rawTrim: string = query.trim()
     if (!rawTrim) return []
 
     // 1. Try FTS5 first
     try {
-      const match = rawTrim
+      const match: string = rawTrim
         .split(/\s+/)
         .filter(Boolean)
-        .map((t) => `"${t.replace(/[*"]/g, '')}"*`)
+        .map((t: string) => `"${t.replace(/[*"]/g, '')}"*`)
         .join(' ')
 
       if (match) {
-        const rows = await db.select<Record<string, unknown>[]>(
+        const rows: Record<string, unknown>[] = await db.select<Record<string, unknown>[]>(
           `SELECT n.*, fld.name AS folder_name,
             (SELECT json_group_array(t.name) FROM note_tag nt JOIN tags t ON t.uuid = nt.tag_uuid WHERE nt.note_uuid = n.uuid) AS tags_json
            FROM notes_fts f
@@ -263,8 +285,8 @@ export const notesRepo = {
     }
 
     // 2. Fallback to LIKE substring search on title and plain_text
-    const likePattern = `%${rawTrim.replace(/[%_]/g, '')}%`
-    const rows = await db.select<Record<string, unknown>[]>(
+    const likePattern: string = `%${rawTrim.replace(/[%_]/g, '')}%`
+    const rows: Record<string, unknown>[] = await db.select<Record<string, unknown>[]>(
       `SELECT n.*, f.name AS folder_name,
         (SELECT json_group_array(t.name) FROM note_tag nt JOIN tags t ON t.uuid = nt.tag_uuid WHERE nt.note_uuid = n.uuid) AS tags_json
        FROM notes n
@@ -281,20 +303,20 @@ export const notesRepo = {
 
   /** `server_version` is null for a note the server has never seen. */
   async getDirtyCloudNotes(): Promise<DirtyCloudNote[]> {
-    const db = await getDb()
-    const query = `
+    const db: Database = await getDb()
+    const query: string = `
       SELECT n.*, f.name AS folder_name,
         (SELECT json_group_array(t.name) FROM note_tag nt JOIN tags t ON t.uuid = nt.tag_uuid WHERE nt.note_uuid = n.uuid) AS tags_json
       FROM notes n
       LEFT JOIN folders f ON f.uuid = n.folder_uuid
       WHERE n.container = 'cloud' AND n.dirty = 1
     `
-    const rows = await db.select<Record<string, unknown>[]>(query)
-    return rows.map((r) => ({ ...rowToNote(r), server_version: (r.server_version as number | null) ?? null }))
+    const rows: Record<string, unknown>[] = await db.select<Record<string, unknown>[]>(query)
+    return rows.map((r: Record<string, unknown>) => ({ ...rowToNote(r), server_version: (r.server_version as number | null) ?? null }))
   },
 
   async clearContainer(container: Container): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     try {
       await db.execute('DELETE FROM notes_fts WHERE container = $1', [container])
     } catch {

@@ -6,11 +6,17 @@ import classes from './app_shell.module.css'
 
 
 
-export const AppShellLayout = memo(function AppShellLayout({
+export interface IAppShellLayoutProps {
+  nav:    ReactNode
+  list:   ReactNode
+  editor: ReactNode
+  header: ReactNode
+  status: ReactNode
+}
+
+export const AppShellLayout: React.NamedExoticComponent<IAppShellLayoutProps> = memo(function AppShellLayout({
   nav, list, editor, header, status,
-}: {
-  nav: ReactNode; list: ReactNode; editor: ReactNode; header: ReactNode; status: ReactNode
-}) {
+}: IAppShellLayoutProps): React.JSX.Element {
   const { view, navOpen, listCollapsed, closeNav } = useUiStore()
 
   return (

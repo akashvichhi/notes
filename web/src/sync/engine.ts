@@ -34,28 +34,28 @@ let currentSnapshot: SyncSnapshot = {
   lastSyncedAt: null,
 }
 
-const listeners = new Set<() => void>()
+const listeners: Set<() => void> = new Set<() => void>()
 
-function updateSnapshot(updates: Partial<SyncSnapshot>) {
+function updateSnapshot(updates: Partial<SyncSnapshot>): void {
   currentSnapshot = { ...currentSnapshot, ...updates }
-  listeners.forEach((listener) => listener())
+  listeners.forEach((listener: () => void) => listener())
 }
 
 async function doRun(): Promise<void> {
   if (!navigator.onLine) {
-    const pending = await outbox.count().catch(() => 0)
+    const pending: number = await outbox.count().catch(() => 0)
     updateSnapshot({ state: 'offline', pendingCount: pending })
     return
   }
 
-  const token = await loadToken().catch(() => null)
+  const token: string | null = await loadToken().catch(() => null)
   if (!token) {
     updateSnapshot({ state: 'synced', pendingCount: 0 })
     return
   }
 
   try {
-    const pending = await outbox.count().catch(() => 0)
+    const pending: number = await outbox.count().catch(() => 0)
     updateSnapshot({ state: 'syncing', pendingCount: pending })
 
     const { conflicts, rejected } = await push()
@@ -87,7 +87,7 @@ async function doRun(): Promise<void> {
       lastSyncedAt: Date.now(),
     })
   } catch (err) {
-    const isOnline = navigator.onLine
+    const isOnline: boolean = navigator.onLine
     updateSnapshot({
       state:        isOnline ? 'error' : 'offline',
       pendingCount: await outbox.count().catch(() => 0),
@@ -96,7 +96,7 @@ async function doRun(): Promise<void> {
   }
 }
 
-export const syncEngine = {
+export const syncEngine: { getSnapshot(): SyncSnapshot; subscribe(listener: () => void): () => void; run(): Promise<void>; start(): void; } = {
   getSnapshot(): SyncSnapshot {
     return currentSnapshot
   },
@@ -134,7 +134,7 @@ export const syncEngine = {
     })
 
     window.addEventListener('offline', () => {
-      void outbox.count().then((count) => {
+      void outbox.count().then((count: number) => {
         updateSnapshot({ state: 'offline', pendingCount: count })
       })
     })

@@ -3,14 +3,17 @@ import { memo, useCallback } from 'react'
 import { ActionIcon, Group, Loader, Menu, ScrollArea, Text, UnstyledButton } from '@mantine/core'
 import { IconPlus, IconX } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { queryKeys } from '@src/constants/query_keys'
 import { useIsPhone } from '@src/hooks/use_is_phone'
 import { useCreateNote } from '@src/queries/notes_queries'
+import type { TCreateNoteMutation } from '@src/queries/notes_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
 import type { Tab } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
+import type { SaveStatus, UiState } from '@src/stores/ui_store'
 
 interface TabItemProps {
   tab:           Tab
@@ -22,7 +25,7 @@ interface TabItemProps {
   onReopen:      () => void
 }
 
-const TabItem = memo(function TabItem({
+const TabItem: React.MemoExoticComponent<({ tab, isActive, onActivate, onClose, onCloseOthers, onCloseAll, onReopen, }: TabItemProps) => React.JSX.Element> = memo(function TabItem({
   tab,
   isActive,
   onActivate,
@@ -31,11 +34,11 @@ const TabItem = memo(function TabItem({
   onCloseAll,
   onReopen,
 }: TabItemProps) {
-  const handleActivate = useCallback(() => {
+  const handleActivate: () => void = useCallback(() => {
     onActivate(tab.uuid)
   }, [onActivate, tab.uuid])
 
-  const handleClose = useCallback(
+  const handleClose: (e: React.MouseEvent) => void = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation()
       onClose(tab.uuid)
@@ -43,15 +46,15 @@ const TabItem = memo(function TabItem({
     [onClose, tab.uuid]
   )
 
-  const handleMenuClose = useCallback(() => {
+  const handleMenuClose: () => void = useCallback(() => {
     onClose(tab.uuid)
   }, [onClose, tab.uuid])
 
-  const handleMenuCloseOthers = useCallback(() => {
+  const handleMenuCloseOthers: () => void = useCallback(() => {
     onCloseOthers(tab.uuid)
   }, [onCloseOthers, tab.uuid])
 
-  const handleKeyDown = useCallback(
+  const handleKeyDown: (e: React.KeyboardEvent) => void = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
@@ -61,8 +64,8 @@ const TabItem = memo(function TabItem({
     [handleActivate]
   )
 
-  const saveStatus = useUiStore((s) => s.saveStatus)
-  const isSaving = isActive && saveStatus === 'saving'
+  const saveStatus: SaveStatus = useUiStore((s: UiState) => s.saveStatus)
+  const isSaving: boolean = isActive && saveStatus === 'saving'
 
   return (
     <Menu position="bottom-start" shadow="md">
@@ -117,21 +120,21 @@ const TabItem = memo(function TabItem({
   )
 })
 
-export const TabBar = memo(function TabBar() {
-  const isPhone = useIsPhone()
+export const TabBar: React.MemoExoticComponent<() => React.JSX.Element | null> = memo(function TabBar() {
+  const isPhone: boolean = useIsPhone()
   const { tabs, activeUuid, activate, close, closeOthers, closeAll, reopen } = useTabsStore()
-  const createNote = useCreateNote()
-  const qc = useQueryClient()
-  const handleActivate = useCallback(
+  const createNote: TCreateNoteMutation = useCreateNote()
+  const qc: QueryClient = useQueryClient()
+  const handleActivate: (uuid: string) => void = useCallback(
     (uuid: string) => {
       activate(uuid)
       void qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
     },
     [activate, qc],
   )
-  const handleClose = useCallback((uuid: string) => close(uuid), [close])
-  const handleCloseOthers = useCallback((uuid: string) => closeOthers(uuid), [closeOthers])
-  const handleCreateNote = useCallback(() => {
+  const handleClose: (uuid: string) => void = useCallback((uuid: string) => close(uuid), [close])
+  const handleCloseOthers: (uuid: string) => void = useCallback((uuid: string) => closeOthers(uuid), [closeOthers])
+  const handleCreateNote: () => void = useCallback(() => {
     createNote.mutate({})
   }, [createNote])
 
@@ -149,7 +152,7 @@ export const TabBar = memo(function TabBar() {
     >
       <ScrollArea style={{ flex: 1 }} type="never">
         <Group gap={4} wrap="nowrap">
-          {tabs.map((tab) => (
+          {tabs.map((tab: Tab) => (
             <TabItem
               key={tab.uuid}
               isActive={tab.uuid === activeUuid}

@@ -2,6 +2,7 @@ import { memo, useCallback } from 'react'
 
 import { Badge, Button, Center, Group, Loader, Table, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
+import type { UseMutationResult } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -13,15 +14,15 @@ import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
 dayjs.extend(relativeTime)
 
-const formatDate = (iso: string | null, fallback: string) => (iso ? dayjs(iso).format('D MMM YYYY') : fallback)
+const formatDate: (iso: string | null, fallback: string) => string = (iso: string | null, fallback: string): string => (iso ? dayjs(iso).format('D MMM YYYY') : fallback)
 
-const isExpired = (token: AccessToken) => token.expires_at !== null && dayjs(token.expires_at).isBefore(dayjs())
+const isExpired: (token: AccessToken) => boolean = (token: AccessToken): boolean => token.expires_at !== null && dayjs(token.expires_at).isBefore(dayjs())
 
-const TokenRow = memo(function TokenRow({ token }: { token: AccessToken }) {
-  const revoke = useRevokeAccessToken()
-  const expired = isExpired(token)
+const TokenRow: React.MemoExoticComponent<({ token }: { token: AccessToken; }) => React.JSX.Element> = memo(function TokenRow({ token }: { token: AccessToken }) {
+  const revoke: UseMutationResult<void, ApiError, number, unknown> = useRevokeAccessToken()
+  const expired: boolean = isExpired(token)
 
-  const handleRevoke = useCallback(() => {
+  const handleRevoke: () => void = useCallback(() => {
     modals.openConfirmModal({
       title:        'Revoke access token',
       children:     `Anything using “${token.name}” will lose access to your notes immediately. This cannot be undone.`,
@@ -83,7 +84,7 @@ const TokenRow = memo(function TokenRow({ token }: { token: AccessToken }) {
   )
 })
 
-export const TokenList = memo(function TokenList() {
+export const TokenList: React.MemoExoticComponent<() => React.JSX.Element> = memo(function TokenList() {
   const { data: tokens, isLoading, isError } = useAccessTokens()
 
   if (isLoading) {
@@ -124,7 +125,7 @@ export const TokenList = memo(function TokenList() {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {tokens.map((token) => (
+          {tokens.map((token: AccessToken) => (
             <TokenRow key={token.id} token={token} />
           ))}
         </Table.Tbody>

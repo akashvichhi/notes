@@ -1,6 +1,7 @@
 import { HttpStatusCode } from 'axios'
 
 import { normalizeError } from '@src/api/api_client'
+import type { ApiError } from '@src/api/api_client'
 import {
   createNote,
   fetchNote,
@@ -11,7 +12,9 @@ import {
   trashNote,
 } from '@src/api/notes_api'
 import { notesRepo } from '@src/db/notes_repo'
+import type { DirtyCloudNote } from '@src/db/notes_repo'
 import { isNative } from '@src/platform/is_native'
+import type { OutboxItem } from '@src/sync/outbox'
 import type { LocalNote, Note } from '@src/types/api'
 
 import { outbox } from './outbox'
@@ -55,13 +58,13 @@ function isRetryable(status: number): boolean {
 export async function push(): Promise<PushResult> {
   const conflicts: Note[] = []
   const rejected: string[] = []
-  let pushed = 0
+  let pushed: number = 0
 
   if (isNative()) {
     try {
-      const dirtyNotes = await notesRepo.getDirtyCloudNotes()
-      const initialPending = await outbox.pending()
-      const pendingUuids = new Set(initialPending.map((o) => o.uuid))
+      const dirtyNotes: DirtyCloudNote[] = await notesRepo.getDirtyCloudNotes()
+      const initialPending: OutboxItem[] = await outbox.pending()
+      const pendingUuids: Set<string> = new Set(initialPending.map((o: OutboxItem) => o.uuid))
       for (const dn of dirtyNotes) {
         if (!pendingUuids.has(dn.uuid)) {
           if (dn.deleted_at) {
@@ -89,7 +92,7 @@ export async function push(): Promise<PushResult> {
     }
   }
 
-  const pendingOps = await outbox.pending()
+  const pendingOps: OutboxItem[] = await outbox.pending()
 
   for (const op of pendingOps) {
     try {
@@ -98,7 +101,7 @@ export async function push(): Promise<PushResult> {
         try {
           created = await createNote({ uuid: op.uuid, folder_id: op.folder_id ?? undefined })
         } catch (createErr) {
-          const remote = await fetchNote(op.uuid).catch(() => null)
+          const remote: Note | null = await fetchNote(op.uuid).catch(() => null)
           if (remote) {
             created = remote
           } else {
@@ -106,9 +109,9 @@ export async function push(): Promise<PushResult> {
           }
         }
         if (isNative()) {
-          const existing = await notesRepo.get(op.uuid, 'cloud')
+          const existing: Note | null = await notesRepo.get(op.uuid, 'cloud')
           if (existing) {
-            const hasMoreOps = pendingOps.slice(pendingOps.indexOf(op) + 1).some((o) => o.uuid === op.uuid)
+            const hasMoreOps: boolean = pendingOps.slice(pendingOps.indexOf(op) + 1).some((o: OutboxItem) => o.uuid === op.uuid)
             await notesRepo.upsert(toLocalNote(existing, {
               server_version: created.version,
               dirty:          hasMoreOps,
@@ -116,15 +119,15 @@ export async function push(): Promise<PushResult> {
           }
         }
       } else if (op.kind === 'body') {
-        const existing = await notesRepo.get(op.uuid, 'cloud')
-        const versionToPush = (op.version && op.version >= 1)
+        const existing: Note | null = await notesRepo.get(op.uuid, 'cloud')
+        const versionToPush: number = (op.version && op.version >= 1)
           ? op.version
           : (existing?.version && existing.version >= 1 ? existing.version : 1)
-        const updated = await patchNote(op.uuid, { body: op.body ?? undefined, version: versionToPush })
+        const updated: Note = await patchNote(op.uuid, { body: op.body ?? undefined, version: versionToPush })
         // An edit merged in while this save was in flight keeps the row, and the note stays dirty.
-        const done = await outbox.complete(op, updated.version)
+        const done: boolean = await outbox.complete(op, updated.version)
         if (isNative()) {
-          const current = await notesRepo.get(op.uuid, 'cloud')
+          const current: Note | null = await notesRepo.get(op.uuid, 'cloud')
           if (current) {
             await notesRepo.upsert(toLocalNote(current, { server_version: updated.version, dirty: !done }))
           }
@@ -136,14 +139,14 @@ export async function push(): Promise<PushResult> {
           try {
             await restoreNote(op.uuid)
           } catch (err) {
-            const norm = normalizeError(err)
+            const norm: ApiError = normalizeError(err)
             if (norm.status !== HttpStatusCode.NotFound) throw err
           }
         } else {
           await patchNote(op.uuid, op.changes)
         }
         if (isNative()) {
-          const existing = await notesRepo.get(op.uuid, 'cloud')
+          const existing: Note | null = await notesRepo.get(op.uuid, 'cloud')
           if (existing) {
             await notesRepo.upsert(toLocalNote(existing, { dirty: false }))
           }
@@ -152,11 +155,11 @@ export async function push(): Promise<PushResult> {
         try {
           await restoreNote(op.uuid)
         } catch (err) {
-          const norm = normalizeError(err)
+          const norm: ApiError = normalizeError(err)
           if (norm.status !== HttpStatusCode.NotFound) throw err
         }
         if (isNative()) {
-          const existing = await notesRepo.get(op.uuid, 'cloud')
+          const existing: Note | null = await notesRepo.get(op.uuid, 'cloud')
           if (existing) {
             await notesRepo.upsert(toLocalNote(existing, { dirty: false }))
           }
@@ -164,7 +167,7 @@ export async function push(): Promise<PushResult> {
       } else if (op.kind === 'tags') {
         await syncNoteTags(op.uuid, op.names)
         if (isNative()) {
-          const existing = await notesRepo.get(op.uuid, 'cloud')
+          const existing: Note | null = await notesRepo.get(op.uuid, 'cloud')
           if (existing) {
             await notesRepo.upsert(toLocalNote(existing, { dirty: false }))
           }
@@ -173,11 +176,11 @@ export async function push(): Promise<PushResult> {
         try {
           await trashNote(op.uuid)
         } catch (err) {
-          const norm = normalizeError(err)
+          const norm: ApiError = normalizeError(err)
           if (norm.status !== HttpStatusCode.NotFound) throw err
         }
         if (isNative()) {
-          const existing = await notesRepo.get(op.uuid, 'cloud')
+          const existing: Note | null = await notesRepo.get(op.uuid, 'cloud')
           if (existing) {
             await notesRepo.upsert(toLocalNote(existing, { dirty: false }))
           }
@@ -186,7 +189,7 @@ export async function push(): Promise<PushResult> {
         try {
           await forceDeleteNote(op.uuid)
         } catch (err) {
-          const norm = normalizeError(err)
+          const norm: ApiError = normalizeError(err)
           if (norm.status !== HttpStatusCode.NotFound) throw err
         }
         if (isNative()) {
@@ -197,7 +200,7 @@ export async function push(): Promise<PushResult> {
       await outbox.complete(op)
       pushed++
     } catch (e) {
-      const err = normalizeError(e)
+      const err: ApiError = normalizeError(e)
 
       if (err.status === HttpStatusCode.Conflict && err.serverCopy) {
         conflicts.push(err.serverCopy)

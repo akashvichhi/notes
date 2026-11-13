@@ -1,3 +1,5 @@
+import type Database from '@tauri-apps/plugin-sql'
+
 import type { Container, Folder, LocalFolder } from '@src/types/api'
 
 import { getDb } from './connection'
@@ -14,10 +16,19 @@ function rowToFolder(r: Record<string, unknown>): Folder {
   }
 }
 
-export const foldersRepo = {
+export interface IFoldersRepo {
+  list(container: Container): Promise<Folder[]>
+  get(uuid: string, container?: Container): Promise<Folder | null>
+  upsert(folder: LocalFolder): Promise<void>
+  softDelete(uuid: string, container?: Container): Promise<void>
+  hardDelete(uuid: string, container?: Container): Promise<void>
+  clearContainer(container: Container): Promise<void>
+}
+
+export const foldersRepo: IFoldersRepo = {
   async list(container: Container): Promise<Folder[]> {
-    const db = await getDb()
-    const rows = await db.select<Record<string, unknown>[]>(
+    const db: Database = await getDb()
+    const rows: Record<string, unknown>[] = await db.select<Record<string, unknown>[]>(
       'SELECT * FROM folders WHERE container = $1 AND deleted_at IS NULL ORDER BY position ASC, name ASC',
       [container],
     )
@@ -25,8 +36,8 @@ export const foldersRepo = {
   },
 
   async get(uuid: string, container?: Container): Promise<Folder | null> {
-    const db = await getDb()
-    const rows = await db.select<Record<string, unknown>[]>(
+    const db: Database = await getDb()
+    const rows: Record<string, unknown>[] = await db.select<Record<string, unknown>[]>(
       `SELECT * FROM folders WHERE uuid = $1 ${container ? 'AND container = $2' : ''} LIMIT 1`,
       container ? [uuid, container] : [uuid],
     )
@@ -35,7 +46,7 @@ export const foldersRepo = {
   },
 
   async upsert(folder: LocalFolder): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     await db.execute(
       `INSERT INTO folders (uuid, container, parent_uuid, name, color, position, deleted_at, dirty, server_revision)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -63,8 +74,8 @@ export const foldersRepo = {
   },
 
   async softDelete(uuid: string, container?: Container): Promise<void> {
-    const db = await getDb()
-    const now = new Date().toISOString()
+    const db: Database = await getDb()
+    const now: string = new Date().toISOString()
     if (container) {
       await db.execute(
         'UPDATE folders SET deleted_at = $1, dirty = 1 WHERE uuid = $2 AND container = $3',
@@ -76,7 +87,7 @@ export const foldersRepo = {
   },
 
   async hardDelete(uuid: string, container?: Container): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     if (container) {
       await db.execute('DELETE FROM folders WHERE uuid = $1 AND container = $2', [uuid, container])
     } else {
@@ -85,7 +96,7 @@ export const foldersRepo = {
   },
 
   async clearContainer(container: Container): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     await db.execute('DELETE FROM folders WHERE container = $1', [container])
   },
 }

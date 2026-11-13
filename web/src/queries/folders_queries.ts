@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { QueryClient, UseMutationResult } from '@tanstack/react-query'
 
+import type { ApiError } from '@src/api/api_client'
 import * as foldersApi from '@src/api/folders_api'
 import type { NotesPage } from '@src/api/notes_api'
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
@@ -8,21 +10,27 @@ import { BOOTSTRAP_KEY, NOTES_KEY } from '@src/constants/query_keys'
 import { foldersRepo } from '@src/db/folders_repo'
 import { isNative } from '@src/platform/is_native'
 import { useUiStore } from '@src/stores/ui_store'
+import type { Scope } from '@src/stores/ui_store'
 import type { Bootstrap, Folder, NoteListItem, UUID } from '@src/types/api'
+import type { ISidebarItemContext } from '@src/types/mutation_context'
 import { getFoldersArray } from '@src/utils/bootstrap_lists'
 import { showErrorToast } from '@src/utils/notifications'
 
-export function useCreateFolder() {
-  const qc = useQueryClient()
+export interface IRenameFolderVars { uuid: string; name: string }
+export type TRenameFolderMutation = UseMutationResult<Folder, ApiError, IRenameFolderVars, ISidebarItemContext>
+export type TDeleteFolderMutation = UseMutationResult<void, ApiError, string, ISidebarItemContext>
+
+export function useCreateFolder(): UseMutationResult<Folder, ApiError, { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID; }, { previous: Bootstrap | undefined; tempUuid: string; }> {
+  const qc: QueryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID }) => {
-      const uuid = payload.uuid || crypto.randomUUID()
+      const uuid: string = payload.uuid || crypto.randomUUID()
       return foldersApi.createFolder({ ...payload, uuid })
     },
-    onMutate: async (payload) => {
+    onMutate: async (payload: { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID; }) => {
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
-      const previous = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
-      const tempUuid = payload.uuid || crypto.randomUUID()
+      const previous: Bootstrap | undefined = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const tempUuid: string = payload.uuid || crypto.randomUUID()
       payload.uuid = tempUuid
 
       const optimisticFolder: Folder = {
@@ -33,9 +41,9 @@ export function useCreateFolder() {
         parent_uuid: payload.parent_uuid ?? null,
       }
 
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old: NoInfer<Bootstrap> | undefined) => {
         if (!old) return old
-        const current = getFoldersArray(old.folders)
+        const current: Folder[] = getFoldersArray(old.folders)
         return {
           ...old,
           folders: [...current, optimisticFolder],
@@ -51,11 +59,11 @@ export function useCreateFolder() {
 
       return { previous, tempUuid }
     },
-    onError: (_err, _v, ctx) => {
+    onError: (_err: ApiError, _v: { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID; }, ctx: { previous: Bootstrap | undefined; tempUuid: string; } | undefined) => {
       if (ctx?.previous) qc.setQueryData(BOOTSTRAP_KEY, ctx.previous)
       showErrorToast(MESSAGES.FOLDER_CREATE_FAILED)
     },
-    onSuccess: async (realFolder, _v, ctx) => {
+    onSuccess: async (realFolder: Folder, _v: { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID; }, ctx: { previous: Bootstrap | undefined; tempUuid: string; }) => {
       if (isNative()) {
         await foldersRepo.upsert({
           uuid:            realFolder.uuid,
@@ -69,42 +77,42 @@ export function useCreateFolder() {
           server_revision: null,
         })
       }
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old: NoInfer<Bootstrap> | undefined) => {
         if (!old) return old
-        const current = getFoldersArray(old.folders)
+        const current: Folder[] = getFoldersArray(old.folders)
         return {
           ...old,
-          folders: current.map((f) => (f.uuid === ctx?.tempUuid ? realFolder : f)),
+          folders: current.map((f: Folder) => (f.uuid === ctx?.tempUuid ? realFolder : f)),
         }
       })
     },
   })
 }
 
-export function useRenameFolder() {
-  const qc = useQueryClient()
+export function useRenameFolder(): TRenameFolderMutation {
+  const qc: QueryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ uuid, name }: { uuid: string; name: string }) =>
       foldersApi.renameFolder(uuid, name),
-    onMutate: async ({ uuid, name }) => {
+    onMutate: async ({ uuid, name }: { uuid: string; name: string; }) => {
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
       await qc.cancelQueries({ queryKey: NOTES_KEY })
-      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
-      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevBootstrap: Bootstrap | undefined = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevNotes: [readonly unknown[], unknown][] = qc.getQueriesData({ queryKey: NOTES_KEY })
 
-      const currentScope = useUiStore.getState().scope
-      const wasActiveScope = currentScope.kind === 'folder' && currentScope.uuid === uuid
-      const prevScope = wasActiveScope ? currentScope : null
+      const currentScope: Scope = useUiStore.getState().scope
+      const wasActiveScope: boolean = currentScope.kind === 'folder' && currentScope.uuid === uuid
+      const prevScope: Scope | null = wasActiveScope ? currentScope : null
       if (wasActiveScope) {
         useUiStore.getState().setScope({ kind: 'folder', uuid, label: name })
       }
 
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old: NoInfer<Bootstrap> | undefined) => {
         if (!old) return old
-        const current = getFoldersArray(old.folders)
+        const current: Folder[] = getFoldersArray(old.folders)
         return {
           ...old,
-          folders: current.map((f) => (f.uuid === uuid ? { ...f, name } : f)),
+          folders: current.map((f: Folder) => (f.uuid === uuid ? { ...f, name } : f)),
         }
       })
 
@@ -112,7 +120,7 @@ export function useRenameFolder() {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p) => ({
+          pages: old.pages.map((p: NotesPage) => ({
             ...p,
             data: p.data.map((n: NoteListItem) =>
               n.folder?.uuid === uuid ? { ...n, folder: { ...n.folder, name } } : n
@@ -123,19 +131,19 @@ export function useRenameFolder() {
 
       return { prevBootstrap, prevNotes, prevScope }
     },
-    onError: (_err, _v, ctx) => {
+    onError: (_err: ApiError, _v: { uuid: string; name: string }, ctx: ISidebarItemContext | undefined) => {
       if (ctx?.prevScope) {
         useUiStore.getState().setScope(ctx.prevScope)
       }
       if (ctx?.prevBootstrap) qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       if (ctx?.prevNotes) {
-        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+        ctx.prevNotes.forEach(([queryKey, data]: [readonly unknown[], unknown]) => qc.setQueryData(queryKey, data))
       }
       showErrorToast(MESSAGES.FOLDER_RENAME_FAILED)
     },
-    onSuccess: async (realFolder) => {
+    onSuccess: async (realFolder: Folder) => {
       if (isNative()) {
-        const existing = await foldersRepo.get(realFolder.uuid, 'cloud')
+        const existing: Folder | null = await foldersRepo.get(realFolder.uuid, 'cloud')
         if (existing) {
           await foldersRepo.upsert({
             ...existing,
@@ -151,31 +159,31 @@ export function useRenameFolder() {
   })
 }
 
-export function useDeleteFolder() {
-  const qc = useQueryClient()
+export function useDeleteFolder(): TDeleteFolderMutation {
+  const qc: QueryClient = useQueryClient()
   return useMutation({
     mutationFn: foldersApi.deleteFolder,
     onMutate:   async (uuid: string) => {
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
       await qc.cancelQueries({ queryKey: NOTES_KEY })
-      const prevBootstrap = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
-      const prevNotes = qc.getQueriesData({ queryKey: NOTES_KEY })
+      const prevBootstrap: Bootstrap | undefined = qc.getQueryData<Bootstrap>(BOOTSTRAP_KEY)
+      const prevNotes: [readonly unknown[], unknown][] = qc.getQueriesData({ queryKey: NOTES_KEY })
 
-      const currentScope = useUiStore.getState().scope
-      const wasActiveScope = currentScope.kind === 'folder' && currentScope.uuid === uuid
-      const prevScope = wasActiveScope ? currentScope : null
+      const currentScope: Scope = useUiStore.getState().scope
+      const wasActiveScope: boolean = currentScope.kind === 'folder' && currentScope.uuid === uuid
+      const prevScope: Scope | null = wasActiveScope ? currentScope : null
       if (wasActiveScope) {
         useUiStore.getState().setScope({ kind: 'all', label: ALL_NOTES_LABEL })
       }
 
-      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old) => {
+      qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old: NoInfer<Bootstrap> | undefined) => {
         if (!old) return old
-        const current = getFoldersArray(old.folders)
-        const nextFolderCounts = { ...old.counts?.folders }
+        const current: Folder[] = getFoldersArray(old.folders)
+        const nextFolderCounts: { [x: string]: number; } = { ...old.counts?.folders }
         delete nextFolderCounts[uuid]
         return {
           ...old,
-          folders: current.filter((f) => f.uuid !== uuid),
+          folders: current.filter((f: Folder) => f.uuid !== uuid),
           counts:  {
             ...old.counts,
             folders: nextFolderCounts,
@@ -187,7 +195,7 @@ export function useDeleteFolder() {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p) => ({
+          pages: old.pages.map((p: NotesPage) => ({
             ...p,
             data: p.data.map((n: NoteListItem) =>
               n.folder?.uuid === uuid ? { ...n, folder: null } : n
@@ -198,17 +206,17 @@ export function useDeleteFolder() {
 
       return { prevBootstrap, prevNotes, prevScope }
     },
-    onError: (_err, _v, ctx) => {
+    onError: (_err: ApiError, _v: string, ctx: ISidebarItemContext | undefined) => {
       if (ctx?.prevScope) {
         useUiStore.getState().setScope(ctx.prevScope)
       }
       if (ctx?.prevBootstrap) qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       if (ctx?.prevNotes) {
-        ctx.prevNotes.forEach(([queryKey, data]) => qc.setQueryData(queryKey, data))
+        ctx.prevNotes.forEach(([queryKey, data]: [readonly unknown[], unknown]) => qc.setQueryData(queryKey, data))
       }
       showErrorToast(MESSAGES.FOLDER_DELETE_FAILED)
     },
-    onSuccess: async (_data, uuid) => {
+    onSuccess: async (_data: void, uuid: string) => {
       if (isNative()) {
         await foldersRepo.hardDelete(uuid, 'cloud')
       }

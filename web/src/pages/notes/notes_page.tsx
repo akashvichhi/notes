@@ -1,9 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
+import type { NavigateFunction } from 'react-router'
 
 import { Box, Button, Center, Stack, Text, ThemeIcon } from '@mantine/core'
 import { IconNotes, IconPlus } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { queryKeys } from '@src/constants/query_keys'
@@ -19,20 +21,23 @@ import { NoteList } from '@src/pages/notes/components/notes/note_list'
 import { SpotlightSearch } from '@src/pages/notes/components/search/spotlight_search'
 import { TopProgress } from '@src/pages/notes/components/top_progress'
 import { useCreateNote, useNote } from '@src/queries/notes_queries'
+import type { TCreateNoteMutation } from '@src/queries/notes_queries'
 import { notePath, ROUTE_PATHS } from '@src/routes/route_paths'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
+import type { Note } from '@src/types/api'
 import { EditorSkeleton } from '@src/ui/skeletons/skeletons'
 
-export const AppPage = memo(function AppPage() {
-  const qc = useQueryClient()
+
+export const AppPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function AppPage() {
+  const qc: QueryClient = useQueryClient()
   const { uuid: routeUuid } = useParams<{ uuid: string }>()
   const { pathname } = useLocation()
-  const navigate = useNavigate()
-  const isPhone = useIsPhone()
+  const navigate: NavigateFunction = useNavigate()
+  const isPhone: boolean = useIsPhone()
   const { setView, scope } = useUiStore()
   const { activeUuid, open: openTab } = useTabsStore()
-  const createNote = useCreateNote()
+  const createNote: TCreateNoteMutation = useCreateNote()
 
   // The URL and the active tab follow each other. A route that changed (a link,
   // a refresh, back/forward) opens its note; otherwise the URL follows the
@@ -40,7 +45,7 @@ export const AppPage = memo(function AppPage() {
   // note opened is a history entry, so Back and Forward step through them.
   // Landing on `/` is replaced instead: otherwise Back would return to `/`,
   // which would forward straight to the saved tab again.
-  const lastRouteUuid = useRef<string | undefined>(undefined)
+  const lastRouteUuid: React.RefObject<string | undefined> = useRef<string | undefined>(undefined)
   useEffect(() => {
     if (routeUuid !== lastRouteUuid.current) {
       lastRouteUuid.current = routeUuid
@@ -50,7 +55,7 @@ export const AppPage = memo(function AppPage() {
       }
     }
 
-    const target = activeUuid ? notePath(activeUuid) : ROUTE_PATHS.HOME
+    const target: string = activeUuid ? notePath(activeUuid) : ROUTE_PATHS.HOME
     if (pathname !== target) {
       void navigate(target, { replace: pathname === ROUTE_PATHS.HOME })
     }
@@ -65,7 +70,7 @@ export const AppPage = memo(function AppPage() {
     }
   }, [note?.uuid, note?.title])
 
-  const handleSelectNote = useCallback(
+  const handleSelectNote: (uuid: string, title?: string) => void = useCallback(
     (uuid: string, title?: string) => {
       openTab(uuid, title || DEFAULT_NOTE_TITLE)
       void qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
@@ -76,11 +81,11 @@ export const AppPage = memo(function AppPage() {
     [isPhone, openTab, qc, setView],
   )
 
-  const handleCreateNote = useCallback(() => {
+  const handleCreateNote: () => void = useCallback(() => {
     createNote.mutate(
       {},
       {
-        onSuccess: (newNote) => {
+        onSuccess: (newNote: Note) => {
           openTab(newNote.uuid, newNote.title || DEFAULT_NOTE_TITLE)
           if (isPhone) {
             setView('editor')
@@ -90,14 +95,14 @@ export const AppPage = memo(function AppPage() {
     )
   }, [createNote, isPhone, openTab, setView])
 
-  const headerSlot = useMemo(() => <Header />, [])
-  const navSlot = useMemo(() => <Sidebar />, [])
-  const listSlot = useMemo(
+  const headerSlot: React.JSX.Element = useMemo(() => <Header />, [])
+  const navSlot: React.JSX.Element = useMemo(() => <Sidebar />, [])
+  const listSlot: React.JSX.Element = useMemo(
     () => <NoteList activeUuid={activeUuid} onSelectNote={handleSelectNote} />,
     [activeUuid, handleSelectNote]
   )
 
-  const editorSlot = useMemo(
+  const editorSlot: React.JSX.Element = useMemo(
     () => (
       <Box style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
         <TabBar />
@@ -141,7 +146,7 @@ export const AppPage = memo(function AppPage() {
     [isLoading, note, createNote.isPending, handleCreateNote, scope.kind]
   )
 
-  const statusSlot = useMemo(
+  const statusSlot: React.JSX.Element = useMemo(
     () => (
       <StatusBar
         container={note?.container ?? scope.container}

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { StoreApi, UseBoundStore } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
@@ -6,7 +7,7 @@ import type { UUID } from '@src/types/api'
 
 export interface Tab { uuid: UUID; title: string; dirty: boolean }
 
-interface TabsState {
+export interface TabsState {
   tabs:        Tab[]
   activeUuid:  UUID | null
   closed:      Tab[]
@@ -20,20 +21,20 @@ interface TabsState {
   activate:    (uuid: UUID) => void
 }
 
-export const useTabsStore = create<TabsState>()(
-  persist(
-    (set, get) => ({
+export const useTabsStore: UseBoundStore<StoreApi<TabsState>> = create<TabsState>()(
+  persist<TabsState>(
+    (set: StoreApi<TabsState>['setState'], get: () => TabsState): TabsState => ({
       tabs:       [],
       activeUuid: null,
       closed:     [],
 
-      open: (uuid, title) => {
+      open: (uuid: string, title: string): void => {
         const { tabs } = get()
-        const existing = tabs.find((t) => t.uuid === uuid)
+        const existing: Tab | undefined = tabs.find((t: Tab) => t.uuid === uuid)
         if (existing) {
-          const nextTitle = title && (!existing.title || existing.title === DEFAULT_NOTE_TITLE || existing.title === 'Untitled') ? title : existing.title
+          const nextTitle: string = title && (!existing.title || existing.title === DEFAULT_NOTE_TITLE || existing.title === 'Untitled') ? title : existing.title
           set({
-            tabs:       tabs.map((t) => (t.uuid === uuid ? { ...t, title: nextTitle } : t)),
+            tabs:       tabs.map((t: Tab) => (t.uuid === uuid ? { ...t, title: nextTitle } : t)),
             activeUuid: uuid,
           })
           return
@@ -41,9 +42,9 @@ export const useTabsStore = create<TabsState>()(
         set({ tabs: [...tabs, { uuid, title: title || DEFAULT_NOTE_TITLE, dirty: false }], activeUuid: uuid })
       },
 
-      close: (uuid) => {
+      close: (uuid: string): void => {
         const { tabs, activeUuid, closed } = get()
-        const index = tabs.findIndex((t) => t.uuid === uuid)
+        const index: number = tabs.findIndex((t: Tab) => t.uuid === uuid)
         if (index === -1) {
           if (activeUuid === uuid) {
             set({ activeUuid: null })
@@ -51,9 +52,9 @@ export const useTabsStore = create<TabsState>()(
           return
         }
 
-        const removed = tabs[index]!
-        const next = tabs.filter((t) => t.uuid !== uuid)
-        const neighbour = next[index - 1] ?? next[index] ?? null
+        const removed: Tab = tabs[index]!
+        const next: Tab[] = tabs.filter((t: Tab) => t.uuid !== uuid)
+        const neighbour: Tab | null = next[index - 1] ?? next[index] ?? null
 
         set({
           tabs:       next,
@@ -62,26 +63,26 @@ export const useTabsStore = create<TabsState>()(
         })
       },
 
-      closeOthers: (uuid) =>
-        set((s) => ({ tabs: s.tabs.filter((t) => t.uuid === uuid), activeUuid: uuid })),
+      closeOthers: (uuid: string) =>
+        set((s: TabsState) => ({ tabs: s.tabs.filter((t: Tab) => t.uuid === uuid), activeUuid: uuid })),
 
       closeAll: () => set({ tabs: [], activeUuid: null, closed: [] }),
 
-      reopen: () => {
+      reopen: (): void => {
         const { closed } = get()
-        const last = closed[closed.length - 1]
+        const last: Tab | undefined = closed[closed.length - 1]
         if (!last) return
         set({ closed: closed.slice(0, -1) })
         get().open(last.uuid, last.title)
       },
 
-      setDirty: (uuid, dirty) =>
-        set((s) => ({ tabs: s.tabs.map((t) => (t.uuid === uuid ? { ...t, dirty } : t)) })),
+      setDirty: (uuid: string, dirty: boolean) =>
+        set((s: TabsState) => ({ tabs: s.tabs.map((t: Tab) => (t.uuid === uuid ? { ...t, dirty } : t)) })),
 
-      setTitle: (uuid, title) =>
-        set((s) => ({ tabs: s.tabs.map((t) => (t.uuid === uuid ? { ...t, title } : t)) })),
+      setTitle: (uuid: string, title: string) =>
+        set((s: TabsState) => ({ tabs: s.tabs.map((t: Tab) => (t.uuid === uuid ? { ...t, title } : t)) })),
 
-      activate: (uuid) => set({ activeUuid: uuid }),
+      activate: (uuid: string) => set({ activeUuid: uuid }),
     }),
     // Per device, never synced: tabs are window state, not user data.
     { name: 'notes.tabs' },

@@ -1,5 +1,6 @@
 import { memo, useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
+import type { NavigateFunction } from 'react-router'
 
 import {
   ActionIcon,
@@ -31,8 +32,9 @@ import {
 import { ALL_NOTES_LABEL, STARRED_LABEL, TRASH_LABEL } from '@src/constants/labels'
 import { MAX_FOLDER_NAME_LENGTH, MAX_TAG_NAME_LENGTH } from '@src/constants/limits'
 import { deviceKind } from '@src/platform/device_kind'
+import type { DeviceKind } from '@src/platform/device_kind'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
-import { useUiStore, type Scope } from '@src/stores/ui_store'
+import { type Scope, useUiStore } from '@src/stores/ui_store'
 import type { Container, Counts, Folder, Tag } from '@src/types/api'
 import { stopEventPropagation } from '@src/utils/events'
 
@@ -54,7 +56,7 @@ interface ContainerSectionProps {
   onDeleteTag?:    (uuid: string) => void
 }
 
-export const ContainerSection = memo(function ContainerSection({
+export const ContainerSection: React.NamedExoticComponent<ContainerSectionProps> = memo(function ContainerSection({
   container,
   title,
   folders,
@@ -68,17 +70,17 @@ export const ContainerSection = memo(function ContainerSection({
   onCreateTag,
   onRenameTag,
   onDeleteTag,
-}: ContainerSectionProps) {
-  const navigate = useNavigate()
+}: ContainerSectionProps): React.JSX.Element {
+  const navigate: NavigateFunction = useNavigate()
   const { scope, setScope, setView } = useUiStore()
-  const dev = deviceKind()
+  const dev: DeviceKind = deviceKind()
 
   const [creating, setCreating] = useState<'folder' | 'tag' | null>(null)
   const [draftName, setDraftName] = useState('')
   const [renameFolderTarget, setRenameFolderTarget] = useState<Folder | null>(null)
   const [renameTagTarget, setRenameTagTarget] = useState<Tag | null>(null)
 
-  const pick = useCallback(
+  const pick: (next: Scope) => void = useCallback(
     (next: Scope) => {
       setScope({ ...next, container })
       setView('list')
@@ -86,8 +88,8 @@ export const ContainerSection = memo(function ContainerSection({
     [setScope, setView, container],
   )
 
-  const commitInline = useCallback(() => {
-    const name = draftName.trim()
+  const commitInline: () => void = useCallback(() => {
+    const name: string = draftName.trim()
     if (name) {
       if (creating === 'folder') {
         onCreateFolder?.(name, container)
@@ -99,7 +101,7 @@ export const ContainerSection = memo(function ContainerSection({
     setDraftName('')
   }, [draftName, creating, onCreateFolder, onCreateTag, container])
 
-  const renderDeviceIcon = () => {
+  const renderDeviceIcon: () => React.JSX.Element = (): React.JSX.Element => {
     if (container === 'cloud') {
       return <IconCloud size={16} />
     }
@@ -112,7 +114,7 @@ export const ContainerSection = memo(function ContainerSection({
     return <IconDeviceLaptop size={16} />
   }
 
-  const isScopeActive = (kind: string, uuidOrSlug?: string) => {
+  const isScopeActive: (kind: string, uuidOrSlug?: string) => boolean = (kind: string, uuidOrSlug?: string): boolean => {
     if (scope.container !== container) return false
     if (scope.kind !== kind) return false
     if (kind === 'folder') return (scope as { uuid?: string }).uuid === uuidOrSlug
@@ -225,15 +227,15 @@ export const ContainerSection = memo(function ContainerSection({
               size="xs"
               value={draftName}
               onBlur={commitInline}
-              onChange={(e) => setDraftName(e.currentTarget.value)}
-              onKeyDown={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => setDraftName(e.currentTarget.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === 'Enter') commitInline()
                 if (e.key === 'Escape') setCreating(null)
               }}
             />
           )}
 
-          {folders.map((f) => (
+          {folders.map((f: Folder) => (
             <NavLink
               key={f.uuid}
               active={isScopeActive('folder', f.uuid)}
@@ -298,8 +300,8 @@ export const ContainerSection = memo(function ContainerSection({
               size="xs"
               value={draftName}
               onBlur={commitInline}
-              onChange={(e) => setDraftName(e.currentTarget.value)}
-              onKeyDown={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => setDraftName(e.currentTarget.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === 'Enter') commitInline()
                 if (e.key === 'Escape') setCreating(null)
               }}
@@ -307,7 +309,7 @@ export const ContainerSection = memo(function ContainerSection({
           )}
 
           <Group gap={4} px="xs" py={2}>
-            {tags.map((t) => (
+            {tags.map((t: Tag) => (
               <Group key={t.uuid} gap={2} wrap="nowrap">
                 <UnstyledButton
                   onClick={() => pick({ kind: 'tag', container, slug: t.slug, label: `#${t.name}` })}
@@ -359,7 +361,7 @@ export const ContainerSection = memo(function ContainerSection({
             opened={Boolean(renameFolderTarget)}
             title="Rename folder"
             onClose={() => setRenameFolderTarget(null)}
-            onConfirm={(name) => {
+            onConfirm={(name: string) => {
               if (renameFolderTarget) {
                 onRenameFolder?.(renameFolderTarget.uuid, name)
               }
@@ -373,7 +375,7 @@ export const ContainerSection = memo(function ContainerSection({
             opened={Boolean(renameTagTarget)}
             title="Rename tag"
             onClose={() => setRenameTagTarget(null)}
-            onConfirm={(name) => {
+            onConfirm={(name: string) => {
               if (renameTagTarget) {
                 onRenameTag?.(renameTagTarget.uuid, name)
               }

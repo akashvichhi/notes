@@ -4,7 +4,7 @@ import type { ProseMirrorDoc, UUID } from '@src/types/api'
 
 export interface Draft { doc: ProseMirrorDoc; savedAt: number }
 
-const key = (uuid: UUID) => `note-draft:${uuid}`
+const key: (uuid: UUID) => string = (uuid: UUID): string => `note-draft:${uuid}`
 
 /** Written on every keystroke so a crash or reload never loses typing. */
 export async function saveDraft(uuid: UUID, doc: ProseMirrorDoc): Promise<void> {

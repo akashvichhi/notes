@@ -2,7 +2,9 @@ import { memo, useCallback } from 'react'
 
 import { ScrollArea, Stack } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
+import type { QueryClient, UseMutationResult } from '@tanstack/react-query'
 
+import type { ApiError } from '@src/api/api_client'
 import { LOCAL_SIDEBAR_KEY } from '@src/constants/query_keys'
 import { foldersRepo } from '@src/db/folders_repo'
 import { tagsRepo } from '@src/db/tags_repo'
@@ -10,32 +12,37 @@ import { isNative } from '@src/platform/is_native'
 import { useMe } from '@src/queries/auth_queries'
 import { useBootstrap, useLocalSidebar } from '@src/queries/bootstrap_queries'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@src/queries/folders_queries'
+import type { TDeleteFolderMutation, TRenameFolderMutation } from '@src/queries/folders_queries'
 import { useCreateTag, useDeleteTag, useRenameTag } from '@src/queries/tags_queries'
+import type { TDeleteTagMutation, TRenameTagMutation } from '@src/queries/tags_queries'
 import { useSyncStatus } from '@src/sync/engine'
-import type { Container } from '@src/types/api'
+import type { SyncSnapshot } from '@src/sync/engine'
+import type { Bootstrap, Container, Counts, Folder, Tag, UUID } from '@src/types/api'
 import { slugify } from '@src/utils/slugify'
 
 import { ContainerSection } from './container_section'
 
-export const Sidebar = memo(function Sidebar() {
-  const qc = useQueryClient()
+
+
+export const Sidebar: React.MemoExoticComponent<() => React.JSX.Element> = memo(function Sidebar() {
+  const qc: QueryClient = useQueryClient()
   const { data: user } = useMe()
   const { folders, tags, counts } = useBootstrap()
   const { data: localData } = useLocalSidebar()
-  const syncStatus = useSyncStatus()
-  const native = isNative()
-  const signedIn = Boolean(user)
+  const syncStatus: SyncSnapshot = useSyncStatus()
+  const native: boolean = isNative()
+  const signedIn: boolean = Boolean(user)
 
-  const createFolder = useCreateFolder()
-  const renameFolder = useRenameFolder()
-  const deleteFolder = useDeleteFolder()
-  const createTag = useCreateTag()
-  const renameTag = useRenameTag()
-  const deleteTag = useDeleteTag()
+  const createFolder: UseMutationResult<Folder, ApiError, { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID; }, { previous: Bootstrap | undefined; tempUuid: string; }> = useCreateFolder()
+  const renameFolder: TRenameFolderMutation = useRenameFolder()
+  const deleteFolder: TDeleteFolderMutation = useDeleteFolder()
+  const createTag: UseMutationResult<Tag, ApiError, { name: string; uuid?: UUID; }, { previous: Bootstrap | undefined; tempUuid: string; }> = useCreateTag()
+  const renameTag: TRenameTagMutation = useRenameTag()
+  const deleteTag: TDeleteTagMutation = useDeleteTag()
 
-  const localFolders = localData?.folders ?? []
-  const localTags = localData?.tags ?? []
-  const localCounts = localData?.counts ?? {
+  const localFolders: Folder[] = localData?.folders ?? []
+  const localTags: Tag[] = localData?.tags ?? []
+  const localCounts: Counts = localData?.counts ?? {
     all:     0,
     starred: 0,
     trashed: 0,
@@ -43,17 +50,17 @@ export const Sidebar = memo(function Sidebar() {
     tags:    {},
   }
 
-  const refreshLocal = useCallback(() => {
+  const refreshLocal: () => void = useCallback(() => {
     qc.invalidateQueries({ queryKey: LOCAL_SIDEBAR_KEY })
   }, [qc])
 
-  const handleCreateFolder = useCallback(
+  const handleCreateFolder: (name: string, container: Container) => Promise<void> = useCallback(
     async (name: string, container: Container) => {
       if (container === 'cloud' && !signedIn) {
         return
       }
       if (container === 'local') {
-        const uuid = crypto.randomUUID()
+        const uuid: `${string}-${string}-${string}-${string}-${string}` = crypto.randomUUID()
         await foldersRepo.upsert({
           uuid,
           container:       'local',
@@ -73,13 +80,13 @@ export const Sidebar = memo(function Sidebar() {
     [createFolder, localFolders.length, refreshLocal, signedIn],
   )
 
-  const handleCreateTag = useCallback(
+  const handleCreateTag: (name: string, container: Container) => Promise<void> = useCallback(
     async (name: string, container: Container) => {
       if (container === 'cloud' && !signedIn) {
         return
       }
       if (container === 'local') {
-        const uuid = crypto.randomUUID()
+        const uuid: `${string}-${string}-${string}-${string}-${string}` = crypto.randomUUID()
         await tagsRepo.upsert({
           uuid,
           container:       'local',
@@ -108,12 +115,12 @@ export const Sidebar = memo(function Sidebar() {
           syncState={native && signedIn ? syncStatus.state : undefined}
           tags={tags}
           title="Cloud"
-          onCreateFolder={(name) => handleCreateFolder(name, 'cloud')}
-          onCreateTag={(name) => handleCreateTag(name, 'cloud')}
-          onDeleteFolder={(uuid) => deleteFolder.mutate(uuid)}
-          onDeleteTag={(uuid) => deleteTag.mutate(uuid)}
-          onRenameFolder={(uuid, name) => renameFolder.mutate({ uuid, name })}
-          onRenameTag={(uuid, name) => renameTag.mutate({ uuid, name })}
+          onCreateFolder={(name: string) => handleCreateFolder(name, 'cloud')}
+          onCreateTag={(name: string) => handleCreateTag(name, 'cloud')}
+          onDeleteFolder={(uuid: string) => deleteFolder.mutate(uuid)}
+          onDeleteTag={(uuid: string) => deleteTag.mutate(uuid)}
+          onRenameFolder={(uuid: string, name: string) => renameFolder.mutate({ uuid, name })}
+          onRenameTag={(uuid: string, name: string) => renameTag.mutate({ uuid, name })}
         />
 
         {native && (
@@ -123,18 +130,18 @@ export const Sidebar = memo(function Sidebar() {
             folders={localFolders}
             tags={localTags}
             title="On This Device"
-            onCreateFolder={(name) => handleCreateFolder(name, 'local')}
-            onCreateTag={(name) => handleCreateTag(name, 'local')}
-            onDeleteFolder={async (uuid) => {
+            onCreateFolder={(name: string) => handleCreateFolder(name, 'local')}
+            onCreateTag={(name: string) => handleCreateTag(name, 'local')}
+            onDeleteFolder={async (uuid: string) => {
               await foldersRepo.softDelete(uuid, 'local')
               refreshLocal()
             }}
-            onDeleteTag={async (uuid) => {
+            onDeleteTag={async (uuid: string) => {
               await tagsRepo.softDelete(uuid, 'local')
               refreshLocal()
             }}
-            onRenameFolder={async (uuid, name) => {
-              const f = await foldersRepo.get(uuid, 'local')
+            onRenameFolder={async (uuid: string, name: string) => {
+              const f: Folder | null = await foldersRepo.get(uuid, 'local')
               if (f) {
                 await foldersRepo.upsert({
                   ...f,
@@ -147,7 +154,7 @@ export const Sidebar = memo(function Sidebar() {
                 refreshLocal()
               }
             }}
-            onRenameTag={async (uuid, name) => {
+            onRenameTag={async (uuid: string, name: string) => {
               await tagsRepo.upsert({
                 uuid,
                 container:       'local',

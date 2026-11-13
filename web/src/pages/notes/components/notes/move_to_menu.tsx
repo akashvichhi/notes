@@ -13,7 +13,7 @@ interface MoveToMenuProps {
   onMoveConfirmed?: (target: { folder_id: UUID | null; container?: Container }) => void
 }
 
-export const MoveToMenu = memo(function MoveToMenu({
+export const MoveToMenu: React.MemoExoticComponent<({ note, folders, onMove, onMoveConfirmed, }: MoveToMenuProps) => React.JSX.Element> = memo(function MoveToMenu({
   note,
   folders,
   onMove,
@@ -21,12 +21,12 @@ export const MoveToMenu = memo(function MoveToMenu({
 }: MoveToMenuProps) {
   const currentContainer: Container = note.container ?? 'cloud'
 
-  const handleSelect = useCallback(
+  const handleSelect: (targetFolder: (Folder & { container?: Container; }) | null, targetContainer: Container) => void = useCallback(
     (targetFolder: (Folder & { container?: Container }) | null, targetContainer: Container) => {
-      const folder_id = targetFolder ? targetFolder.uuid : null
+      const folder_id: string | null = targetFolder ? targetFolder.uuid : null
 
       if (targetContainer !== currentContainer) {
-        const isMovingToLocal = targetContainer === 'local'
+        const isMovingToLocal: boolean = targetContainer === 'local'
         modals.openConfirmModal({
           title:    isMovingToLocal ? 'Move to On This Device' : 'Move to Cloud',
           children: isMovingToLocal
@@ -48,8 +48,8 @@ export const MoveToMenu = memo(function MoveToMenu({
     [currentContainer, onMove, onMoveConfirmed],
   )
 
-  const cloudFolders = folders.filter((f) => (f.container ?? 'cloud') === 'cloud')
-  const localFolders = folders.filter((f) => f.container === 'local')
+  const cloudFolders: (Folder & { container?: Container; })[] = folders.filter((f: Folder & { container?: Container; }) => (f.container ?? 'cloud') === 'cloud')
+  const localFolders: (Folder & { container?: Container; })[] = folders.filter((f: Folder & { container?: Container; }) => f.container === 'local')
 
   return (
     <Menu.Dropdown>
@@ -60,7 +60,7 @@ export const MoveToMenu = memo(function MoveToMenu({
       >
         All notes (No folder)
       </Menu.Item>
-      {cloudFolders.map((f) => (
+      {cloudFolders.map((f: Folder & { container?: Container; }) => (
         <Menu.Item
           key={f.uuid}
           leftSection={<IconFolder color={f.color ?? undefined} size={14} />}
@@ -80,7 +80,7 @@ export const MoveToMenu = memo(function MoveToMenu({
           >
             All notes (On This Device)
           </Menu.Item>
-          {localFolders.map((f) => (
+          {localFolders.map((f: Folder & { container?: Container; }) => (
             <Menu.Item
               key={f.uuid}
               leftSection={<IconFolder color={f.color ?? undefined} size={14} />}

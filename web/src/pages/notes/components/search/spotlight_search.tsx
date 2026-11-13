@@ -4,40 +4,44 @@ import { Progress, Text } from '@mantine/core'
 import { Spotlight, spotlight } from '@mantine/spotlight'
 import { IconFolder, IconNote, IconPlus, IconSearch } from '@tabler/icons-react'
 import { useQueryClient } from '@tanstack/react-query'
-
+import type { QueryClient } from '@tanstack/react-query'
 
 import { queryKeys } from '@src/constants/query_keys'
 import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
 import { useCreateNote } from '@src/queries/notes_queries'
+import type { TCreateNoteMutation } from '@src/queries/notes_queries'
 import { MIN_QUERY, useSearch } from '@src/queries/search_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
+import type { TabsState } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
+import type { Scope, UiState } from '@src/stores/ui_store'
+import type { SearchHit, UUID } from '@src/types/api'
 
 import { HighlightTerms } from './highlight'
 
 
-export const SpotlightSearch = memo(function SpotlightSearch() {
-  const qc = useQueryClient()
+export const SpotlightSearch: React.MemoExoticComponent<() => React.JSX.Element> = memo(function SpotlightSearch() {
+  const qc: QueryClient = useQueryClient()
   const [query, setQuery] = useState('')
   const { data, isFetching } = useSearch(query)
-  const showBar = useDelayedLoading(isFetching)
-  const openTab = useTabsStore((s) => s.open)
-  const setScope = useUiStore((s) => s.setScope)
-  const createNote = useCreateNote()
+  const showBar: boolean = useDelayedLoading(isFetching)
+  const openTab: (uuid: UUID, title: string) => void = useTabsStore((s: TabsState) => s.open)
+  const setScope: (s: Scope) => void = useUiStore((s: UiState) => s.setScope)
+  const createNote: TCreateNoteMutation = useCreateNote()
 
-  const trimmedQuery = useMemo(() => query.trim(), [query])
-  const short = useMemo(
+  const trimmedQuery: string = useMemo(() => query.trim(), [query])
+  const short: boolean = useMemo(
     () => trimmedQuery.length > 0 && trimmedQuery.length < MIN_QUERY,
     [trimmedQuery],
   )
 
-  const handleSeeAllResults = useCallback(() => {
+  const handleSeeAllResults: () => void = useCallback(() => {
     // Hand off to the list pane instead of competing with it.
     setScope({ kind: 'search', q: trimmedQuery, label: `Results for “${trimmedQuery}”` })
     spotlight.close()
   }, [setScope, trimmedQuery])
 
-  const handleCreateEmptyNote = useCallback(() => {
+  const handleCreateEmptyNote: () => void = useCallback(() => {
     createNote.mutate({})
   }, [createNote])
 
@@ -53,7 +57,7 @@ export const SpotlightSearch = memo(function SpotlightSearch() {
           <Text c="dimmed" p="md" size="sm" ta="center">Type at least {MIN_QUERY} characters</Text>
         )}
 
-        {data?.notes.map((hit) => (
+        {data?.notes.map((hit: SearchHit) => (
           <Spotlight.Action key={hit.uuid} leftSection={<IconNote size={18} />}
             onClick={() => {
               openTab(hit.uuid, hit.title)
@@ -66,7 +70,7 @@ export const SpotlightSearch = memo(function SpotlightSearch() {
           </Spotlight.Action>
         ))}
 
-        {data?.folders.map((f) => (
+        {data?.folders.map((f: { uuid: UUID; name: string; }) => (
           <Spotlight.Action key={f.uuid} leftSection={<IconFolder size={18} />}
             onClick={() => setScope({ kind: 'folder', uuid: f.uuid, label: f.name })}>
             {f.name}

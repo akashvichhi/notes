@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { notifications } from '@mantine/notifications'
 import { useQueryClient } from '@tanstack/react-query'
-import type { Editor } from '@tiptap/react'
+import type { QueryClient } from '@tanstack/react-query'
+import type { Editor, JSONContent } from '@tiptap/react'
 
 import { normalizeError } from '@src/api/api_client'
+import type { ApiError } from '@src/api/api_client'
 import * as notesApi from '@src/api/notes_api'
 import { type NotesPage, patchNote } from '@src/api/notes_api'
 import { MESSAGES } from '@src/constants/messages'
@@ -12,46 +14,61 @@ import { BOOTSTRAP_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { clearDraft, saveDraft } from '@src/db/drafts_store'
 import { notesRepo } from '@src/db/notes_repo'
 import { isNative } from '@src/platform/is_native'
-import { useRestoreNote } from '@src/queries/notes_queries'
+import { type TNoteListMutation, useRestoreNote } from '@src/queries/notes_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
-import { type SaveStatus, useUiStore } from '@src/stores/ui_store'
+import type { TabsState } from '@src/stores/tabs_store'
+import { type SaveStatus, type UiState, useUiStore } from '@src/stores/ui_store'
 import { syncEngine } from '@src/sync/engine'
 import { outbox } from '@src/sync/outbox'
-import type { Note, NoteListItem } from '@src/types/api'
+import type { Note, NoteListItem, UUID } from '@src/types/api'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
 export type { SaveStatus }
 
-const DEBOUNCE_MS = 5000 // 5 seconds debounce
-const MIN_SAVING_MS = 400 // below this, "Saving…" strobes
+const DEBOUNCE_MS: number = 5000 // 5 seconds debounce
+const MIN_SAVING_MS: number = 400 // below this, "Saving…" strobes
 
-export function useAutosave(note: Note, editor: Editor | null) {
-  const qc = useQueryClient()
-  const setDirty = useTabsStore((s) => s.setDirty)
-  const setSaveStatus = useUiStore((s) => s.setSaveStatus)
-  const setRetrySave = useUiStore((s) => s.setRetrySave)
-  const setCancelPendingSave = useUiStore((s) => s.setCancelPendingSave)
-  const closeTab = useTabsStore((s) => s.close)
-  const restoreNote = useRestoreNote()
+export interface IAutosave {
+  status:             SaveStatus
+  savedAt:            number | null
+  conflict:           Note | null
+  clearConflict:      () => void
+  resolveKeepMine:    () => Promise<void>
+  resolveKeepTheirs:  () => void
+  resolveSaveCopy:    () => Promise<void>
+  resolveRestoreMine: () => Promise<void>
+  resolveDiscard:     () => void
+  onChange:           () => void
+  saveNow:            (isExplicit?: boolean) => Promise<void>
+}
+
+export function useAutosave(note: Note, editor: Editor | null): IAutosave {
+  const qc: QueryClient = useQueryClient()
+  const setDirty: (uuid: UUID, dirty: boolean) => void = useTabsStore((s: TabsState) => s.setDirty)
+  const setSaveStatus: (saveStatus: SaveStatus, savedAt?: number | null) => void = useUiStore((s: UiState) => s.setSaveStatus)
+  const setRetrySave: (retrySave: (() => Promise<void> | void) | null) => void = useUiStore((s: UiState) => s.setRetrySave)
+  const setCancelPendingSave: (cancelPendingSave: (() => void) | null) => void = useUiStore((s: UiState) => s.setCancelPendingSave)
+  const closeTab: (uuid: UUID) => void = useTabsStore((s: TabsState) => s.close)
+  const restoreNote: TNoteListMutation = useRestoreNote()
 
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [conflict, setConflict] = useState<Note | null>(null)
 
-  const version = useRef(note.version)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const retries = useRef(0)
-  const saveRef = useRef<(isExplicit?: boolean) => Promise<void>>(async () => {})
+  const version: React.RefObject<number> = useRef(note.version)
+  const timer: React.RefObject<number | null> = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const retries: React.RefObject<number> = useRef(0)
+  const saveRef: React.RefObject<(isExplicit?: boolean) => Promise<void>> = useRef<(isExplicit?: boolean) => Promise<void>>(async () => {})
 
   useEffect(() => {
     version.current = note.version
   }, [note.version, note.uuid])
 
-  const save = useCallback(
-    async (isExplicit = false) => {
+  const save: (isExplicit?: boolean) => Promise<void> = useCallback(
+    async (isExplicit: boolean = false) => {
       if (!editor) return
 
-      const body = editor.getJSON() as Note['body']
+      const body: JSONContent | null = editor.getJSON() as Note['body']
       if (!body) return
 
       if (timer.current) {
@@ -59,21 +76,21 @@ export function useAutosave(note: Note, editor: Editor | null) {
         timer.current = null
       }
 
-      const startedAt = Date.now()
+      const startedAt: number = Date.now()
       setStatus('saving')
       setSaveStatus('saving')
 
       try {
         let updated: Note
-        const isLocal = note.container === 'local' || (!note.container && isNative())
+        const isLocal: boolean = note.container === 'local' || (!note.container && isNative())
 
         if (isNative()) {
-          const plainText = editor.getText()
-          const excerpt = plainText.slice(0, 150)
-          const wordCount = plainText.trim() ? plainText.trim().split(/\s+/).length : 0
-          const nowStr = new Date().toISOString()
-          const existing = await notesRepo.get(note.uuid)
-          const title = existing?.title ?? note.title
+          const plainText: string = editor.getText()
+          const excerpt: string = plainText.slice(0, 150)
+          const wordCount: number = plainText.trim() ? plainText.trim().split(/\s+/).length : 0
+          const nowStr: string = new Date().toISOString()
+          const existing: Note | null = await notesRepo.get(note.uuid)
+          const title: string = existing?.title ?? note.title
 
           await notesRepo.upsert({
             uuid:            note.uuid,
@@ -136,7 +153,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
           if (!old?.pages?.length) return old
           return {
             ...old,
-            pages: old.pages.map((p) => ({
+            pages: old.pages.map((p: notesApi.NotesPage) => ({
               ...p,
               data: p.data.map((n: NoteListItem) =>
                 n.uuid === note.uuid
@@ -154,15 +171,15 @@ export function useAutosave(note: Note, editor: Editor | null) {
         qc.invalidateQueries({ queryKey: NOTES_KEY })
 
         // Hold "Saving…" long enough to be readable.
-        const elapsed = Date.now() - startedAt
-        const now = Date.now()
+        const elapsed: number = Date.now() - startedAt
+        const now: number = Date.now()
         setTimeout(() => {
           setStatus('saved')
           setSavedAt(now)
           setSaveStatus('saved', now)
         }, Math.max(0, MIN_SAVING_MS - elapsed))
       } catch (e) {
-        const err = normalizeError(e)
+        const err: ApiError = normalizeError(e)
 
         if (err.status === 409 && err.serverCopy) {
           // Never discard the user's text: hand it to the conflict sheet.
@@ -183,7 +200,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
           })
         }
         retries.current += 1
-        const backoff = Math.min(30_000, 2 ** retries.current * 1000)
+        const backoff: number = Math.min(30_000, 2 ** retries.current * 1000)
         timer.current = setTimeout(() => void saveRef.current(), backoff)
       }
     },
@@ -194,7 +211,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
     saveRef.current = save
   }, [save])
 
-  const onChange = useCallback(() => {
+  const onChange: () => void = useCallback(() => {
     if (!editor) return
 
     setDirty(note.uuid, true)
@@ -207,7 +224,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
   // Flush on anything that can end the session. visibilitychange matters most:
   // mobile browsers discard backgrounded tabs without firing beforeunload.
   useEffect(() => {
-    const flush = () => {
+    const flush: () => void = (): void => {
       if (timer.current) {
         clearTimeout(timer.current)
         timer.current = null
@@ -219,7 +236,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
     document.addEventListener('visibilitychange', flush)
     window.addEventListener('blur', flush)
 
-    return () => {
+    return (): void => {
       window.removeEventListener('beforeunload', flush)
       document.removeEventListener('visibilitychange', flush)
       window.removeEventListener('blur', flush)
@@ -228,7 +245,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
 
   // ⌘S / Ctrl+S forces an immediate save with explicit acknowledgement.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
+    const onKey: (e: KeyboardEvent) => void = (e: KeyboardEvent): void => {
       if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 's' || e.code === 'KeyS')) {
         e.preventDefault()
         e.stopPropagation()
@@ -241,15 +258,15 @@ export function useAutosave(note: Note, editor: Editor | null) {
     }
 
     window.addEventListener('keydown', onKey, true)
-    return () => window.removeEventListener('keydown', onKey, true)
+    return (): void => window.removeEventListener('keydown', onKey, true)
   }, [])
 
   useEffect(() => {
     setRetrySave(() => save(true))
-    return () => { setRetrySave(null) }
+    return (): void => { setRetrySave(null) }
   }, [save, setRetrySave])
 
-  const cancelPending = useCallback(() => {
+  const cancelPending: () => void = useCallback(() => {
     if (timer.current) {
       clearTimeout(timer.current)
       timer.current = null
@@ -263,19 +280,19 @@ export function useAutosave(note: Note, editor: Editor | null) {
 
   useEffect(() => {
     setCancelPendingSave(cancelPending)
-    return () => { setCancelPendingSave(null) }
+    return (): void => { setCancelPendingSave(null) }
   }, [cancelPending, setCancelPendingSave])
 
-  const clearConflict = useCallback(() => setConflict(null), [])
+  const clearConflict: () => void = useCallback(() => setConflict(null), [])
 
-  const resolveKeepMine = useCallback(async () => {
+  const resolveKeepMine: () => Promise<void> = useCallback(async () => {
     if (!conflict) return
     version.current = conflict.version
     setConflict(null)
     await save(true)
   }, [conflict, save])
 
-  const resolveKeepTheirs = useCallback(() => {
+  const resolveKeepTheirs: () => void = useCallback(() => {
     if (!conflict || !editor) return
     version.current = conflict.version
     editor.commands.setContent(conflict.body, { emitUpdate: false })
@@ -288,7 +305,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
   }, [conflict, editor, note.uuid, qc, setDirty, setSaveStatus])
 
   /** The note was trashed elsewhere: bring it back, then write the user's text over it. */
-  const resolveRestoreMine = useCallback(async (): Promise<void> => {
+  const resolveRestoreMine: () => Promise<void> = useCallback(async (): Promise<void> => {
     if (!conflict) return
     try {
       await restoreNote.mutateAsync(note.uuid)
@@ -301,7 +318,7 @@ export function useAutosave(note: Note, editor: Editor | null) {
   }, [conflict, note.uuid, restoreNote, save])
 
   /** The note was trashed elsewhere and the user lets it go: drop the edit and close it. */
-  const resolveDiscard = useCallback((): void => {
+  const resolveDiscard: () => void = useCallback((): void => {
     void clearDraft(note.uuid)
     setDirty(note.uuid, false)
     setStatus('idle')
@@ -311,12 +328,12 @@ export function useAutosave(note: Note, editor: Editor | null) {
     qc.removeQueries({ queryKey: queryKeys.notes.detail(note.uuid) })
   }, [closeTab, note.uuid, qc, setDirty, setSaveStatus])
 
-  const resolveSaveCopy = useCallback(async () => {
+  const resolveSaveCopy: () => Promise<void> = useCallback(async () => {
     if (!conflict || !editor) return
-    const body = editor.getJSON() as Note['body']
+    const body: JSONContent | null = editor.getJSON() as Note['body']
     if (!body) return
     try {
-      const newNote = await notesApi.createNote({ folder_id: note.folder?.uuid })
+      const newNote: Note = await notesApi.createNote({ folder_id: note.folder?.uuid })
       await notesApi.patchNote(newNote.uuid, { body, version: newNote.version })
       resolveKeepTheirs()
       qc.invalidateQueries({ queryKey: NOTES_KEY })

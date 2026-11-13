@@ -1,3 +1,5 @@
+import type { JSONContent } from '@tiptap/react'
+
 import type { ProseMirrorDoc } from '@src/types/api'
 
 /**
@@ -10,7 +12,7 @@ export function sanitizeProseMirrorDoc(doc: unknown): ProseMirrorDoc {
     return { type: 'doc', content: [] }
   }
 
-  const raw = doc as Record<string, unknown>
+  const raw: Record<string, unknown> = doc as Record<string, unknown>
   if (raw.type !== 'doc') {
     return { type: 'doc', content: [] }
   }
@@ -18,7 +20,7 @@ export function sanitizeProseMirrorDoc(doc: unknown): ProseMirrorDoc {
   function cleanNode(node: unknown): unknown | null {
     if (!node || typeof node !== 'object') return null
 
-    const n = node as Record<string, unknown>
+    const n: Record<string, unknown> = node as Record<string, unknown>
 
     // Text nodes MUST have a string text value. Drop any invalid/null text nodes.
     if (n.type === 'text') {
@@ -35,7 +37,7 @@ export function sanitizeProseMirrorDoc(doc: unknown): ProseMirrorDoc {
     if (Array.isArray(n.content)) {
       const cleanedChildren: unknown[] = []
       for (const child of n.content) {
-        const cleaned = cleanNode(child)
+        const cleaned: unknown = cleanNode(child)
         if (cleaned) {
           cleanedChildren.push(cleaned)
         }
@@ -49,6 +51,6 @@ export function sanitizeProseMirrorDoc(doc: unknown): ProseMirrorDoc {
     return n
   }
 
-  const cleaned = cleanNode(raw) as ProseMirrorDoc
+  const cleaned: JSONContent = cleanNode(raw) as ProseMirrorDoc
   return cleaned ?? { type: 'doc', content: [] }
 }

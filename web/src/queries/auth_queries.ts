@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { QueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 import { hostname, platform } from '@tauri-apps/plugin-os'
 import { HttpStatusCode } from 'axios'
 
 import { normalizeError } from '@src/api/api_client'
+import type { ApiError } from '@src/api/api_client'
 import * as authApi from '@src/api/auth_api'
 import { AUTH_KEY, BOOTSTRAP_KEY, NOTES_KEY } from '@src/constants/query_keys'
 import { clearAllDrafts } from '@src/db/drafts_store'
@@ -13,19 +15,21 @@ import { isNative } from '@src/platform/is_native'
 import { deleteToken, loadToken, saveToken } from '@src/platform/secure_store'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
+import type { Scope } from '@src/stores/ui_store'
 import { syncEngine } from '@src/sync/engine'
 import { outbox } from '@src/sync/outbox'
 import type { User } from '@src/types/api'
+import type { ILoginCredentials, IRegisterCredentials } from '@src/types/auth'
 
 export { AUTH_KEY }
 
-export function useMe() {
+export function useMe(): UseQueryResult<User | null, ApiError> {
   return useQuery<User | null>({
     queryKey: AUTH_KEY,
     queryFn:  async () => {
       try {
         if (isNative()) {
-          const token = await loadToken()
+          const token: string | null = await loadToken()
           if (!token) return null
         }
         return await authApi.fetchMe()
@@ -44,24 +48,24 @@ export function useMe() {
   })
 }
 
-export function useLogin() {
-  const qc = useQueryClient()
+export function useLogin(): UseMutationResult<User, ApiError, ILoginCredentials> {
+  const qc: QueryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (creds: { email: string; password: string }) => {
+    mutationFn: async (creds: ILoginCredentials) => {
       if (isNative()) {
-        const host = await hostname().catch(() => 'Desktop')
-        let plat = 'desktop'
+        const host: string | null = await hostname().catch(() => 'Desktop')
+        let plat: string = 'desktop'
         try {
           plat = platform()
         } catch {
           // ignore
         }
-        const token = await authApi.issueToken({
+        const token: string = await authApi.issueToken({
           ...creds,
           device_name: `${host ?? 'Device'} · ${plat}`,
         })
         await saveToken(token)
-        const user = await authApi.fetchMe()
+        const user: User = await authApi.fetchMe()
         useUiStore.getState().setScope({
           kind:      'all',
           container: 'cloud',
@@ -73,7 +77,7 @@ export function useLogin() {
 
       return authApi.login(creds)
     },
-    onSuccess: (user) => {
+    onSuccess: (user: User) => {
       useTabsStore.getState().closeAll()
       try {
         localStorage.removeItem('notes.tabs')
@@ -89,31 +93,26 @@ export function useLogin() {
   })
 }
 
-export function useRegister() {
-  const qc = useQueryClient()
+export function useRegister(): UseMutationResult<User, ApiError, IRegisterCredentials> {
+  const qc: QueryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (creds: {
-      name:                  string
-      email:                 string
-      password:              string
-      password_confirmation: string
-    }) => {
+    mutationFn: async (creds: IRegisterCredentials) => {
       if (isNative()) {
         await authApi.register(creds)
-        const host = await hostname().catch(() => 'Desktop')
-        let plat = 'desktop'
+        const host: string | null = await hostname().catch(() => 'Desktop')
+        let plat: string = 'desktop'
         try {
           plat = platform()
         } catch {
           // ignore
         }
-        const token = await authApi.issueToken({
+        const token: string = await authApi.issueToken({
           email:       creds.email,
           password:    creds.password,
           device_name: `${host ?? 'Device'} · ${plat}`,
         })
         await saveToken(token)
-        const user = await authApi.fetchMe()
+        const user: User = await authApi.fetchMe()
         useUiStore.getState().setScope({
           kind:      'all',
           container: 'cloud',
@@ -125,7 +124,7 @@ export function useRegister() {
 
       return authApi.register(creds)
     },
-    onSuccess: (user) => {
+    onSuccess: (user: User) => {
       useTabsStore.getState().closeAll()
       try {
         localStorage.removeItem('notes.tabs')
@@ -142,8 +141,8 @@ export function useRegister() {
 }
 
 
-export function useLogout() {
-  const qc = useQueryClient()
+export function useLogout(): UseMutationResult<void, ApiError, void, unknown> {
+  const qc: QueryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
       if (isNative()) {
@@ -157,7 +156,7 @@ export function useLogout() {
             tagsRepo.clearContainer('cloud'),
             outbox.clear(),
           ]).catch(() => {})
-          const currentScope = useUiStore.getState().scope
+          const currentScope: Scope = useUiStore.getState().scope
           if (currentScope.container === 'cloud') {
             useUiStore.getState().setScope({
               kind:      'all',
@@ -195,17 +194,17 @@ export function useLogout() {
 }
 
 
-export function useUpdateProfile() {
-  const qc = useQueryClient()
+export function useUpdateProfile(): UseMutationResult<User, ApiError, { name?: string; email?: string; }, unknown> {
+  const qc: QueryClient = useQueryClient()
   return useMutation({
     mutationFn: authApi.updateProfile,
-    onSuccess:  (user) => {
+    onSuccess:  (user: User) => {
       qc.setQueryData(AUTH_KEY, user)
     },
   })
 }
 
-export function useUpdatePassword() {
+export function useUpdatePassword(): UseMutationResult<void, ApiError, { current_password: string; password: string; password_confirmation: string; }, unknown> {
   return useMutation({
     mutationFn: authApi.updatePassword,
   })

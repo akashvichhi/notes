@@ -6,27 +6,28 @@ import { IconCheck, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 import { isNative } from '@src/platform/is_native'
 import { useBootstrap, useLocalSidebar } from '@src/queries/bootstrap_queries'
 import { useSyncNoteTags } from '@src/queries/notes_queries'
+import type { TNoteTagsMutation } from '@src/queries/notes_queries'
 import { useUiStore } from '@src/stores/ui_store'
-import type { Note } from '@src/types/api'
+import type { Note, Tag } from '@src/types/api'
 
-export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
+export const TagStrip: React.MemoExoticComponent<({ note }: { note: Note; }) => React.JSX.Element> = memo(function TagStrip({ note }: { note: Note }) {
   const { tags: cloudTags } = useBootstrap()
   const { data: localData } = useLocalSidebar()
-  const localTags = localData?.tags ?? []
+  const localTags: Tag[] = localData?.tags ?? []
 
-  const isLocal = note.container === 'local' || (!note.container && isNative() && useUiStore.getState().scope.container === 'local')
-  const tags = isLocal ? localTags : cloudTags
-  const syncTags = useSyncNoteTags()
+  const isLocal: boolean = note.container === 'local' || (!note.container && isNative() && useUiStore.getState().scope.container === 'local')
+  const tags: Tag[] = isLocal ? localTags : cloudTags
+  const syncTags: TNoteTagsMutation = useSyncNoteTags()
   const [opened, setOpened] = useState(false)
   const [query, setQuery] = useState('')
 
-  const activeNames = useMemo(() => note.tags ?? [], [note.tags])
+  const activeNames: string[] = useMemo(() => note.tags ?? [], [note.tags])
 
-  const handleToggle = useCallback(
+  const handleToggle: (tagName: string) => void = useCallback(
     (tagName: string) => {
       let next: string[]
       if (activeNames.includes(tagName)) {
-        next = activeNames.filter((t) => t !== tagName)
+        next = activeNames.filter((t: string) => t !== tagName)
       } else {
         next = [...activeNames, tagName]
       }
@@ -35,42 +36,42 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
     [activeNames, note.uuid, syncTags],
   )
 
-  const handleCreate = useCallback(() => {
-    const trimmed = query.trim()
+  const handleCreate: () => void = useCallback(() => {
+    const trimmed: string = query.trim()
     if (!trimmed) return
     handleToggle(trimmed)
     setQuery('')
   }, [handleToggle, query])
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+  const filtered: Tag[] = useMemo(() => {
+    const q: string = query.trim().toLowerCase()
     if (!q) return tags
-    return tags.filter((t) => t.name.toLowerCase().includes(q))
+    return tags.filter((t: Tag) => t.name.toLowerCase().includes(q))
   }, [tags, query])
 
-  const hasExactMatch = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return !q || filtered.some((t) => t.name.toLowerCase() === q)
+  const hasExactMatch: boolean = useMemo(() => {
+    const q: string = query.trim().toLowerCase()
+    return !q || filtered.some((t: Tag) => t.name.toLowerCase() === q)
   }, [filtered, query])
 
-  const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQueryChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.currentTarget.value)
   }, [])
 
-  const handleQueryKeyDown = useCallback(
+  const handleQueryKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') handleCreate()
     },
     [handleCreate],
   )
 
-  const handleToggleOpened = useCallback(() => {
-    setOpened((o) => !o)
+  const handleToggleOpened: () => void = useCallback(() => {
+    setOpened((o: boolean) => !o)
   }, [])
 
   return (
     <Group gap="xs" mb="md" wrap="wrap">
-      {activeNames.map((tag) => (
+      {activeNames.map((tag: string) => (
         <Badge
           key={tag}
           pr={4}
@@ -81,7 +82,7 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
               component="span"
               size={14}
               variant="transparent"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
                 e.stopPropagation()
                 handleToggle(tag)
               }}
@@ -120,8 +121,8 @@ export const TagStrip = memo(function TagStrip({ note }: { note: Note }) {
             />
 
             <Stack gap={2}>
-              {filtered.map((t) => {
-                const isSelected = activeNames.includes(t.name) || activeNames.includes(t.slug)
+              {filtered.map((t: Tag) => {
+                const isSelected: boolean = activeNames.includes(t.name) || activeNames.includes(t.slug)
                 return (
                   <Button
                     key={t.uuid}

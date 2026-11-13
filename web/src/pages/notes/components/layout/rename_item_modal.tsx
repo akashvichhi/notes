@@ -13,7 +13,7 @@ interface RenameItemModalProps {
   onConfirm:    (newName: string) => void
 }
 
-export const RenameItemModal = memo(function RenameItemModal({
+export const RenameItemModal: React.MemoExoticComponent<({ opened, title, label, placeholder, initialValue, maxLength, onClose, onConfirm, }: RenameItemModalProps) => React.JSX.Element> = memo(function RenameItemModal({
   opened,
   title,
   label,
@@ -31,10 +31,10 @@ export const RenameItemModal = memo(function RenameItemModal({
     }
   }, [opened, initialValue])
 
-  const handleSubmit = useCallback(
+  const handleSubmit: (e: React.FormEvent) => void = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
-      const trimmed = value.trim()
+      const trimmed: string = value.trim()
       if (trimmed && trimmed !== initialValue) {
         onConfirm(trimmed)
       }
@@ -54,7 +54,7 @@ export const RenameItemModal = memo(function RenameItemModal({
             maxLength={maxLength}
             placeholder={placeholder ?? label}
             value={value}
-            onChange={(e) => setValue(e.currentTarget.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => setValue(e.currentTarget.value)}
           />
           <Group justify="flex-end">
             <Button variant="default" onClick={onClose}>

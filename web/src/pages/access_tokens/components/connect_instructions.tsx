@@ -9,8 +9,8 @@ import { claudeCodeCommand, mcpUrl, TOKEN_PLACEHOLDER } from '@src/utils/mcp_url
  * How to point an MCP client at this server. Without a token the commands carry
  * a placeholder; right after creating one they carry the real token.
  */
-export const ConnectInstructions = memo(function ConnectInstructions({ token }: { token?: string }) {
-  const value = token ?? TOKEN_PLACEHOLDER
+export const ConnectInstructions: React.MemoExoticComponent<({ token }: { token?: string; }) => React.JSX.Element> = memo(function ConnectInstructions({ token }: { token?: string }) {
+  const value: string = token ?? TOKEN_PLACEHOLDER
 
   return (
     <Stack gap="md">

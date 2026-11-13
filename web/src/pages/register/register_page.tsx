@@ -1,38 +1,44 @@
 import { memo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
+import type { NavigateFunction } from 'react-router'
 
 import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
+import type { UseMutationResult } from '@tanstack/react-query'
 
-
+import type { ApiError } from '@src/api/api_client'
 import { isNative } from '@src/platform/is_native'
 import { useRegister } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
+import type { User } from '@src/types/api'
+import type { IRegisterCredentials } from '@src/types/auth'
 import {
   validateEmail,
   validatePassword,
   validatePasswordConfirmation,
 } from '@src/validations/auth_validations'
 
-export const RegisterPage = memo(function RegisterPage() {
-  const navigate = useNavigate()
-  const register = useRegister()
-  const native = isNative()
 
-  const form = useForm({
+export const RegisterPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function RegisterPage() {
+  const navigate: NavigateFunction = useNavigate()
+  const register: UseMutationResult<User, ApiError, IRegisterCredentials> = useRegister()
+  const native: boolean = isNative()
+
+  const form: UseFormReturnType<IRegisterCredentials> = useForm<IRegisterCredentials>({
     initialValues: { name: '', email: '', password: '', password_confirmation: '' },
     validate:      {
-      name:                  (v) => (v.trim().length > 0 ? null : 'Enter your name'),
+      name:                  (v: string) => (v.trim().length > 0 ? null : 'Enter your name'),
       email:                 validateEmail,
       password:              validatePassword,
       password_confirmation: validatePasswordConfirmation,
     },
   })
 
-  const error = register.error
+  const error: ApiError | null = register.error
 
-  const handleSubmit = useCallback(
-    (values: { name: string; email: string; password: string; password_confirmation: string }) => {
+  const handleSubmit: (values: IRegisterCredentials) => void = useCallback(
+    (values: IRegisterCredentials): void => {
       register.mutate(values, { onSuccess: () => navigate(ROUTE_PATHS.HOME) })
     },
     [navigate, register]

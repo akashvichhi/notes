@@ -1,3 +1,5 @@
+import type Database from '@tauri-apps/plugin-sql'
+
 import type { Container, LocalTag, Tag } from '@src/types/api'
 
 import { getDb } from './connection'
@@ -12,10 +14,19 @@ function rowToTag(r: Record<string, unknown>): Tag {
   }
 }
 
-export const tagsRepo = {
+export interface ITagsRepo {
+  list(container: Container): Promise<Tag[]>
+  upsert(tag: LocalTag): Promise<void>
+  softDelete(uuid: string, container?: Container): Promise<void>
+  hardDelete(uuid: string, container?: Container): Promise<void>
+  setNoteTags(noteUuid: string, tagNames: string[], container: Container): Promise<void>
+  clearContainer(container: Container): Promise<void>
+}
+
+export const tagsRepo: ITagsRepo = {
   async list(container: Container): Promise<Tag[]> {
-    const db = await getDb()
-    const rows = await db.select<Record<string, unknown>[]>(
+    const db: Database = await getDb()
+    const rows: Record<string, unknown>[] = await db.select<Record<string, unknown>[]>(
       'SELECT * FROM tags WHERE container = $1 AND deleted_at IS NULL ORDER BY name ASC',
       [container],
     )
@@ -23,7 +34,7 @@ export const tagsRepo = {
   },
 
   async upsert(tag: LocalTag): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     await db.execute(
       `INSERT INTO tags (uuid, container, name, slug, deleted_at, dirty, server_revision)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -47,8 +58,8 @@ export const tagsRepo = {
   },
 
   async softDelete(uuid: string, container?: Container): Promise<void> {
-    const db = await getDb()
-    const now = new Date().toISOString()
+    const db: Database = await getDb()
+    const now: string = new Date().toISOString()
     if (container) {
       await db.execute(
         'UPDATE tags SET deleted_at = $1, dirty = 1 WHERE uuid = $2 AND container = $3',
@@ -60,7 +71,7 @@ export const tagsRepo = {
   },
 
   async hardDelete(uuid: string, container?: Container): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     if (container) {
       await db.execute('DELETE FROM tags WHERE uuid = $1 AND container = $2', [uuid, container])
     } else {
@@ -70,11 +81,11 @@ export const tagsRepo = {
   },
 
   async setNoteTags(noteUuid: string, tagNames: string[], container: Container): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     await db.execute('DELETE FROM note_tag WHERE note_uuid = $1', [noteUuid])
     for (const name of tagNames) {
-      const slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-      const tagRows = await db.select<{ uuid: string }[]>(
+      const slug: string = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      const tagRows: { uuid: string; }[] = await db.select<{ uuid: string }[]>(
         'SELECT uuid FROM tags WHERE slug = $1 AND container = $2 LIMIT 1',
         [slug, container],
       )
@@ -98,7 +109,7 @@ export const tagsRepo = {
   },
 
   async clearContainer(container: Container): Promise<void> {
-    const db = await getDb()
+    const db: Database = await getDb()
     await db.execute(
       'DELETE FROM note_tag WHERE note_uuid IN (SELECT uuid FROM notes WHERE container = $1)',
       [container],

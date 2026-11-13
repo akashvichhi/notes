@@ -10,12 +10,12 @@ import { TokenList } from '@src/pages/access_tokens/components/token_list'
 import { useMe } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
 
-export const AccessTokensPage = memo(function AccessTokensPage() {
+export const AccessTokensPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function AccessTokensPage() {
   const { data: user } = useMe()
   const [createOpen, setCreateOpen] = useState(false)
 
-  const handleOpenCreate = useCallback(() => setCreateOpen(true), [])
-  const handleCloseCreate = useCallback(() => setCreateOpen(false), [])
+  const handleOpenCreate: () => void = useCallback(() => setCreateOpen(true), [])
+  const handleCloseCreate: () => void = useCallback(() => setCreateOpen(false), [])
 
   return (
     <Container px="md" py="lg" size="md">

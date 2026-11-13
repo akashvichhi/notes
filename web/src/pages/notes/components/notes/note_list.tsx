@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
+import type { NavigateFunction } from 'react-router'
 
 import {
   Box,
@@ -15,9 +16,10 @@ import {
   TextInput,
 } from '@mantine/core'
 import { IconCloud, IconFolder, IconPlus } from '@tabler/icons-react'
+import type { UseMutationResult } from '@tanstack/react-query'
 
-
-
+import type { ApiError } from '@src/api/api_client'
+import type { NotesPage } from '@src/api/notes_api'
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { MAX_NOTE_TITLE_LENGTH } from '@src/constants/limits'
 import { useIsPhone } from '@src/hooks/use_is_phone'
@@ -35,10 +37,12 @@ import {
   useStarNote,
   useTrashNote,
 } from '@src/queries/notes_queries'
+import type { TCreateNoteMutation, TDuplicateNoteMutation, TMoveNoteMutation, TRenameNoteMutation, TStarNoteMutation } from '@src/queries/notes_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
 import { useTabsStore } from '@src/stores/tabs_store'
+import type { TabsState } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
-import type { NoteListItem, UUID } from '@src/types/api'
+import type { Bootstrap, Folder, Note, NoteListItem, UUID } from '@src/types/api'
 import { ListSkeleton } from '@src/ui/skeletons/skeletons'
 import { filterNotes } from '@src/utils/filter_notes'
 
@@ -46,54 +50,57 @@ import { FilterInput } from './filter_input'
 import { NoteRow } from './note_row'
 
 
-export const NoteList = memo(function NoteList({
-  activeUuid,
-  onSelectNote,
-}: {
+
+export interface INoteListProps {
   activeUuid?:  string | null
   onSelectNote: (uuid: string, title?: string) => void
-}) {
-  const navigate = useNavigate()
+}
+
+export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(function NoteList({
+  activeUuid,
+  onSelectNote,
+}: INoteListProps): React.JSX.Element {
+  const navigate: NavigateFunction = useNavigate()
   const { data: user } = useMe()
   const { scope, filter, setView } = useUiStore()
-  const isCloudSignedOut = scope.container === 'cloud' && !user
-  const isPhone = useIsPhone()
-  const closeTab = useTabsStore((s) => s.close)
+  const isCloudSignedOut: boolean = scope.container === 'cloud' && !user
+  const isPhone: boolean = useIsPhone()
+  const closeTab: (uuid: UUID) => void = useTabsStore((s: TabsState) => s.close)
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotes(scope)
   const { folders: cloudFolders } = useBootstrap()
   const { data: localData } = useLocalSidebar()
-  const localFolders = localData?.folders ?? []
+  const localFolders: Folder[] = localData?.folders ?? []
 
-  const starNote = useStarNote(scope)
-  const trashNote = useTrashNote()
-  const duplicateNote = useDuplicateNote()
-  const createNote = useCreateNote()
-  const restoreNote = useRestoreNote()
-  const forceDeleteNote = useForceDeleteNote()
-  const renameNote = useRenameNote()
-  const moveNoteFolder = useMoveNoteFolder()
+  const starNote: TStarNoteMutation = useStarNote(scope)
+  const trashNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; prevLocal: unknown; }> = useTrashNote()
+  const duplicateNote: TDuplicateNoteMutation = useDuplicateNote()
+  const createNote: TCreateNoteMutation = useCreateNote()
+  const restoreNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; prevLocal: unknown; }> = useRestoreNote()
+  const forceDeleteNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; prevLocal: unknown; }> = useForceDeleteNote()
+  const renameNote: TRenameNoteMutation = useRenameNote()
+  const moveNoteFolder: TMoveNoteMutation = useMoveNoteFolder()
 
   const [restoreModalNote, setRestoreModalNote] = useState<NoteListItem | null>(null)
   const [moveModalNote, setMoveModalNote] = useState<NoteListItem | null>(null)
   const [renameModalNote, setRenameModalNote] = useState<NoteListItem | null>(null)
   const [renameTitle, setRenameTitle] = useState('')
 
-  const moveModalContainer = moveModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
-  const moveModalFolders = moveModalContainer === 'local' ? localFolders : cloudFolders
+  const moveModalContainer: 'cloud' | 'local' = moveModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
+  const moveModalFolders: Folder[] = moveModalContainer === 'local' ? localFolders : cloudFolders
 
-  const restoreModalContainer = restoreModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
-  const restoreModalFolders = restoreModalContainer === 'local' ? localFolders : cloudFolders
+  const restoreModalContainer: 'cloud' | 'local' = restoreModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
+  const restoreModalFolders: Folder[] = restoreModalContainer === 'local' ? localFolders : cloudFolders
 
-  const allNotes = useMemo(() => {
-    return data?.pages.flatMap((page) => page.data) ?? []
+  const allNotes: NoteListItem[] = useMemo(() => {
+    return data?.pages.flatMap((page: NotesPage) => page.data) ?? []
   }, [data])
 
-  const filtered = useMemo(() => {
+  const filtered: NoteListItem[] = useMemo(() => {
     return filterNotes(allNotes, filter)
   }, [allNotes, filter])
 
-  const handleOpen = useCallback(
+  const handleOpen: (uuid: string, title?: string) => void = useCallback(
     (uuid: string, title?: string) => {
       onSelectNote(uuid, title)
       if (isPhone) setView('editor')
@@ -101,10 +108,10 @@ export const NoteList = memo(function NoteList({
     [onSelectNote, isPhone, setView],
   )
 
-  const handleRestoreToFolder = useCallback(
+  const handleRestoreToFolder: (folderId: UUID | null) => Promise<void> = useCallback(
     async (folderId: UUID | null) => {
       if (!restoreModalNote) return
-      const uuid = restoreModalNote.uuid
+      const uuid: string = restoreModalNote.uuid
       setRestoreModalNote(null)
       await restoreNote.mutateAsync(uuid)
       if (folderId !== null) {
@@ -114,22 +121,22 @@ export const NoteList = memo(function NoteList({
     [restoreModalNote, restoreNote, moveNoteFolder],
   )
 
-  const handleMoveToFolder = useCallback(
+  const handleMoveToFolder: (folderId: UUID | null) => void = useCallback(
     (folderId: UUID | null) => {
       if (!moveModalNote) return
-      const uuid = moveModalNote.uuid
+      const uuid: string = moveModalNote.uuid
       setMoveModalNote(null)
       moveNoteFolder.mutate({ uuid, folder_id: folderId })
     },
     [moveModalNote, moveNoteFolder],
   )
 
-  const handleCreateNote = useCallback(() => {
-    const uuid = crypto.randomUUID()
+  const handleCreateNote: () => void = useCallback(() => {
+    const uuid: `${string}-${string}-${string}-${string}-${string}` = crypto.randomUUID()
     createNote.mutate(
       { ...(scope.kind === 'folder' ? { folder_id: scope.uuid } : {}), uuid },
       {
-        onSuccess: (newNote) => {
+        onSuccess: (newNote: Note) => {
           onSelectNote(newNote.uuid, newNote.title || DEFAULT_NOTE_TITLE)
           if (isPhone) {
             setView('editor')
@@ -143,25 +150,25 @@ export const NoteList = memo(function NoteList({
     }
   }, [createNote, scope, onSelectNote, isPhone, setView])
 
-  const handleCloseRestoreModal = useCallback(() => {
+  const handleCloseRestoreModal: () => void = useCallback(() => {
     setRestoreModalNote(null)
   }, [])
 
-  const handleOpenRename = useCallback((note: NoteListItem) => {
+  const handleOpenRename: (note: NoteListItem) => void = useCallback((note: NoteListItem) => {
     setRenameModalNote(note)
     setRenameTitle(note.title || '')
   }, [])
 
-  const handleCloseRename = useCallback(() => {
+  const handleCloseRename: () => void = useCallback(() => {
     setRenameModalNote(null)
     setRenameTitle('')
   }, [])
 
-  const handleConfirmRename = useCallback(
+  const handleConfirmRename: (e?: React.FormEvent) => void = useCallback(
     (e?: React.FormEvent) => {
       if (e) e.preventDefault()
       if (!renameModalNote) return
-      const title = renameTitle.trim()
+      const title: string = renameTitle.trim()
       if (title !== renameModalNote.title) {
         renameNote.mutate({
           uuid: renameModalNote.uuid,
@@ -173,21 +180,21 @@ export const NoteList = memo(function NoteList({
     [renameModalNote, renameNote, renameTitle, handleCloseRename],
   )
 
-  const sentinelRef = useRef<HTMLDivElement>(null)
+  const sentinelRef: React.RefObject<HTMLDivElement | null> = useRef<HTMLDivElement>(null)
 
-  const handleBottomReached = useCallback(() => {
+  const handleBottomReached: () => void = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage()
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   useEffect(() => {
-    const el = sentinelRef.current
+    const el: HTMLDivElement | null = sentinelRef.current
     if (!el || !hasNextPage) return
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0]
+    const observer: IntersectionObserver = new IntersectionObserver(
+      (entries: IntersectionObserverEntry[]) => {
+        const first: IntersectionObserverEntry | undefined = entries[0]
         if (first?.isIntersecting && hasNextPage && !isFetchingNextPage) {
           void fetchNextPage()
         }
@@ -196,10 +203,10 @@ export const NoteList = memo(function NoteList({
     )
 
     observer.observe(el)
-    return () => observer.disconnect()
+    return (): void => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const totalCount = data?.pages[0]?.meta.total ?? allNotes.length
+  const totalCount: number = data?.pages[0]?.meta.total ?? allNotes.length
 
   return (
     <Stack gap="xs" h="100%" p="sm">
@@ -272,7 +279,7 @@ export const NoteList = memo(function NoteList({
           </Center>
         ) : (
           <Stack gap={4}>
-            {filtered.map((note) => (
+            {filtered.map((note: NoteListItem) => (
               <NoteRow
                 key={note.uuid}
                 active={note.uuid === activeUuid}
@@ -321,7 +328,7 @@ export const NoteList = memo(function NoteList({
             leftSection={<IconFolder size={16} />}
             onClick={() => handleMoveToFolder(null)}
           />
-          {moveModalFolders.map((folder) => (
+          {moveModalFolders.map((folder: Folder) => (
             <NavLink
               key={folder.uuid}
               active={moveModalNote?.folder?.uuid === folder.uuid}
@@ -346,7 +353,7 @@ export const NoteList = memo(function NoteList({
             leftSection={<IconFolder size={16} />}
             onClick={() => handleRestoreToFolder(null)}
           />
-          {restoreModalFolders.map((folder) => (
+          {restoreModalFolders.map((folder: Folder) => (
             <NavLink
               key={folder.uuid}
               label={folder.name}
@@ -373,7 +380,7 @@ export const NoteList = memo(function NoteList({
               maxLength={MAX_NOTE_TITLE_LENGTH}
               placeholder="Enter note title"
               value={renameTitle}
-              onChange={(e) => setRenameTitle(e.currentTarget.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => setRenameTitle(e.currentTarget.value)}
             />
             <Group gap="xs" justify="flex-end">
               <Button variant="default" onClick={handleCloseRename}>

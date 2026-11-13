@@ -15,7 +15,7 @@ import { ALIGNMENTS, IMAGE_SCHEMES, INLINE_NODES, LINK_REL, LINK_TARGET, LISTS, 
 type Node = JSONContent
 type Mark = NonNullable<JSONContent['marks']>[number]
 
-const isNode = (n: unknown): n is Node => typeof n === 'object' && n !== null && typeof (n as Node).type === 'string'
+const isNode: (n: unknown) => n is Node = (n: unknown): n is Node => typeof n === 'object' && n !== null && typeof (n as Node).type === 'string'
 
 export function normalizeDoc(doc: Node): Node {
   return { type: 'doc', content: blocks(doc.content ?? []) }
@@ -26,7 +26,7 @@ function blocks(children: unknown[]): Node[] {
   const out: Node[] = []
   let inlineRun: Node[] = []
 
-  const flush = () => {
+  const flush: () => void = (): void => {
     if (inlineRun.length > 0) {
       out.push(...paragraphs({ type: 'paragraph', content: inlineRun }))
       inlineRun = []
@@ -67,7 +67,7 @@ function block(node: Node): Node[] {
     case 'horizontalRule':
       return [{ type: 'horizontalRule' }]
     case 'image': {
-      const img = image(node)
+      const img: JSONContent | null = image(node)
       return img ? [img] : []
     }
     case 'table':
@@ -83,7 +83,7 @@ function block(node: Node): Node[] {
 }
 
 function blocksOrEmpty(children: unknown[]): Node[] {
-  const out = blocks(children)
+  const out: JSONContent[] = blocks(children)
   return out.length > 0 ? out : [{ type: 'paragraph' }]
 }
 
@@ -94,25 +94,25 @@ function blocksOrEmpty(children: unknown[]): Node[] {
 function paragraphs(node: Node): Node[] {
   const attrs: Record<string, unknown> = {}
   if (node.type === 'heading') {
-    const level = Number.parseInt(String(node.attrs?.level ?? 1), 10)
+    const level: number = Number.parseInt(String(node.attrs?.level ?? 1), 10)
     attrs.level = level >= 1 && level <= 6 ? level : 1
   }
-  const align = node.attrs?.textAlign
+  const align: unknown = node.attrs?.textAlign
   if (typeof align === 'string' && ALIGNMENTS.includes(align)) {
     attrs.textAlign = align
   }
 
-  const make = (run: Node[]): Node => {
+  const make: (run: Node[]) => Node = (run: Node[]): Node => {
     const p: Node = { type: node.type }
     if (Object.keys(attrs).length > 0) p.attrs = { ...attrs }
-    const content = inline(run)
+    const content: JSONContent[] = inline(run)
     if (content.length > 0) p.content = content
     return p
   }
 
   const out: Node[] = []
   let run: Node[] = []
-  let split = false
+  let split: boolean = false
 
   for (const child of node.content ?? []) {
     if (!isNode(child)) continue
@@ -134,7 +134,7 @@ function paragraphs(node: Node): Node[] {
 }
 
 /** Text and hard breaks with clean marks; adjacent text with equal marks merged. */
-function inline(nodes: Node[], allowBreaks = true): Node[] {
+function inline(nodes: Node[], allowBreaks: boolean = true): Node[] {
   const out: Node[] = []
 
   for (const node of nodes) {
@@ -147,10 +147,10 @@ function inline(nodes: Node[], allowBreaks = true): Node[] {
 
     // A soft line break in markdown is a space in the editor (commonmark renders it so).
     const text: Node = { type: 'text', text: node.text.replace(/\r?\n/g, ' ') }
-    const marks = cleanMarks(node.marks ?? [])
+    const marks: Mark[] = cleanMarks(node.marks ?? [])
     if (marks.length > 0) text.marks = marks
 
-    const last = out[out.length - 1]
+    const last: JSONContent | undefined = out[out.length - 1]
     if (last && last.type === 'text' && JSON.stringify(last.marks ?? []) === JSON.stringify(text.marks ?? [])) {
       last.text += text.text!
     } else {
@@ -162,16 +162,16 @@ function inline(nodes: Node[], allowBreaks = true): Node[] {
 }
 
 function cleanMarks(marks: Mark[]): Mark[] {
-  const byType = new Map<string, Mark>()
+  const byType: Map<string, Mark> = new Map<string, Mark>()
 
   for (const mark of marks) {
-    const type = mark?.type
+    const type: string = mark?.type
     if (!type || !(MARKS as readonly string[]).includes(type) || byType.has(type)) continue
 
-    const attrs = (mark.attrs ?? {}) as Record<string, unknown>
+    const attrs: Record<string, unknown> = (mark.attrs ?? {}) as Record<string, unknown>
 
     if (type === 'link') {
-      const href = String(attrs.href ?? '').trim()
+      const href: string = String(attrs.href ?? '').trim()
       if (href === '') continue
       byType.set(type, {
         type:  'link',
@@ -183,7 +183,7 @@ function cleanMarks(marks: Mark[]): Mark[] {
         },
       })
     } else if (type === 'textStyle') {
-      const color = attrs.color
+      const color: unknown = attrs.color
       if (typeof color !== 'string' || color === '') continue   // a textStyle without a colour carries nothing
       byType.set(type, { type: 'textStyle', attrs: { color } })
     } else {
@@ -194,12 +194,12 @@ function cleanMarks(marks: Mark[]): Mark[] {
   // The editor's code mark excludes every other mark.
   if (byType.has('code')) return [{ type: 'code' }]
 
-  return MARKS.filter((t) => byType.has(t)).map((t) => byType.get(t)!)
+  return MARKS.filter((t: 'code' | 'link' | 'bold' | 'strike' | 'italic' | 'underline' | 'textStyle' | 'highlight' | 'subscript' | 'superscript') => byType.has(t)).map((t: 'code' | 'link' | 'bold' | 'strike' | 'italic' | 'underline' | 'textStyle' | 'highlight' | 'subscript' | 'superscript') => byType.get(t)!)
 }
 
 function list(node: Node): Node[] {
-  const type = node.type!
-  const itemType = LISTS[type] ?? 'listItem'
+  const type: string = node.type!
+  const itemType: 'listItem' | 'taskItem' = LISTS[type] ?? 'listItem'
   const items: Node[] = []
 
   for (const child of node.content ?? []) {
@@ -220,7 +220,7 @@ function list(node: Node): Node[] {
   const out: Node = { type, content: items }
 
   if (type === 'orderedList') {
-    const start = Number.parseInt(String(node.attrs?.start ?? 1), 10)
+    const start: number = Number.parseInt(String(node.attrs?.start ?? 1), 10)
     out.attrs = { start: Number.isFinite(start) && start >= 0 ? start : 1, type: null }
   }
 
@@ -228,14 +228,14 @@ function list(node: Node): Node[] {
 }
 
 function listItem(itemType: string, node: Node): Node {
-  const content = blocks(node.content ?? [])
+  const content: JSONContent[] = blocks(node.content ?? [])
 
   // listItem and taskItem are "paragraph block*".
   if (content[0]?.type !== 'paragraph') content.unshift({ type: 'paragraph' })
 
   const item: Node = { type: itemType }
   if (itemType === 'taskItem') {
-    const checked = node.attrs?.checked
+    const checked: unknown = node.attrs?.checked
     item.attrs = { checked: checked === true || checked === 'true' || checked === 'checked' || checked === 1 }
   }
   item.content = content
@@ -244,10 +244,10 @@ function listItem(itemType: string, node: Node): Node {
 }
 
 function codeBlock(node: Node): Node {
-  let text = textOf(node)
+  let text: string = textOf(node)
   if (text.endsWith('\n')) text = text.slice(0, -1)
 
-  const language = node.attrs?.language
+  const language: unknown = node.attrs?.language
   const out: Node = {
     type:  'codeBlock',
     attrs: { language: typeof language === 'string' && language !== '' ? language : null },
@@ -262,18 +262,18 @@ function textOf(node: Node): string {
   if (node.type === 'text') return String(node.text ?? '')
   if (node.type === 'hardBreak') return '\n'
 
-  return (node.content ?? []).map((c) => (isNode(c) ? textOf(c) : '')).join('')
+  return (node.content ?? []).map((c: JSONContent) => (isNode(c) ? textOf(c) : '')).join('')
 }
 
 function image(node: Node): Node | null {
-  const attrs = (node.attrs ?? {}) as Record<string, unknown>
-  const src = String(attrs.src ?? '').trim()
+  const attrs: Record<string, unknown> = (node.attrs ?? {}) as Record<string, unknown>
+  const src: string = String(attrs.src ?? '').trim()
 
   // `note-image:N` placeholders and other schemes mean nothing in the editor.
-  if (!IMAGE_SCHEMES.some((scheme) => src.toLowerCase().startsWith(scheme))) return null
+  if (!IMAGE_SCHEMES.some((scheme: string) => src.toLowerCase().startsWith(scheme))) return null
 
-  const dimension = (v: unknown) => {
-    const n = typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : Number.NaN
+  const dimension: (v: unknown) => number | null = (v: unknown): number | null => {
+    const n: number = typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' ? Number(v) : Number.NaN
     return Number.isFinite(n) ? Math.trunc(n) : null
   }
 
@@ -307,12 +307,12 @@ function table(node: Node): Node[] {
   if (rows.length === 0) return []
 
   // ProseMirror tables must be rectangular.
-  const span = (cells: Node[]) => cells.reduce((sum, c) => sum + (c.attrs!.colspan as number), 0)
-  const width = Math.max(...rows.map(span))
+  const span: (cells: Node[]) => number = (cells: Node[]): number => cells.reduce((sum: number, c: JSONContent) => sum + (c.attrs!.colspan as number), 0)
+  const width: number = Math.max(...rows.map(span))
 
-  const content = rows.map((cells) => {
-    const cellType = cells[0]!.type!
-    for (let missing = width - span(cells); missing > 0; missing--) {
+  const content: { type: string; content: JSONContent[]; }[] = rows.map((cells: JSONContent[]) => {
+    const cellType: string = cells[0]!.type!
+    for (let missing: number = width - span(cells); missing > 0; missing--) {
       cells.push(cell({ type: cellType }))
     }
     return { type: 'tableRow', content: cells }
@@ -322,19 +322,19 @@ function table(node: Node): Node[] {
 }
 
 function cell(node: Node): Node {
-  const attrs = (node.attrs ?? {}) as Record<string, unknown>
-  const int = (v: unknown) => {
-    const n = Number.parseInt(String(v ?? 1), 10)
+  const attrs: Record<string, unknown> = (node.attrs ?? {}) as Record<string, unknown>
+  const int: (v: unknown) => number = (v: unknown): number => {
+    const n: number = Number.parseInt(String(v ?? 1), 10)
     return Number.isFinite(n) ? Math.max(1, n) : 1
   }
-  const colwidth = attrs.colwidth
+  const colwidth: unknown = attrs.colwidth
 
   return {
     type:  node.type,
     attrs: {
       colspan:  int(attrs.colspan),
       rowspan:  int(attrs.rowspan),
-      colwidth: Array.isArray(colwidth) ? colwidth.map((w) => Number.parseInt(String(w), 10) || 0) : null,
+      colwidth: Array.isArray(colwidth) ? colwidth.map((w: unknown): number => Number.parseInt(String(w), 10) || 0) : null,
     },
     content: blocksOrEmpty(node.content ?? []),
   }
@@ -342,7 +342,7 @@ function cell(node: Node): Node {
 
 function details(node: Node): Node {
   let summary: Node[] = []
-  let haveSummary = false
+  let haveSummary: boolean = false
   const body: unknown[] = []
 
   for (const child of node.content ?? []) {

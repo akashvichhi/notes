@@ -3,8 +3,9 @@ import { memo, useCallback, useMemo } from 'react'
 import { Loader, Text, TextInput } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { IconFilter } from '@tabler/icons-react'
+import type { UseQueryResult } from '@tanstack/react-query'
 
-
+import type { NotesPage } from '@src/api/notes_api'
 import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
 import { useNotesFilterQuery } from '@src/queries/notes_queries'
 import { useUiStore } from '@src/stores/ui_store'
@@ -14,29 +15,33 @@ import { useUiStore } from '@src/stores/ui_store'
  * has further pages, a scoped server query tops up the results. Filtering only
  * the loaded page would silently miss notes and make them look deleted.
  */
-export const FilterInput = memo(function FilterInput({
+export interface IFilterInputProps {
+  hasMore:    boolean
+  localCount: number
+  totalCount: number
+  params:     Record<string, string | undefined>
+}
+
+export const FilterInput: React.NamedExoticComponent<IFilterInputProps> = memo(function FilterInput({
   hasMore, localCount, totalCount, params,
-}: {
-  hasMore: boolean; localCount: number; totalCount: number
-  params: Record<string, string | undefined>
-}) {
+}: IFilterInputProps): React.JSX.Element {
   const { filter, setFilter, scope } = useUiStore()
   const [debounced] = useDebouncedValue(filter, 250)
 
-  const server = useNotesFilterQuery(scope, debounced, params, hasMore && debounced.trim().length > 0)
+  const server: UseQueryResult<NotesPage> = useNotesFilterQuery(scope, debounced, params, hasMore && debounced.trim().length > 0)
 
-  const showSpinner = useDelayedLoading(server.isFetching)
+  const showSpinner: boolean = useDelayedLoading(server.isFetching)
 
-  const handleChange = useCallback(
+  const handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setFilter(e.currentTarget.value)
     },
     [setFilter],
   )
 
-  const placeholder = useMemo(() => `Filter in ${scope.label}`, [scope.label])
+  const placeholder: string = useMemo(() => `Filter in ${scope.label}`, [scope.label])
 
-  const rightSection = useMemo(() => {
+  const rightSection: React.JSX.Element | null = useMemo(() => {
     if (showSpinner) return <Loader size={14} />
     if (filter) return <Text c="dimmed" size="xs">{localCount} of {totalCount}</Text>
     return null

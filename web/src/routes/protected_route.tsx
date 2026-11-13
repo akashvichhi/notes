@@ -7,7 +7,7 @@ import { AppSkeleton } from '@src/ui/skeletons/skeletons'
 
 import { ROUTE_PATHS } from './route_paths'
 
-export const RequireAuth = memo(function RequireAuth({ children }: { children: ReactNode }) {
+export const RequireAuth: React.MemoExoticComponent<({ children }: { children: ReactNode; }) => React.JSX.Element> = memo(function RequireAuth({ children }: { children: ReactNode }) {
   const { data: user, isLoading } = useMe()
 
   // Native apps (desktop & mobile) are local-first and work without login

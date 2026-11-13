@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo } from 'react'
 
 import { Box } from '@mantine/core'
 import { RichTextEditor } from '@mantine/tiptap'
-import { useEditor } from '@tiptap/react'
+import { type Editor as TiptapEditor, type JSONContent, useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 
 
@@ -10,6 +10,7 @@ import { useIsPhone } from '@src/hooks/use_is_phone'
 import { useAutosave } from '@src/pages/notes/hooks/use_autosave'
 import { useKeyboardInset } from '@src/pages/notes/hooks/use_visual_viewport'
 import { useUiStore } from '@src/stores/ui_store'
+import type { EditorStats, UiState } from '@src/stores/ui_store'
 import type { Note } from '@src/types/api'
 import { sanitizeProseMirrorDoc } from '@src/utils/prosemirror'
 
@@ -21,16 +22,16 @@ import { TableBar } from './table_bar'
 import { TagStrip } from './tag_strip'
 
 
-export const Editor = memo(function Editor({ note }: { note: Note }) {
-  const isPhone = useIsPhone()
-  const keyboardInset = useKeyboardInset()
-  const setEditorStats = useUiStore((s) => s.setEditorStats)
+export const Editor: React.MemoExoticComponent<({ note }: { note: Note; }) => React.JSX.Element> = memo(function Editor({ note }: { note: Note }) {
+  const isPhone: boolean = useIsPhone()
+  const keyboardInset: number = useKeyboardInset()
+  const setEditorStats: (editorStats: EditorStats | null) => void = useUiStore((s: UiState) => s.setEditorStats)
 
-  const sanitizedContent = useMemo(() => {
+  const sanitizedContent: JSONContent = useMemo(() => {
     return sanitizeProseMirrorDoc(note.body)
   }, [note.body])
 
-  const editor = useEditor(
+  const editor: TiptapEditor | null = useEditor(
     {
       extensions:  editorExtensions,
       content:     sanitizedContent,
@@ -45,8 +46,8 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
   // Keep editor content in sync when note body changes externally or finishes loading
   useEffect(() => {
     if (!editor) return
-    const currentJson = JSON.stringify(editor.getJSON())
-    const nextJson = JSON.stringify(sanitizedContent)
+    const currentJson: string = JSON.stringify(editor.getJSON())
+    const nextJson: string = JSON.stringify(sanitizedContent)
     if (currentJson !== nextJson) {
       editor.commands.setContent(sanitizedContent, { emitUpdate: false })
     }
@@ -56,16 +57,16 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
   useEffect(() => {
     if (!editor) return
 
-    const updateStats = () => {
-      const words = editor.storage.characterCount?.words() ?? 0
-      const characters = editor.storage.characterCount?.characters() ?? 0
+    const updateStats: () => void = (): void => {
+      const words: number = editor.storage.characterCount?.words() ?? 0
+      const characters: number = editor.storage.characterCount?.characters() ?? 0
       const { from, to, empty } = editor.state.selection
-      let selectedWords = 0
-      let selectedCharacters = 0
+      let selectedWords: number = 0
+      let selectedCharacters: number = 0
       if (!empty) {
-        const text = editor.state.doc.textBetween(from, to, ' ')
+        const text: string = editor.state.doc.textBetween(from, to, ' ')
         selectedCharacters = text.length
-        const trimmed = text.trim()
+        const trimmed: string = text.trim()
         selectedWords = trimmed ? trimmed.split(/\s+/).length : 0
       }
       setEditorStats({
@@ -78,7 +79,7 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
 
     updateStats()
     editor.on('transaction', updateStats)
-    return () => {
+    return (): void => {
       editor.off('transaction', updateStats)
       setEditorStats(null)
     }
@@ -98,7 +99,7 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
   useEffect(() => {
     if (!editor) return
     editor.on('update', onChange)
-    return () => { editor.off('update', onChange) }
+    return (): void => { editor.off('update', onChange) }
   }, [editor, onChange])
 
   return (

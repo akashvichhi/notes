@@ -10,10 +10,10 @@ async function applyMigrations(conn: Database): Promise<void> {
     'CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY)',
   )
 
-  const rows = await conn.select<{ version: number }[]>(
+  const rows: { version: number; }[] = await conn.select<{ version: number }[]>(
     'SELECT COALESCE(MAX(version), 0) AS version FROM schema_version',
   )
-  const current = rows[0]?.version ?? 0
+  const current: number = rows[0]?.version ?? 0
 
   for (const m of MIGRATIONS) {
     if (m.version <= current) continue
@@ -27,10 +27,10 @@ export async function getDb(): Promise<Database> {
   if (db) return db
   if (opening) return opening
 
-  opening = (async () => {
+  opening = (async (): Promise<Database> => {
     // Resolves to the OS app-data directory: %APPDATA%\com.notesapp.desktop,
     // ~/Library/Application Support/..., ~/.local/share/...
-    const conn = await Database.load('sqlite:notes.db')
+    const conn: Database = await Database.load('sqlite:notes.db')
     await conn.execute('PRAGMA journal_mode = WAL')
     await conn.execute('PRAGMA foreign_keys = ON')
     await applyMigrations(conn)

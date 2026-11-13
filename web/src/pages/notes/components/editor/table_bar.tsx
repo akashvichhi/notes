@@ -7,10 +7,10 @@ import type { Editor } from '@tiptap/react'
 /**
  * Only rendered while the cursor is inside a table.
  */
-export const TableBar = memo(function TableBar({ editor }: { editor: Editor | null }) {
-  const viewportRef = useRef<HTMLDivElement>(null)
+export const TableBar: React.MemoExoticComponent<({ editor }: { editor: Editor | null; }) => React.JSX.Element | null> = memo(function TableBar({ editor }: { editor: Editor | null }) {
+  const viewportRef: React.RefObject<HTMLDivElement | null> = useRef<HTMLDivElement>(null)
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  const handleWheel: (e: React.WheelEvent) => void = useCallback((e: React.WheelEvent) => {
     if (e.deltaY && !e.deltaX && viewportRef.current) {
       viewportRef.current.scrollLeft += e.deltaY
     }

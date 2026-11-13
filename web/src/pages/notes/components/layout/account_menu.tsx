@@ -1,11 +1,12 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
+import type { NavigateFunction } from 'react-router'
 
 import { Avatar, Button, Loader, Menu, Overlay, Stack, Text } from '@mantine/core'
 import { IconKey, IconLock, IconLogout, IconUser } from '@tabler/icons-react'
+import type { UseMutationResult } from '@tanstack/react-query'
 
-
-
+import type { ApiError } from '@src/api/api_client'
 import { useLogout, useMe } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
 
@@ -13,43 +14,43 @@ import { AccountDetailsModal } from './account_details_modal'
 import { ChangePasswordModal } from './change_password_modal'
 
 
-export const AccountMenu = memo(function AccountMenu() {
+export const AccountMenu: React.MemoExoticComponent<() => React.JSX.Element> = memo(function AccountMenu() {
   const { data: user } = useMe()
-  const logout = useLogout()
-  const navigate = useNavigate()
+  const logout: UseMutationResult<void, ApiError, void, unknown> = useLogout()
+  const navigate: NavigateFunction = useNavigate()
   const [accountDetailsOpen, setAccountDetailsOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
 
-  const initials = useMemo(() => {
+  const initials: string = useMemo(() => {
     return (user?.name ?? '?')
       .split(' ')
-      .map((p) => p[0])
+      .map((p: string) => p[0])
       .slice(0, 2)
       .join('')
       .toUpperCase()
   }, [user?.name])
 
-  const handleOpenAccountDetails = useCallback(() => {
+  const handleOpenAccountDetails: () => void = useCallback(() => {
     setAccountDetailsOpen(true)
   }, [])
 
-  const handleCloseAccountDetails = useCallback(() => {
+  const handleCloseAccountDetails: () => void = useCallback(() => {
     setAccountDetailsOpen(false)
   }, [])
 
-  const handleOpenChangePassword = useCallback(() => {
+  const handleOpenChangePassword: () => void = useCallback(() => {
     setChangePasswordOpen(true)
   }, [])
 
-  const handleCloseChangePassword = useCallback(() => {
+  const handleCloseChangePassword: () => void = useCallback(() => {
     setChangePasswordOpen(false)
   }, [])
 
-  const handleOpenAccessTokens = useCallback(() => {
+  const handleOpenAccessTokens: () => void = useCallback(() => {
     navigate(ROUTE_PATHS.ACCESS_TOKENS)
   }, [navigate])
 
-  const handleLogout = useCallback(() => {
+  const handleLogout: () => void = useCallback(() => {
     if (logout.isPending) return
     logout.mutate(undefined, {
       onSettled: () => navigate(ROUTE_PATHS.LOGIN),

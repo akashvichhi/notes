@@ -3,12 +3,12 @@ import { memo, useMemo } from 'react'
 import { Box, Group, Skeleton, Stack } from '@mantine/core'
 
 
-export const ListSkeleton = memo(function ListSkeleton({ rows = 6 }: { rows?: number }) {
-  const rowList = useMemo(() => Array.from({ length: rows }, (_, i) => i), [rows])
+export const ListSkeleton: React.MemoExoticComponent<({ rows }: { rows?: number; }) => React.JSX.Element> = memo(function ListSkeleton({ rows = 6 }: { rows?: number }) {
+  const rowList: number[] = useMemo(() => Array.from({ length: rows }, (_: unknown, i: number) => i), [rows])
 
   return (
     <Stack gap="md">
-      {rowList.map((i) => (
+      {rowList.map((i: number) => (
         <Stack key={i} gap={6}>
           <Skeleton h={12} w="55%" /><Skeleton h={9} w="85%" /><Skeleton h={8} w="30%" />
         </Stack>
@@ -17,7 +17,7 @@ export const ListSkeleton = memo(function ListSkeleton({ rows = 6 }: { rows?: nu
   )
 })
 
-export const EditorSkeleton = memo(function EditorSkeleton() {
+export const EditorSkeleton: React.MemoExoticComponent<() => React.JSX.Element> = memo(function EditorSkeleton() {
   return (
     <Stack gap="md">
       <Skeleton h={26} w="45%" />
@@ -27,7 +27,7 @@ export const EditorSkeleton = memo(function EditorSkeleton() {
 })
 
 /** The shape of the loaded app, so nothing jumps when data arrives. */
-export const AppSkeleton = memo(function AppSkeleton() {
+export const AppSkeleton: React.MemoExoticComponent<() => React.JSX.Element> = memo(function AppSkeleton() {
   return (
     <Box h="100dvh" style={{ display: 'grid', gridTemplateRows: '52px 1fr 28px' }}>
       <Group h={52} px="sm"><Skeleton h={24} w={120} /></Group>

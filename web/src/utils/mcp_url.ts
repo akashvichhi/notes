@@ -14,4 +14,4 @@ export function claudeCodeCommand(token: string): string {
 }
 
 /** Stands in for the token in instructions shown without one. Safe to paste into a shell. */
-export const TOKEN_PLACEHOLDER = 'YOUR_TOKEN'
+export const TOKEN_PLACEHOLDER: string = 'YOUR_TOKEN'

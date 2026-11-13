@@ -1,6 +1,7 @@
 import { createTheme } from '@mantine/core'
+import type { MantineThemeOverride } from '@mantine/core'
 
-export const theme = createTheme({
+export const theme: MantineThemeOverride = createTheme({
   primaryColor:  'blue',
   defaultRadius: 'md',
   fontFamily:

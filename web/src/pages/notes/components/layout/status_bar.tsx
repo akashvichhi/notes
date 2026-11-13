@@ -6,45 +6,48 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 
 import { deviceKind } from '@src/platform/device_kind'
 import { isNative } from '@src/platform/is_native'
-import type { SaveStatus } from '@src/stores/ui_store'
 import { useUiStore } from '@src/stores/ui_store'
+import type { EditorStats, SaveStatus, UiState } from '@src/stores/ui_store'
 import { useSyncStatus } from '@src/sync/engine'
+import type { SyncSnapshot } from '@src/sync/engine'
 import type { Container } from '@src/types/api'
 
 dayjs.extend(relativeTime)
 
-export const StatusBar = memo(function StatusBar({
-  status: propStatus,
-  savedAt: propSavedAt,
-  words = 0,
-  folderPath = null,
-  container,
-  onRetry,
-}: {
+export interface IStatusBarProps {
   status?:     SaveStatus
   savedAt?:    number | null
   words?:      number
   folderPath?: string | null
   container?:  Container
   onRetry?:    () => void
-}) {
-  const storeStatus = useUiStore((s) => s.saveStatus)
-  const storeSavedAt = useUiStore((s) => s.savedAt)
-  const editorStats = useUiStore((s) => s.editorStats)
-  const storeRetry = useUiStore((s) => s.retrySave)
-  const syncStatus = useSyncStatus()
-  const native = isNative()
+}
 
-  const handleRetry = onRetry ?? (storeRetry ? () => storeRetry() : undefined)
+export const StatusBar: React.NamedExoticComponent<IStatusBarProps> = memo(function StatusBar({
+  status: propStatus,
+  savedAt: propSavedAt,
+  words = 0,
+  folderPath = null,
+  container,
+  onRetry,
+}: IStatusBarProps): React.JSX.Element {
+  const storeStatus: SaveStatus = useUiStore((s: UiState) => s.saveStatus)
+  const storeSavedAt: number | null = useUiStore((s: UiState) => s.savedAt)
+  const editorStats: EditorStats | null = useUiStore((s: UiState) => s.editorStats)
+  const storeRetry: (() => Promise<void> | void) | null = useUiStore((s: UiState) => s.retrySave)
+  const syncStatus: SyncSnapshot = useSyncStatus()
+  const native: boolean = isNative()
 
-  const status = propStatus ?? storeStatus
-  const savedAt = propSavedAt ?? storeSavedAt
+  const handleRetry: (() => void) | undefined = onRetry ?? (storeRetry ? (): void | Promise<void> => storeRetry() : undefined)
 
-  const savedAtText = useMemo(() => {
+  const status: SaveStatus = propStatus ?? storeStatus
+  const savedAt: number | null = propSavedAt ?? storeSavedAt
+
+  const savedAtText: string | null = useMemo(() => {
     return savedAt ? dayjs(savedAt).fromNow() : null
   }, [savedAt])
 
-  const statsText = useMemo(() => {
+  const statsText: string = useMemo(() => {
     if (editorStats) {
       const { words: w, characters: c, selectedWords: sw, selectedCharacters: sc } = editorStats
       if (sc > 0) {
@@ -55,7 +58,7 @@ export const StatusBar = memo(function StatusBar({
     return `${words} words`
   }, [editorStats, words])
 
-  const syncText = useMemo(() => {
+  const syncText: string = useMemo(() => {
     if (!native) return 'Autosave on'
     if (container === 'local') {
       return `On ${deviceKind().noun} — not backed up`

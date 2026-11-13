@@ -17,6 +17,6 @@ export function deviceKindFor(p: Platform | null, viewportWidth: number): Device
 }
 
 export function deviceKind(): DeviceKind {
-  const p = isNative() ? (platform() as Platform) : null
+  const p: Platform | null = isNative() ? (platform() as Platform) : null
   return deviceKindFor(p, window.innerWidth)
 }

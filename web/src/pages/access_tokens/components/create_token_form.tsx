@@ -5,52 +5,53 @@ import { Button, Checkbox, Group, Select, Stack, Text, TextInput } from '@mantin
 import type { ApiError } from '@src/api/api_client'
 import { MESSAGES } from '@src/constants/messages'
 import { useCreateAccessToken } from '@src/queries/access_tokens_queries'
-import type { AccessTokenAbility } from '@src/types/api'
+import type { TCreateAccessTokenMutation } from '@src/queries/access_tokens_queries'
+import type { AccessToken, AccessTokenAbility } from '@src/types/api'
 import { showErrorToast } from '@src/utils/notifications'
 
-const MAX_NAME_LENGTH = 60
+const MAX_NAME_LENGTH: number = 60
 
-const EXPIRY_OPTIONS = [
+const EXPIRY_OPTIONS: { value: string; label: string; }[] = [
   { value: '30', label: '30 days' },
   { value: '90', label: '90 days' },
   { value: '365', label: '1 year' },
   { value: 'never', label: 'Never' },
 ]
 
-export const CreateTokenForm = memo(function CreateTokenForm({
+export const CreateTokenForm: React.MemoExoticComponent<({ onCancel, onCreated, }: { onCancel: () => void; onCreated: (token: string, name: string) => void; }) => React.JSX.Element> = memo(function CreateTokenForm({
   onCancel,
   onCreated,
 }: {
   onCancel:  () => void
   onCreated: (token: string, name: string) => void
 }) {
-  const createToken = useCreateAccessToken()
+  const createToken: TCreateAccessTokenMutation = useCreateAccessToken()
 
   const [name, setName] = useState('')
   const [canRead, setCanRead] = useState(true)
   const [canWrite, setCanWrite] = useState(false)
   const [expiry, setExpiry] = useState<string>('90')
 
-  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.currentTarget.value)
   }, [])
 
-  const handleReadChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReadChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCanRead(e.currentTarget.checked)
   }, [])
 
   // Writing needs reading, so ticking write ticks read too.
-  const handleWriteChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.currentTarget.checked
+  const handleWriteChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked: boolean = e.currentTarget.checked
     setCanWrite(checked)
     if (checked) setCanRead(true)
   }, [])
 
-  const handleExpiryChange = useCallback((value: string | null) => {
+  const handleExpiryChange: (value: string | null) => void = useCallback((value: string | null) => {
     setExpiry(value ?? '90')
   }, [])
 
-  const handleSubmit = useCallback(
+  const handleSubmit: (e: SyntheticEvent<HTMLFormElement>) => void = useCallback(
     (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault()
       const abilities: AccessTokenAbility[] = []
@@ -69,7 +70,7 @@ export const CreateTokenForm = memo(function CreateTokenForm({
           expires_in_days: expiry === 'never' ? null : Number(expiry),
         },
         {
-          onSuccess: ({ token, access_token }) => onCreated(token, access_token.name),
+          onSuccess: ({ token, access_token }: { token: string; access_token: AccessToken; }) => onCreated(token, access_token.name),
           onError:   (err: ApiError) => showErrorToast(err.message || MESSAGES.TOKEN_CREATE_FAILED),
         },
       )

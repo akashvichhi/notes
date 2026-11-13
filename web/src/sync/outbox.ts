@@ -1,3 +1,5 @@
+import type Database from '@tauri-apps/plugin-sql'
+
 import { getDb } from '@src/db/connection'
 import { isNative } from '@src/platform/is_native'
 import type { Container, Note, UUID } from '@src/types/api'
@@ -22,10 +24,11 @@ async function withLock<T>(fn: () => Promise<T>): Promise<T> {
 
 // In-memory fallback for web environment
 let webOps: OutboxItem[] = []
-let webNextId = 1
+let webNextId: number = 1
 
 function serialize(item: OutboxItem): string {
-  const { id: _id, ...op } = item
+  const op: Partial<OutboxItem> = { ...item }
+  delete op.id
   return JSON.stringify(op)
 }
 
@@ -39,10 +42,10 @@ function parseRow(row: { id: number; kind: string; note_uuid: string; payload: s
 
 async function readOp(id: number): Promise<OutboxItem | null> {
   if (!isNative()) {
-    return webOps.find((o) => o.id === id) ?? null
+    return webOps.find((o: OutboxItem) => o.id === id) ?? null
   }
-  const db = await getDb()
-  const rows = await db.select<{ id: number; kind: string; note_uuid: string; payload: string }[]>(
+  const db: Database = await getDb()
+  const rows: { id: number; kind: string; note_uuid: string; payload: string; }[] = await db.select<{ id: number; kind: string; note_uuid: string; payload: string }[]>(
     'SELECT id, kind, note_uuid, payload FROM outbox WHERE id = $1',
     [id],
   )
@@ -51,23 +54,32 @@ async function readOp(id: number): Promise<OutboxItem | null> {
 
 async function writeOp(item: OutboxItem): Promise<void> {
   if (!isNative()) {
-    webOps = webOps.map((o) => (o.id === item.id ? item : o))
+    webOps = webOps.map((o: OutboxItem) => (o.id === item.id ? item : o))
     return
   }
-  const db = await getDb()
+  const db: Database = await getDb()
   await db.execute('UPDATE outbox SET payload = $1 WHERE id = $2', [serialize(item), item.id])
 }
 
 async function deleteOp(id: number): Promise<void> {
   if (!isNative()) {
-    webOps = webOps.filter((o) => o.id !== id)
+    webOps = webOps.filter((o: OutboxItem) => o.id !== id)
     return
   }
-  const db = await getDb()
+  const db: Database = await getDb()
   await db.execute('DELETE FROM outbox WHERE id = $1', [id])
 }
 
-export const outbox = {
+export interface IOutbox {
+  enqueue(op: QueuedOp): Promise<void>
+  pending(): Promise<OutboxItem[]>
+  complete(sent: OutboxItem, nextVersion?: number): Promise<boolean>
+  remove(id: number): Promise<void>
+  count(): Promise<number>
+  clear(): Promise<void>
+}
+
+export const outbox: IOutbox = {
   async enqueue(op: QueuedOp): Promise<void> {
     if (op.container === 'local') {
       throw new Error('Refusing to enqueue a local note: it must never leave the device')
@@ -76,9 +88,9 @@ export const outbox = {
     return withLock(async () => {
       if (!isNative()) {
         if (op.kind === 'body') {
-          const at = webOps.findIndex((o) => o.kind === 'body' && o.uuid === op.uuid)
+          const at: number = webOps.findIndex((o: OutboxItem) => o.kind === 'body' && o.uuid === op.uuid)
           if (at > -1) {
-            const existing = webOps[at]
+            const existing: OutboxItem | undefined = webOps[at]
             if (existing && existing.kind === 'body') {
               webOps[at] = {
                 ...op,
@@ -93,20 +105,20 @@ export const outbox = {
         return
       }
 
-      const db = await getDb()
-      const nowStr = new Date().toISOString()
+      const db: Database = await getDb()
+      const nowStr: string = new Date().toISOString()
 
       if (op.kind === 'body') {
-        const rows = await db.select<{ id: number; payload: string }[]>(
+        const rows: { id: number; payload: string; }[] = await db.select<{ id: number; payload: string }[]>(
           "SELECT id, payload FROM outbox WHERE kind = 'body' AND note_uuid = $1 ORDER BY id ASC LIMIT 1",
           [op.uuid],
         )
 
         if (rows.length > 0 && rows[0]) {
-          const existing = rows[0]
-          let originalVersion = op.version
+          const existing: { id: number; payload: string; } = rows[0]
+          let originalVersion: number | undefined = op.version
           try {
-            const parsed = JSON.parse(existing.payload) as { version?: number }
+            const parsed: { version?: number; } = JSON.parse(existing.payload) as { version?: number }
             if (parsed.version !== undefined) {
               originalVersion = parsed.version
             }
@@ -114,7 +126,7 @@ export const outbox = {
             // keep op.version
           }
 
-          const coalescedOp = { ...op, version: originalVersion }
+          const coalescedOp: { version: number | undefined; kind: 'body'; uuid: UUID; body: Note['body']; container?: Container; } = { ...op, version: originalVersion }
           await db.execute(
             'UPDATE outbox SET payload = $1, created_at = $2 WHERE id = $3',
             [JSON.stringify(coalescedOp), nowStr, existing.id],
@@ -136,8 +148,8 @@ export const outbox = {
         return [...webOps]
       }
 
-      const db = await getDb()
-      const rows = await db.select<{ id: number; kind: string; note_uuid: string; payload: string }[]>(
+      const db: Database = await getDb()
+      const rows: { id: number; kind: string; note_uuid: string; payload: string; }[] = await db.select<{ id: number; kind: string; note_uuid: string; payload: string }[]>(
         'SELECT id, kind, note_uuid, payload FROM outbox ORDER BY id ASC',
       )
 
@@ -153,7 +165,7 @@ export const outbox = {
    */
   async complete(sent: OutboxItem, nextVersion?: number): Promise<boolean> {
     return withLock(async () => {
-      const current = await readOp(sent.id)
+      const current: OutboxItem | null = await readOp(sent.id)
       if (current === null) return true
 
       if (serialize(current) === serialize(sent)) {
@@ -178,8 +190,8 @@ export const outbox = {
       return webOps.length
     }
 
-    const db = await getDb()
-    const rows = await db.select<{ count: number }[]>(
+    const db: Database = await getDb()
+    const rows: { count: number; }[] = await db.select<{ count: number }[]>(
       'SELECT COUNT(*) as count FROM outbox',
     )
     return rows[0]?.count ?? 0
@@ -192,7 +204,7 @@ export const outbox = {
         return
       }
 
-      const db = await getDb()
+      const db: Database = await getDb()
       await db.execute('DELETE FROM outbox')
     })
   },

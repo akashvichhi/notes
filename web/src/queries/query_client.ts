@@ -9,7 +9,7 @@ declare module '@tanstack/react-query' {
   }
 }
 
-export const queryClient = new QueryClient({
+export const queryClient: QueryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime:            30_000,

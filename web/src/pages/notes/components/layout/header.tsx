@@ -11,24 +11,26 @@ import { useIsPhone } from '@src/hooks/use_is_phone'
 import { useRefreshFromServer } from '@src/pages/notes/hooks/use_refresh_from_server'
 import { useMe } from '@src/queries/auth_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
+import type { Tab, TabsState } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
+import type { SaveStatus, UiState } from '@src/stores/ui_store'
 
 import { AccountMenu } from './account_menu'
 
 
-export const Header = memo(function Header() {
-  const isPhone = useIsPhone()
+export const Header: React.MemoExoticComponent<() => React.JSX.Element> = memo(function Header() {
+  const isPhone: boolean = useIsPhone()
   const { data: user } = useMe()
   const { view, setView, toggleNav, scope } = useUiStore()
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
-  const activeTab = useTabsStore((s) => s.tabs.find((t) => t.uuid === s.activeUuid))
-  const isDirty = activeTab?.dirty ?? false
-  const activeTitle = activeTab?.title
-  const saveStatus = useUiStore((s) => s.saveStatus)
-  const isNoteOpen = isPhone ? view === 'editor' && Boolean(activeTab) : Boolean(activeTab)
+  const activeTab: Tab | undefined = useTabsStore((s: TabsState) => s.tabs.find((t: Tab) => t.uuid === s.activeUuid))
+  const isDirty: boolean = activeTab?.dirty ?? false
+  const activeTitle: string | undefined = activeTab?.title
+  const saveStatus: SaveStatus = useUiStore((s: UiState) => s.saveStatus)
+  const isNoteOpen: boolean = isPhone ? view === 'editor' && Boolean(activeTab) : Boolean(activeTab)
 
-  const handleSave = useCallback(async () => {
-    const retrySave = useUiStore.getState().retrySave
+  const handleSave: () => Promise<void> = useCallback(async () => {
+    const retrySave: (() => Promise<void> | void) | null = useUiStore.getState().retrySave
     if (retrySave) {
       await retrySave()
     } else {
@@ -36,11 +38,11 @@ export const Header = memo(function Header() {
     }
   }, [])
 
-  const handleBack = useCallback(() => {
+  const handleBack: () => void = useCallback(() => {
     setView(view === 'editor' ? 'list' : 'folders')
   }, [view, setView])
 
-  const handleOpenSpotlight = useCallback(() => {
+  const handleOpenSpotlight: () => void = useCallback(() => {
     spotlight.open()
   }, [])
 

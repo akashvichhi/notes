@@ -11,11 +11,11 @@ import { TokenCreated } from './token_created'
 
 type Created = { token: string; name: string }
 
-export const CreateTokenModal = memo(function CreateTokenModal({ onClose }: { onClose: () => void }) {
+export const CreateTokenModal: React.MemoExoticComponent<({ onClose }: { onClose: () => void; }) => React.JSX.Element> = memo(function CreateTokenModal({ onClose }: { onClose: () => void }) {
   const [created, setCreated] = useState<Created | null>(null)
-  const isPhone = useIsPhone()
+  const isPhone: boolean = useIsPhone()
 
-  const handleCreated = useCallback((token: string, name: string) => {
+  const handleCreated: (token: string, name: string) => void = useCallback((token: string, name: string) => {
     setCreated({ token, name })
   }, [])
 

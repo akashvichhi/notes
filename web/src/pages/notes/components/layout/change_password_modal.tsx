@@ -1,6 +1,7 @@
 import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
+import type { UseMutationResult } from '@tanstack/react-query'
 
 import type { ApiError } from '@src/api/api_client'
 import { MIN_PASSWORD_LENGTH } from '@src/constants/limits'
@@ -8,30 +9,30 @@ import { MESSAGES } from '@src/constants/messages'
 import { useUpdatePassword } from '@src/queries/auth_queries'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
-export const ChangePasswordModal = memo(function ChangePasswordModal({
+export const ChangePasswordModal: React.MemoExoticComponent<({ onClose, }: { onClose: () => void; }) => React.JSX.Element> = memo(function ChangePasswordModal({
   onClose,
 }: {
   onClose: () => void
 }) {
-  const updatePassword = useUpdatePassword()
+  const updatePassword: UseMutationResult<void, ApiError, { current_password: string; password: string; password_confirmation: string; }, unknown> = useUpdatePassword()
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const handleCurrentPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCurrentPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentPassword(e.currentTarget.value)
   }, [])
 
-  const handleNewPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setNewPassword(e.currentTarget.value)
   }, [])
 
-  const handleConfirmPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleConfirmPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setConfirmPassword(e.currentTarget.value)
   }, [])
 
-  const handleSubmit = useCallback(
+  const handleSubmit: (e: SyntheticEvent<HTMLFormElement>) => void = useCallback(
     (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault()
       if (newPassword !== confirmPassword) {

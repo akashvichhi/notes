@@ -7,8 +7,8 @@ import { useIsFetching } from '@tanstack/react-query'
 import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
 
 /** Catch-all indicator for fetches with no better home. Never blocks. */
-export const TopProgress = memo(function TopProgress() {
-  const show = useDelayedLoading(useIsFetching() > 0)
+export const TopProgress: React.MemoExoticComponent<() => React.JSX.Element | null> = memo(function TopProgress() {
+  const show: boolean = useDelayedLoading(useIsFetching() > 0)
   if (!show) return null
 
   return (

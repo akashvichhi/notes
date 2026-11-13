@@ -13,19 +13,7 @@ import type { NoteListItem } from '@src/types/api'
 
 dayjs.extend(relativeTime)
 
-export const NoteRow = memo(function NoteRow({
-  note,
-  active,
-  onOpen,
-  onStar,
-  onTrash,
-  onRename,
-  onDuplicate,
-  onMoveToFolder,
-  onRestore,
-  onRestoreTo,
-  onForceDelete,
-}: {
+export interface INoteRowProps {
   note:            NoteListItem
   active:          boolean
   onOpen:          () => void
@@ -37,8 +25,22 @@ export const NoteRow = memo(function NoteRow({
   onRestore?:      () => void
   onRestoreTo?:    () => void
   onForceDelete?:  () => void
-}) {
-  const updatedAgo = useMemo(() => dayjs(note.updated_at).fromNow(), [note.updated_at])
+}
+
+export const NoteRow: React.NamedExoticComponent<INoteRowProps> = memo(function NoteRow({
+  note,
+  active,
+  onOpen,
+  onStar,
+  onTrash,
+  onRename,
+  onDuplicate,
+  onMoveToFolder,
+  onRestore,
+  onRestoreTo,
+  onForceDelete,
+}: INoteRowProps): React.JSX.Element {
+  const updatedAgo: string = useMemo(() => dayjs(note.updated_at).fromNow(), [note.updated_at])
   return (
     <Box
       className={classes.noteRow}
@@ -80,7 +82,7 @@ export const NoteRow = memo(function NoteRow({
               size="sm"
               style={{ pointerEvents: 'auto', ...(note.is_starred ? { opacity: 1 } : {}) }}
               variant="subtle"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
                 e.stopPropagation()
                 onStar()
               }}
@@ -101,12 +103,12 @@ export const NoteRow = memo(function NoteRow({
                   className={classes.rowAction}
                   size="sm"
                   variant="subtle"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => e.stopPropagation()}
                 >
                   <IconDots size={14} />
                 </ActionIcon>
               </Menu.Target>
-              <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+              <Menu.Dropdown onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => e.stopPropagation()}>
                 {note.deleted_at ? (
                   <>
                     <Menu.Item onClick={onRestore}>Restore</Menu.Item>

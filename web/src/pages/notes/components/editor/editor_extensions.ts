@@ -1,6 +1,7 @@
-import { Link, getTaskListExtension, getUploadImageExtension } from '@mantine/tiptap'
+import { getTaskListExtension, getUploadImageExtension, Link } from '@mantine/tiptap'
 import { CharacterCount } from '@tiptap/extension-character-count'
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
+import type { CodeBlockLowlightOptions } from '@tiptap/extension-code-block-lowlight'
 import { Color } from '@tiptap/extension-color'
 import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details'
 import { Highlight } from '@tiptap/extension-highlight'
@@ -19,13 +20,14 @@ import { TextAlign } from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Typography } from '@tiptap/extension-typography'
 import { ReactNodeViewRenderer } from '@tiptap/react'
+import type { Extensions, Node, NodeViewRenderer } from '@tiptap/react'
 import { StarterKit } from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 
 import { CodeBlockWithCopy } from './code_block_with_copy'
 
-export const CodeBlockView = CodeBlockLowlight.extend({
-  addNodeView() {
+export const CodeBlockView: Node<CodeBlockLowlightOptions> = CodeBlockLowlight.extend({
+  addNodeView(): NodeViewRenderer {
     return ReactNodeViewRenderer(CodeBlockWithCopy)
   },
 })
@@ -34,7 +36,7 @@ export const CodeBlockView = CodeBlockLowlight.extend({
  * Every extension here is MIT. Do not add @tiptap-pro/* — the project has no
  * TipTap Pro licence, and nothing in Phase 1 needs one.
  */
-export const editorExtensions = [
+export const editorExtensions: Extensions = [
   StarterKit.configure({
     codeBlock: false,
     link:      false,
@@ -58,9 +60,9 @@ export const editorExtensions = [
     }),
     {
       onImageUpload: (file: File) =>
-        new Promise((resolve) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
+        new Promise<string>((resolve: (value: string) => void) => {
+          const reader: FileReader = new FileReader()
+          reader.onload = (): void => resolve(reader.result as string)
           reader.readAsDataURL(file)
         }),
     },

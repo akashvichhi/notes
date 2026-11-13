@@ -4,7 +4,7 @@ import { ActionIcon, Code, CopyButton, Group, Text, Tooltip } from '@mantine/cor
 import { IconCheck, IconCopy } from '@tabler/icons-react'
 
 /** A value shown in monospace with a copy button beside it. */
-export const CopyField = memo(function CopyField({
+export const CopyField: React.MemoExoticComponent<({ label, value, }: { label?: string; value: string; }) => React.JSX.Element> = memo(function CopyField({
   label,
   value,
 }: {
@@ -23,7 +23,7 @@ export const CopyField = memo(function CopyField({
           {value}
         </Code>
         <CopyButton timeout={2000} value={value}>
-          {({ copied, copy }) => (
+          {({ copied, copy }: { copied: boolean; copy: () => void; }) => (
             <Tooltip withArrow label={copied ? 'Copied' : 'Copy'} position="left">
               <ActionIcon
                 aria-label={copied ? 'Copied' : `Copy ${label ?? 'value'}`}

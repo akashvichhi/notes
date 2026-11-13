@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance } from 'axios'
+import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig, isAxiosError } from 'axios'
 
 import { API_URL, IS_DEV } from '@src/config/env'
 import { isNative } from '@src/platform/is_native'
@@ -12,7 +12,7 @@ export interface ApiError {
   serverCopy?: Note
 }
 
-const getBaseUrl = (): string => {
+const getBaseUrl: () => string = (): string => {
   // In browser development, always route through Vite's proxy (relative path)
   // so requests are same-origin and proxy to whatever VITE_API_URL is configured to.
   if (IS_DEV && !isNative()) {
@@ -30,9 +30,9 @@ export const api: AxiosInstance = axios.create({
   withXSRFToken:   !isNative(),
 })
 
-api.interceptors.request.use(async (config) => {
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
   if (isNative()) {
-    const token = await loadToken()
+    const token: string | null = await loadToken()
     if (token) {
       if (typeof config.headers?.set === 'function') {
         config.headers.set('Authorization', `Bearer ${token}`)
@@ -45,7 +45,10 @@ api.interceptors.request.use(async (config) => {
 })
 
 
-let csrfPrimed = false
+/** A request the CSRF retry has already re-sent once. */
+interface IRetriableConfig extends InternalAxiosRequestConfig { __retried?: boolean }
+
+let csrfPrimed: boolean = false
 
 export async function ensureCsrf(): Promise<void> {
   if (isNative() || csrfPrimed) return
@@ -65,15 +68,15 @@ function isApiError(e: unknown): e is ApiError {
 export function normalizeError(e: unknown): ApiError {
   if (isApiError(e)) return e
 
-  const err = e as { response?: { status: number; data?: Record<string, unknown> }; message?: string }
+  const err: { response?: { status: number; data?: Record<string, unknown>; }; message?: string; } = e as { response?: { status: number; data?: Record<string, unknown> }; message?: string }
 
   if (!err.response) {
     return { status: 0, message: err.message ?? 'Network error' }
   }
 
-  const data = err.response.data ?? {}
+  const data: Record<string, unknown> = err.response.data ?? {}
   // The API sends the conflicting note unwrapped: `{ message, server_copy: {...note} }`.
-  const serverCopy = data.server_copy as Note | undefined
+  const serverCopy: Note | undefined = data.server_copy as Note | undefined
 
   return {
     status:  err.response.status,
@@ -84,9 +87,9 @@ export function normalizeError(e: unknown): ApiError {
 }
 
 // 419 means the CSRF cookie expired: re-prime it and retry exactly once.
-api.interceptors.response.use(undefined, async (error) => {
-  const status = error?.response?.status
-  const config = error?.config
+api.interceptors.response.use(undefined, async (error: unknown): Promise<AxiosResponse> => {
+  const status: number | undefined = isAxiosError(error) ? error.response?.status : undefined
+  const config: IRetriableConfig | undefined = isAxiosError(error) ? error.config : undefined
 
   if (status === 419 && config && !config.__retried) {
     config.__retried = true

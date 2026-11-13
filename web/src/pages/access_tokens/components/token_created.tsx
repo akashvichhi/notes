@@ -8,7 +8,7 @@ import { CopyField } from '@src/ui/form/copy_field'
 import { ConnectInstructions } from './connect_instructions'
 
 /** Shown once, right after creating a token: the server never returns it again. */
-export const TokenCreated = memo(function TokenCreated({
+export const TokenCreated: React.MemoExoticComponent<({ name, token, onDone, }: { name: string; token: string; onDone: () => void; }) => React.JSX.Element> = memo(function TokenCreated({
   name,
   token,
   onDone,

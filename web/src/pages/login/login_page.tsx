@@ -1,32 +1,38 @@
 import { memo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
+import type { NavigateFunction } from 'react-router'
 
 import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
+import type { UseMutationResult } from '@tanstack/react-query'
 
-
+import type { ApiError } from '@src/api/api_client'
 import { isNative } from '@src/platform/is_native'
 import { useLogin } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
+import type { User } from '@src/types/api'
+import type { ILoginCredentials } from '@src/types/auth'
 import { validateEmail } from '@src/validations/auth_validations'
 
-export const LoginPage = memo(function LoginPage() {
-  const navigate = useNavigate()
-  const login = useLogin()
-  const native = isNative()
 
-  const form = useForm({
+export const LoginPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function LoginPage() {
+  const navigate: NavigateFunction = useNavigate()
+  const login: UseMutationResult<User, ApiError, ILoginCredentials> = useLogin()
+  const native: boolean = isNative()
+
+  const form: UseFormReturnType<ILoginCredentials> = useForm<ILoginCredentials>({
     initialValues: { email: '', password: '' },
     validate:      {
       email:    validateEmail,
-      password: (v) => (v.length > 0 ? null : 'Enter your password'),
+      password: (v: string) => (v.length > 0 ? null : 'Enter your password'),
     },
   })
 
-  const error = login.error
+  const error: ApiError | null = login.error
 
-  const handleSubmit = useCallback(
-    (values: { email: string; password: string }) => {
+  const handleSubmit: (values: ILoginCredentials) => void = useCallback(
+    (values: ILoginCredentials): void => {
       login.mutate(values, { onSuccess: () => navigate(ROUTE_PATHS.HOME) })
     },
     [login, navigate]

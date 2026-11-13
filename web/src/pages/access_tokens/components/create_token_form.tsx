@@ -2,7 +2,7 @@ import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Checkbox, Group, Select, Stack, Text, TextInput } from '@mantine/core'
 
-import { normalizeError } from '@src/api/api_client'
+import type { ApiError } from '@src/api/api_client'
 import { useCreateAccessToken } from '@src/queries/access_tokens_queries'
 import { showErrorToast } from '@src/utils/notifications'
 import type { AccessTokenAbility } from '@src/types/api'
@@ -69,7 +69,7 @@ export const CreateTokenForm = memo(function CreateTokenForm({
         },
         {
           onSuccess: ({ token, access_token }) => onCreated(token, access_token.name),
-          onError:   (err: unknown) => showErrorToast(normalizeError(err).message || 'Failed to create token'),
+          onError:   (err: ApiError) => showErrorToast(err.message || 'Failed to create token'),
         },
       )
     },

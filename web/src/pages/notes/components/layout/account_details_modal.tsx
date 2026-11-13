@@ -2,6 +2,7 @@ import { memo, type SyntheticEvent, useCallback, useEffect, useState } from 'rea
 
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
 
+import type { ApiError } from '@src/api/api_client'
 import { useMe, useUpdateProfile } from '@src/queries/auth_queries'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
@@ -41,12 +42,7 @@ export const AccountDetailsModal = memo(function AccountDetailsModal({
             showSuccessToast('Account details updated successfully')
             onClose()
           },
-          onError: (err: unknown) => {
-            const msg =
-              (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-              ?? 'Failed to update account details'
-            showErrorToast(msg)
-          },
+          onError: (err: ApiError) => showErrorToast(err.message || 'Failed to update account details'),
         },
       )
     },

@@ -53,7 +53,18 @@ export async function ensureCsrf(): Promise<void> {
   csrfPrimed = true
 }
 
+function isApiError(e: unknown): e is ApiError {
+  return typeof e === 'object' && e !== null && !('response' in e) && !('isAxiosError' in e)
+    && typeof (e as ApiError).status === 'number' && typeof (e as ApiError).message === 'string'
+}
+
+/**
+ * Turns any failure into an ApiError. The client already rejects with one, so
+ * this is a no-op for API calls; it covers errors thrown by other code.
+ */
 export function normalizeError(e: unknown): ApiError {
+  if (isApiError(e)) return e
+
   const err = e as { response?: { status: number; data?: Record<string, unknown> }; message?: string }
 
   if (!err.response) {
@@ -84,5 +95,5 @@ api.interceptors.response.use(undefined, async (error) => {
     return api.request(config)
   }
 
-  return Promise.reject(error)
+  return Promise.reject(normalizeError(error))
 })

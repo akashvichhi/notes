@@ -1,6 +1,8 @@
 import { notifications } from '@mantine/notifications'
 import { type UseQueryResult, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { HttpStatusCode } from 'axios'
 
+import { normalizeError } from '@src/api/api_client'
 import * as notesApi from '@src/api/notes_api'
 import { COPY_NOTE_SUFFIX, DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { AUTH_KEY, BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
@@ -67,8 +69,7 @@ export function useNote(uuid?: UUID | null) {
               return remote
             }
           } catch (err: unknown) {
-            const error = err as { response?: { status?: number }; status?: number }
-            if (error.response?.status === 404 || error.status === 404) {
+            if (normalizeError(err).status === HttpStatusCode.NotFound) {
               closeTab(uuid)
               return null
             }
@@ -91,8 +92,7 @@ export function useNote(uuid?: UUID | null) {
       try {
         return await notesApi.fetchNote(uuid)
       } catch (err: unknown) {
-        const error = err as { response?: { status?: number }; status?: number }
-        if (error.response?.status === 404 || error.status === 404) {
+        if (normalizeError(err).status === HttpStatusCode.NotFound) {
           closeTab(uuid)
           return null
         }
@@ -103,8 +103,7 @@ export function useNote(uuid?: UUID | null) {
     staleTime:      0,
     refetchOnMount: 'always',
     retry:          (failureCount, err) => {
-      const error = err as { response?: { status?: number }; status?: number }
-      if (error.response?.status === 404 || error.status === 404) {
+      if (normalizeError(err).status === HttpStatusCode.NotFound) {
         return false
       }
       return failureCount < 2

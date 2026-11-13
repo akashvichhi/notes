@@ -1,11 +1,10 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 
 
-import { normalizeError } from '@src/api/api_client'
 import { useRegister } from '@src/queries/auth_queries'
 import {
   validateEmail,
@@ -30,7 +29,7 @@ export const RegisterPage = memo(function RegisterPage() {
     },
   })
 
-  const error = useMemo(() => (register.error ? normalizeError(register.error) : null), [register.error])
+  const error = register.error
 
   const handleSubmit = useCallback(
     (values: { name: string; email: string; password: string; password_confirmation: string }) => {

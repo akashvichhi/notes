@@ -2,6 +2,7 @@ import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
 
+import type { ApiError } from '@src/api/api_client'
 import { MIN_PASSWORD_LENGTH } from '@src/constants/limits'
 import { useUpdatePassword } from '@src/queries/auth_queries'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
@@ -53,12 +54,7 @@ export const ChangePasswordModal = memo(function ChangePasswordModal({
             showSuccessToast('Password updated successfully')
             onClose()
           },
-          onError: (err: unknown) => {
-            const msg =
-              (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-              ?? 'Failed to change password'
-            showErrorToast(msg)
-          },
+          onError: (err: ApiError) => showErrorToast(err.message || 'Failed to change password'),
         },
       )
     },

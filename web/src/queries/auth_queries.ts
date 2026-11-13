@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { hostname, platform } from '@tauri-apps/plugin-os'
+import { HttpStatusCode } from 'axios'
 
+import { normalizeError } from '@src/api/api_client'
 import * as authApi from '@src/api/auth_api'
 import { AUTH_KEY, BOOTSTRAP_KEY, NOTES_KEY } from '@src/constants/query_keys'
 import { foldersRepo } from '@src/db/folders_repo'
@@ -29,7 +31,7 @@ export function useMe() {
         return await authApi.fetchMe()
       } catch (e) {
         // Signed out or expired token is a normal state, not an error the UI should surface.
-        if ((e as { response?: { status: number } })?.response?.status === 401) {
+        if (normalizeError(e).status === HttpStatusCode.Unauthorized) {
           if (isNative()) {
             await deleteToken()
           }

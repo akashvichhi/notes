@@ -17,7 +17,7 @@ vi.mock('@src/api/notes_api', () => ({
   trashNote:      vi.fn(),
 }))
 vi.mock('@src/db/notes_repo', () => ({
-  notesRepo: { getDirtyCloudNotes: vi.fn(), get: vi.fn(), upsert: vi.fn(), hardDelete: vi.fn() },
+  notesRepo: { getDirtyCloudNotes: vi.fn(), get: vi.fn(), upsert: vi.fn(), hardDelete: vi.fn(), markDirty: vi.fn() },
 }))
 vi.mock('./outbox', () => ({
   outbox: { pending: vi.fn(), enqueue: vi.fn(), complete: vi.fn(), remove: vi.fn() },
@@ -55,6 +55,16 @@ describe('push', () => {
 
     expect(outbox.remove).toHaveBeenCalledWith(2)
     expect(result.rejected).toEqual(['n2'])
+  })
+
+  it('stops re-sending a rejected change on the next run', async () => {
+    vi.mocked(outbox.pending).mockResolvedValue([{ id: 4, kind: 'body', uuid: 'n4', body: null, version: 1, container: 'cloud' }])
+    vi.mocked(patchNote).mockRejectedValue(httpError(422))
+
+    await push()
+
+    // Still dirty, the note would be queued again by the next run's recovery step.
+    expect(notesRepo.markDirty).toHaveBeenCalledWith('n4', false)
   })
 
   it('re-creates a dirty note the server has never seen', async () => {

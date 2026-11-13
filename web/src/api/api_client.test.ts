@@ -1,6 +1,8 @@
 import { AxiosError, type AxiosResponse, HttpStatusCode, type InternalAxiosRequestConfig } from 'axios'
 import { describe, expect, it, vi } from 'vitest'
 
+import { MESSAGES } from '@src/constants/messages'
+
 import { api, type ApiError, normalizeError } from './api_client'
 
 vi.mock('@src/platform/is_native', () => ({ isNative: (): boolean => false }))
@@ -23,6 +25,22 @@ describe('normalizeError', () => {
 
   it('reports a network failure as status 0', () => {
     expect(normalizeError(new Error('Network Error')).status).toBe(0)
+  })
+
+  it('says the server could not be reached when a request got no response', () => {
+    const offline: AxiosError = new AxiosError('Network Error', AxiosError.ERR_NETWORK)
+
+    expect(normalizeError(offline)).toEqual({ status: 0, message: MESSAGES.NETWORK_ERROR })
+  })
+
+  it('never shows the text of an error thrown by our own code', () => {
+    const internal: Error = new Error('UNIQUE constraint failed: notes.uuid')
+
+    expect(normalizeError(internal).message).toBe(MESSAGES.UNEXPECTED_ERROR)
+  })
+
+  it('falls back to a generic message when the server sends none', () => {
+    expect(normalizeError({ response: { status: 500, data: {} } }).message).toBe(MESSAGES.REQUEST_FAILED)
   })
 
   it('returns an error that is already normalised unchanged', () => {

@@ -15,7 +15,7 @@ export interface IEditorBoundaryProps {
 function renderFallback({ resetErrorBoundary }: FallbackProps): React.JSX.Element {
   return (
     <ErrorFallback
-      actionLabel="Try again"
+      actionLabel={MESSAGES.TRY_AGAIN_ACTION}
       message={MESSAGES.CRASH_EDITOR}
       title={MESSAGES.CRASH_TITLE}
       onAction={resetErrorBoundary}

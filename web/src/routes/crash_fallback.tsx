@@ -17,7 +17,7 @@ export function CrashFallback({ error, onRetry }: ICrashFallbackProps): React.JS
   if (isChunkLoadError(error)) {
     return (
       <ErrorFallback
-        actionLabel="Reload"
+        actionLabel={MESSAGES.RELOAD_ACTION}
         message={MESSAGES.NEW_RELEASE_BODY}
         title={MESSAGES.NEW_RELEASE_TITLE}
         onAction={reloadPage}
@@ -25,5 +25,5 @@ export function CrashFallback({ error, onRetry }: ICrashFallbackProps): React.JS
     )
   }
 
-  return <ErrorFallback actionLabel="Try again" message={MESSAGES.CRASH_PAGE} title={MESSAGES.CRASH_TITLE} onAction={onRetry} />
+  return <ErrorFallback actionLabel={MESSAGES.TRY_AGAIN_ACTION} message={MESSAGES.CRASH_PAGE} title={MESSAGES.CRASH_TITLE} onAction={onRetry} />
 }

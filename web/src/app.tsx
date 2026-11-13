@@ -19,7 +19,7 @@ function reloadPage(): void {
 }
 
 function renderAppFallback(_props: FallbackProps): React.JSX.Element {
-  return <ErrorFallback fullPage actionLabel="Reload" message={MESSAGES.CRASH_APP} title={MESSAGES.CRASH_TITLE} onAction={reloadPage} />
+  return <ErrorFallback fullPage actionLabel={MESSAGES.RELOAD_ACTION} message={MESSAGES.CRASH_APP} title={MESSAGES.CRASH_TITLE} onAction={reloadPage} />
 }
 
 function handleAppError(error: unknown): void {

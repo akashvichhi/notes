@@ -210,6 +210,10 @@ export async function push(): Promise<PushResult> {
       // Any other 4xx will fail the same way every time: drop it rather than block
       // the queue, and report it so the user hears that the change was not saved.
       await outbox.remove(op.id)
+      if (isNative()) {
+        // A dirty note is queued again by the recovery step above.
+        await notesRepo.markDirty(op.uuid, false)
+      }
       rejected.push(op.uuid)
     }
   }

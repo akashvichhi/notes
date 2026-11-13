@@ -15,3 +15,10 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 - **Options:** copy `dist/` in a deploy step; build straight into `api/public`.
 - **Decision:** `vite build` writes to `../api/public` with `emptyOutDir: false`, so `index.php` and Laravel's own files stay. `npm run clean` removes only `assets/` and `index.html` before a production build.
 - **Consequences:** the release commit includes the build output.
+
+## 3. Error boundaries use react-error-boundary
+
+- **Context:** no JavaScript error may leave the user on a blank screen, so the app needs boundaries at the root, app, route and editor levels. React has no hook form of a boundary; it takes a class component.
+- **Options:** our own class component; `react-error-boundary` (6.1.6).
+- **Decision:** `react-error-boundary`. It adds `resetKeys`, `onError` and a `FallbackComponent` prop, which our own class would have to rebuild and test, for a few kilobytes.
+- **Consequences:** every boundary is an `ErrorBoundary` from that package; fallbacks never show the error.

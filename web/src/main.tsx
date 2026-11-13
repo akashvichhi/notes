@@ -10,32 +10,36 @@ import { createRoot } from 'react-dom/client'
 import { MantineProvider } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
+import { ErrorBoundary } from 'react-error-boundary'
 
-
-import { App } from './app'
+import { App } from '@src/app'
 import { theme } from '@src/styles/theme'
+import { RootErrorFallback } from '@src/ui/feedback/root_error_fallback'
+import { logCrash } from '@src/utils/log_crash'
+import { reloadPageAfterNewRelease } from '@src/utils/reload_after_new_release'
 
-// Automatically reload the page when a chunk 404s after a new release
-window.addEventListener('vite:preloadError', (event) => {
-  const lastReload = sessionStorage.getItem('chunk_reload')
-  const now = Date.now()
-
-  // Guard against infinite reload loops if offline or server is unreachable
-  if (!lastReload || now - Number(lastReload) > 10_000) {
-    sessionStorage.setItem('chunk_reload', String(now))
-    window.location.reload()
-  } else {
-    console.error('Failed to preload chunk after reload:', event)
-  }
+// A lazy chunk 404s after a new release: reload once to fetch the new files.
+// Within the guard window the route fallback offers "A new version is available".
+window.addEventListener('vite:preloadError', (): void => {
+  reloadPageAfterNewRelease()
 })
 
-createRoot(document.getElementById('root')!).render(
+function handleRootError(error: unknown): void {
+  logCrash('root', error)
+}
+
+const rootElement: HTMLElement | null = document.getElementById('root')
+if (rootElement === null) throw new Error('index.html has no #root element')
+
+createRoot(rootElement).render(
   <StrictMode>
-    <MantineProvider defaultColorScheme="dark" theme={theme}>
-      <ModalsProvider>
-        <Notifications position="bottom-center" />
-        <App />
-      </ModalsProvider>
-    </MantineProvider>
+    <ErrorBoundary FallbackComponent={RootErrorFallback} onError={handleRootError}>
+      <MantineProvider defaultColorScheme="dark" theme={theme}>
+        <ModalsProvider>
+          <Notifications position="bottom-center" />
+          <App />
+        </ModalsProvider>
+      </MantineProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

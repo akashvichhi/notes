@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { EditorSkeleton } from '@src/ui/skeletons/skeletons'
 import { TopProgress } from '@src/pages/notes/components/top_progress'
 import { Editor } from '@src/pages/notes/components/editor/editor'
+import { EditorBoundary } from '@src/pages/notes/components/editor/editor_boundary'
 import { TabBar } from '@src/pages/notes/components/editor/tab_bar'
 import { AppShellLayout } from '@src/pages/notes/components/layout/app_shell'
 import { Header } from '@src/pages/notes/components/layout/header'
@@ -105,7 +106,9 @@ export const AppPage = memo(function AppPage() {
             <EditorSkeleton />
           </Box>
         ) : note ? (
-          <Editor key={note.uuid} note={note} />
+          <EditorBoundary noteUuid={note.uuid}>
+            <Editor key={note.uuid} note={note} />
+          </EditorBoundary>
         ) : (
           <Center p="xl" style={{ flex: 1 }}>
             <Stack align="center" gap="sm">

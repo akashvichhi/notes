@@ -1,83 +1,52 @@
-import { lazy, Suspense } from 'react'
+import { type ComponentType, lazy, type LazyExoticComponent, type ReactNode } from 'react'
 import { createBrowserRouter } from 'react-router'
 
-import { Center, Loader } from '@mantine/core'
-
-import { RouteErrorBoundary } from './route_error'
+import { PageSkeleton } from '@src/ui/skeletons/page_skeleton'
 import { AppSkeleton } from '@src/ui/skeletons/skeletons'
+
 import { GuestOnly } from './guest_route'
 import { RequireAuth } from './protected_route'
+import { RouteBoundary } from './route_boundary'
+import { RouteErrorBoundary } from './route_error'
 import { ROUTE_PATHS } from './route_paths'
 
-const LoginPage = lazy(() => import('@src/pages/login/login_page').then((m) => ({ default: m.LoginPage })))
-const RegisterPage = lazy(() => import('@src/pages/register/register_page').then((m) => ({ default: m.RegisterPage })))
-const AccessTokensPage = lazy(() =>
-  import('@src/pages/access_tokens/access_tokens_page').then((m) => ({ default: m.AccessTokensPage }))
+type TLazyPage = LazyExoticComponent<ComponentType>
+
+const LoginPage: TLazyPage = lazy(() => import('@src/pages/login/login_page').then((m: { LoginPage: ComponentType }): { default: ComponentType } => ({ default: m.LoginPage })))
+const RegisterPage: TLazyPage = lazy(() => import('@src/pages/register/register_page').then((m: { RegisterPage: ComponentType }): { default: ComponentType } => ({ default: m.RegisterPage })))
+const AccessTokensPage: TLazyPage = lazy(() =>
+  import('@src/pages/access_tokens/access_tokens_page').then((m: { AccessTokensPage: ComponentType }): { default: ComponentType } => ({ default: m.AccessTokensPage }))
 )
-const AppPage = lazy(() => import('@src/pages/notes/notes_page').then((m) => ({ default: m.AppPage })))
+const AppPage: TLazyPage = lazy(() => import('@src/pages/notes/notes_page').then((m: { AppPage: ComponentType }): { default: ComponentType } => ({ default: m.AppPage })))
 
-const AuthFallback = (
-  <Center h="100dvh">
-    <Loader size="md" />
-  </Center>
-)
+const PAGE_FALLBACK: ReactNode = <PageSkeleton />
+const APP_FALLBACK: ReactNode = <AppSkeleton />
+const ROUTE_ERROR: ReactNode = <RouteErrorBoundary />
 
-const AppFallback = <AppSkeleton />
-
-export const router = createBrowserRouter([
+export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
   {
-    path:    ROUTE_PATHS.LOGIN,
-    element: (
-      <GuestOnly>
-        <Suspense fallback={AuthFallback}>
-          <LoginPage />
-        </Suspense>
-      </GuestOnly>
-    ),
-    errorElement: <RouteErrorBoundary />,
+    path:         ROUTE_PATHS.LOGIN,
+    element:      <GuestOnly><RouteBoundary fallback={PAGE_FALLBACK}><LoginPage /></RouteBoundary></GuestOnly>,
+    errorElement: ROUTE_ERROR,
   },
   {
-    path:    ROUTE_PATHS.REGISTER,
-    element: (
-      <GuestOnly>
-        <Suspense fallback={AuthFallback}>
-          <RegisterPage />
-        </Suspense>
-      </GuestOnly>
-    ),
-    errorElement: <RouteErrorBoundary />,
+    path:         ROUTE_PATHS.REGISTER,
+    element:      <GuestOnly><RouteBoundary fallback={PAGE_FALLBACK}><RegisterPage /></RouteBoundary></GuestOnly>,
+    errorElement: ROUTE_ERROR,
   },
   {
-    path:    ROUTE_PATHS.HOME,
-    element: (
-      <RequireAuth>
-        <Suspense fallback={AppFallback}>
-          <AppPage />
-        </Suspense>
-      </RequireAuth>
-    ),
-    errorElement: <RouteErrorBoundary />,
+    path:         ROUTE_PATHS.HOME,
+    element:      <RequireAuth><RouteBoundary fallback={APP_FALLBACK}><AppPage /></RouteBoundary></RequireAuth>,
+    errorElement: ROUTE_ERROR,
   },
   {
-    path:    ROUTE_PATHS.NOTE,
-    element: (
-      <RequireAuth>
-        <Suspense fallback={AppFallback}>
-          <AppPage />
-        </Suspense>
-      </RequireAuth>
-    ),
-    errorElement: <RouteErrorBoundary />,
+    path:         ROUTE_PATHS.NOTE,
+    element:      <RequireAuth><RouteBoundary fallback={APP_FALLBACK}><AppPage /></RouteBoundary></RequireAuth>,
+    errorElement: ROUTE_ERROR,
   },
   {
-    path:    ROUTE_PATHS.ACCESS_TOKENS,
-    element: (
-      <RequireAuth>
-        <Suspense fallback={AuthFallback}>
-          <AccessTokensPage />
-        </Suspense>
-      </RequireAuth>
-    ),
-    errorElement: <RouteErrorBoundary />,
+    path:         ROUTE_PATHS.ACCESS_TOKENS,
+    element:      <RequireAuth><RouteBoundary fallback={PAGE_FALLBACK}><AccessTokensPage /></RouteBoundary></RequireAuth>,
+    errorElement: ROUTE_ERROR,
   },
 ])

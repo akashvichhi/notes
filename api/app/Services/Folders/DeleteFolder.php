@@ -17,15 +17,17 @@ class DeleteFolder
     {
         DB::transaction(function () use ($folder) {
             $folder->notes()->update(['folder_id' => null]);
+            $children = Folder::where('parent_id', $folder->id)->get();
 
-            foreach (Folder::where('parent_id', $folder->id)->get() as $child) {
+            // Deleted first, so a child may take the folder's own name.
+            $folder->delete();
+
+            foreach ($children as $child) {
                 $child->update([
                     'parent_id' => $folder->parent_id,
                     'name' => $this->freeName($folder, $child->name),
                 ]);
             }
-
-            $folder->delete();
         });
     }
 

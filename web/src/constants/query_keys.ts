@@ -16,7 +16,7 @@ export interface IQueryKeys {
     readonly all:    typeof NOTES_KEY
     readonly list:   (container: Container | undefined, scopeKey: string) => readonly ['notes', Container | undefined, string]
     readonly detail: (uuid?: UUID | null) => readonly ['note', UUID | null | undefined]
-    readonly filter: (scope: Scope, query: string) => readonly ['notes-filter', Scope, string]
+    readonly filter: (scope: Scope, query: string) => readonly ['notes', 'filter', Scope, string]
   }
   readonly search: (query: string, container: Container | undefined) => readonly ['search', string, Container | undefined]
 }
@@ -29,7 +29,8 @@ export const queryKeys: IQueryKeys = {
     all:    NOTES_KEY,
     list:   (container: Container | undefined, scopeKey: string) => [...NOTES_KEY, container, scopeKey] as const,
     detail: (uuid?: UUID | null) => [...NOTE_KEY, uuid] as const,
-    filter: (scope: Scope, query: string) => ['notes-filter', scope, query] as const,
+    // Under NOTES_KEY, so every note change refreshes filter results too.
+    filter: (scope: Scope, query: string) => [...NOTES_KEY, 'filter', scope, query] as const,
   },
   search: (query: string, container: Container | undefined) => ['search', query, container] as const,
 } as const

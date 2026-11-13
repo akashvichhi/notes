@@ -11,6 +11,7 @@ import { BOOTSTRAP_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { clearDraft, saveDraft } from '@src/db/drafts_store'
 import { notesRepo } from '@src/db/notes_repo'
 import { isNative } from '@src/platform/is_native'
+import { useRestoreNote } from '@src/queries/notes_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { type SaveStatus, useUiStore } from '@src/stores/ui_store'
 import { syncEngine } from '@src/sync/engine'
@@ -29,6 +30,8 @@ export function useAutosave(note: Note, editor: Editor | null) {
   const setSaveStatus = useUiStore((s) => s.setSaveStatus)
   const setRetrySave = useUiStore((s) => s.setRetrySave)
   const setCancelPendingSave = useUiStore((s) => s.setCancelPendingSave)
+  const closeTab = useTabsStore((s) => s.close)
+  const restoreNote = useRestoreNote()
 
   const [status, setStatus] = useState<SaveStatus>('idle')
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -283,6 +286,30 @@ export function useAutosave(note: Note, editor: Editor | null) {
     setConflict(null)
   }, [conflict, editor, note.uuid, qc, setDirty, setSaveStatus])
 
+  /** The note was trashed elsewhere: bring it back, then write the user's text over it. */
+  const resolveRestoreMine = useCallback(async (): Promise<void> => {
+    if (!conflict) return
+    try {
+      await restoreNote.mutateAsync(note.uuid)
+    } catch {
+      return // useRestoreNote already told the user.
+    }
+    version.current = conflict.version
+    setConflict(null)
+    await save(true)
+  }, [conflict, note.uuid, restoreNote, save])
+
+  /** The note was trashed elsewhere and the user lets it go: drop the edit and close it. */
+  const resolveDiscard = useCallback((): void => {
+    void clearDraft(note.uuid)
+    setDirty(note.uuid, false)
+    setStatus('idle')
+    setSaveStatus('idle')
+    setConflict(null)
+    closeTab(note.uuid)
+    qc.removeQueries({ queryKey: queryKeys.notes.detail(note.uuid) })
+  }, [closeTab, note.uuid, qc, setDirty, setSaveStatus])
+
   const resolveSaveCopy = useCallback(async () => {
     if (!conflict || !editor) return
     const body = editor.getJSON() as Note['body']
@@ -307,6 +334,8 @@ export function useAutosave(note: Note, editor: Editor | null) {
     resolveKeepMine,
     resolveKeepTheirs,
     resolveSaveCopy,
+    resolveRestoreMine,
+    resolveDiscard,
     onChange,
     saveNow: save,
   }

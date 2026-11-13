@@ -2,15 +2,39 @@ import { memo } from 'react'
 
 import { Button, Group, Modal, Stack, Text } from '@mantine/core'
 
-
 import type { Note } from '@src/types/api'
 
-export const ConflictSheet = memo(function ConflictSheet({
-  serverCopy, onKeepMine, onKeepTheirs, onSaveCopy, onClose,
-}: {
-  serverCopy: Note
-  onKeepMine: () => void; onKeepTheirs: () => void; onSaveCopy: () => void; onClose: () => void
-}) {
+export interface IConflictSheetProps {
+  serverCopy:    Note
+  onKeepMine:    () => void
+  onKeepTheirs:  () => void
+  onSaveCopy:    () => void
+  onRestoreMine: () => void
+  onDiscard:     () => void
+  onClose:       () => void
+}
+
+export const ConflictSheet: React.NamedExoticComponent<IConflictSheetProps> = memo(function ConflictSheet({
+  serverCopy, onKeepMine, onKeepTheirs, onSaveCopy, onRestoreMine, onDiscard, onClose,
+}: IConflictSheetProps): React.JSX.Element {
+  // SPEC 5.5: the server refuses edits to a trashed note, so "keep mine" can't work there.
+  if (serverCopy.deleted_at !== null) {
+    return (
+      <Modal centered opened title="This note was moved to Trash" onClose={onClose}>
+        <Stack>
+          <Text size="sm">
+            It was moved to Trash on another device while you were typing.
+            Restore it to keep your changes, or discard them.
+          </Text>
+          <Group>
+            <Button onClick={onRestoreMine}>Restore and keep mine</Button>
+            <Button variant="default" onClick={onDiscard}>Discard my changes</Button>
+          </Group>
+        </Stack>
+      </Modal>
+    )
+  }
+
   return (
     <Modal centered opened title="This note changed somewhere else" onClose={onClose}>
       <Stack>

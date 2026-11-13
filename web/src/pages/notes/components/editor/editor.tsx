@@ -91,6 +91,8 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
     resolveKeepMine,
     resolveKeepTheirs,
     resolveSaveCopy,
+    resolveRestoreMine,
+    resolveDiscard,
   } = useAutosave(note, editor)
 
   useEffect(() => {
@@ -106,7 +108,9 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
           serverCopy={conflict}
           onClose={clearConflict}
           onKeepMine={resolveKeepMine}
+          onDiscard={resolveDiscard}
           onKeepTheirs={resolveKeepTheirs}
+          onRestoreMine={resolveRestoreMine}
           onSaveCopy={resolveSaveCopy}
         />
       )}

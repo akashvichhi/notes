@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { makeNote } from '@src/test_utils/note_factory'
 import { renderWithProviders } from '@src/test_utils/render_with_providers'
 
-import { ConflictSheet } from './conflict_sheet'
+import { ConflictSheet, type IConflictSheetProps } from './conflict_sheet'
 
-const HANDLERS = {
+const HANDLERS: Omit<IConflictSheetProps, 'serverCopy'> = {
   onKeepMine:    vi.fn(),
   onKeepTheirs:  vi.fn(),
   onSaveCopy:    vi.fn(),

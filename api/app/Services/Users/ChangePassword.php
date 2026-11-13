@@ -4,6 +4,7 @@ namespace App\Services\Users;
 
 use App\Models\User;
 use Illuminate\Contracts\Session\Session;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ChangePassword
 {
@@ -17,7 +18,9 @@ class ChangePassword
     {
         $user->update(['password' => $password]);
 
-        $currentTokenId = $user->currentAccessToken()?->getKey();
+        // A browser session is given a TransientToken, which has no row to keep.
+        $current = $user->currentAccessToken();
+        $currentTokenId = $current instanceof PersonalAccessToken ? $current->getKey() : null;
         $user->tokens()
             ->when($currentTokenId !== null, fn ($tokens) => $tokens->whereKeyNot($currentTokenId))
             ->delete();

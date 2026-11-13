@@ -1,0 +1,30 @@
+@use "@src/styles/shared/style_system/layers";
+@use "@src/styles/shared/style_system/spacing";
+
+.wrapper {
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+}
+
+// Two classes outrank ProseMirror's `.ProseMirror pre { white-space: pre-wrap }`,
+// which Tiptap injects after our styles; long lines scroll instead of wrapping.
+.wrapper .pre,
+.wrapper .pre * {
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.wrapper .code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}
+
+.copy {
+  position: absolute;
+  top: spacing.$xs;
+  right: spacing.$xs;
+  z-index: layers.$raised;
+}

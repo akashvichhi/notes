@@ -1,0 +1,8 @@
+// The app shell's fixed sizes. ui/skeletons/skeletons.tsx draws the same
+// shell while the page loads, so change both together.
+$header-height: 52px;
+$status-height: 28px;
+$nav-width: 232px;
+$list-width: 300px;
+$tablet-list-width: minmax(260px, 320px);
+$touch-target: 38px;

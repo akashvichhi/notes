@@ -1,0 +1,9 @@
+// Font sizes match Mantine's scale (sm 14px, md 16px).
+$font-size-sm: 0.875rem;
+$font-size-md: 1rem;
+
+// Inline code sits inside running text, so it is sized relative to it.
+$font-size-inline-code: 0.85em;
+
+// Mantine's monospace stack (theme.ts).
+$font-family-mono: var(--mantine-font-family-monospace);

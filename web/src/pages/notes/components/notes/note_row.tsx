@@ -7,8 +7,9 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 
 
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
-import classes from '@src/pages/notes/components/layout/app_shell.module.css'
 import type { NoteListItem } from '@src/types/api'
+
+import classes from './note_row.module.scss'
 
 
 dayjs.extend(relativeTime)

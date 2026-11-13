@@ -15,7 +15,7 @@ import type { Note } from '@src/types/api'
 import { sanitizeProseMirrorDoc } from '@src/utils/prosemirror'
 
 import { ConflictSheet } from './conflict_sheet'
-import mobile from './editor.module.css'
+import mobile from './editor.module.scss'
 import { editorExtensions } from './editor_extensions'
 import { EditorToolbar } from './editor_toolbar'
 import { TableBar } from './table_bar'
@@ -115,7 +115,7 @@ export const Editor: React.MemoExoticComponent<({ note }: { note: Note; }) => Re
           onSaveCopy={resolveSaveCopy}
         />
       )}
-      <RichTextEditor editor={editor} style={{ display: 'contents' }}>
+      <RichTextEditor classNames={{ control: mobile.control }} editor={editor} style={{ display: 'contents' }}>
         <Box className={mobile.toolbar} style={{ transform: keyboardInset ? `translateY(-${keyboardInset}px)` : undefined }}>
           <EditorToolbar />
         </Box>

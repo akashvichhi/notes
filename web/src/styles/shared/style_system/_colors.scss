@@ -1,0 +1,46 @@
+// Colours that are not Mantine theme colours. Everything else uses
+// Mantine's CSS variables, so light and dark mode stay in step.
+
+$scrim: rgb(0 0 0 / 40%);
+$search-highlight: rgb(250 176 5 / 35%);
+
+// Code blocks and inline code: a GitHub-like palette per colour scheme. Light scheme.
+$code-light-background: #f6f8fa;
+$code-light-text: #1f2328;
+$code-light-border: #d0d7de;
+$code-light-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+$inline-code-light-background: #f1f3f5;
+$inline-code-light-text: #d6336c;
+$inline-code-light-border: #dee2e6;
+
+// Dark scheme.
+$code-dark-text: #e6edf3;
+$code-dark-border: #30363d;
+$code-dark-shadow: 0 4px 12px rgb(0 0 0 / 35%);
+$inline-code-dark-background: rgb(255 255 255 / 8%);
+$inline-code-dark-text: #ff7b72;
+$inline-code-dark-border: rgb(255 255 255 / 15%);
+
+// Syntax highlighting, keyed by the token groups in global.scss. Light scheme.
+$syntax-light: (
+  keyword: #cf222e,
+  string: #0a3069,
+  comment: #6e7781,
+  number: #0550ae,
+  variable: #953800,
+  builtin: #116329,
+  function: #8250df,
+  attribute: #0550ae,
+);
+
+// Dark scheme.
+$syntax-dark: (
+  keyword: #ff7b72,
+  string: #a5d6ff,
+  comment: #8b949e,
+  number: #79c0ff,
+  variable: #ffa657,
+  builtin: #7ee787,
+  function: #d2a8ff,
+  attribute: #79c0ff,
+);

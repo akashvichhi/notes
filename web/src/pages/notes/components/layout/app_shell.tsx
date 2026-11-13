@@ -2,7 +2,7 @@ import { memo, type ReactNode } from 'react'
 
 import { useUiStore } from '@src/stores/ui_store'
 
-import classes from './app_shell.module.css'
+import classes from './app_shell.module.scss'
 
 
 

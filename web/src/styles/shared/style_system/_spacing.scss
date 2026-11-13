@@ -1,0 +1,11 @@
+// The 4px spacing scale. The only place raw spacing values appear.
+$xxs: 4px;
+$xs: 8px;
+$sm: 12px;
+$md: 16px;
+$lg: 24px;
+$xl: 32px;
+$xxl: 48px;
+
+// Inline code pads in em, so the pill grows with the text around it.
+$inline-code-padding: 0.15em 0.45em;

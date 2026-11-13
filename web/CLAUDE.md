@@ -142,9 +142,9 @@ Order of preference (use the first that works):
 3. **An SCSS module**, only when Mantine can't express the design, using tokens.
 4. **Inline `style`**, only for values known at runtime, passed as a CSS custom property (`style={{ '--folder-color': color } as React.CSSProperties}`).
 
-- Tokens live in `src/styles/shared/style_system/` (`_spacing.scss`, `_typography.scss`, `_colors.scss`, `_breakpoints.scss`), the only place raw values appear. Spacing uses a 4px scale (`$xxs: 4px` … `$xxl: 48px`); colours map to Mantine CSS variables, so light and dark mode match; breakpoints equal Mantine's. `theme.ts` uses the **same** scale.
+- Tokens live in `src/styles/shared/style_system/` (`_spacing.scss`, `_typography.scss`, `_colors.scss`, `_breakpoints.scss`, `_layers.scss` for `z-index`, `_layout.scss` for the app shell's sizes), the only place raw values appear. Spacing uses a 4px scale (`$xxs: 4px` … `$xxl: 48px`); colours map to Mantine CSS variables where Mantine has one, so light and dark mode match; breakpoints equal Mantine's. `theme.ts` uses the **same** scale.
 - Load tokens with `@use "@src/styles/shared/style_system/spacing" as spacing;`. **NEVER** `@import`.
-- **NEVER** hardcode spacing, font, colour or breakpoint values. If no token fits, add one to the token file. Allowed literals: `0`, `1px` borders, percentages, `auto`/`none`/`inherit`/`transparent`/`currentColor`, unitless `opacity`/`flex`/`z-index`.
+- **NEVER** hardcode spacing, font, colour or breakpoint values. If no token fits, add one to the token file. Allowed literals: `0`, `1px` borders, percentages, `auto`/`none`/`inherit`/`transparent`/`currentColor`, unitless `opacity`/`flex`. `z-index` always comes from `_layers.scss`.
 - One SCSS module per component, next to it (`note_row.module.scss`). Never shared, never imported by another component. Class names are camelCase; nesting is at most 3 levels.
 - **NEVER** use ID selectors, `!important` or bare element selectors in modules. `:global` only as a last resort, with a comment (the Tiptap editor content is the expected case, since its HTML is not ours).
 - Combine classes with `classnames`, never template strings or `+`.

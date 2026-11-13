@@ -4,7 +4,7 @@ import { ActionIcon, CopyButton, Tooltip } from '@mantine/core'
 import { IconCheck, IconCopy } from '@tabler/icons-react'
 import { NodeViewContent, type NodeViewProps, NodeViewWrapper } from '@tiptap/react'
 
-import styles from './code_block_with_copy.module.css'
+import styles from './code_block_with_copy.module.scss'
 
 /** The one NodeView prop this view reads; Tiptap passes the rest too. */
 export interface ICodeBlockWithCopyProps {
@@ -14,8 +14,8 @@ export interface ICodeBlockWithCopyProps {
 export const CodeBlockWithCopy: React.NamedExoticComponent<ICodeBlockWithCopyProps> = memo(function CodeBlockWithCopy({ node }: ICodeBlockWithCopyProps): React.JSX.Element {
   return (
     <NodeViewWrapper className={styles.wrapper}>
-      <pre>
-        <NodeViewContent<'code'> as="code" />
+      <pre className={styles.pre}>
+        <NodeViewContent<'code'> as="code" className={styles.code} />
       </pre>
       <div className={styles.copy} contentEditable={false}>
         <CopyButton timeout={1500} value={node.textContent}>

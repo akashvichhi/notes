@@ -1,0 +1,193 @@
+// App-wide styles for HTML we don't render ourselves: the page shell,
+// Tiptap's editor content and Mantine's own components. Component styles
+// live in each component's module.
+@use "sass:map";
+@use "@src/styles/shared/style_system/breakpoints";
+@use "@src/styles/shared/style_system/colors";
+@use "@src/styles/shared/style_system/spacing";
+@use "@src/styles/shared/style_system/typography";
+
+// Light mode, including the moment before Mantine sets the attribute.
+@mixin light-scheme {
+  [data-mantine-color-scheme="light"] &,
+  :root:not([data-mantine-color-scheme="dark"]) & {
+    @content;
+  }
+}
+
+@mixin dark-scheme {
+  [data-mantine-color-scheme="dark"] & {
+    @content;
+  }
+}
+
+html,
+body,
+.app-root {
+  height: 100dvh;
+  margin: 0;
+  overscroll-behavior: none;
+}
+
+// ── Code blocks and inline code ─────────────────────────────────────────
+
+.mantine-RichTextEditor-content pre,
+.tiptap pre {
+  position: relative;
+  font-size: typography.$font-size-sm;
+  tab-size: 2;
+  overflow-x: auto;
+  letter-spacing: -0.01em;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  scrollbar-width: thin;
+
+  @include light-scheme {
+    background-color: colors.$code-light-background;
+    color: colors.$code-light-text;
+    border: 1px solid colors.$code-light-border;
+    box-shadow: colors.$code-light-shadow;
+  }
+
+  @include dark-scheme {
+    color: colors.$code-dark-text;
+    border: 1px solid colors.$code-dark-border;
+    box-shadow: colors.$code-dark-shadow;
+  }
+
+  // Code inside a block takes the block's styling, not the inline pill.
+  code {
+    display: block;
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    font-weight: inherit;
+    box-shadow: none;
+  }
+}
+
+.mantine-RichTextEditor-content pre::before,
+.mantine-RichTextEditor-content pre::after {
+  display: none;
+}
+
+.mantine-RichTextEditor-content :not(pre) > code,
+.tiptap :not(pre) > code {
+  font-family: typography.$font-family-mono;
+  font-size: typography.$font-size-inline-code;
+  padding: spacing.$inline-code-padding;
+  border-radius: var(--mantine-radius-sm);
+  font-weight: inherit;
+
+  @include light-scheme {
+    background-color: colors.$inline-code-light-background;
+    color: colors.$inline-code-light-text;
+    border: 1px solid colors.$inline-code-light-border;
+  }
+
+  @include dark-scheme {
+    background-color: colors.$inline-code-dark-background;
+    color: colors.$inline-code-dark-text;
+    border: 1px solid colors.$inline-code-dark-border;
+  }
+}
+
+// Syntax highlighting (lowlight / hljs), no bold. Later groups win ties,
+// so a class title is coloured as a function, not a title.
+$syntax-groups: (
+  keyword: ".hljs-keyword, .hljs-selector-tag, .hljs-subst",
+  string: ".hljs-string, .hljs-title, .hljs-section, .hljs-attribute, .hljs-literal, .hljs-type, .hljs-addition",
+  comment: ".hljs-comment, .hljs-quote, .hljs-deletion",
+  number: ".hljs-number, .hljs-regexp, .hljs-link",
+  variable: ".hljs-variable, .hljs-params",
+  builtin: ".hljs-built_in, .hljs-symbol, .hljs-bullet",
+  function: ".hljs-function, .hljs-class .hljs-title",
+  attribute: ".hljs-attr, .hljs-property",
+);
+
+.tiptap pre {
+  @each $group, $selectors in $syntax-groups {
+    @include light-scheme {
+      #{$selectors} {
+        color: map.get(colors.$syntax-light, $group);
+      }
+    }
+
+    @include dark-scheme {
+      #{$selectors} {
+        color: map.get(colors.$syntax-dark, $group);
+      }
+    }
+  }
+
+  .hljs-comment,
+  .hljs-quote,
+  .hljs-deletion {
+    font-style: italic;
+  }
+}
+
+// ── Other editor content ────────────────────────────────────────────────
+
+.tiptap img,
+.mantine-RichTextEditor-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--mantine-radius-md);
+  margin: spacing.$sm 0;
+  display: block;
+}
+
+@media (width <= #{breakpoints.$phone-max}) {
+  // Tables scroll rather than forcing the page to.
+  .mantine-RichTextEditor-content table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+// ── Spotlight search: a subtle selection, no blue flash ─────────────────
+
+// Mantine's selected style is a single class, so a class plus an attribute wins.
+.mantine-Spotlight-action[data-selected] {
+  --action-description-color: var(--mantine-color-dimmed);
+  --action-description-opacity: 1;
+
+  background-color: var(--mantine-color-default-hover);
+  color: var(--mantine-color-text);
+}
+
+.mantine-Spotlight-action:hover {
+  background-color: var(--mantine-color-default-hover);
+}
+
+mark {
+  background-color: colors.$search-highlight;
+  color: inherit;
+  padding: 1px spacing.$xxs;
+  border-radius: var(--mantine-radius-xs);
+}
+
+// ── Menus on phones ─────────────────────────────────────────────────────
+
+@media (width <= #{breakpoints.$phone-max}) {
+  // Dropdowns become bottom sheets: a menu anchored to a 20px ⋯ is a dart throw.
+  .mantine-Menu-dropdown {
+    /* stylelint-disable declaration-no-important -- Floating UI positions the
+       dropdown with inline top/left, and only !important overrides an inline style. */
+    position: fixed !important;
+    inset: auto spacing.$xs calc(#{spacing.$xs} + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+    /* stylelint-enable declaration-no-important */
+  }
+
+  .mantine-Menu-item {
+    padding: spacing.$sm spacing.$md;
+    font-size: typography.$font-size-md;
+  }
+}

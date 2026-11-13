@@ -1,0 +1,6 @@
+// Layout breakpoints. $tablet-min is Mantine's sm (48em); the phone limit
+// must match hooks/use_is_phone.ts, and the tablet limit is where the
+// three-pane desktop layout has room.
+$phone-max: 767px;
+$tablet-min: 768px;
+$tablet-max: 1099px;

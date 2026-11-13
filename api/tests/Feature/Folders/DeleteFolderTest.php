@@ -38,4 +38,16 @@ class DeleteFolderTest extends TestCase
         $this->assertSame(Folder::ROOT, $child->fresh()->parent_id);
         $this->assertSame('Archive (2)', $child->fresh()->name);
     }
+
+    public function test_a_child_named_like_the_deleted_folder_keeps_its_name(): void
+    {
+        $user = User::factory()->create();
+        $work = Folder::factory()->for($user)->create(['name' => 'Work']);
+        $child = Folder::factory()->for($user)->create(['name' => 'Work', 'parent_id' => $work->id]);
+        Sanctum::actingAs($user, ['*']);
+
+        $this->deleteJson("/api/v1/folders/{$work->uuid}")->assertNoContent();
+
+        $this->assertSame('Work', $child->fresh()->name);
+    }
 }

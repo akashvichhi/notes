@@ -1,16 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { MESSAGES } from '@src/constants/messages'
 import * as tagsApi from '@src/api/tags_api'
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
+import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
 import { tagsRepo } from '@src/db/tags_repo'
-import { getTagsArray } from '@src/utils/bootstrap_lists'
-import { slugify } from '@src/utils/slugify'
 import { isNative } from '@src/platform/is_native'
 import { useUiStore } from '@src/stores/ui_store'
 import type { Bootstrap, Note, Tag, UUID } from '@src/types/api'
+import { getTagsArray } from '@src/utils/bootstrap_lists'
 import { showErrorToast } from '@src/utils/notifications'
+import { slugify } from '@src/utils/slugify'
 
 export function useCreateTag() {
   const qc = useQueryClient()

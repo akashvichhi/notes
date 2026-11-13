@@ -3,8 +3,9 @@ import { memo } from 'react'
 import { Alert, Button, Divider, Group, Stack } from '@mantine/core'
 import { IconAlertTriangle } from '@tabler/icons-react'
 
-import { ConnectInstructions } from './connect_instructions'
 import { CopyField } from '@src/ui/form/copy_field'
+
+import { ConnectInstructions } from './connect_instructions'
 
 /** Shown once, right after creating a token: the server never returns it again. */
 export const TokenCreated = memo(function TokenCreated({

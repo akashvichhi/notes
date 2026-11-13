@@ -2,14 +2,15 @@ import { useSyncExternalStore } from 'react'
 
 import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
-import { queryClient } from '@src/queries/query_client'
 import { isNative } from '@src/platform/is_native'
 import { loadToken } from '@src/platform/secure_store'
+import { queryClient } from '@src/queries/query_client'
+import type { Note } from '@src/types/api'
 import { showErrorToast } from '@src/utils/notifications'
+
 import { outbox } from './outbox'
 import { pull } from './pull'
 import { push } from './push'
-import type { Note } from '@src/types/api'
 
 
 export type SyncState = 'synced' | 'syncing' | 'offline' | 'conflict' | 'error'

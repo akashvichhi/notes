@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { MESSAGES } from '@src/constants/messages'
 import * as foldersApi from '@src/api/folders_api'
 import type { NotesPage } from '@src/api/notes_api'
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
+import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTES_KEY } from '@src/constants/query_keys'
 import { foldersRepo } from '@src/db/folders_repo'
-import { getFoldersArray } from '@src/utils/bootstrap_lists'
 import { isNative } from '@src/platform/is_native'
 import { useUiStore } from '@src/stores/ui_store'
 import type { Bootstrap, Folder, NoteListItem, UUID } from '@src/types/api'
+import { getFoldersArray } from '@src/utils/bootstrap_lists'
 import { showErrorToast } from '@src/utils/notifications'
 
 export function useCreateFolder() {

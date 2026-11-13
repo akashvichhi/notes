@@ -18,9 +18,10 @@ import { IconCloud, IconFolder, IconPlus } from '@tabler/icons-react'
 
 
 
-import { ListSkeleton } from '@src/ui/skeletons/skeletons'
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { MAX_NOTE_TITLE_LENGTH } from '@src/constants/limits'
+import { useIsPhone } from '@src/hooks/use_is_phone'
+import { isNative } from '@src/platform/is_native'
 import { useMe } from '@src/queries/auth_queries'
 import { useBootstrap, useLocalSidebar } from '@src/queries/bootstrap_queries'
 import {
@@ -34,13 +35,12 @@ import {
   useStarNote,
   useTrashNote,
 } from '@src/queries/notes_queries'
-import { useIsPhone } from '@src/hooks/use_is_phone'
-import { filterNotes } from '@src/utils/filter_notes'
-import { isNative } from '@src/platform/is_native'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
 import type { NoteListItem, UUID } from '@src/types/api'
+import { ListSkeleton } from '@src/ui/skeletons/skeletons'
+import { filterNotes } from '@src/utils/filter_notes'
 
 import { FilterInput } from './filter_input'
 import { NoteRow } from './note_row'

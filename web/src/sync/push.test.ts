@@ -2,19 +2,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createNote, patchNote, trashNote } from '@src/api/notes_api'
 import { notesRepo } from '@src/db/notes_repo'
+
 import { outbox, type OutboxItem } from './outbox'
 import { push } from './push'
 
 vi.mock('@src/platform/is_native', () => ({ isNative: (): boolean => true }))
 vi.mock('@src/platform/secure_store', () => ({ loadToken: async (): Promise<string> => 'token' }))
 vi.mock('@src/api/notes_api', () => ({
-  createNote:     vi.fn(),
-  fetchNote:      vi.fn(),
+  createNote:      vi.fn(),
+  fetchNote:       vi.fn(),
   forceDeleteNote: vi.fn(),
-  patchNote:      vi.fn(),
-  restoreNote:    vi.fn(),
-  syncNoteTags:   vi.fn(),
-  trashNote:      vi.fn(),
+  patchNote:       vi.fn(),
+  restoreNote:     vi.fn(),
+  syncNoteTags:    vi.fn(),
+  trashNote:       vi.fn(),
 }))
 vi.mock('@src/db/notes_repo', () => ({
   notesRepo: { getDirtyCloudNotes: vi.fn(), get: vi.fn(), upsert: vi.fn(), hardDelete: vi.fn(), markDirty: vi.fn() },

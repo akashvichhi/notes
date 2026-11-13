@@ -5,11 +5,11 @@ import { modals } from '@mantine/modals'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-import { MESSAGES } from '@src/constants/messages'
 import type { ApiError } from '@src/api/api_client'
+import { MESSAGES } from '@src/constants/messages'
 import { useAccessTokens, useRevokeAccessToken } from '@src/queries/access_tokens_queries'
-import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 import type { AccessToken } from '@src/types/api'
+import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
 dayjs.extend(relativeTime)
 

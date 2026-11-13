@@ -5,14 +5,14 @@ import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } 
 import { useForm } from '@mantine/form'
 
 
+import { isNative } from '@src/platform/is_native'
 import { useRegister } from '@src/queries/auth_queries'
+import { ROUTE_PATHS } from '@src/routes/route_paths'
 import {
   validateEmail,
   validatePassword,
   validatePasswordConfirmation,
 } from '@src/validations/auth_validations'
-import { isNative } from '@src/platform/is_native'
-import { ROUTE_PATHS } from '@src/routes/route_paths'
 
 export const RegisterPage = memo(function RegisterPage() {
   const navigate = useNavigate()

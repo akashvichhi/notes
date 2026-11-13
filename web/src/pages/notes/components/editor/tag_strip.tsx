@@ -3,9 +3,9 @@ import { memo, useCallback, useMemo, useState } from 'react'
 import { ActionIcon, Badge, Button, Group, Popover, Stack, TextInput } from '@mantine/core'
 import { IconCheck, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 
+import { isNative } from '@src/platform/is_native'
 import { useBootstrap, useLocalSidebar } from '@src/queries/bootstrap_queries'
 import { useSyncNoteTags } from '@src/queries/notes_queries'
-import { isNative } from '@src/platform/is_native'
 import { useUiStore } from '@src/stores/ui_store'
 import type { Note } from '@src/types/api'
 

@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchNotes } from '@src/api/notes_api'
 import { notesRepo } from '@src/db/notes_repo'
+import type { NoteListItem } from '@src/types/api'
+
 import { outbox } from './outbox'
 import { pull } from './pull'
-import type { NoteListItem } from '@src/types/api'
 
 vi.mock('@src/api/bootstrap_api', () => ({
   fetchBootstrap: async (): Promise<object> => ({ folders: [], tags: [] }),
@@ -18,7 +19,7 @@ vi.mock('@src/db/notes_repo', () => ({
 vi.mock('./outbox', () => ({ outbox: { pending: vi.fn() } }))
 
 const REMOTE: NoteListItem = {
-  uuid: 'n1', title: 'Remote', excerpt: '', is_starred: false, folder: null, tags: [],
+  uuid:       'n1', title:      'Remote', excerpt:    '', is_starred: false, folder:     null, tags:       [],
   updated_at: '2026-11-10T09:00:00Z', deleted_at: null,
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { MIN_PASSWORD_LENGTH } from '@src/constants/limits'
+
 import { validateEmail, validatePassword, validatePasswordConfirmation } from './auth_validations'
 
 describe('validateEmail', (): void => {

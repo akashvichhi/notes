@@ -2,8 +2,8 @@ import { memo, type SyntheticEvent, useCallback, useEffect, useState } from 'rea
 
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
 
-import { MESSAGES } from '@src/constants/messages'
 import type { ApiError } from '@src/api/api_client'
+import { MESSAGES } from '@src/constants/messages'
 import { useMe, useUpdateProfile } from '@src/queries/auth_queries'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 

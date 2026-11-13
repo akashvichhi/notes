@@ -28,14 +28,15 @@ import {
   IconTrash,
 } from '@tabler/icons-react'
 
-import { RenameItemModal } from './rename_item_modal'
 import { ALL_NOTES_LABEL, STARRED_LABEL, TRASH_LABEL } from '@src/constants/labels'
 import { MAX_FOLDER_NAME_LENGTH, MAX_TAG_NAME_LENGTH } from '@src/constants/limits'
-import { stopEventPropagation } from '@src/utils/events'
 import { deviceKind } from '@src/platform/device_kind'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
 import { useUiStore, type Scope } from '@src/stores/ui_store'
 import type { Container, Counts, Folder, Tag } from '@src/types/api'
+import { stopEventPropagation } from '@src/utils/events'
+
+import { RenameItemModal } from './rename_item_modal'
 
 interface ContainerSectionProps {
   container:       Container

@@ -2,9 +2,9 @@ import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
 
-import { MESSAGES } from '@src/constants/messages'
 import type { ApiError } from '@src/api/api_client'
 import { MIN_PASSWORD_LENGTH } from '@src/constants/limits'
+import { MESSAGES } from '@src/constants/messages'
 import { useUpdatePassword } from '@src/queries/auth_queries'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 

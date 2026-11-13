@@ -5,10 +5,10 @@ import { Alert, Button, Center, Paper, PasswordInput, Stack, TextInput, Title } 
 import { useForm } from '@mantine/form'
 
 
-import { useLogin } from '@src/queries/auth_queries'
-import { validateEmail } from '@src/validations/auth_validations'
 import { isNative } from '@src/platform/is_native'
+import { useLogin } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
+import { validateEmail } from '@src/validations/auth_validations'
 
 export const LoginPage = memo(function LoginPage() {
   const navigate = useNavigate()

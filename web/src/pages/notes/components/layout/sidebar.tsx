@@ -3,18 +3,19 @@ import { memo, useCallback } from 'react'
 import { ScrollArea, Stack } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { ContainerSection } from './container_section'
 import { LOCAL_SIDEBAR_KEY } from '@src/constants/query_keys'
 import { foldersRepo } from '@src/db/folders_repo'
 import { tagsRepo } from '@src/db/tags_repo'
+import { isNative } from '@src/platform/is_native'
 import { useMe } from '@src/queries/auth_queries'
 import { useBootstrap, useLocalSidebar } from '@src/queries/bootstrap_queries'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@src/queries/folders_queries'
 import { useCreateTag, useDeleteTag, useRenameTag } from '@src/queries/tags_queries'
 import { useSyncStatus } from '@src/sync/engine'
-import { slugify } from '@src/utils/slugify'
-import { isNative } from '@src/platform/is_native'
 import type { Container } from '@src/types/api'
+import { slugify } from '@src/utils/slugify'
+
+import { ContainerSection } from './container_section'
 
 export const Sidebar = memo(function Sidebar() {
   const qc = useQueryClient()

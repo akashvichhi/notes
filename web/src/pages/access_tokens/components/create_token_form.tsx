@@ -2,11 +2,11 @@ import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Checkbox, Group, Select, Stack, Text, TextInput } from '@mantine/core'
 
-import { MESSAGES } from '@src/constants/messages'
 import type { ApiError } from '@src/api/api_client'
+import { MESSAGES } from '@src/constants/messages'
 import { useCreateAccessToken } from '@src/queries/access_tokens_queries'
-import { showErrorToast } from '@src/utils/notifications'
 import type { AccessTokenAbility } from '@src/types/api'
+import { showErrorToast } from '@src/utils/notifications'
 
 const MAX_NAME_LENGTH = 60
 

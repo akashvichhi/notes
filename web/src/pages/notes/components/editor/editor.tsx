@@ -6,17 +6,17 @@ import { useEditor } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 
 
-import { ConflictSheet } from './conflict_sheet'
-import { useAutosave } from '@src/pages/notes/hooks/use_autosave'
 import { useIsPhone } from '@src/hooks/use_is_phone'
+import { useAutosave } from '@src/pages/notes/hooks/use_autosave'
 import { useKeyboardInset } from '@src/pages/notes/hooks/use_visual_viewport'
-import { sanitizeProseMirrorDoc } from '@src/utils/prosemirror'
 import { useUiStore } from '@src/stores/ui_store'
 import type { Note } from '@src/types/api'
+import { sanitizeProseMirrorDoc } from '@src/utils/prosemirror'
 
-import { EditorToolbar } from './editor_toolbar'
-import { editorExtensions } from './editor_extensions'
+import { ConflictSheet } from './conflict_sheet'
 import mobile from './editor.module.css'
+import { editorExtensions } from './editor_extensions'
+import { EditorToolbar } from './editor_toolbar'
 import { TableBar } from './table_bar'
 import { TagStrip } from './tag_strip'
 
@@ -107,8 +107,8 @@ export const Editor = memo(function Editor({ note }: { note: Note }) {
         <ConflictSheet
           serverCopy={conflict}
           onClose={clearConflict}
-          onKeepMine={resolveKeepMine}
           onDiscard={resolveDiscard}
+          onKeepMine={resolveKeepMine}
           onKeepTheirs={resolveKeepTheirs}
           onRestoreMine={resolveRestoreMine}
           onSaveCopy={resolveSaveCopy}

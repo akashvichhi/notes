@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { filterNotes } from './filter_notes'
 import type { NoteListItem } from '@src/types/api'
+
+import { filterNotes } from './filter_notes'
 
 const note = (overrides: Partial<NoteListItem>): NoteListItem => ({
   uuid:       '00000000-0000-7000-8000-000000000001',

@@ -8,10 +8,10 @@ import { BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY } from '@src/constants/query_keys'
 import { foldersRepo } from '@src/db/folders_repo'
 import { notesRepo } from '@src/db/notes_repo'
 import { tagsRepo } from '@src/db/tags_repo'
-import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
-import { slugify } from '@src/utils/slugify'
 import { isNative } from '@src/platform/is_native'
 import type { Bootstrap, Counts, Folder, NoteListItem, Tag, User } from '@src/types/api'
+import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
+import { slugify } from '@src/utils/slugify'
 
 export { BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY }
 

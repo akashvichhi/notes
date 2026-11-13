@@ -1,23 +1,23 @@
 import { type UseQueryResult, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { HttpStatusCode } from 'axios'
 
-import { MESSAGES } from '@src/constants/messages'
 import { normalizeError } from '@src/api/api_client'
 import * as notesApi from '@src/api/notes_api'
 import { COPY_NOTE_SUFFIX, DEFAULT_NOTE_TITLE } from '@src/constants/labels'
+import { MESSAGES } from '@src/constants/messages'
 import { AUTH_KEY, BOOTSTRAP_KEY, LOCAL_SIDEBAR_KEY, NOTE_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { notesSource } from '@src/data/notes_source'
 import { notesRepo } from '@src/db/notes_repo'
 import { tagsRepo } from '@src/db/tags_repo'
-import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
-import { slugify } from '@src/utils/slugify'
 import { isNative } from '@src/platform/is_native'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { useUiStore, type Scope } from '@src/stores/ui_store'
 import { syncEngine } from '@src/sync/engine'
 import { outbox } from '@src/sync/outbox'
 import type { Bootstrap, Container, Counts, Folder, Note, NoteListItem, Tag, UUID } from '@src/types/api'
+import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
 import { showErrorToast } from '@src/utils/notifications'
+import { slugify } from '@src/utils/slugify'
 
 export { NOTE_KEY, NOTES_KEY }
 

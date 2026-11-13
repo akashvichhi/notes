@@ -4,11 +4,11 @@ import { Group, Text, UnstyledButton } from '@mantine/core'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-import { useSyncStatus } from '@src/sync/engine'
 import { deviceKind } from '@src/platform/device_kind'
 import { isNative } from '@src/platform/is_native'
 import type { SaveStatus } from '@src/stores/ui_store'
 import { useUiStore } from '@src/stores/ui_store'
+import { useSyncStatus } from '@src/sync/engine'
 import type { Container } from '@src/types/api'
 
 dayjs.extend(relativeTime)

@@ -12,8 +12,9 @@ import {
 } from '@src/api/notes_api'
 import { notesRepo } from '@src/db/notes_repo'
 import { isNative } from '@src/platform/is_native'
-import { outbox } from './outbox'
 import type { LocalNote, Note } from '@src/types/api'
+
+import { outbox } from './outbox'
 
 function toLocalNote(n: Note, overrides: { server_version?: number | null; dirty: boolean }): LocalNote {
   return {

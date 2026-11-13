@@ -3,9 +3,10 @@ import { fetchNotes } from '@src/api/notes_api'
 import { foldersRepo } from '@src/db/folders_repo'
 import { notesRepo } from '@src/db/notes_repo'
 import { tagsRepo } from '@src/db/tags_repo'
-import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
-import { outbox } from './outbox'
 import type { LocalFolder, LocalNote, LocalTag, NoteListItem } from '@src/types/api'
+import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
+
+import { outbox } from './outbox'
 
 export async function pull(): Promise<{ applied: number }> {
   let applied = 0

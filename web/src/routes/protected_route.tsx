@@ -1,9 +1,10 @@
 import { memo, type ReactNode } from 'react'
 import { Navigate } from 'react-router'
 
-import { AppSkeleton } from '@src/ui/skeletons/skeletons'
-import { useMe } from '@src/queries/auth_queries'
 import { isNative } from '@src/platform/is_native'
+import { useMe } from '@src/queries/auth_queries'
+import { AppSkeleton } from '@src/ui/skeletons/skeletons'
+
 import { ROUTE_PATHS } from './route_paths'
 
 export const RequireAuth = memo(function RequireAuth({ children }: { children: ReactNode }) {

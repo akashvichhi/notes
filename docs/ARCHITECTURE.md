@@ -339,6 +339,23 @@ wipes cloud rows first.
 | uuid | 14 | UUIDv7 for client-minted ids |
 | Tabler Icons | 3.49 | Icons |
 | dayjs | 1.11 | Dates |
+| react-error-boundary | 6.1 | Error boundaries (decision 3) |
+
+### Errors and resilience (frontend)
+
+- **One error shape.** The axios response interceptor rejects every failure as an
+  `ApiError` (`status`, `message`, optional field `errors` and `serverCopy`); a network
+  error is `status: 0`. React Query's `defaultError` is `ApiError`, so hooks and
+  components read `error.status` and never a raw axios error.
+- **No blank screens.** Error boundaries sit at four levels: root (plain HTML, outside
+  every provider), app, route (around each lazy page, reset on navigation) and the
+  editor (a bad note body leaves the list and sidebar working). Fallbacks never show
+  error messages or stacks; `onError` logs only the error's name.
+- **Stale deploys.** A failed lazy-chunk load reloads the page once through one helper,
+  guarded in `sessionStorage`; inside the guard window the user sees "A new version is
+  available" with a Reload button instead of a reload loop.
+- **Stray errors.** A global `error` / `unhandledrejection` listener shows one throttled,
+  generic notification and ignores chunk-load errors.
 
 ### Backend
 

@@ -251,6 +251,9 @@ write to a trashed note with 409**, and B is asked *"This note was moved to Tras
 another device — restore it, or discard your changes?"* Without the rule, B's edit
 lands silently on a trashed note.
 
+**Restore and keep mine** restores the note, then saves B's body over the server version.
+**Discard my changes** drops B's draft and closes the tab; the note stays in Trash.
+
 ### 5.6 Search
 
 | Source | Mechanism |
@@ -352,17 +355,23 @@ each record to the authenticated user. **Never accept `user_id` from a client.**
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/sanctum/csrf-cookie` | Web only |
-| POST | `/register` · `/login` · `/logout` | Web, cookie session |
+| POST | `/register` · `/login` · `/logout` | Web, cookie session. Register and login throttled 5/min |
 | POST | **`/tokens`** | **Native.** email + password + `device_name` → token, shown once. Throttled 5/min |
 | DELETE | **`/tokens/current`** | **Native** sign-out |
-| POST | `/forgot-password` · `/reset-password` | |
-| GET / PATCH | `/me` · `/me/password` | |
+| POST | `/forgot-password` · `/reset-password` | Throttled 5/min. A reset revokes every token |
+| GET / PATCH | `/me` · `/me/password` | A password change revokes every other token; the caller stays signed in |
 
 ### Bootstrap, notes, folders, tags
 
 Unchanged from the previous specification: `GET /bootstrap`; `GET|POST /notes`,
 `GET|PATCH|DELETE /notes/{uuid}`, `/notes/{uuid}/restore|duplicate|tags`,
 `DELETE /trash`; CRUD for `/folders` and `/tags`; `PATCH /preferences`; `GET /search`.
+
+Deleting a folder never deletes notes: its notes move to the root and its child folders
+move to its parent. A child whose name is already taken there gets a " (2)" style suffix.
+
+A missing record, or one belonging to another user, is a plain **404** `{ message: "Not found." }`
+that never names the model or echoes the id.
 
 `PATCH /notes/{uuid}` checks `version` **only when the payload contains `body`**, and
 returns **409** with the server copy on a mismatch. It also returns **409** for a body

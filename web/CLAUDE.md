@@ -69,8 +69,8 @@ Pages: login, register, notes (list and editor, `/` and `/notes/:uuid`), access_
 - Only **keys** are converted, never values. Values the API expects in snake_case are constants in that form.
 - **Opaque data is never converted:** a note's `body` (ProseMirror JSON; `textAlign` must stay `textAlign`) and maps keyed by data (`counts.folders` is keyed by folder uuid, `counts.tags` by tag slug).
 - The local SQLite tables keep their snake_case columns. Each `db/*_repo.ts` maps rows to camelCase objects and back, so nothing outside `db/` sees a column name. Outbox payloads stored before the change are converted when read.
-- In a 422, `details[].field` is converted to camelCase so it matches the form field name.
-- The error interceptor turns every failure into an `IApiError` (`{ error: string, details?: IFieldError[], status?: number, serverCopy?: INote }`), with a fallback message for network errors. Components, hooks and the sync engine never inspect raw axios errors.
+- In a 422, the keys of `errors` are converted to camelCase so they match the form field names.
+- The error interceptor rejects every failure as an `ApiError` (`{ status: number, message: string, errors?: Record<string, string[]>, serverCopy?: Note }`, defined in `api/api_client.ts`); a network error has `status: 0` and a fallback message. React Query's `defaultError` is `ApiError`, and `normalizeError()` turns anything else thrown into one. Components, hooks and the sync engine never inspect raw axios errors.
 
 ## Authentication
 - **Browser:** the Sanctum session lives in an httpOnly cookie. The frontend never sees, stores or sends a token. A 419 (expired CSRF token) is retried once inside the interceptor after refreshing the CSRF cookie.
@@ -129,10 +129,10 @@ Pages: login, register, notes (list and editor, `/` and `/notes/:uuid`), access_
 
 ## User feedback and UX
 - **The URL holds navigation state:** the open note is `/notes/:uuid`. Opening a note from the list navigates to its route.
-- Every mutation shows a failure notification (the API's `error` message), wired once in the mutation hooks or a shared helper; actions the user can't see happen (move, trash, token created) also show a success notification. Texts come from `constants/messages.ts`.
+- Every mutation shows a failure notification (the API's `message`), wired once in the mutation hooks or a shared helper; actions the user can't see happen (move, trash, token created) also show a success notification. Texts come from `constants/messages.ts`.
 - Permanent delete always asks first, in a confirmation modal naming the record; the confirm button shows the loading state. Moving to Trash needs no confirmation because it can be undone.
 - A failed query shows `error_state` with a retry button; an empty result shows `empty_state` with a hint.
-- Server field errors (`details`) appear on the matching form inputs. Frontend validation is for UX only; the backend is the source of truth.
+- Server field errors (`errors`) appear on the matching form inputs. Frontend validation is for UX only; the backend is the source of truth.
 - **Accessibility:** every input has a visible label (never placeholder-only, except the search and filter boxes, which have an `aria-label`); icon-only buttons have an `aria-label`; every action works with the keyboard; status is never shown by colour alone.
 
 ## Styling: Mantine first, then SCSS

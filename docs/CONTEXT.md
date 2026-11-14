@@ -1,7 +1,7 @@
 # Project context — read this first
 
 **Purpose:** everything decided so far, and why. If you are starting a fresh session,
-read this file, then `ARCHITECTURE.md`, then `SPEC.md` and `PLAN.md`.
+read this file, then `architecture.md`, then `requirements.md` and `PLAN.md`.
 
 **Last updated:** 2026-10-11
 
@@ -32,8 +32,8 @@ the developer.**
 | `WHEN-IT-GOES-WRONG.md` | **Developer recovery guide** |
 | `docs/START.md` | The agent's entry point |
 | `docs/CONTEXT.md` | This file |
-| `docs/ARCHITECTURE.md` | **Current** design: storage, saving and conflicts, auth, MCP, stack |
-| `docs/SPEC.md` | Product spec and acceptance criteria |
+| `docs/architecture.md` | **Current** design: storage, saving and conflicts, auth, MCP, stack |
+| `docs/requirements.md` | Product spec and acceptance criteria |
 | `docs/PLAN.md` | 31-task implementation plan |
 | `GETTING-STARTED.md` | Step-by-step runbook and the agent prompt |
 | `docs/SETUP-WINDOWS.md` | Docker environment reference |
@@ -182,8 +182,8 @@ Failure is loud, success is quiet.
 | `docs/START.md` | Entry point — read order, folder map, git bootstrap, delivery gates, ground rules |
 | `docs/PRINCIPLES.md` | How to work — 11 absolutes, the task loop, the self-audit |
 | `docs/CONTEXT.md` | This file — decisions, reversals, status |
-| `docs/ARCHITECTURE.md` | Storage, saving and conflicts, auth, MCP, the stack |
-| `docs/SPEC.md` | Product spec · **16 acceptance criteria in §7** |
+| `docs/architecture.md` | Storage, saving and conflicts, auth, MCP, the stack |
+| `docs/requirements.md` | Product spec · **16 acceptance criteria in §7** |
 | `docs/PLAN.md` | **31 tasks** — B1–B15 api · F1–F15 web app |
 | `docs/SETUP-WINDOWS.md` | The Docker environment |
 | | **For the developer only** | |

@@ -14,6 +14,7 @@ from app.constants.folder_constants import (
     FOLDER_POSITION_MAX,
     FOLDER_POSITION_MIN,
 )
+from app.constants.note_constants import NOTE_TITLE_MAX_LENGTH
 from app.constants.tag_constants import TAG_NAME_MAX_LENGTH
 from app.constants.user_constants import PASSWORD_MIN_LENGTH, USER_EMAIL_MAX_LENGTH, USER_NAME_MAX_LENGTH
 from app.content.slug import slugify
@@ -86,4 +87,9 @@ TagName = Annotated[
     StringConstraints(strip_whitespace=True, max_length=TAG_NAME_MAX_LENGTH),
     AfterValidator(require_text),
     AfterValidator(require_slug),
+]
+NoteTitle = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, max_length=NOTE_TITLE_MAX_LENGTH),
+    AfterValidator(require_text),
 ]

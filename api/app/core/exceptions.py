@@ -9,7 +9,7 @@ from typing import Self
 from pydantic import BaseModel
 
 from app.constants import messages
-from app.schemas.common.error_response import ErrorDetail, ErrorResponse
+from app.schemas.common.error_response import ErrorDetail, ErrorResponse, NoteConflictResponse
 
 
 class DomainError(Exception):
@@ -70,3 +70,14 @@ class RateLimitedError(DomainError):
     @property
     def headers(self) -> Mapping[str, str]:
         return {"Retry-After": str(self.retry_after_seconds)}
+
+
+class NoteConflictError(ConflictError):
+    default_message = messages.NOTE_CHANGED_ELSEWHERE
+
+    def __init__(self, server_copy: BaseModel) -> None:
+        super().__init__()
+        self.server_copy = server_copy
+
+    def to_response(self) -> BaseModel:
+        return NoteConflictResponse(error=self.message, server_copy=self.server_copy)

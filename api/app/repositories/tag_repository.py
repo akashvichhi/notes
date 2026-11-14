@@ -1,6 +1,8 @@
-from uuid import UUID
+from collections.abc import Mapping
+from uuid import UUID, uuid7
 
 from sqlalchemy import exists, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.models.tag_model import Tag
@@ -22,6 +24,24 @@ class TagRepository:
         if exclude_id is not None:
             conditions.append(Tag.id != exclude_id)
         return bool(self._session.scalar(select(exists().where(*conditions))))
+
+    def find_by_slugs(self, user_id: int, slugs: list[str]) -> list[Tag]:
+        if not slugs:
+            return []
+        return list(self._session.scalars(select(Tag).where(Tag.user_id == user_id, Tag.slug.in_(slugs))))
+
+    def insert_missing(self, user_id: int, names_by_slug: Mapping[str, str]) -> None:
+        """Creates the tags whose slug the user has no tag for yet. ON CONFLICT DO NOTHING,
+        so two requests adding the same new tag at once both succeed."""
+        if not names_by_slug:
+            return
+        rows = [
+            {"uuid": uuid7(), "user_id": user_id, "slug": slug, "name": name}
+            for slug, name in names_by_slug.items()
+        ]
+        self._session.execute(
+            insert(Tag).values(rows).on_conflict_do_nothing(index_elements=[Tag.user_id, Tag.slug])
+        )
 
     def add(self, tag: Tag) -> Tag:
         self._session.add(tag)

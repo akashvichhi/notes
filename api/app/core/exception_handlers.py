@@ -34,9 +34,7 @@ STATUS_MESSAGES: dict[int, str] = {
 
 
 def error_json(body: BaseModel, status_code: int, headers: Mapping[str, str] | None = None) -> JSONResponse:
-    return JSONResponse(
-        body.model_dump(mode="json", exclude_none=True), status_code=status_code, headers=headers
-    )
+    return JSONResponse(body.model_dump(mode="json"), status_code=status_code, headers=headers)
 
 
 class _MessageContext(dict[str, object]):

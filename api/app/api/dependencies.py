@@ -6,22 +6,25 @@ from typing import Annotated
 from fastapi import Depends, Request, Response
 from sqlalchemy.orm import Session
 
-from app.constants.auth_constants import UNKNOWN_CLIENT_ADDRESS
+from app.constants.auth_constants import RATE_LIMIT_WINDOW_SECONDS, UNKNOWN_CLIENT_ADDRESS
+from app.constants.note_constants import NOTE_SAVES_PER_MINUTE
 from app.core.clock import Clock
 from app.core.database import get_db_session
-from app.core.rate_limiter import RateLimiter
+from app.core.rate_limiter import RateLimit, RateLimiter
 from app.core.security import PasswordHasher
 from app.core.session_cookie import SessionCookie
 from app.models.user_model import User
 from app.repositories.access_token_repository import AccessTokenRepository
 from app.repositories.folder_repository import FolderRepository
 from app.repositories.health_repository import HealthRepository
+from app.repositories.note_repository import NoteRepository
 from app.repositories.tag_repository import TagRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
 from app.services.auth_service import Authenticated, AuthService
 from app.services.folder_service import FolderService
 from app.services.health_service import HealthService
+from app.services.note_service import NoteService
 from app.services.profile_service import ProfileService
 from app.services.tag_service import TagService
 from app.services.user_session_service import UserSessionService
@@ -144,3 +147,17 @@ def get_tag_service(session: DbSession) -> TagService:
 
 
 TagServiceDependency = Annotated[TagService, Depends(get_tag_service)]
+
+
+def get_note_service(session: DbSession, tags: TagServiceDependency, clock: ClockDependency) -> NoteService:
+    return NoteService(session, NoteRepository(session), FolderRepository(session), tags, clock)
+
+
+NoteServiceDependency = Annotated[NoteService, Depends(get_note_service)]
+
+NOTE_SAVE_LIMIT = RateLimit(NOTE_SAVES_PER_MINUTE, RATE_LIMIT_WINDOW_SECONDS)
+
+
+def limit_note_saves(user: CurrentUser, limiter: RateLimiterDependency) -> None:
+    """Counts a note save per user; autosave stays far below the limit."""
+    limiter.hit(f"note-saves:{user.id}", NOTE_SAVE_LIMIT)

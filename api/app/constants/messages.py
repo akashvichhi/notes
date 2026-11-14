@@ -48,3 +48,7 @@ VALIDATION_MESSAGE_TEMPLATES: dict[str, str] = {
 CURRENT_PASSWORD_INCORRECT = "The password is incorrect."  # noqa: S105 - a message
 NAME_TAKEN = "The name has already been taken."
 TAG_NAME_WITHOUT_SLUG = "The name must contain a letter or number that has a Latin spelling."
+NOTE_CHANGED_ELSEWHERE = "This note changed somewhere else."
+NOTE_TOO_LARGE = "This note is too large to save."
+NOTE_TOO_DEEP = "This note is nested too deeply."
+VERSION_REQUIRED_WITH_BODY = "The version field is required when body is present."

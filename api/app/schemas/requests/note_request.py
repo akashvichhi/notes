@@ -1,0 +1,91 @@
+import json
+from typing import Annotated, Self
+from uuid import UUID
+
+from pydantic import BaseModel, BeforeValidator, Field, StrictBool, StringConstraints, model_validator
+from pydantic_core import PydanticCustomError
+
+from app.constants import messages
+from app.constants.note_constants import (
+    NOTE_BODY_MAX_BYTES,
+    NOTE_BODY_MAX_DEPTH,
+    NOTE_TAG_NAMES_MAX,
+    NoteSort,
+)
+from app.constants.tag_constants import TAG_NAME_MAX_LENGTH
+from app.schemas.common.field_types import NoteTitle, NotNull, field_error
+from app.schemas.common.json_types import JsonObject
+from app.schemas.common.pagination_request import PaginationRequest
+
+_CONTENT_KEY = "content"
+
+
+def body_depth(node: object, level: int = 0) -> int:
+    """How deep the content tree goes; stops counting once past the limit."""
+    if level > NOTE_BODY_MAX_DEPTH or not isinstance(node, dict):
+        return level
+    deepest = level
+    children = node.get(_CONTENT_KEY)
+    for child in children if isinstance(children, list) else []:
+        deepest = max(deepest, body_depth(child, level + 1))
+        if deepest > NOTE_BODY_MAX_DEPTH:
+            return deepest
+    return deepest
+
+
+def _check_body_limits(value: object) -> object:
+    """Runs before the body is validated as JSON, so a huge or deep body fails fast."""
+    if not isinstance(value, dict):
+        return value
+    if len(json.dumps(value, separators=(",", ":")).encode()) > NOTE_BODY_MAX_BYTES:
+        raise PydanticCustomError("note_too_large", messages.NOTE_TOO_LARGE)
+    if body_depth(value) > NOTE_BODY_MAX_DEPTH:
+        raise PydanticCustomError("note_too_deep", messages.NOTE_TOO_DEEP)
+    return value
+
+
+NoteBody = Annotated[JsonObject, BeforeValidator(_check_body_limits)]
+TagNameInput = Annotated[str, StringConstraints(strip_whitespace=True, max_length=TAG_NAME_MAX_LENGTH)]
+
+
+class NoteListRequest(PaginationRequest):
+    folder_id: UUID | None = None
+    tag: Annotated[str | None, Field(max_length=TAG_NAME_MAX_LENGTH)] = None
+    starred: bool = False
+    trashed: bool = False
+    sort: NoteSort = NoteSort.UPDATED
+
+
+class CreateNoteRequest(BaseModel):
+    """The client may choose the uuid, so a create retried after a lost response is safe."""
+
+    uuid: UUID | None = None
+    folder_id: UUID | None = None
+
+
+class UpdateNoteRequest(BaseModel):
+    """A body save carries the version it edited; metadata changes carry none, so they
+    never clash with an autosave."""
+
+    body: Annotated[NoteBody | None, NotNull] = None
+    version: Annotated[Annotated[int, Field(ge=1)] | None, NotNull] = None
+    title: Annotated[NoteTitle | None, NotNull] = None
+    # null moves the note to the top level.
+    folder_id: UUID | None = None
+    is_starred: Annotated[StrictBool | None, NotNull] = None
+
+    @model_validator(mode="after")
+    def _version_comes_with_the_body(self) -> Self:
+        if self.body is not None and self.version is None:
+            raise field_error("version", messages.VERSION_REQUIRED_WITH_BODY)
+        return self
+
+
+class SetNoteTagsRequest(BaseModel):
+    """The whole set. Names that are new become tags; names without a slug are skipped."""
+
+    names: Annotated[list[TagNameInput], Field(max_length=NOTE_TAG_NAMES_MAX)]
+
+
+class RestoreNoteRequest(BaseModel):
+    folder_id: UUID | None = None

@@ -50,6 +50,18 @@ class TagService:
         self._tags.delete(self._get(user, tag_uuid))
         self._db.commit()
 
+    def resolve_names(self, user: User, names: list[str]) -> list[Tag]:
+        """The user's tags for these names, creating the missing ones. Names that share a
+        slug are one tag, named after the first; names with no slug are skipped. Does not
+        commit: the caller's transaction does."""
+        names_by_slug: dict[str, str] = {}
+        for name in names:
+            slug = slugify(name)
+            if slug:
+                names_by_slug.setdefault(slug, name)
+        self._tags.insert_missing(user.id, names_by_slug)
+        return self._tags.find_by_slugs(user.id, list(names_by_slug))
+
     def _get(self, user: User, tag_uuid: UUID) -> Tag:
         tag = self._tags.find_of_user(user.id, tag_uuid)
         if tag is None:

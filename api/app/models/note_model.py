@@ -15,7 +15,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import TSVECTOR
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.constants.database_constants import CASE_INSENSITIVE_COLLATION, SEARCH_TEXT_CONFIG
 from app.constants.note_constants import (
@@ -24,11 +24,21 @@ from app.constants.note_constants import (
     NOTE_TITLE_MAX_LENGTH,
 )
 from app.models.base_model import Base, IdMixin, TimestampMixin, UuidMixin
+from app.models.folder_model import Folder
+from app.models.tag_model import Tag
 from app.schemas.common.json_types import JsonObject
 
 # Title and text in one vector, so a search term can match either.
 SEARCH_VECTOR_EXPRESSION = (
     f"to_tsvector('{SEARCH_TEXT_CONFIG}', coalesce(title, '') || ' ' || coalesce(plain_text, ''))"
+)
+
+
+note_tag = Table(
+    "note_tag",
+    Base.metadata,
+    Column("note_id", ForeignKey("notes.id", ondelete="CASCADE"), primary_key=True),
+    Column("tag_id", ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True, index=True),
 )
 
 
@@ -60,11 +70,9 @@ class Note(IdMixin, UuidMixin, TimestampMixin, Base):
     search_vector: Mapped[str] = mapped_column(
         TSVECTOR, Computed(SEARCH_VECTOR_EXPRESSION, persisted=True), deferred=True
     )
-
-
-note_tag = Table(
-    "note_tag",
-    Base.metadata,
-    Column("note_id", ForeignKey("notes.id", ondelete="CASCADE"), primary_key=True),
-    Column("tag_id", ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True, index=True),
-)
+    # lazy="raise": the repository loads both with every note, so a missed load is an error,
+    # not a query per note. Deleting rows from note_tag is left to ON DELETE CASCADE.
+    folder: Mapped[Folder | None] = relationship(lazy="raise")
+    tags: Mapped[list[Tag]] = relationship(
+        secondary=note_tag, order_by=Tag.slug, lazy="raise", passive_deletes=True
+    )

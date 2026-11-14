@@ -1,0 +1,66 @@
+[project]
+name = "notes-api"
+version = "2.0.0"
+description = "The Notes API: REST for the web app and an MCP server for AI assistants"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic==1.20.1",
+    "argon2-cffi==25.1.0",
+    "bcrypt==5.0.0",
+    "email-validator==2.3.0",
+    "fastapi==0.162.7",
+    "psycopg[binary]==3.3.9",
+    "pydantic-settings==2.16.3",
+    "sqlalchemy==2.1.8",
+    "tzdata==2026.6",
+    "uvicorn==0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx==0.28.1",
+    "mypy==2.4.1",
+    "pytest==9.2.0",
+    "pytest-cov==7.1.0",
+    "ruff==0.17.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 110
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "S", "RUF", "C4", "PTH", "RET"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+"migrations/**" = ["N999"]
+
+[tool.mypy]
+strict = true
+python_version = "3.14"
+plugins = ["pydantic.mypy"]
+# Any use of a deprecated API fails the check.
+enable_error_code = ["deprecated"]
+exclude = ["^\\.venv/"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+skip_empty = true
+exclude_also = ["if TYPE_CHECKING:"]

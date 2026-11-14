@@ -1,20 +1,21 @@
+# Every env file stays out, web/.env.production included: the image serves the web app
+# from the API's own origin, so the build must not point it at another server
+# (web/src/config/env.ts). Compose passes the API its settings at run time.
 .git
 **/node_modules
 **/.env
 **/.env.*
-!web/.env.production
-**/*.sqlite
-api-laravel/vendor
-api-laravel/tests
-api-laravel/.phpunit.cache
-api-laravel/bootstrap/cache/*.php
-api-laravel/public/hot
-api-laravel/storage/logs/*.log
-api-laravel/storage/pail
-api-laravel/storage/framework/cache/data/*
-api-laravel/storage/framework/sessions/*
-api-laravel/storage/framework/views/*.php
+**/__pycache__
+**/.venv
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.coverage
+**/htmlcov
+api/tests
+api-laravel
 web/coverage
+web/dist
 assets
 docs
 mockup

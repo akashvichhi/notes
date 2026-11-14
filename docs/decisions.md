@@ -4,6 +4,8 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 
 ## 1. The app is web-only
 
+The sign-in part is superseded by decision 10: the browser uses the API's own server-side session.
+
 - **Context:** the app was planned to ship as a web app and as Tauri apps for desktop and mobile, with a local SQLite copy, an "On This Device" container, a sync engine and bearer tokens kept in the OS secure store. Only the web app is in use.
 - **Options:** keep the native code in the repository; remove it and keep one build.
 - **Decision:** remove the native shell (`web/src-tauri`), the local database, the sync engine, the platform layer, the On This Device container and the device sign-in tokens (`POST /tokens`, `DELETE /tokens/current`). The browser signs in with the Sanctum session cookie only.
@@ -33,6 +35,8 @@ Superseded by decision 9.
 - **Consequences:** `sass` is a dev dependency; Vite compiles `*.scss` and resolves `@src` in `@use`. Its optional `@parcel/watcher` install script stays unapproved, because only `sass --watch` uses it.
 
 ## 5. Docker Compose runs the whole app
+
+Superseded by decision 10.
 
 - **Context:** the app should run on a VPS with one command and come back by itself after a crash or a reboot. Compose used to start only MySQL, and the commented-out PHP service ran `php artisan serve`, Laravel's development server. The API needs its daily scheduler (`notes:prune-pats`); nothing is queued.
 - **Options:** keep `php artisan serve`; nginx in front of PHP-FPM; Caddy (2.11.6) in front of PHP-FPM.
@@ -71,3 +75,19 @@ Superseded by decision 9.
 - **Options:** keep writing into a server folder; build to `web/dist` and have the API serve that folder; a separate static server.
 - **Decision:** `vite build` writes to `web/dist`, emptied on each build. The API serves `/assets/*` from it with an immutable cache header and `index.html` for every other path outside `/api` and `/mcp` (`api/app/core/frontend.py`). The Docker image builds the web app and copies `dist` in, so no build output is committed.
 - **Consequences:** a release is a push of source only. Running the API locally without a build serves the API alone; the Vite dev server proxies `/api` to it.
+
+## 10. The API is FastAPI on Postgres, run by Docker Compose
+
+- **Context:** the app runs on a VPS with Docker (decision 5), so it is not tied to shared hosting. The API needs full-text search, text that compares without regard to case or accents, a daily cleanup of expired sessions and tokens, and one origin for the web app and the API.
+- **Options:** keep the existing PHP stack; FastAPI with SQLite; FastAPI with Postgres.
+- **Decision:** a FastAPI API (`api/`) on Postgres 18, synchronous SQLAlchemy with psycopg, Alembic migrations, served by one uvicorn worker. Postgres over SQLite for its generated `tsvector` column with a GIN index, ICU collations and concurrent writers. `docker/api/Dockerfile` builds the web app and the API into one image. Compose runs `app` (migrates, then serves), `scheduler` (the same image, running `scripts/prune_daily.sh`), `web` (Caddy 2.11.6, a reverse proxy that gets the HTTPS certificate) and `postgres`, all with `restart: unless-stopped`. The runtime dependencies beyond decisions 7 and 8:
+  - `fastapi` (0.162.7): routing, dependency injection and request validation on Pydantic.
+  - `pydantic-settings` (2.16.3): typed configuration read in one place (`app/core/config.py`).
+  - `sqlalchemy` (2.1.8) and `alembic` (1.20.1): the ORM and its migrations.
+  - `psycopg[binary]` (3.3.9): the Postgres driver, with prebuilt wheels.
+  - `argon2-cffi` (25.1.0): password hashing.
+  - `bcrypt` (5.0.0): verifies bcrypt hashes of imported accounts once, so they are rehashed to Argon2 at the next sign-in.
+  - `email-validator` (2.3.0): Pydantic's `EmailStr`.
+  - `tzdata` (2026.6): the IANA zone database, which Windows and slim images lack.
+  - `uvicorn` (0.54.0): the ASGI server.
+- **Consequences:** `docker compose up -d --build` deploys. The API reads `api/.env.production`; the root `.env` holds the Compose values, including `POSTGRES_PASSWORD`, which Compose puts into `DATABASE_URL`, and `APP_ORIGIN`, which becomes `ALLOWED_ORIGINS`. No domain is written into a committed file. Postgres listens on localhost only. The rate limits are counted in memory, so the API must stay at one worker. The tests need a real Postgres, locally from Compose and in CI as a service container.

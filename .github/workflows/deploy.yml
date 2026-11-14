@@ -37,17 +37,39 @@ jobs:
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: api-laravel
+        working-directory: api
+    # The tests need a real Postgres: the ICU collation and full-text search have no
+    # in-memory stand-in (api/CLAUDE.md).
+    services:
+      postgres:
+        image: postgres:18.4-bookworm
+        env:
+          POSTGRES_USER: notes
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: notes_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U notes -d notes_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://notes:secret@127.0.0.1:5432/notes_test
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: shivammathur/setup-php@2.40.0
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
-          php-version: '8.5'
-          extensions: pdo_sqlite, intl, zip, bcmath
-          coverage: none
-      - run: composer install --no-interaction --prefer-dist
-      - run: cp .env.example .env && php artisan key:generate
-      - run: php artisan test
+          version: 0.13.6
+          python-version: 3.14.3
+          enable-cache: true
+          cache-dependency-glob: api/uv.lock
+      - run: uv sync --frozen
+      - run: make check
+      # ruff runs with --fix and formats, so a change it had to make means the pushed
+      # code wasn't clean.
+      - name: Fail if the linters changed files
+        run: git diff --exit-code
 
   deploy:
     needs: [web-checks, api-checks]

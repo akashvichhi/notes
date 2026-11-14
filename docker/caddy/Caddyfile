@@ -1,15 +1,6 @@
 # SITE_ADDRESS is ":80" locally. On the server it is the domain (for example
 # my-notes.app), and Caddy then gets and renews the HTTPS certificate itself.
+# The API compresses responses and sets the cache headers, so Caddy only proxies.
 {$SITE_ADDRESS::80} {
-	root * /var/www/html/public
-	encode zstd gzip
-
-	# Vite puts a content hash in every asset name, so a file never changes.
-	@assets path /assets/*
-	header @assets Cache-Control "public, max-age=31536000, immutable"
-
-	php_fastcgi app:9000
-	file_server {
-		hide .htaccess
-	}
+	reverse_proxy app:8000
 }

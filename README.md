@@ -1,8 +1,7 @@
 # Notes
 
-A web notes app with a rich-text editor, folders, tags and search. It runs on a Laravel API with MySQL and includes an MCP server, so AI assistants can read and write your notes.
+A web notes app with a rich-text editor, folders, tags and search. It runs on a FastAPI API with Postgres and includes an MCP server, so AI assistants can read and write your notes.
 
-- **Live app:** https://notes.codespan.in
 - **Demo account:** demo@example.com / Demo@2026
 
 ![Notes](assets/screenshots/app.png)
@@ -12,7 +11,7 @@ A web notes app with a rich-text editor, folders, tags and search. It runs on a 
 - **Rich-text editor.** Tiptap with the full toolbar: headings, lists, task lists, tables, code blocks with syntax highlighting, links, images, highlight, text colour, alignment, sub/superscript, and word and character counts.
 - **Autosave with conflict handling.** Notes save as you type. If the same note was changed in another tab or on another device in the meantime, you choose what to keep, and nothing is lost by default. Unsaved typing is buffered in the browser, so a crash or reload doesn't lose it.
 - **Folders, tags and stars.** Nested, coloured folders, tags on any note, and a starred view.
-- **Search.** A global search (⌘K / Ctrl+K) across all notes, backed by MySQL full-text search, plus a filter scoped to the current list.
+- **Search.** A global search (⌘K / Ctrl+K) across all notes, backed by Postgres full-text search, plus a filter scoped to the current list.
 - **Trash.** Deleted notes go to the Trash first and can be restored.
 - **MCP server.** AI assistants such as Claude can search, read, create and edit notes through a personal access token. See [Using the MCP server](#using-the-mcp-server).
 
@@ -21,10 +20,10 @@ A web notes app with a rich-text editor, folders, tags and search. It runs on a 
 | Area | Technologies |
 |---|---|
 | Frontend | React 19, TypeScript (strict), Vite 8, Mantine 9, TanStack Query 5, Zustand 5, Tiptap 3, React Router, SCSS modules |
-| Backend | PHP 8.3, Laravel 13, MySQL 8.4, Laravel Sanctum, `laravel/mcp` |
-| Tooling | Docker Compose (MySQL for local development), Pest (API tests), Vitest and React Testing Library (web tests), ESLint, Stylelint |
+| Backend | Python 3.14, FastAPI, Pydantic 2, SQLAlchemy 2, Alembic, Postgres 18, the official `mcp` SDK |
+| Tooling | Docker Compose and Caddy, uv, pytest, ruff and mypy (API), Vitest and React Testing Library, ESLint and Stylelint (web) |
 
-Exact versions are pinned in [`web/package.json`](web/package.json) and [`api/composer.json`](api/composer.json).
+Exact versions are pinned in [`web/package.json`](web/package.json) and [`api/pyproject.toml`](api/pyproject.toml), locked in `api/uv.lock`.
 
 ## Architecture
 
@@ -39,11 +38,11 @@ flowchart LR
     end
 
     subgraph server["Server"]
-        api["Laravel API<br/>/api/v1, Sanctum"]
+        api["FastAPI API<br/>/api/v1, session"]
         mcp["MCP endpoint<br/>/mcp"]
-        mysql[("MySQL")]
-        api --> mysql
-        mcp --> mysql
+        db[("Postgres")]
+        api --> db
+        mcp --> db
     end
 
     assistant["AI assistant<br/>(Claude or another MCP client)"]
@@ -52,13 +51,13 @@ flowchart LR
     assistant <-->|"Streamable HTTP<br/>Bearer token"| mcp
 ```
 
-- **Serving:** Laravel serves the built React app from `api/public`, so the app and the API share one origin ([decision 2](docs/decisions.md)).
-- **Sign-in:** the browser authenticates with Sanctum's session in an httpOnly cookie. JavaScript never sees a token.
+- **Serving:** the API serves the built React app from `web/dist`, so the app and the API share one origin ([decision 9](docs/decisions.md)).
+- **Sign-in:** the browser authenticates with a server-side session whose id sits in an httpOnly cookie. JavaScript never sees it. Writes from any other origin are rejected.
 - **Errors:** every API failure reaches the UI as one error shape. Error boundaries at the root, app, route and editor levels mean a JavaScript error never leaves a blank screen.
 
 ## Using the MCP server
 
-The API includes a [Model Context Protocol](https://modelcontextprotocol.io) server. With it, an AI assistant can work with your notes on your behalf: find a note, summarise a folder, or append to a running log. It is served at **`/mcp`** (for the live app, `https://notes.codespan.in/mcp`) over the Streamable HTTP transport.
+The API includes a [Model Context Protocol](https://modelcontextprotocol.io) server. With it, an AI assistant can work with your notes on your behalf: find a note, summarise a folder, or append to a running log. It is served at **`/mcp`** (for example `https://<your-domain>/mcp`) over the Streamable HTTP transport.
 
 ### Create a personal access token
 
@@ -74,7 +73,7 @@ The API includes a [Model Context Protocol](https://modelcontextprotocol.io) ser
 | `notes:write` | Also create and edit notes, folders and tags. Write implies read |
 
 - **Scopes are checked inside each tool.** A read-only token sees only an error message from a write tool, telling it which scope is missing.
-- **Nothing can be deleted with a token.** No MCP tool deletes, trashes or restores anything, and personal access tokens can never reach the API's delete, trash or account routes.
+- **Nothing can be deleted with a token.** No MCP tool deletes, trashes or restores anything, and personal access tokens work only at `/mcp`, never on the REST API.
 - **Trash:** notes in the Trash are invisible to the MCP server.
 - **Rate limit:** 120 requests per minute.
 
@@ -83,7 +82,7 @@ The API includes a [Model Context Protocol](https://modelcontextprotocol.io) ser
 **Claude Code**, from a terminal:
 
 ```sh
-claude mcp add --transport http notes https://notes.codespan.in/mcp --header "Authorization: Bearer <your-token>"
+claude mcp add --transport http notes https://<your-domain>/mcp --header "Authorization: Bearer <your-token>"
 ```
 
 To share the server with a project instead, add a `.mcp.json` file:
@@ -93,7 +92,7 @@ To share the server with a project instead, add a `.mcp.json` file:
   "mcpServers": {
     "notes": {
       "type": "http",
-      "url": "https://notes.codespan.in/mcp",
+      "url": "https://<your-domain>/mcp",
       "headers": {
         "Authorization": "Bearer <your-token>"
       }
@@ -110,7 +109,7 @@ Don't commit a real token. Use an environment variable (`"Bearer ${NOTES_TOKEN}"
 
 ### Tools
 
-Defined in [`api/app/Mcp/Tools/`](api/app/Mcp/Tools) and registered in [`NotesServer.php`](api/app/Mcp/Servers/NotesServer.php). Note bodies are exchanged as markdown.
+Defined in [`api/app/mcp/`](api/app/mcp), one module per tool group, and registered in [`mcp_server.py`](api/app/mcp/mcp_server.py). Note bodies are exchanged as markdown.
 
 | Tool | Scope | What it does |
 |---|---|---|
@@ -140,9 +139,9 @@ Defined in [`api/app/Mcp/Tools/`](api/app/Mcp/Tools) and registered in [`NotesSe
 
 **Rich text stored as ProseMirror JSON.** Markdown can't express highlight, text colour, alignment or sub/superscript, so it would drop them on every save. The server derives plain text from the JSON for full-text search, and never accepts it from the client, so search can't drift from the content. The MCP server converts bodies to and from markdown at its edge, keeping the formatting markdown can't express as inline HTML.
 
-**Token scopes are checked inside each MCP tool.** The `/mcp` route only admits tokens that carry at least one notes scope. Each tool then declares the scope it needs and checks it before doing anything. A read-only token can still list the write tools, and calling one returns a clear error naming the missing scope. The tools call the same services and policies as the REST API, so the MCP server has no data access of its own. Personal access tokens are never given the `account` ability, which keeps every delete, trash, restore and account route out of their reach.
+**Token scopes are checked inside each MCP tool.** The `/mcp` route only admits tokens that carry at least one notes scope. Each tool then declares the scope it needs and checks it before doing anything. A read-only token can still list the write tools, and calling one returns a clear error naming the missing scope. The tools call the same services as the REST API, so the MCP server has no data access of its own. Personal access tokens are accepted only at `/mcp`, which keeps every delete, trash, restore and account route out of their reach.
 
-**Why Laravel.** Laravel and MySQL were chosen because the app is deployed on shared PHP hosting; on a VPS I would use FastAPI with Docker.
+**Why FastAPI and Postgres.** The app runs on a VPS with Docker. Postgres gives full-text search with a generated, indexed column and an ICU collation that compares names and emails without regard to case or accents ([decision 10](docs/decisions.md)).
 
 Numbered decision records are in [`docs/decisions.md`](docs/decisions.md).
 
@@ -154,45 +153,44 @@ I built this app with a coding agent, working from documents I wrote first: a pr
 
 ### Run the whole app with Docker
 
-`docker-compose.yml` runs everything: MySQL, the Laravel API on PHP-FPM, Caddy serving the API and the React build, and Laravel's scheduler. Every service restarts after a crash and whenever Docker starts. The reasons are in decision 5 of [`docs/decisions.md`](docs/decisions.md).
+`docker-compose.yml` runs everything: Postgres, the FastAPI API (which also serves the React build), a scheduler that removes expired sessions and tokens once a day, and Caddy in front. Every service restarts after a crash and whenever Docker starts. The reasons are in decision 10 of [`docs/decisions.md`](docs/decisions.md).
 
 ```sh
-cp api/.env.example api/.env       # then set APP_KEY (php artisan key:generate --show) and the mail settings
-cp .env.example .env               # optional locally; the defaults work
+cp .env.example .env                              # set POSTGRES_PASSWORD and APP_ORIGIN
+cp api/.env.example api/.env.production           # then set APP_ENV=production and the values below
 docker compose up -d --build
 ```
 
-The app is on `http://127.0.0.1:8000`. The `app` container runs the migrations each time it starts. To seed the demo data: `docker compose exec app php artisan db:seed --force`.
+The app is on `http://127.0.0.1:8000`. The `app` container runs the migrations each time it starts.
 
 **On a server:**
-- In `.env`, set a strong `DB_PASSWORD` before the first start, `SITE_ADDRESS` to the domain, `HTTP_PORT=80` and `HTTPS_PORT=443`. Caddy then gets the HTTPS certificate itself.
-- In `api/.env`, set `APP_ENV=production`, `APP_DEBUG=false`, and `APP_URL`, `SANCTUM_STATEFUL_DOMAINS` and `SESSION_DOMAIN` for the domain.
+- In `.env`, set a strong `POSTGRES_PASSWORD` (letters and digits) before the first start, `SITE_ADDRESS` to the domain, `APP_ORIGIN` to the site's origin (`https://` and the domain), `HTTP_PORT=80` and `HTTPS_PORT=443`. Caddy then gets the HTTPS certificate itself.
+- In `api/.env.production`, set `APP_ENV=production`, `CORS_ORIGINS` empty, `SESSION_COOKIE_SECURE=true` and `WEB_DIST_DIR=/app/web/dist`. `DATABASE_URL` and `ALLOWED_ORIGINS` come from Compose.
 - Run `sudo systemctl enable docker` once, so Docker, and with it the app, starts when the server boots.
 - Every push to `master` deploys automatically: GitHub Actions runs the checks, then pulls and rebuilds on the server (decision 6). By hand, it's `git pull && docker compose up -d --build`.
 
 ### Develop on your machine
 
-Prerequisites: Docker (for MySQL), Node 20 or newer, and PHP 8.3 or newer with Composer, installed on your machine. The API and the web app run natively, so changes show up without rebuilding images.
+Prerequisites: Docker (for Postgres), Node 26, and [uv](https://docs.astral.sh/uv/) (it installs Python 3.14 itself). The API and the web app run natively, so changes show up without rebuilding images.
 
-**1. Start only MySQL** (MySQL 8.4 on `127.0.0.1:3306`, database `notes`, root password from `DB_PASSWORD` in the root `.env`, default `secret`):
+**1. Start only Postgres** (Postgres 18 on `127.0.0.1:5432`, user and database `notes`, password from `POSTGRES_PASSWORD` in the root `.env`; a `notes_test` database for the tests is created with it):
 
 ```sh
-docker compose up -d mysql
+cp .env.example .env
+docker compose up -d postgres
 ```
 
 **2. Run the API** on `http://127.0.0.1:8000`:
 
 ```sh
 cd api
-composer install
-cp .env.example .env
-php artisan key:generate
-# set DB_CONNECTION=mysql, DB_HOST=127.0.0.1, DB_DATABASE=notes and the MySQL credentials in .env
-php artisan migrate --seed
-php artisan serve
+uv sync --frozen
+cp .env.example .env               # the defaults match the Postgres above
+uv run alembic upgrade head
+uv run uvicorn app.main:create_app --factory --reload
 ```
 
-**3. Run the web app** on `http://localhost:5173`. The Vite dev server forwards `/api` and `/sanctum` to the API, so cookies and CSRF behave as they do in production:
+**3. Run the web app** on `http://localhost:5173`. The Vite dev server forwards `/api` to the API (or to `VITE_API_URL` in `web/.env`), so the session cookie behaves as it does in production:
 
 ```sh
 cd web
@@ -203,12 +201,12 @@ npm run dev
 **Tests and checks:**
 
 ```sh
-cd api && php artisan test     # Pest feature and unit tests
-cd web && npm run test         # Vitest
-cd web && npm run check        # ESLint, Stylelint, type check and Vitest
+cd api && make check               # ruff, mypy and pytest with coverage, against notes_test
+cd web && npm run test             # Vitest
+cd web && npm run check            # ESLint, Stylelint, type check and Vitest
 ```
 
-How the production build is served by Laravel is described in [`PRODUCTION-BUILD.md`](PRODUCTION-BUILD.md).
+The API tests use `TEST_DATABASE_URL`, by default the `notes_test` database above.
 
 ## Author
 

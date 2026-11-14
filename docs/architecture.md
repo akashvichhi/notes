@@ -1,7 +1,7 @@
 # Notes — Architecture
 
-A web notes app. A React single-page app talks to a Laravel API that stores every note
-in MySQL. The same API exposes an MCP server, so AI assistants can read and write notes
+A web notes app. A React single-page app talks to a FastAPI API that stores every note
+in Postgres. The same API exposes an MCP server, so AI assistants can read and write notes
 with a personal access token. The app is web-only (decision 1).
 
 ---
@@ -17,22 +17,28 @@ with a personal access token. The app is web-only (decision 1).
                      │  HTTPS / JSON, session cookie
                      ▼
           ┌──────────────────────┐        ┌──────────────────┐
-          │   LARAVEL API        │◄───────│  AI ASSISTANT    │
-          │   /api/v1 (Sanctum)  │  /mcp  │  Bearer token    │
-          │   /mcp (laravel/mcp) │        └──────────────────┘
+          │    CADDY (HTTPS)     │◄───────│  AI ASSISTANT    │
+          └──────────┬───────────┘  /mcp  │  Bearer token    │
+                     ▼                    └──────────────────┘
+          ┌──────────────────────┐
+          │   FASTAPI API        │
+          │   /api/v1 · /mcp     │
+          │   the web build      │
           └──────────┬───────────┘
                      ▼
           ┌──────────────────────┐
-          │      MySQL 8.4       │
+          │     Postgres 18      │
           └──────────────────────┘
 ```
 
-- **One origin.** Laravel serves the built SPA from `api/public`, so the app, `/api`,
-  `/sanctum` and `/mcp` share one origin (decision 2). In development the Vite dev
-  server proxies `/api` and `/sanctum` to the API, which keeps cookies and CSRF the same
-  as in production.
+- **One origin.** The API serves the built SPA from `web/dist`, so the app, `/api` and
+  `/mcp` share one origin (decision 9). In development the Vite dev server proxies
+  `/api` to the API, so the session cookie behaves as in production.
 - **Reads go to the API.** TanStack Query caches server data in memory; there is no
   local copy of the notes.
+- **Key case.** The API speaks snake_case and the app camelCase; the axios interceptors
+  convert the keys (`web/src/utils/case_conversion.ts`). Note bodies pass through
+  untouched.
 
 ---
 
@@ -51,24 +57,52 @@ It is cleared once the API confirms the save, and on sign-out.
 
 ### On the server
 
-MySQL 8.4:
+Postgres 18, schema in `api/migrations/`:
 
 ```sql
-notes(id, uuid, user_id, folder_id, title, title_locked, body JSON,
-      plain_text LONGTEXT, excerpt, is_starred, version, word_count,
-      deleted_at, created_at, updated_at,
-      FULLTEXT ft_notes(title, plain_text))
-folders(...)  tags(...)  note_tag(...)  note_versions(...)
-personal_access_tokens(...)   -- Sanctum, plus a `type` column
+users(id, uuid, name, email, password_hash, preferences JSON, created_at, updated_at)
+sessions(id, user_id, token_hash, expires_at, created_at)
+access_tokens(id, user_id, name, token_hash, abilities, last_used_at, expires_at, ...)
+folders(id, uuid, user_id, parent_id, name, color, position, ...)
+tags(id, uuid, user_id, name, slug, ...)
+notes(id, uuid, user_id, folder_id, title, title_locked, body JSON, plain_text,
+      excerpt, is_starred, version, word_count, deleted_at, created_at, updated_at,
+      search_vector TSVECTOR GENERATED)
+note_tag(note_id, tag_id)
 ```
 
-- **Bodies are ProseMirror JSON.** The server derives `plain_text` from the body for
-  full-text search and never accepts it from the client.
+- **Case- and accent-insensitive text.** Emails, folder and tag names, tag slugs and
+  note titles use the ICU collation `case_insensitive`, so uniqueness and lookups
+  ignore case and accents.
+- **Bodies are stored as `json`, not `jsonb`**, because `jsonb` reorders keys.
+- **Bodies are ProseMirror JSON.** The server derives `plain_text` from the body and
+  never accepts it from the client; `search_vector` is generated from the title and
+  `plain_text`.
 - **Trash is a soft delete** (`deleted_at`). Every note query goes through the one
   helper that applies the Trash filter.
 - **UUIDs are public ids.** The web app mints a note's UUID itself so it can show the
   note optimistically; `POST /notes` is idempotent on that UUID, so a retried create
   never makes a second note.
+
+### Indexes
+
+| Index | Why |
+|---|---|
+| `notes (user_id, deleted_at, updated_at)` | The All Notes and Trash lists: one user's notes, in or out of the Trash, newest first |
+| `notes (user_id, folder_id, deleted_at)` | A folder's list and the per-folder counts |
+| `notes (user_id, is_starred, deleted_at)` | The Starred list and its count |
+| `notes (folder_id)` | Clearing a deleted folder from its notes (`ON DELETE SET NULL`) |
+| `notes (search_vector)` GIN | Full-text search |
+| `note_tag (tag_id)` | A tag's notes and counts; the primary key covers lookups by note |
+| `folders (user_id, parent_id, name)` unique | No two sibling folders share a name, root folders included (`NULLS NOT DISTINCT`) |
+| `folders (user_id, parent_id)` | One level of the folder tree |
+| `folders (parent_id)` | A folder's children, when it is deleted or moved |
+| `tags (user_id, slug)` unique | One tag per slug per user; tag lookups by slug |
+| `users (email)` unique | Sign-in lookup; one account per email, whatever the case |
+| `sessions (token_hash)`, `access_tokens (token_hash)` unique | Finding the session or token behind a request |
+| `sessions (user_id)`, `access_tokens (user_id)` | Signing a user out everywhere; listing a user's tokens |
+| `sessions (expires_at)`, `access_tokens (expires_at)` | The daily prune of expired credentials |
+| `uuid` unique on users, folders, tags, notes | Public ids in URLs and request bodies |
 
 ---
 
@@ -109,34 +143,38 @@ once, and a CRDT would replace readable JSON with binary state the server can't 
 
 | Client | Mechanism | Credential stored in |
 |---|---|---|
-| Browser | Sanctum stateful session | httpOnly cookie; JavaScript never sees it |
-| MCP client | Personal access token | The client's own configuration |
+| Browser | Server-side session; only a hash of its id is stored | httpOnly cookie; JavaScript never sees it |
+| MCP client | Personal access token (`{id}|notes_pat_…`); only its SHA-256 is stored | The client's own configuration |
 
-- **Browser.** axios sends `withCredentials` and `withXSRFToken`; a 419 is retried once
-  after refreshing the CSRF cookie. The signed-in user lives only in the TanStack Query
-  cache. Sign-out clears the query cache, the open tabs and the draft buffer.
+- **Browser.** axios sends `withCredentials`. CSRF protection is `SameSite=Lax` plus an
+  origin check on every write (`ALLOWED_ORIGINS`). The signed-in user lives only in the
+  TanStack Query cache. Sign-out clears the query cache, the open tabs and the draft
+  buffer.
 - **Personal access tokens** are created on the Access tokens page with `notes:read`
-  and/or `notes:write` and an expiry. They never carry the `account` ability, so every
-  delete, trash, restore, profile, password and token route is out of their reach.
-  Changing or resetting the password revokes every token.
+  and/or `notes:write` and an expiry. They work only at `/mcp`; every REST route takes
+  the session cookie alone. Changing the password revokes every token.
+- **Expired sessions and tokens** are rejected when used and removed once a day by the
+  scheduler container (`api/scripts/prune_expired.py`).
 
 ---
 
 ## 5 · MCP server
 
-`laravel/mcp` serves `NotesServer` at `/mcp` over Streamable HTTP, behind
-`auth:sanctum`, the read ability and a rate limit of 120 requests a minute. Each tool
+The official `mcp` SDK serves the server at `/mcp` over Streamable HTTP, stateless,
+with JSON responses (decision 8). A wrapper in front of it checks the Bearer token, its
+expiry and abilities, and a rate limit of 120 requests a minute per token. Each tool
 declares the scope it needs and checks it before doing anything. The tools call the
-same services and policies as the REST API, so the MCP server has no data access of its
-own. Bodies are converted to and from markdown at the MCP edge; formatting markdown
-can't express is kept as inline HTML. No tool deletes, trashes or restores anything,
-and notes in the Trash are invisible to it.
+same services as the REST API (`api/app/mcp/`), so the MCP server has no data access
+of its own. Bodies are converted to and from markdown at the MCP edge (decision 7);
+formatting markdown can't express is kept as inline HTML. No tool deletes, trashes or
+restores anything, and notes in the Trash are invisible to it.
 
 ---
 
 ## 6 · Technology stack
 
-Exact versions are pinned in `web/package.json` and `api/composer.json`.
+Exact versions are pinned in `web/package.json` and `api/pyproject.toml` (locked in
+`api/uv.lock`).
 
 ### Frontend
 
@@ -174,15 +212,19 @@ Exact versions are pinned in `web/package.json` and `api/composer.json`.
 
 | Technology | Role |
 |---|---|
-| PHP, Laravel (API-only) | The API |
-| Laravel Sanctum | Session cookies for the browser, personal access tokens for MCP |
-| laravel/mcp | The MCP server |
-| MySQL 8.4 | Storage, `FULLTEXT` search |
+| Python, FastAPI, Pydantic | The API, input validation, response shapes |
+| SQLAlchemy, Alembic, psycopg | Database access (synchronous) and migrations |
+| Postgres 18 | Storage, full-text search, ICU collation |
+| Argon2 | Password hashing |
+| mcp | The MCP server (decision 8) |
+| markdown-it-py, lxml | Markdown ↔ ProseMirror at the MCP edge (decision 7) |
+| uvicorn | The ASGI server, one worker (the rate limits are counted in memory) |
 
 ### Testing and tooling
 
-Pest (API) · Vitest + React Testing Library (web) · ESLint · Stylelint · Docker Compose
-(MySQL for local development).
+pytest against a real Postgres, ruff, mypy strict (API) · Vitest + React Testing
+Library, ESLint, Stylelint (web) · Docker Compose (Postgres for local development, the
+whole app on the server, decision 10).
 
 ---
 

@@ -1,75 +1,79 @@
-x-laravel: &laravel
+# The app on one machine (decision 10). `docker compose up -d --build` builds and starts
+# everything; the values come from the root .env (.env.example).
+
+x-api: &api
   image: notes-app
   # Built from this repo, never pulled from a registry.
   pull_policy: build
   build:
     context: .
-    dockerfile: docker/php/Dockerfile
-    target: app
-  env_file: api-laravel/.env
+    dockerfile: docker/api/Dockerfile
+  env_file: api/.env.production
   environment:
-    DB_CONNECTION: mysql
-    DB_HOST: mysql
-    DB_PORT: 3306
-    DB_DATABASE: ${DB_DATABASE:-notes}
-    DB_USERNAME: root
-    DB_PASSWORD: ${DB_PASSWORD:-secret}
-  volumes:
-    - storage:/var/www/html/storage
+    # Here, not in api/.env.production, so the password and the domain live only in the
+    # root .env.
+    ALLOWED_ORIGINS: ${APP_ORIGIN:?set APP_ORIGIN in .env}
+    DATABASE_URL: postgresql+psycopg://notes:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/notes
   depends_on:
-    mysql:
+    postgres:
       condition: service_healthy
   restart: unless-stopped
 
 services:
   app:
-    <<: *laravel
+    <<: *api
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
   scheduler:
-    <<: *laravel
-    command: ["php", "artisan", "schedule:work"]
+    <<: *api
+    command: ["sh", "scripts/prune_daily.sh"]
+    depends_on:
+      # The app runs the migrations on start; the scheduler waits for them.
+      app:
+        condition: service_healthy
 
   web:
-    image: notes-web
-    pull_policy: build
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-      target: web
+    image: caddy:2.11.6-alpine
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-:80}
     ports:
       - "${HTTP_PORT:-8000}:80"
       - "${HTTPS_PORT:-8443}:443"
     volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
       - app
     restart: unless-stopped
 
-  mysql:
-    image: mysql:8.4.11
-    container_name: notes-mysql
+  postgres:
+    image: postgres:18.4-bookworm
+    container_name: notes-postgres
     restart: unless-stopped
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
-      MYSQL_DATABASE: ${DB_DATABASE:-notes}
-    # Bound to localhost only, so the database is never reachable from outside
-    # the machine; the app reaches it over Docker's own network.
+      POSTGRES_USER: notes
+      POSTGRES_DB: notes
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    # Bound to localhost only, so the database is never reachable from outside the
+    # machine; the app reaches it over Docker's own network.
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:5432:5432"
     volumes:
-      - mysql-data:/var/lib/mysql
+      # Postgres 18 images keep the data in a versioned folder under this path.
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/create_test_database.sql:/docker-entrypoint-initdb.d/create_test_database.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      test: ["CMD-SHELL", "pg_isready -U notes -d notes"]
       interval: 5s
       timeout: 5s
       retries: 20
 
 volumes:
-  mysql-data:
-  storage:
+  postgres-data:
   caddy-data:
   caddy-config:

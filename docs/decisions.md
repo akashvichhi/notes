@@ -43,3 +43,14 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 - **Options:** pull on the server by hand; a cron job that polls the repo; a GitHub Actions workflow that connects over SSH after the checks pass.
 - **Decision:** `.github/workflows/deploy.yml` runs `npm run check` and the API tests, then connects with plain `ssh` (no third-party deploy action holds the key), runs `git pull --ff-only` and `docker compose up -d --build`. The server's host keys are pinned in a secret.
 - **Consequences:** a failing check blocks the deploy. The secrets `VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS` and `VPS_APP_DIR` must be set in the repo. Each deploy has a few seconds of downtime while containers are replaced. `npm run release` is no longer needed, because the image builds the web app itself.
+
+## 7. Note Markdown is converted with markdown-it-py and lxml
+
+- **Context:** the MCP tools read and write note bodies as Markdown, while the editor stores ProseMirror JSON. The conversion must accept GitHub's dialect (tables, task lists, strikethrough, autolinks) plus the inline HTML that carries what Markdown cannot say (underline, colour, alignment, details), and it must be strict about what survives.
+- **Options:** a hand-written Markdown parser; markdown-it-py with its plugins, rendering to HTML that an HTML parser turns into the editor's nodes; a Markdown parser that emits an AST mapped straight to nodes.
+- **Decision:** Markdown → HTML with markdown-it-py, HTML fix-ups and reading with lxml, then the document normalizer (`api/app/content/`). Inline HTML has to be parsed anyway, so going through HTML handles both forms with one set of rules. The runtime dependencies:
+  - `markdown-it-py` (4.3.0): a CommonMark-compliant parser with tables and strikethrough built in.
+  - `mdit-py-plugins` (0.7.0): the task-list syntax.
+  - `linkify-it-py` (2.2.0): turns bare URLs into links; markdown-it-py's linkify rule needs it.
+  - `lxml` (6.1.3): a fast, lenient HTML parser with a tree that can be rewritten in place.
+- **Consequences:** golden fixtures in `api/tests/golden/` pin the output in both directions, so a dependency upgrade that changes a conversion fails the tests. Unsafe link and image URLs are removed after parsing rather than rejected, so their text stays.

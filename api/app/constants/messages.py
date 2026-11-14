@@ -54,6 +54,11 @@ TAG_NAME_WITHOUT_SLUG = "The name must contain a letter or number that has a Lat
 NOTE_CHANGED_ELSEWHERE = "This note changed somewhere else."
 NOTE_TOO_LARGE = "This note is too large to save."
 NOTE_TOO_DEEP = "This note is nested too deeply."
+# Markdown written through the MCP. The caller is an assistant, so the messages say how to fix it.
+IMAGE_SOURCE_NOT_ALLOWED = "Images must use an http(s) URL or an existing note-image placeholder."
+UNKNOWN_IMAGE_PLACEHOLDER = (
+    "Unknown image placeholder {placeholder}. Keep the placeholders exactly as get_note returned them."
+)
 VERSION_REQUIRED_WITH_BODY = "The version field is required when body is present."
 ABILITIES_DISTINCT = "The abilities field has a duplicate value."
 ACCESS_TOKEN_LIMIT_REACHED = (

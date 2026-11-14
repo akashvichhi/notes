@@ -6,9 +6,12 @@ import re
 import unicodedata
 from typing import Final
 
-# The characters that separate words: ASCII whitespace and the Unicode spaces.
-_WHITESPACE: Final = "\t\n\x0b\x0c\r \x85\xa0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000"
-WHITESPACE_RUNS: Final = re.compile(f"[{_WHITESPACE}]+")
+# The characters that separate words: ASCII whitespace and the Unicode spaces. Written as the
+# inside of a character class, so other patterns can build on it.
+WHITESPACE_CHARACTERS: Final = (
+    "\t\n\x0b\x0c\r \x85\xa0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000"
+)
+WHITESPACE_RUNS: Final = re.compile(f"[{WHITESPACE_CHARACTERS}]+")
 # Trimming removes ASCII whitespace and NUL only: a leading no-break space is content.
 _TRIM_CHARACTERS: Final = " \t\n\r\0\x0b"
 # Display width: East Asian wide and fullwidth characters take two columns.
@@ -23,6 +26,10 @@ def trim_ascii(text: str) -> str:
 
 def rtrim_ascii(text: str) -> str:
     return text.rstrip(_TRIM_CHARACTERS)
+
+
+def ltrim_ascii(text: str) -> str:
+    return text.lstrip(_TRIM_CHARACTERS)
 
 
 def collapse_whitespace(text: str) -> str:

@@ -9,6 +9,10 @@ dependencies = [
     "bcrypt==5.0.0",
     "email-validator==2.3.0",
     "fastapi==0.162.7",
+    "linkify-it-py==2.2.0",
+    "lxml==6.1.3",
+    "markdown-it-py==4.3.0",
+    "mdit-py-plugins==0.7.0",
     "psycopg[binary]==3.3.9",
     "pydantic-settings==2.16.3",
     "sqlalchemy==2.1.8",
@@ -23,6 +27,7 @@ dev = [
     "pytest==9.2.0",
     "pytest-cov==7.1.0",
     "ruff==0.17.5",
+    "types-lxml==2026.2.16",
 ]
 
 [tool.uv]
@@ -50,6 +55,11 @@ plugins = ["pydantic.mypy"]
 # Any use of a deprecated API fails the check.
 enable_error_code = ["deprecated"]
 exclude = ["^\\.venv/"]
+
+# linkify-it-py ships no type information.
+[[tool.mypy.overrides]]
+module = ["linkify_it", "linkify_it.*"]
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

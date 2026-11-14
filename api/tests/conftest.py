@@ -18,9 +18,13 @@ from sqlalchemy.orm import Session
 from app.core.config import AppEnvironment, Settings
 from app.core.database import create_database_engine, get_db_session
 from app.main import create_app
+from app.models.user_model import User
+from tests.factories import PASSWORD, make_user
+from tests.fakes import START_TIME, FakeClock
 
 DEFAULT_TEST_DATABASE_URL = "postgresql+psycopg://notes:secret@127.0.0.1:5432/notes_test"
 ALLOWED_ORIGIN = "https://notes.test"
+LOGIN_PATH = "/api/v1/auth/login"
 ALEMBIC_INI = Path(__file__).resolve().parent.parent / "alembic.ini"
 
 type AppFactory = Callable[[Settings], FastAPI]
@@ -74,9 +78,14 @@ def db_session(engine: Engine) -> Iterator[Session]:
 
 
 @pytest.fixture
-def build_app(db_session: Session) -> AppFactory:
+def clock() -> FakeClock:
+    return FakeClock(START_TIME)
+
+
+@pytest.fixture
+def build_app(db_session: Session, clock: FakeClock) -> AppFactory:
     def build(settings: Settings) -> FastAPI:
-        app = create_app(settings)
+        app = create_app(settings, clock=clock)
         app.dependency_overrides[get_db_session] = lambda: db_session
         return app
 
@@ -96,3 +105,16 @@ def build_client(build_app: AppFactory) -> Iterator[ClientFactory]:
 @pytest.fixture
 def client(build_client: ClientFactory, test_settings: Settings) -> TestClient:
     return build_client(test_settings)
+
+
+@pytest.fixture
+def user(db_session: Session) -> User:
+    return make_user(db_session)
+
+
+@pytest.fixture
+def authenticated_client(client: TestClient, user: User) -> TestClient:
+    """A client signed in as `user`, through the real login endpoint."""
+    response = client.post(LOGIN_PATH, json={"email": user.email, "password": PASSWORD})
+    assert response.status_code == 200, response.text
+    return client

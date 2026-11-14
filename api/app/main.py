@@ -6,6 +6,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from sqlalchemy.orm import Session, sessionmaker
+from starlette.concurrency import run_in_threadpool
 
 from app.api.health_router import health_router
 from app.api.v1.api_router import api_router
@@ -17,6 +19,8 @@ from app.core.frontend import Frontend
 from app.core.logging_setup import configure_logging
 from app.core.origin_check_middleware import OriginCheckMiddleware
 from app.core.request_logging_middleware import RequestLoggingMiddleware
+from app.core.startup_checks import ensure_database_has_users
+from app.repositories.user_repository import UserRepository
 
 APP_TITLE = "Notes API"
 
@@ -25,9 +29,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     configure_logging(settings.log_level)
     engine = create_database_engine(settings.database_url)
+    session_factory = create_session_factory(engine)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+        # In a worker thread: the database driver is synchronous.
+        await run_in_threadpool(check_database, session_factory, settings)
         yield
         engine.dispose()
 
@@ -35,7 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title=APP_TITLE, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.settings = settings
     app.state.engine = engine
-    app.state.session_factory = create_session_factory(engine)
+    app.state.session_factory = session_factory
     app.state.frontend = Frontend(settings.web_dist_dir)
 
     register_exception_handlers(app)
@@ -46,6 +53,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(api_router)
     app.state.frontend.mount_assets(app)
     return app
+
+
+def check_database(session_factory: sessionmaker[Session], settings: Settings) -> None:
+    with session_factory() as session:
+        ensure_database_has_users(UserRepository(session), settings.allow_empty_database)
 
 
 def _add_middleware(app: FastAPI, settings: Settings) -> None:

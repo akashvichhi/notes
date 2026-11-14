@@ -1,6 +1,6 @@
 # CLAUDE.md: Notes
 
-A cross-platform notes app: one React codebase ships as a web app and as Tauri apps for Windows, macOS, Linux, Android and iOS. Notes live in **Cloud** (synced through the Laravel API) or **On This Device** (local SQLite only). Design lives in `docs/ARCHITECTURE.md` and `docs/SPEC.md`.
+A web notes app: a React single-page app on a Laravel API with MySQL, plus an MCP server for AI assistants. The app is web-only (decision 1). Design lives in `docs/ARCHITECTURE.md` and `docs/SPEC.md`.
 
 These rules apply to AI agents and humans working anywhere in this repo. **MUST** and **NEVER** are hard rules; everything else is the strong default. Frontend rules are in `web/CLAUDE.md`; API rules are in `api/CLAUDE.md`.
 
@@ -9,7 +9,7 @@ These rules apply to AI agents and humans working anywhere in this repo. **MUST*
 ```
 notes-app/
 ├── api/            Laravel API (MySQL); also serves the web build from api/public
-├── web/            React app (TypeScript + Vite + Mantine), plus the Tauri shell in web/src-tauri
+├── web/            React app (TypeScript + Vite + Mantine)
 ├── docs/           architecture, spec, decisions
 └── CLAUDE.md
 ```
@@ -47,7 +47,7 @@ notes-app/
 ## Security, privacy and configuration
 - **NEVER** commit secrets, `.env` files or database files. Commit a `.env.example` listing every variable.
 - Configuration comes from environment variables, read in **exactly one place** per app (`api/config/*.php` via `env()`, `web/src/config/env.ts`).
-- The browser authenticates with the Sanctum session in an **httpOnly cookie**; JavaScript never sees it. The native apps are the one exception: they keep an API token in the OS secure store (decision 1).
+- The browser authenticates with the Sanctum session in an **httpOnly cookie**; JavaScript never sees it. Personal access tokens exist only for MCP clients.
 - **Personal data:** **NEVER** log names, emails, note titles or bodies, or request/response bodies that contain them. Logs may contain IDs, routes, status codes and timings only. Error messages never echo personal data back.
 - **NEVER** show stack traces, SQL, file paths or other internals to users.
 
@@ -80,7 +80,7 @@ notes-app/
 - **The TDD rhythm is visible in the history:** `test(...)` (red), then `feat(...)` / `fix(...)` (green), then `refactor(...)` only when there's something to refactor. A red commit is allowed only when the green commit follows it directly. **NEVER** push a branch whose last commit fails the checks.
 - **Message format** (Conventional Commits): `<type>(<scope>): <imperative summary, lowercase, no full stop, max 72 chars>`, with an optional body explaining *why*, wrapped at 72.
   - Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `perf`, `style`.
-  - Scopes: `api`, `web`, or a feature (`notes`, `sync`, `auth`), e.g. `feat(web/notes): add word count`.
+  - Scopes: `api`, `web`, or a feature (`notes`, `mcp`, `auth`), e.g. `feat(web/notes): add word count`.
 - AI-assisted commits end with a `Co-Authored-By:` trailer naming the AI tool.
 - **Stage files explicitly.** **NEVER** `git add .` or `git add -A` without checking `git status` first. (`npm run release` is the one deliberate exception.)
 - **NEVER commit:** `.env` files, database files, `node_modules/`, `vendor/`, `.venv/`, coverage output. They are in `.gitignore`.

@@ -18,9 +18,8 @@ git tag stage-0-start
 Tag at each checkpoint as you go:
 
 ```powershell
-git tag stage-1-api     # after B18
+git tag stage-1-api     # after B15
 git tag stage-1-web         # after F15
-git tag stage-2-desktop     # after D12
 ```
 
 A tag is a named point you can return to without hunting through hashes.
@@ -177,12 +176,11 @@ versus <what you expect>. Do not change the test. Diagnose why the implementatio
 produces this, explain the cause, and propose a fix before making it.
 ```
 
-**It crossed a delivery gate**
+**It kept going after the gate**
 
 ```
-You started Task D1. PLAN.md has a STOP gate after F15 and PRINCIPLES.md §A
-absolute 11 forbids crossing it. Reset your work on D1 and stop. I will tell you
-when to begin Phase 3.
+You carried on after Task F15. PLAN.md has a STOP gate after F15 and PRINCIPLES.md §A
+absolute 11 forbids crossing it. Reset the work you did after F15 and stop.
 ```
 
 ---
@@ -235,8 +233,8 @@ Three failed corrections on the same task is a signal, not bad luck.
 1. **Re-paste the rules.** Give it `PRINCIPLES.md` §A and §B directly in the message.
 2. **Start a fresh conversation.** Long sessions drift; context loss is usually the
    cause.
-3. **Switch model** for that task — the reasoning-heavy ones (B8, B17, B18, D3, D4,
-   D7–D9) are where a weaker model struggles.
+3. **Switch model** for that task — the reasoning-heavy one (B8) is where a weaker
+   model struggles.
 4. **Shrink the task.** Tell it to do only steps 1–3 and stop.
 5. **Suspect the plan.** If three attempts all fail the same way, the task is
    probably wrong. Stop and have it fixed rather than forcing it through.

@@ -106,10 +106,8 @@ worked:
   broken every login in development.
 - A `<div>` added as a fourth child of a three-row CSS grid pushed the entire app
   into a 28px strip at the bottom of the window.
-- The offline write queue did read-modify-write with no lock, so two windows could
-  silently drop a queued edit.
-- Deleting a note on one device left a ghost copy on another, whose queued edit then
-  resurrected it on the server.
+- Starring a note while an autosave was in flight returned a 409, because the version
+  check applied to every write instead of body writes only.
 - A service worker kept serving month-old JavaScript because nothing ever checked
   for an update.
 
@@ -120,9 +118,9 @@ None of these were in any requirement. Each would have cost a day to diagnose la
 
 Do not decide by what is conventional. Decide by asking what happens when it fails.
 
-> "IndexedDB is fine for a cache, because losing a cache costs a refetch. It is not
-> fine for notes that exist nowhere else, because browser eviction then means
-> permanent data loss. So: SQLite."
+> "A spinner is fine for a button, because the user is waiting on that one action. It
+> is not fine for autosave, because it would flash on every pause in typing and make
+> a quiet success look like work. So: status-bar text, held for 400 ms."
 
 That sentence is the whole justification and it is reusable. "Best practice says use
 X" is not a reason and will not survive contact with a trade-off.
@@ -139,8 +137,9 @@ Silently switching approach is worse than being wrong, because nobody can check 
 ### Price the trade-off in real units
 
 Not "this is heavier". Say **how much**: megabytes, days, dollars per year, number of
-extra tasks. "Electron is ~130 MB versus Tauri's ~10 MB" is a decision someone can
-make. "Electron is bigger" is not.
+extra tasks. "`react-error-boundary` costs a few kilobytes versus a class component
+we would have to write and test" is a decision someone can make. "It's lighter" is
+not.
 
 ### Check, do not recall
 

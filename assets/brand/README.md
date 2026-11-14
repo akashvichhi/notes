@@ -42,7 +42,7 @@ instead, so Vite can inline and tree-shake them.
 | **`logo-dark.svg`** | vector | Same lockup **for dark backgrounds** |
 | **`logo-mark.svg`** | vector | Square mark alone, fixed blue. Use where the lockup is too wide |
 | **`logo-mark-mono.svg`** | vector | Square mark whose background is `currentColor`, so it inherits the surrounding text colour. For single-colour contexts |
-| ~~`manifest.webmanifest`~~ | — | **Unused.** Written for the PWA design, which was replaced by native apps. Do not copy it or link to it |
+| ~~`manifest.webmanifest`~~ | — | **Unused.** Written for the PWA design, which this project does not use. Do not copy it or link to it |
 
 ---
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Notes Desktop Mockup</title>
+<title>Notes Mockup</title>
 <style>
 /* ============ tokens: Mantine 9 palette ============ */
 :root{
@@ -145,8 +145,6 @@ kbd{font-family:var(--font);font-size:11px;padding:1px 5px;border-radius:var(--r
   text-overflow:ellipsis;white-space:nowrap}
 .rmeta{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:11px;color:var(--text-faint)}
 .chip{padding:1px 6px;border-radius:var(--r-sm);background:var(--bg-code);font-size:10.5px}
-.chip.cloud{background:var(--blue-light);color:var(--blue-7)}
-.chip.local{background:var(--bg-code);color:var(--text-dim)}
 .pend{color:var(--amber)}
 
 /* ============ editor ============ */
@@ -172,12 +170,6 @@ kbd{font-family:var(--font);font-size:11px;padding:1px 5px;border-radius:var(--r
 .ctrl b{font-weight:800} .ctrl i{font-family:Georgia,serif}
 
 .canvas{overflow-y:auto;min-height:0;padding:14px 40px 70px}
-.callout{display:flex;gap:11px;padding:11px 13px;border-radius:var(--r-md);
-  background:var(--amber-light);border:1px solid var(--amber);margin:0 0 20px;align-items:flex-start}
-.callout .ic{color:var(--amber);flex:none;margin-top:1px}
-.callout .tx{flex:1;font-size:12.5px;line-height:1.5;color:var(--text)}
-.callout .tx b{font-weight:650}
-.callout .acts{display:flex;gap:8px;margin-top:9px}
 .btn-xs{padding:0 11px;height:28px;border-radius:var(--r-sm);background:var(--blue-6);
   color:#fff;font-size:12.5px;font-weight:500}
 .btn-xs.ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border-strong)}
@@ -278,13 +270,9 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 8V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3"/><path d="M8 12h8M8 16h5"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.7-4.7"/></symbol>
-  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6-1.4A3.8 3.8 0 0 1 18 18z"/></symbol>
-  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 20h20"/></symbol>
   <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2"/><path d="M10 12h10M17 9l3 3-3 3"/></symbol>
-  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></symbol>
-  <symbol id="i-tablet" viewBox="0 0 24 24"><rect x="4.5" y="2.5" width="15" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></symbol>
   <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
@@ -294,7 +282,6 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/></symbol>
   <symbol id="i-sort" viewBox="0 0 24 24"><path d="M4 7h11M4 12h8M4 17h5M17 9l3-3 3 3M20 6v12"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
-  <symbol id="i-sync" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4.5L4 9"/><path d="M4 13a8 8 0 0 0 14 4.5L20 15"/><path d="M4 5v4h4M20 19v-4h-4"/></symbol>
   <symbol id="i-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M7 18a4 4 0 0 1-.9-7.9"/><path d="M10.5 6.2A5.5 5.5 0 0 1 17.6 8.6 3.8 3.8 0 0 1 19.8 15"/></symbol>
 </svg>
 
@@ -329,49 +316,23 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
         <svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg> New note
       </button>
 
-      <!-- CLOUD -->
       <div class="acct">
-        <div class="acct-head">
-          <svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-cloud"/></svg>
-          <span class="acct-title">Cloud</span>
-          <span class="acct-state ok" id="cloud-state">
-            <span class="dot ok"></span> Synced
-          </span>
-        </div>
-        <button class="item on" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">24</span></button>
-        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-star"/></svg> Starred <span class="n">3</span></button>
+        <button class="item on"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">24</span></button>
+        <button class="item"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-star"/></svg> Starred <span class="n">3</span></button>
 
         <div class="sec">Folders<span class="add" data-new="folder" title="New folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></div>
-        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Work <span class="n">11</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
-        <button class="item child" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Releases <span class="n">4</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
-        <button class="item" data-scope="cloud"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--green)"><use href="#i-folder"/></svg> Personal <span class="n">7</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
+        <button class="item"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Work <span class="n">11</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
+        <button class="item child"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-6)"><use href="#i-folder"/></svg> Releases <span class="n">4</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
+        <button class="item"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--green)"><use href="#i-folder"/></svg> Personal <span class="n">7</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
 
         <div class="sec">Tags<span class="add" data-new="tag" title="New tag"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></div>
         <div class="tags">
           <button class="tag">#todo</button><button class="tag">#draft</button>
         </div>
 
-        <button class="item" data-scope="cloud" style="margin-top:6px"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">2</span></button>
+        <button class="item" style="margin-top:6px"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">2</span></button>
       </div>
 
-      <!-- ON THIS DEVICE -->
-      <div class="acct">
-        <div class="acct-head">
-          <svg class="icon sm" id="dev-icon" viewBox="0 0 24 24" style="color:var(--text-faint)"><use href="#i-laptop"/></svg>
-          <span class="acct-title">On This Device</span>
-        </div>
-        <!-- the permanent, quiet warning -->
-        <div class="acct-note">Not backed up · stays on <span id="dev-noun">this computer</span></div>
-        <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg> All notes <span class="n">5</span></button>
-
-        <div class="sec">Folders<span class="add" data-new="folder" title="New folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></div>
-        <button class="item" data-scope="local"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--violet)"><use href="#i-folder"/></svg> Quick notes <span class="n">2</span><span class="more" data-ctx="folder"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-dots"/></svg></span></button>
-
-        <div class="sec">Tags<span class="add" data-new="tag" title="New tag"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></div>
-        <div class="tags"><button class="tag">#private</button></div>
-
-        <button class="item" data-scope="local" style="margin-top:6px"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-trash"/></svg> Trash <span class="n">0</span></button>
-      </div>
     </aside>
 
     <!-- ===================== NOTE LIST ===================== -->
@@ -383,7 +344,7 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       </div>
       <div class="lfilter">
         <svg class="icon sm" viewBox="0 0 24 24"><path d="M4 5h16l-6.3 7.4v5.3L10.3 20v-7.6z"/></svg>
-        <input class="input" id="filter" placeholder="Filter in Cloud">
+        <input class="input" id="filter" placeholder="Filter in All notes">
       </div>
       <div class="lscroll" id="rows"></div>
     </section>
@@ -418,20 +379,6 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       </div>
 
       <div class="canvas">
-        <!-- shown once, the first time a note lands on this device -->
-        <div class="callout" id="callout" style="display:none">
-          <svg class="icon ic" viewBox="0 0 24 24"><use href="#i-warn"/></svg>
-          <div class="tx">
-            <b>This note is only on this computer.</b><br>
-            Notes in <b>On This Device</b> are not backed up and never leave this machine.
-            They are <b>deleted if you uninstall the app</b>.
-            <div class="acts">
-              <button class="btn-xs" id="to-cloud">Move to Cloud</button>
-              <button class="btn-xs ghost" id="keep-local">Keep it here</button>
-            </div>
-          </div>
-        </div>
-
         <div class="doc">
           <div class="dtags">
             <button class="tag">#todo</button><button class="tag">#release</button>
@@ -454,45 +401,41 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
 
   <!-- ===================== STATUS BAR ===================== -->
   <footer class="status">
-    <span class="sync" id="sync"><span class="dot ok"></span> Synced just now</span>
+    <span class="sync" id="sync"><span class="dot ok"></span> Saved just now</span>
     <span class="sel" id="sel" hidden></span>
     <span class="vsep" id="sel-sep" hidden></span>
     <span class="counts" id="counts">148 words · 892 characters</span>
     <span class="sp"></span>
-    <span id="where">Cloud · Work / Releases</span>
+    <span id="where">Work / Releases</span>
   </footer>
 </div>
 
 <!-- ===================== MOVE TO MENU ===================== -->
 <div class="menu" id="move-menu">
-  <div class="mlabel">Cloud</div>
+  <div class="mlabel">Folders</div>
   <button class="mi"><span class="cdot" style="background:var(--blue-6)"></span> Work</button>
   <button class="mi" style="padding-left:30px">Releases
     <span class="k"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--blue-7)"><use href="#i-check"/></svg></span></button>
   <button class="mi"><span class="cdot" style="background:var(--green)"></span> Personal</button>
-  <div class="msep"></div>
-  <div class="mlabel">On This Device</div>
-  <button class="mi" id="mi-local"><svg class="icon sm" viewBox="0 0 24 24" style="color:var(--violet)"><use href="#i-folder"/></svg> Quick notes</button>
-  <div class="mnote">Moving here stops syncing. The note disappears from your other devices.</div>
 </div>
 
 <!-- ===================== CONFLICT SHEET ===================== -->
 <div class="ovl" id="conflict">
   <div class="modal">
     <div class="mhead">
-      <h3>This note changed on another device</h3>
-      <p>Your MacBook saved a newer version while this device was offline.
+      <h3>This note changed in another tab</h3>
+      <p>Another tab saved a newer version while you were typing.
          Nothing has been lost — choose what to keep.</p>
     </div>
     <div class="mbody">
       <div class="diff">
         <div class="side mine">
-          <h4>Yours · this device · 2 min ago</h4>
+          <h4>Yours · this tab · 2 min ago</h4>
           <div class="c">Ship <strong>r34</strong> on Thursday.<br><br>
             — Verify migrations on staging<br>— Draft the release notes</div>
         </div>
         <div class="side">
-          <h4>MacBook · 11 min ago</h4>
+          <h4>Other tab · 11 min ago</h4>
           <div class="c">Ship <strong>r34</strong> on <strong>Friday</strong>.<br><br>
             — Verify migrations on staging<br>— Ask Priya about the QA sign-off</div>
         </div>
@@ -532,17 +475,15 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
     <div style="padding:6px;max-height:50vh;overflow-y:auto">
       <div class="mlabel">Notes</div>
       <button class="mi"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg>
-        <span style="flex:1">Meeting <mark style="background:transparent;color:var(--blue-7);font-weight:700">not</mark>es — 7 Oct</span>
-        <span class="chip cloud">Cloud</span></button>
+        <span style="flex:1">Meeting <mark style="background:transparent;color:var(--blue-7);font-weight:700">not</mark>es — 7 Oct</span></button>
       <button class="mi"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-note"/></svg>
-        <span style="flex:1">Book <mark style="background:transparent;color:var(--blue-7);font-weight:700">not</mark>es</span>
-        <span class="chip local">On this device</span></button>
+        <span style="flex:1">Book <mark style="background:transparent;color:var(--blue-7);font-weight:700">not</mark>es</span></button>
       <div class="mlabel">Actions</div>
       <button class="mi"><svg class="icon sm" viewBox="0 0 24 24"><use href="#i-plus"/></svg>
         <span style="flex:1">New note</span><span class="k">⌘N</span></button>
     </div>
     <div class="mfoot" style="font-size:11.5px">
-      <span class="hint">Search spans both containers · each result shows where it lives</span>
+      <span class="hint">Search spans every note</span>
       <span class="sp"></span><kbd>esc</kbd>
     </div>
   </div>
@@ -551,10 +492,9 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
 <!-- ===================== STATE SWITCHER (mockup only) ===================== -->
 <div class="states" title="Mockup only — the real app derives this automatically">
   <span style="padding:5px 8px;font-size:11px;color:var(--text-faint)">demo:</span>
-  <button class="on" data-state="synced">Synced</button>
-  <button data-state="syncing">Syncing</button>
-  <button data-state="offline">Offline</button>
-  <button data-state="local">Local note</button>
+  <button class="on" data-state="saved">Saved</button>
+  <button data-state="saving">Saving</button>
+  <button data-state="error">Save failed</button>
   <button data-state="conflict">Conflict</button>
 </div>
 
@@ -572,27 +512,19 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   paint();
   document.getElementById('nav-toggle').onclick=function(){app.classList.toggle('navopen')}
 
-  /* note data per container */
+  /* note data */
   var DATA={
-    cloud:{title:'All notes',count:24,filter:'Filter in Cloud',rows:[
-      ['Release plan — r34','Ship r34 on Thursday. Blockers in ENG-4471.','2 min ago','Work / Releases',true,''],
-      ['Meeting notes — 7 Oct','Discussed the migration backlog.','1 hr ago','Work',false,''],
-      ['API scratchpad','curl snippets for the notes endpoints.','3 hr ago','Ideas',false,''],
-      ['Reading list','ProseMirror internals, Postgres ranking.','Yesterday','Personal',false,''],
-      ['Onboarding checklist','Laptop, VPN, repo access, first ticket.','Last week','Work',false,'']
-    ]},
-    local:{title:'On This Device',count:5,filter:'Filter in On This Device',rows:[
-      ['Interview prep','Rails n+1, ActiveJob retries, React memo traps.','5 min ago','Quick notes',true,'local'],
-      ['Wifi codes','Guest network and the printer PIN.','Yesterday','Quick notes',false,'local'],
-      ['Draft resignation','Not ready to send. Definitely not syncing this one.','3 days ago','',false,'local'],
-      ['Car service history','Last oil change 94,200 km.','Last month','',false,'local'],
-      ['Book notes','Thinking in Systems — stocks and flows.','Last month','',false,'local']
+    all:{title:'All notes',count:24,filter:'Filter in All notes',rows:[
+      ['Release plan — r34','Ship r34 on Thursday. Blockers in ENG-4471.','2 min ago','Work / Releases',true],
+      ['Meeting notes — 7 Oct','Discussed the migration backlog.','1 hr ago','Work',false],
+      ['API scratchpad','curl snippets for the notes endpoints.','3 hr ago','Ideas',false],
+      ['Reading list','ProseMirror internals, Postgres ranking.','Yesterday','Personal',false],
+      ['Onboarding checklist','Laptop, VPN, repo access, first ticket.','Last week','Work',false]
     ]}
   };
 
-  var scope='cloud';
   function render(){
-    var d=DATA[scope];
+    var d=DATA.all;
     document.getElementById('list-title').textContent=d.title;
     document.getElementById('list-count').textContent=d.count;
     document.getElementById('filter').placeholder=d.filter;
@@ -609,57 +541,40 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
           '<div class="rsnip">'+r[1]+'</div>'+
           '<div class="rmeta">'+r[2]+
             (r[3]?' <span class="chip">'+r[3]+'</span>':'')+
-            (r[5]==='local'?' <span class="chip local">On this device</span>':'')+
           '</div></button>'}).join('');
-    // keep the editor header consistent with the chosen container
+    // keep the editor header consistent with the list
     var first=d.rows[0];
     document.getElementById('doc-title').textContent=first[0];
     document.getElementById('tab-name').textContent=first[0];
-    setState(scope==='local'?'local':'synced');
+    setState('saved');
     if (typeof updateTotals === 'function') updateTotals();
-    document.getElementById('callout').style.display = scope==='local' ? 'flex' : 'none';
   }
   document.querySelectorAll('.item').forEach(function(b){
     b.onclick=function(){
       document.querySelectorAll('.item').forEach(function(x){x.classList.remove('on')});
       b.classList.add('on');
-      scope=b.getAttribute('data-scope');
       render();
     }});
 
   /* status-bar states */
-  var sync=document.getElementById('sync'), where=document.getElementById('where'),
-      cloudState=document.getElementById('cloud-state');
+  var sync=document.getElementById('sync');
   function setState(s){
     document.querySelectorAll('.states button').forEach(function(b){
       b.classList.toggle('on', b.getAttribute('data-state')===s)});
 
-    if(s==='synced'){
-      sync.className='sync'; sync.innerHTML='<span class="dot ok"></span> Synced just now';
-      where.textContent='Cloud · Work / Releases';
-      cloudState.className='acct-state ok'; cloudState.innerHTML='<span class="dot ok"></span> Synced';
+    if(s==='saved'){
+      sync.className='sync'; sync.innerHTML='<span class="dot ok"></span> Saved just now';
     }
-    if(s==='syncing'){
-      sync.className='sync'; sync.innerHTML=
-        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-sync"/></svg> Syncing… 12 of 30';
-      where.textContent='Cloud · Work / Releases';
-      cloudState.className='acct-state'; cloudState.innerHTML='<span class="dot off"></span> Syncing';
+    if(s==='saving'){
+      sync.className='sync'; sync.innerHTML='Saving…';
     }
-    if(s==='offline'){
-      sync.className='sync warn'; sync.innerHTML=
-        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-off"/></svg> Offline — 3 changes pending';
-      where.textContent='Cloud · Work / Releases';
-      cloudState.className='acct-state warn'; cloudState.innerHTML='<span class="dot warn"></span> Offline';
-    }
-    if(s==='local'){
-      // local notes never sync, so they never show sync state
-      sync.className='sync'; sync.innerHTML=
-        '<svg class="icon sm" viewBox="0 0 24 24"><use href="'+deviceKind().icon+'"/></svg> On '+deviceKind().noun+' — not backed up';
-      where.textContent='On This Device · Quick notes';
+    if(s==='error'){
+      sync.className='sync err'; sync.innerHTML=
+        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-warn"/></svg> Save failed — retry';
     }
     if(s==='conflict'){
       sync.className='sync err'; sync.innerHTML=
-        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-warn"/></svg> 1 note needs your attention';
+        '<svg class="icon sm" viewBox="0 0 24 24"><use href="#i-warn"/></svg> Conflict — choose what to keep';
       document.getElementById('conflict').classList.add('open');
     }
   }
@@ -677,21 +592,16 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
   };
   document.addEventListener('click',function(){mm.classList.remove('open')});
 
-  /* conflict + callout */
+  /* conflict */
   var ovl=document.getElementById('conflict');
   ['c-mine','c-theirs','c-copy'].forEach(function(id){
-    document.getElementById(id).onclick=function(){ovl.classList.remove('open'); setState('synced')}});
-  ovl.onclick=function(e){if(e.target===ovl){ovl.classList.remove('open'); setState('synced')}};
-  document.getElementById('keep-local').onclick=function(){
-    document.getElementById('callout').style.display='none'};
-  document.getElementById('to-cloud').onclick=function(){
-    document.getElementById('callout').style.display='none';
-    document.querySelector('.item[data-scope="cloud"]').click()};
+    document.getElementById(id).onclick=function(){ovl.classList.remove('open'); setState('saved')}});
+  ovl.onclick=function(e){if(e.target===ovl){ovl.classList.remove('open'); setState('saved')}};
 
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){ovl.classList.remove('open'); mm.classList.remove('open')}});
 
-  /* ---- context menus: folders, tags and notes, in BOTH containers ---- */
+  /* ---- context menus: folders, tags and notes ---- */
   var MENUS = {
     folder:[['Rename','F2'],['New subfolder',''],['Change colour…',''],['-',''],
             ['Delete folder','','danger'],
@@ -760,23 +670,6 @@ li.done .tx{color:var(--text-faint);text-decoration:line-through}
       spot.classList.toggle('open'); if(spot.classList.contains('open')) document.getElementById('spot-q').select()}
     if(e.key==='Escape'){spot.classList.remove('open'); ctx.classList.remove('open'); acct.classList.remove('open')}
   });
-
-  /* ---- the On This Device icon and noun follow the hardware ----
-     Real app: Tauri's platform() returns windows|macos|linux|android|ios.
-     This mockup approximates it with the viewport. The container NAME never
-     changes — it is a data concept — only the icon and the noun do. */
-  function deviceKind(){
-    if (matchMedia('(max-width:767px)').matches)  return {icon:'#i-phone',  noun:'this phone'};
-    if (matchMedia('(max-width:1099px)').matches) return {icon:'#i-tablet', noun:'this tablet'};
-    return {icon:'#i-laptop', noun:'this computer'};
-  }
-  function applyDeviceKind(){
-    var k = deviceKind();
-    document.getElementById('dev-icon').firstElementChild.setAttribute('href', k.icon);
-    document.getElementById('dev-noun').textContent = k.noun;
-  }
-  applyDeviceKind();
-  window.addEventListener('resize', applyDeviceKind);
 
   /* ---- word and character counts, including the selection ---- */
   var canvasEl = document.querySelector('.canvas'),

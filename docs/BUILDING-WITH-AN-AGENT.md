@@ -33,6 +33,4 @@ itself.
 
 | Stage | Tasks | Ends |
 |---|---|---|
-| 1 · Backend + web app | `B1`–`B18`, `F1`–`F15` | ⛔ stops for you to test |
-| 2 · Desktop | `D1`–`D12` | ⛔ stops for you to test |
-| 3 · Mobile | `M1`–`M8` | ⛔ complete |
+| Backend + web app | `B1`–`B15`, `F1`–`F15` | ⛔ stops for you to test |

@@ -10,9 +10,9 @@
 ## Using with Claude
 
 The API serves an MCP endpoint at `<APP_URL>/mcp` (HTTP transport). Claude can search,
-read and write your Cloud notes through it, with note bodies as markdown. It **cannot delete**
+read and write your notes through it, with note bodies as markdown. It **cannot delete**
 anything: there are no delete, trash or restore tools, and access tokens cannot reach those
-routes. Notes in the Trash and notes stored "On This Device" are not visible to it.
+routes. Notes in the Trash are not visible to it.
 
 ### 1. Create an access token
 

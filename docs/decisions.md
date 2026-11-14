@@ -2,12 +2,12 @@
 
 Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 
-## 1. Native apps keep a bearer token in the OS secure store
+## 1. The app is web-only
 
-- **Context:** the standards keep browser sessions in httpOnly cookies and never let JavaScript hold a token. The Tauri apps load the UI from their own origin (`tauri://` / `http://tauri.localhost`), so the API's SameSite session cookie is never sent from them.
-- **Options:** cookies with `SameSite=None` and CORS credentials for the app origins; a bearer token kept in the webview's storage; a bearer token kept in the OS secure store.
-- **Decision:** the browser build uses the Sanctum session cookie only. The native apps sign in through `POST /auth/token`, keep the token in the OS secure store (Credential Manager, Keychain, libsecret, Keystore) through `platform/secureStore.ts`, and send it as `Authorization: Bearer`. It is never written to `localStorage` or `sessionStorage`.
-- **Consequences:** the API client adds the header only when `isNative()`. Signing out deletes the token from the secure store and revokes it on the server.
+- **Context:** the app was planned to ship as a web app and as Tauri apps for desktop and mobile, with a local SQLite copy, an "On This Device" container, a sync engine and bearer tokens kept in the OS secure store. Only the web app is in use.
+- **Options:** keep the native code in the repository; remove it and keep one build.
+- **Decision:** remove the native shell (`web/src-tauri`), the local database, the sync engine, the platform layer, the On This Device container and the device sign-in tokens (`POST /tokens`, `DELETE /tokens/current`). The browser signs in with the Sanctum session cookie only.
+- **Consequences:** every note lives on the server. Unsaved typing is still buffered in IndexedDB (`db/drafts_store.ts`). Personal access tokens for the MCP server are the only tokens the API issues.
 
 ## 2. The web build is written into Laravel's public folder
 

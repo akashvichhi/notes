@@ -1,28 +1,26 @@
 # Notes
 
-A cross-platform notes app: one React codebase ships as a web app and as Tauri desktop apps, backed by a Laravel API on MySQL, with an MCP server so AI assistants can read and write your notes.
+A web notes app with a rich-text editor, folders, tags and search. It runs on a Laravel API with MySQL and includes an MCP server, so AI assistants can read and write your notes.
 
 - **Live app:** https://notes.codespan.in
-- **Demo account:** TODO(akash): demo email / password
+- **Demo account:** demo@example.com / Demo@2026
 
 ![Notes](assets/screenshots/app.png)
 
 ## Features
 
-- **Two containers.** Notes live in **Cloud**, synced to your account, or, in the desktop app, in **On This Device**: a local SQLite file that never reaches the server. Each container has its own folders, tags and Trash. The desktop app works without an account; signing in adds Cloud.
-- **Offline editing with sync.** In the desktop app, Cloud notes are cached locally and stay editable without a network. Changes queue in a local outbox and sync when the connection returns. If another device changed the same note, you choose what to keep.
-- **Folders, tags and stars.** Nested, coloured folders, tags on any note, and a starred view.
-- **Search.** A global search (⌘K / Ctrl+K) across notes, backed by MySQL full-text search on the server and SQLite FTS5 on the device, plus a filter scoped to the current list.
 - **Rich-text editor.** Tiptap with the full toolbar: headings, lists, task lists, tables, code blocks with syntax highlighting, links, images, highlight, text colour, alignment, sub/superscript, and word and character counts.
-- **One codebase, several platforms.** The same React app runs in the browser and in Tauri 2 desktop apps. Everything platform-specific lives in one folder (`web/src/platform/`). TODO(akash): list the desktop platforms that have actually been built and tested, and whether the Android/iOS build exists yet (no mobile project is checked in under `web/src-tauri/gen/`).
-- **MCP server.** AI assistants such as Claude can search, read, create and edit Cloud notes through a personal access token. See [Using the MCP server](#using-the-mcp-server).
+- **Autosave with conflict handling.** Notes save as you type. If the same note was changed in another tab or on another device in the meantime, you choose what to keep, and nothing is lost by default. Unsaved typing is buffered in the browser, so a crash or reload doesn't lose it.
+- **Folders, tags and stars.** Nested, coloured folders, tags on any note, and a starred view.
+- **Search.** A global search (⌘K / Ctrl+K) across all notes, backed by MySQL full-text search, plus a filter scoped to the current list.
+- **Trash.** Deleted notes go to the Trash first and can be restored.
+- **MCP server.** AI assistants such as Claude can search, read, create and edit notes through a personal access token. See [Using the MCP server](#using-the-mcp-server).
 
 ## Tech stack
 
 | Area | Technologies |
 |---|---|
 | Frontend | React 19, TypeScript (strict), Vite 8, Mantine 9, TanStack Query 5, Zustand 5, Tiptap 3, React Router, SCSS modules |
-| Native shell | Tauri 2, with `tauri-plugin-sql` for the local SQLite database |
 | Backend | PHP 8.3, Laravel 13, MySQL 8.4, Laravel Sanctum, `laravel/mcp` |
 | Tooling | Docker Compose (MySQL for local development), Pest (API tests), Vitest and React Testing Library (web tests), ESLint, Stylelint |
 
@@ -32,42 +30,35 @@ Exact versions are pinned in [`web/package.json`](web/package.json) and [`api/co
 
 ```mermaid
 flowchart LR
-    subgraph client["Client: React app (browser or Tauri)"]
+    subgraph browser["Browser: React app"]
         ui["UI<br/>Mantine + Tiptap"]
-        localdb[("Local SQLite<br/>(desktop only)")]
-        outbox["Outbox<br/>pending writes"]
-        engine["Sync engine<br/>push, then pull"]
-        ui --> localdb
-        ui --> outbox
-        outbox --> engine
-        engine --> localdb
+        cache["TanStack Query<br/>cache"]
+        drafts[("Draft buffer<br/>IndexedDB")]
+        ui --> cache
+        ui --> drafts
     end
 
     subgraph server["Server"]
         api["Laravel API<br/>/api/v1, Sanctum"]
         mcp["MCP endpoint<br/>/mcp"]
-        mysql[("MySQL<br/>Cloud notes only")]
+        mysql[("MySQL")]
         api --> mysql
         mcp --> mysql
     end
 
     assistant["AI assistant<br/>(Claude or another MCP client)"]
 
-    engine <-->|"HTTPS / JSON"| api
+    cache <-->|"HTTPS / JSON<br/>session cookie"| api
     assistant <-->|"Streamable HTTP<br/>Bearer token"| mcp
 ```
 
-- **Desktop app:** the UI always reads the local SQLite database. The sync engine fills it in the background, so being offline is not a special case.
-- **Browser:** the UI reads the API directly and offers only the Cloud container.
-- **Server:** it only ever stores Cloud notes. It has no table for On This Device notes and doesn't know they exist.
-
-The browser signs in with Sanctum's httpOnly session cookie. The desktop app loads from its own origin, where that cookie is never sent, so it uses a bearer token kept in the OS secure store ([decision 1](docs/decisions.md)).
-
-The full design is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+- **Serving:** Laravel serves the built React app from `api/public`, so the app and the API share one origin ([decision 2](docs/decisions.md)).
+- **Sign-in:** the browser authenticates with Sanctum's session in an httpOnly cookie. JavaScript never sees a token.
+- **Errors:** every API failure reaches the UI as one error shape. Error boundaries at the root, app, route and editor levels mean a JavaScript error never leaves a blank screen.
 
 ## Using the MCP server
 
-The API includes a [Model Context Protocol](https://modelcontextprotocol.io) server. With it, an AI assistant can work with your Cloud notes on your behalf: find a note, summarise a folder, or append to a running log. It is served at **`/mcp`** (for the live app, `https://notes.codespan.in/mcp`) over the Streamable HTTP transport.
+The API includes a [Model Context Protocol](https://modelcontextprotocol.io) server. With it, an AI assistant can work with your notes on your behalf: find a note, summarise a folder, or append to a running log. It is served at **`/mcp`** (for the live app, `https://notes.codespan.in/mcp`) over the Streamable HTTP transport.
 
 ### Create a personal access token
 
@@ -84,7 +75,7 @@ The API includes a [Model Context Protocol](https://modelcontextprotocol.io) ser
 
 - **Scopes are checked inside each tool.** A read-only token sees only an error message from a write tool, telling it which scope is missing.
 - **Nothing can be deleted with a token.** No MCP tool deletes, trashes or restores anything, and personal access tokens can never reach the API's delete, trash or account routes.
-- **Only Cloud notes are reachable.** Notes in On This Device never reach the server, and notes in the Trash are invisible.
+- **Trash:** notes in the Trash are invisible to the MCP server.
 - **Rate limit:** 120 requests per minute.
 
 ### Connect Claude
@@ -113,7 +104,7 @@ To share the server with a project instead, add a `.mcp.json` file:
 
 Don't commit a real token. Use an environment variable (`"Bearer ${NOTES_TOKEN}"`) or keep the file out of version control.
 
-**Claude on the web, desktop and mobile:** on claude.ai, open Customize → Connectors → Add custom connector. Paste the server URL, choose no sign-in, and add an `Authorization` request header with the value `Bearer <your-token>`.
+**Claude on claude.ai:** open Customize → Connectors → Add custom connector. Paste the server URL, choose no sign-in, and add an `Authorization` request header with the value `Bearer <your-token>`.
 
 **Other MCP clients:** use the server URL with the Streamable HTTP transport and send the same `Authorization` header with every request.
 
@@ -145,19 +136,15 @@ Defined in [`api/app/Mcp/Tools/`](api/app/Mcp/Tools) and registered in [`NotesSe
 
 ## Design decisions
 
-**Sync uses a local outbox and per-note versions.** In the desktop app, every change to a Cloud note is written to SQLite first and queued in an outbox. Repeated body edits to the same note are merged into one entry, so an hour of offline typing goes back to the server as a single request. A sync run pushes the outbox first, then pulls the server's current notes, folders and tags. Notes with changes not yet sent keep their local copy.
+**Version-checked saves, resolved by the user.** Every body save carries the note version it was based on. Metadata changes such as starring carry no version, so they never conflict with an autosave in flight. If the note was saved elsewhere in between (another tab, another device, or an AI assistant through the MCP server), the API answers `409 Conflict` with the server's copy. The app then offers **Keep mine**, **Keep theirs** or **Save mine as a copy**. If the note was moved to the Trash in the meantime, it asks whether to restore the note and keep the edit, or discard the edit. This is document-level conflict handling with copies, the model Dropbox and Obsidian Sync use. Real-time merging (CRDTs) was rejected: one person rarely edits the same note in two places at once, and a CRDT would replace readable JSON with binary state that the server can't search.
 
-**Conflicts are resolved by the user, and nothing is lost by default.** Body writes carry the version they were based on. Metadata changes such as starring carry no version, so they never conflict. If another device saved the note in between, the API answers `409 Conflict` with the server's copy, and the app offers three choices: **Keep mine**, **Keep theirs**, or **Save mine as a copy**. If the note was moved to the Trash on another device, the API rejects the edit and the app asks whether to restore the note and keep the edit, or discard the edit. This is document-level sync with conflict copies, the model Dropbox and Obsidian Sync use. CRDTs were rejected: one person across a few devices conflicts rarely, and a CRDT would replace readable JSON with binary state that the server can't search.
-
-The architecture document describes a per-account revision counter with tombstones and a dedicated pull endpoint. That design is not built yet: today's pull fetches the current notes, folders and tags.
-
-**Cloud vs On This Device.** Some notes should never leave the machine, and the app should be useful without an account. On This Device notes live only in a local SQLite file, which the OS backs up like any other file. IndexedDB was rejected because the browser engine can evict it under storage pressure, and for notes that exist nowhere else, eviction is data loss. The app warns that these notes are not backed up and disappear if it is uninstalled.
+**Rich text stored as ProseMirror JSON.** Markdown can't express highlight, text colour, alignment or sub/superscript, so it would drop them on every save. The server derives plain text from the JSON for full-text search, and never accepts it from the client, so search can't drift from the content. The MCP server converts bodies to and from markdown at its edge, keeping the formatting markdown can't express as inline HTML.
 
 **Token scopes are checked inside each MCP tool.** The `/mcp` route only admits tokens that carry at least one notes scope. Each tool then declares the scope it needs and checks it before doing anything. A read-only token can still list the write tools, and calling one returns a clear error naming the missing scope. The tools call the same services and policies as the REST API, so the MCP server has no data access of its own. Personal access tokens are never given the `account` ability, which keeps every delete, trash, restore and account route out of their reach.
 
 **Why Laravel.** Laravel and MySQL were chosen because the app is deployed on shared PHP hosting; on a VPS I would use FastAPI with Docker.
 
-Numbered decision records are in [`docs/decisions.md`](docs/decisions.md). The reasoning behind earlier design choices is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
+Numbered decision records are in [`docs/decisions.md`](docs/decisions.md).
 
 ## How it was built
 
@@ -165,7 +152,7 @@ I built this app with a coding agent, working from documents I wrote first: a pr
 
 ## Local development
 
-Prerequisites: Docker, Node 20 or newer, and PHP 8.3 with Composer. The desktop app also needs Rust. TODO(akash): confirm how you run PHP locally. The `app` (PHP) service in `docker-compose.yml` is currently commented out, so Compose starts only MySQL.
+Prerequisites: Docker (for MySQL), Node 20 or newer, and PHP 8.3 or newer with Composer, installed on your machine. The `app` (PHP) service in `docker-compose.yml` is commented out, so Compose starts only MySQL and the API runs on your local PHP.
 
 **1. Start MySQL** (MySQL 8.4 on port 3306, database `notes`; the root password is set in [`docker-compose.yml`](docker-compose.yml)):
 
@@ -193,13 +180,6 @@ npm ci
 npm run dev
 ```
 
-**4. Run the desktop app** (optional):
-
-```sh
-cd web
-npm run tauri:dev
-```
-
 **Tests and checks:**
 
 ```sh
@@ -208,7 +188,7 @@ cd web && npm run test         # Vitest
 cd web && npm run check        # ESLint, Stylelint, type check and Vitest
 ```
 
-More detail on the Docker environment is in [`docs/SETUP-WINDOWS.md`](docs/SETUP-WINDOWS.md), and on the production build in [`PRODUCTION-BUILD.md`](PRODUCTION-BUILD.md).
+How the production build is served by Laravel is described in [`PRODUCTION-BUILD.md`](PRODUCTION-BUILD.md).
 
 ## Author
 

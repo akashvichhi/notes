@@ -1,9 +1,9 @@
 # Frontend rules: Notes
 
-Stack: React 19, TypeScript (`strict`), Vite, Mantine, TanStack React Query, React Router, axios, zustand, Tiptap, Tauri 2, Vitest + React Testing Library. The API is Laravel with Sanctum. These rules add to the root `CLAUDE.md`.
+Stack: React 19, TypeScript (`strict`), Vite, Mantine, TanStack React Query, React Router, axios, zustand, Tiptap, Vitest + React Testing Library. The API is Laravel with Sanctum. These rules add to the root `CLAUDE.md`.
 
 - **NEVER** use `@tiptap-pro` packages.
-- The same code runs in the browser and in Tauri. Everything that differs between them lives in `platform/`.
+- The app runs only in the browser (decision 1).
 
 ---
 
@@ -29,12 +29,7 @@ web/src/
 ├── common/        domain components shared by 2+ pages (created when the second page needs one)
 ├── test_utils/    render helpers and test-data factories
 ├── pages/         one folder per route: <page>_page.tsx, components/, hooks/
-│
-│   Offline-first layers (this app keeps a local copy of every note):
-├── db/            local SQLite: connection, schema, one <resource>_repo.ts per table, drafts store
-├── data/          <resource>_source.ts: picks the server or the local DB for a scope (Cloud vs On This Device)
-├── sync/          the sync engine: outbox of pending writes, pull, push, status
-├── platform/      browser vs Tauri differences: secure store, device kind, isNative()
+├── db/            drafts_store.ts: the IndexedDB draft buffer for unsaved typing
 └── stores/        zustand stores for client-only UI state (open tabs, panels); never server data
 ```
 
@@ -43,7 +38,7 @@ Pages: login, register, notes (list and editor, `/` and `/notes/:uuid`), access_
 ## Naming
 - Files and folders: `snake_case` (`note_row.tsx`, `use_autosave.ts`).
 - Components: `PascalCase`. Hooks: `camelCase` starting with `use`. Functions and variables: `camelCase`. Constants: `UPPER_SNAKE_CASE`.
-- Interfaces: `I` prefix (`INote`, `IPaginatedResponse<T>`), with `camelCase` properties. Type aliases: `T` prefix (`TContainer = 'cloud' | 'local'`). Generic parameters stay single letters (`<T>`).
+- Interfaces: `I` prefix (`INote`, `IPaginatedResponse<T>`), with `camelCase` properties. Type aliases: `T` prefix (`TSaveStatus = 'idle' | 'saving'`). Generic parameters stay single letters (`<T>`).
 - `interface` for object shapes; `type` for unions, literals and function signatures.
 - **NEVER** leave anything untyped, even where TypeScript could infer it:
   - variables and constants: `const pageSize: number = 50`
@@ -68,34 +63,31 @@ Pages: login, register, notes (list and editor, `/` and `/notes/:uuid`), access_
 - Pure, recursive converters in `utils/case_converter.ts`; they skip `FormData`, `Blob` and `Date`.
 - Only **keys** are converted, never values. Values the API expects in snake_case are constants in that form.
 - **Opaque data is never converted:** a note's `body` (ProseMirror JSON; `textAlign` must stay `textAlign`) and maps keyed by data (`counts.folders` is keyed by folder uuid, `counts.tags` by tag slug).
-- The local SQLite tables keep their snake_case columns. Each `db/*_repo.ts` maps rows to camelCase objects and back, so nothing outside `db/` sees a column name. Outbox payloads stored before the change are converted when read.
 - In a 422, the keys of `errors` are converted to camelCase so they match the form field names.
-- The error interceptor rejects every failure as an `ApiError` (`{ status: number, message: string, errors?: Record<string, string[]>, serverCopy?: Note }`, defined in `api/api_client.ts`); a network error has `status: 0` and a fallback message. React Query's `defaultError` is `ApiError`, and `normalizeError()` turns anything else thrown into one. Components, hooks and the sync engine never inspect raw axios errors.
+- The error interceptor rejects every failure as an `ApiError` (`{ status: number, message: string, errors?: Record<string, string[]>, serverCopy?: Note }`, defined in `api/api_client.ts`); a network error has `status: 0` and a fallback message. React Query's `defaultError` is `ApiError`, and `normalizeError()` turns anything else thrown into one. Components and hooks never inspect raw axios errors.
 
 ## Authentication
 - **Browser:** the Sanctum session lives in an httpOnly cookie. The frontend never sees, stores or sends a token. A 419 (expired CSRF token) is retried once inside the interceptor after refreshing the CSRF cookie.
-- **Native apps (Tauri):** the webview is a different origin from the API, so the session cookie is never sent. The app keeps an API token in the OS secure store (Credential Manager, Keychain, libsecret, Keystore) through `platform/secure_store.ts` and sends it as a bearer header. It is cached in memory only. See decision 1.
 - **NEVER** put auth data in `localStorage`, `sessionStorage` or a JS-readable cookie. The current user lives only in the React Query cache (`useCurrentUserQuery`).
 - `protected_route.tsx` runs `useCurrentUserQuery` (`GET /me`): loading → full-screen loader; 200 → the page; 401 → login, remembering the page asked for. `guest_route.tsx` sends a signed-in user from login and register to the notes.
 - Session expiry: the response interceptor reports a 401 (except from `/me` and `/login`) to a handler registered by `app.tsx`, which clears cached queries and re-checks the session. The API client needs no access to the router or the cache.
 - Login: on success, put the user in the `useCurrentUserQuery` cache and go to the remembered page. Show the API's generic error; **NEVER** say whether the email or the password was wrong.
 - The remembered page comes from router state, never from a URL parameter (no open redirects).
-- Logout: on success, clear the whole query cache and the local Cloud copy, then go to login.
+- Logout: clear the whole query cache, the open tabs and the draft buffer, then go to login.
 
 ## Types
 - `types/pagination.ts` holds `IPaginationMeta`, `IPaginatedResponse<T>` and `IPaginationParams`, used by EVERY paginated API. A list's params **extend** `IPaginationParams`. **NEVER** redefine pagination fields per feature.
 - API functions are fully typed; single-resource functions unwrap `data` and return `Promise<INote>`.
-- Shared aliases: `TUuid`, `TIsoDate`, `TContainer`, `TProseMirrorDoc`.
+- Shared aliases: `TUuid`, `TIsoDate`, `TProseMirrorDoc`.
 
 ## Data fetching (React Query)
-- Flow: **types → API functions / data sources → query and mutation hooks → components**. Components **NEVER** call API functions, repos or sources directly. **NEVER** fetch data in `useEffect`.
+- Flow: **types → API functions → query and mutation hooks → components**. Components **NEVER** call API functions directly. **NEVER** fetch data in `useEffect`.
 - All hooks for one resource live in `src/queries/<resource>_queries.ts`, so its invalidation stays in one file.
 - **All** query keys live in `constants/query_keys.ts`, one factory per resource (`noteKeys.list(scope)`, `noteKeys.detail(uuid)`). **NEVER** write an inline key array.
 - Mutations invalidate exactly the keys they affect. Optimistic updates roll back on failure.
 - Paginated lists use `placeholderData: keepPreviousData`.
 - The `QueryClient` sets a default `staleTime` and `retry` from constants.
 - **NEVER** set `throwOnError` globally; API errors are expected states, not crashes.
-- Writes to Cloud notes go through the outbox (`sync/`), so they survive going offline. On This Device notes never reach the API.
 
 ## Logic vs UI
 - **All logic lives in hooks:** shared logic in `src/hooks/`, single-page logic in `pages/<page>/hooks/`.
@@ -189,6 +181,6 @@ ESLint (`eslint.config.js`) enforces: no `any`; explicit return and boundary typ
 Stylelint (`stylelint.config.js`) enforces token-only values, max nesting 3, no IDs, no `!important`, camelCase module classes and no `@import`.
 
 ## Testing
-- Vitest + React Testing Library for important flows (login and register validation, note list filtering, error and empty states), the sync engine and pure utils (case conversion, ProseMirror helpers, clipboard).
+- Vitest + React Testing Library for important flows (login and register validation, note list filtering, error and empty states), autosave and pure utils (case conversion, ProseMirror helpers, clipboard).
 - Mock at the network edge (the API module), never React Query internals.
 - Query by role and label text, as a user would, never by CSS classes.

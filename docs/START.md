@@ -6,23 +6,16 @@ Entry point for the coding agent. Read this file first, in full.
 
 ## ✅ STATUS — 2026-10-11 · READY
 
-All documents are current and consistent. `docs/PLAN.md` holds **54 tasks** across
-four phases — api, shared UI, desktop and mobile — separated by three `⛔ STOP`
-gates. Begin at Task B1, and stop at the first gate after Task F15.
+All documents are current and consistent. `docs/PLAN.md` holds **31 tasks** across
+two phases — api and web app — ending at a `⛔ STOP` gate after Task F15. Begin at
+Task B1.
 
 ---
 
 ## 1 · What this is
 
-A cross-platform notes application. One React codebase ships as a web app and as
-native apps for Windows, macOS, Linux, Android and iOS, against a
-Laravel API on MySQL.
-
-Notes live in one of two containers:
-
-- **Cloud** — synced to the user's account across every device. Works offline; changes
-  reconcile on reconnect.
-- **On This Device** — never leaves the machine, needs no account, deleted on uninstall.
+A web notes application: a React single-page app against a Laravel API on MySQL. The
+app is web-only — there are no desktop or mobile builds.
 
 ---
 
@@ -34,9 +27,9 @@ All paths are relative to the repository root.
 |---|---|---|
 | 1 | `docs/PRINCIPLES.md` | **How to work on this project** — branching, when to stop, how to test, what never to do |
 | 2 | `docs/CONTEXT.md` | Every decision and the reasoning behind it, including six reversals that must not be undone |
-| 3 | `docs/ARCHITECTURE.md` | **The current design.** Containers, local and cloud storage, the sync protocol, auth, the full stack |
+| 3 | `docs/ARCHITECTURE.md` | **The current design.** Storage, saving and conflicts, auth, the MCP server, the full stack |
 | 4 | `docs/SPEC.md` | Product spec and acceptance criteria |
-| 5 | `docs/PLAN.md` | **The 54 tasks, in order, across four phases and three gates** |
+| 5 | `docs/PLAN.md` | **The 31 tasks, in order, ending at one gate** |
 | 6 | `docs/SETUP-WINDOWS.md` | The Docker environment |
 | — | `mockup/index.html` | Open in a browser to see the intended UI |
 
@@ -58,27 +51,22 @@ notes-app/
 ├── mockup/index.html             UI reference — open it if a layout is unclear
 ├── docs/                         everything here is for you
 │   ├── START.md  PRINCIPLES.md  CONTEXT.md
-│   ├── ARCHITECTURE.md  SPEC.md  PLAN.md  SETUP-WINDOWS.md
-│   ├── NATIVE-TEST-PLAN.md       ← you create in D12
-│   └── MOBILE-TEST-PLAN.md       ← you create in M6
-├── .github/workflows/
-│   └── desktop.yml               ← D11 (optional)
+│   └── ARCHITECTURE.md  SPEC.md  PLAN.md  SETUP-WINDOWS.md
 │
 ├── api/                      provided as a bare Laravel 12 app
 │   ├── app/
 │   │   ├── Console/Commands/     PruneEmptyNotes, PurgeTrash
 │   │   ├── Exceptions/           NoteConflictException
 │   │   ├── Http/
-│   │   │   ├── Controllers/Api/V1/   Auth, Profile, PasswordReset, Token,
-│   │   │   │                         Note, Folder, Tag, Search, Bootstrap, Sync
+│   │   │   ├── Controllers/Api/V1/   Auth, Profile, PasswordReset,
+│   │   │   │                         Note, Folder, Tag, Search, Bootstrap
 │   │   │   ├── Requests/             one per write endpoint
 │   │   │   └── Resources/            User, Note, NoteList, Folder, Tag
-│   │   ├── Models/               User, Note, Folder, Tag, Tombstone
+│   │   ├── Models/               User, Note, Folder, Tag
 │   │   ├── Policies/             NotePolicy, FolderPolicy, TagPolicy
 │   │   ├── Queries/              NotesQuery, FolderQuery
 │   │   ├── Services/             one action per class, single __invoke()
 │   │   │   ├── Auth/             RegisterUser, AuthenticateUser, LogoutUser,
-│   │   │   │                     IssueToken, RevokeCurrentToken,
 │   │   │   │                     SendPasswordResetLink, ResetPassword
 │   │   │   ├── Users/            UpdateProfile, ChangePassword, UpdatePreferences
 │   │   │   ├── Folders/          CreateFolder, RenameFolder, DeleteFolder
@@ -87,54 +75,39 @@ notes-app/
 │   │   │   │                     SyncNoteTags, DeleteNote, RestoreNote,
 │   │   │   │                     EmptyTrash, DuplicateNote
 │   │   │   ├── Search/           SearchNotes
-│   │   │   ├── Sync/             BumpRevision, RecordTombstone, BuildSyncDelta
 │   │   │   └── Bootstrap/        BuildBootstrapPayload
 │   │   └── Support/              PlainTextExtractor, SnippetBuilder, SearchTerms
-│   ├── database/migrations/      notes, folders, tags, note_tag, note_versions,
-│   │                             user_sync_counters, tombstones, sync revisions
+│   ├── database/migrations/      notes, folders, tags, note_tag, note_versions
 │   ├── routes/api.php
 │   └── tests/
 │       ├── Feature/              Architecture, Auth, Profile, Folder, Tag,
 │       │                         NoteIndex, NoteUpdate, NoteTag, Trash, Search,
 │       │                         Bootstrap, Cleanup, Authorization,
-│       │                         NoteCreateIdempotency, TokenAuth,
-│       │                         SyncRevision, SyncPull, TrashedNoteConflict
+│       │                         NoteCreateIdempotency, TrashedNoteConflict
 │       └── Unit/                 PlainTextExtractor, SnippetBuilder
 │
 └── web/                     provided as a bare Vite React-TS app
-    ├── e2e/                      notes.spec.ts, sync.spec.ts
+    ├── e2e/                      notes.spec.ts
     ├── public/                   icons copied from assets/brand
-    ├── src-tauri/                ← D1
-    │   ├── Cargo.toml  tauri.conf.json  build.rs
-    │   ├── capabilities/default.json
-    │   ├── icons/                generated by `tauri icon`
-    │   ├── gen/android/          ← M1, generated — never hand-edit
-    │   ├── gen/apple/            ← M2, generated — never hand-edit
-    │   └── src/                  main.rs, lib.rs, keychain.rs
     └── src/
         ├── api/                  client, auth, notes, folders, tags, search, bootstrap
         ├── components/
-        │   ├── common/           Skeletons, TopProgress, UpdatePrompt, LocalNoteCallout
+        │   ├── common/           Skeletons, TopProgress, UpdatePrompt
         │   ├── editor/           Editor, EditorToolbar, TableBar, TabBar, TagStrip,
         │   │                     extensions.ts
-        │   ├── layout/           AppShell, Header, Sidebar, ContainerSection,
+        │   ├── layout/           AppShell, Header, Sidebar, SidebarNav,
         │   │                     StatusBar, AccountMenu, ProfileModal
-        │   ├── notes/            NoteList, NoteRow, FilterInput, MoveToMenu
+        │   ├── notes/            NoteList, NoteRow, FilterInput
         │   ├── search/           SpotlightSearch, Highlight
-        │   └── sync/             ConflictBanner, ConflictSheet
-        ├── data/                 notesSource, foldersSource
-        ├── db/                   schema, connection, notesRepo, foldersRepo, tagsRepo
+        │   └── conflicts/        ConflictSheet
+        ├── db/                   drafts (the IndexedDB draft buffer)
         ├── hooks/
         │   ├── queries/          useAuth, useBootstrap, useNotes, useFolders,
         │   │                     useTags, useSearch
-        │   └── useAutosave, useAbandonedNote, useOnline, useVisualViewport,
-        │                         useSyncStatus
+        │   └── useAutosave, useAbandonedNote, useOnline, useVisualViewport
         ├── lib/                  queryClient, drafts, filterNotes, useDelayedLoading
         ├── pages/                LoginPage, RegisterPage, AppPage
-        ├── platform/             isNative, deviceKind, secureStore, wipeCloudData,
-        │                          backButton
         ├── stores/               uiStore, tabsStore
-        ├── sync/                 outbox, push, pull, engine, conflicts
         ├── types/                api.ts
         └── theme.ts  routes.tsx  App.tsx  main.tsx
 ```
@@ -182,7 +155,6 @@ vendor/
 /api/.env
 /api/storage/*.key
 /web/dist/
-/web/src-tauri/target/
 ```
 
 No remote is required. Everything is local; `git log` is how the developer tracks
@@ -190,20 +162,11 @@ progress.
 
 ---
 
-## 2d · Delivery in three stages
+## 2d · Delivery
 
-This project ships in three authorised stages. **Each one stops and waits.**
-
-| Stage | Tasks | Ends when |
-|---|---|---|
-| **1 · Backend + web app** ← *this one* | `B1`–`B18`, `F1`–`F15` | **Stop after F15.** The developer tests the web app end to end |
-| 2 · Desktop — Windows, macOS, Linux | `D1`–`D12` | Only after the developer asks. **Stop after D12** |
-| 3 · Mobile — Android, iOS | `M1`–`M8` | Only after the developer asks. **Stop after M8** |
-
-You are executing **stage 1**. Treat the plan as ending at F15.
-
-Every gate is marked `⛔ STOP` in `PLAN.md`. Reaching the next task in the file is
-**not** authorisation to start it.
+This project ships in one authorised stage: **the api plus the web app, `B1`–`B15`
+and `F1`–`F15`.** It ends at the `⛔ STOP` gate after F15, where the developer tests
+the web app end to end.
 
 ---
 
@@ -230,23 +193,18 @@ work on `master` only — **no branches, no worktrees, no stashing** — stop ra
 improvise, never weaken a test to make it pass, verify before you claim, and report
 failures plainly.
 
-**Pause at 🧠 REASONING-HEAVY tasks.** Nine tasks in the plan carry a
-`🧠 REASONING-HEAVY TASK` banner. **Before starting one, stop and say so**, then wait.
+**Pause at 🧠 REASONING-HEAVY tasks.** Task B8 carries a
+`🧠 REASONING-HEAVY TASK` banner. **Before starting it, stop and say so**, then wait.
 You cannot change your own model — the developer may want to switch to a stronger one
 first, and they can only do that between turns. One line is enough:
 
-> *"The next task is D7, which is marked reasoning-heavy. Say continue when you're
+> *"The next task is B8, which is marked reasoning-heavy. Say continue when you're
 > ready."*
 
 **Work through the tasks strictly in order.** Do not skip ahead or reorder.
 
-**⛔ STOP AFTER TASK F15.** This delivery is the api plus the web application —
-tasks **B1 through F15 only**. When F15 is committed, run the full suite, report, and
-**wait**. Do **not** start Task D1.
-
-There are three gates: after **F15** (web), after **D12** (desktop) and after **M8**
-(mobile). Each one stops and waits for the developer. The tasks after a gate exist in
-the file; that is not permission to begin them.
+**⛔ STOP AFTER TASK F15.** When F15 is committed, run the full suite, report, and
+**wait**.
 
 **Each task is a TDD cycle.** Write the failing test, run it and confirm it fails,
 implement, run it and confirm it passes, commit. Never write implementation before its
@@ -279,10 +237,6 @@ packages. Never add `@tiptap-pro/*` or CKEditor.
 **Do not invent branding.** Every icon and logo already exists in `assets/brand/` and
 is documented in its README. Copy those files; never generate, redraw or substitute an
 image asset, and never invent a wordmark, tagline or brand colour.
-
-**Task D11 is optional and skipped by default.** It covers code signing, release
-hosting and auto-update, none of which are set up. Go from D10 straight to D12.
-Unsigned local builds work fine.
 
 **Do not invent files or endpoints** that are not in the plan. If something in the plan
 is wrong or impossible, **stop and say so** rather than improvising.

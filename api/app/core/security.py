@@ -1,4 +1,5 @@
-"""Password hashing and the random ids behind sessions. Passwords are never logged or returned."""
+"""Password hashing and the random secrets behind sessions and access tokens. Passwords
+are never logged or returned."""
 
 import hashlib
 import secrets
@@ -6,6 +7,8 @@ import secrets
 import bcrypt
 from argon2 import PasswordHasher as Argon2Hasher
 from argon2.exceptions import InvalidHashError, VerificationError
+
+from app.constants.access_token_constants import ACCESS_TOKEN_PREFIX, ACCESS_TOKEN_SECRET_BYTES
 
 SESSION_TOKEN_BYTES = 32
 # Imported accounts carry bcrypt hashes, mostly in the "$2y$" variant, made by a hasher
@@ -55,6 +58,11 @@ class PasswordHasher:
 
 def new_session_token() -> str:
     return secrets.token_urlsafe(SESSION_TOKEN_BYTES)
+
+
+def new_access_token_secret() -> str:
+    """The part of a personal access token after "{id}|"; only its hash is stored."""
+    return ACCESS_TOKEN_PREFIX + secrets.token_urlsafe(ACCESS_TOKEN_SECRET_BYTES)
 
 
 def hash_token(token: str) -> str:

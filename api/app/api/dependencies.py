@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import Depends, Request, Response
 from sqlalchemy.orm import Session
 
+from app.constants.access_token_constants import ACCESS_TOKEN_CREATES_PER_MINUTE
 from app.constants.auth_constants import RATE_LIMIT_WINDOW_SECONDS, UNKNOWN_CLIENT_ADDRESS
 from app.constants.note_constants import NOTE_SAVES_PER_MINUTE
 from app.constants.search_constants import SEARCHES_PER_MINUTE
@@ -23,6 +24,7 @@ from app.repositories.note_repository import NoteRepository
 from app.repositories.tag_repository import TagRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
+from app.services.access_token_service import AccessTokenService
 from app.services.auth_service import Authenticated, AuthService
 from app.services.bootstrap_service import BootstrapService
 from app.services.folder_service import FolderService
@@ -173,6 +175,9 @@ def per_user_rate_limit(bucket: str, limit: RateLimit) -> Callable[[User, RateLi
 limit_note_saves = per_user_rate_limit(
     "note-saves", RateLimit(NOTE_SAVES_PER_MINUTE, RATE_LIMIT_WINDOW_SECONDS)
 )
+limit_access_token_creates = per_user_rate_limit(
+    "access-token-creates", RateLimit(ACCESS_TOKEN_CREATES_PER_MINUTE, RATE_LIMIT_WINDOW_SECONDS)
+)
 limit_searches = per_user_rate_limit("searches", RateLimit(SEARCHES_PER_MINUTE, RATE_LIMIT_WINDOW_SECONDS))
 
 
@@ -188,3 +193,10 @@ def get_bootstrap_service(session: DbSession) -> BootstrapService:
 
 
 BootstrapServiceDependency = Annotated[BootstrapService, Depends(get_bootstrap_service)]
+
+
+def get_access_token_service(session: DbSession, clock: ClockDependency) -> AccessTokenService:
+    return AccessTokenService(session, AccessTokenRepository(session), clock)
+
+
+AccessTokenServiceDependency = Annotated[AccessTokenService, Depends(get_access_token_service)]

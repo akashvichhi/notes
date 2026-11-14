@@ -1,5 +1,7 @@
 """Every user-facing message. Messages never contain personal data."""
 
+from app.constants.access_token_constants import ACTIVE_ACCESS_TOKENS_MAX
+
 VALIDATION_FAILED = "Validation failed."
 NOT_FOUND = "Not found."
 METHOD_NOT_ALLOWED = "Method not allowed."
@@ -40,6 +42,7 @@ VALIDATION_MESSAGE_TEMPLATES: dict[str, str] = {
     "dict_type": "The {label} field must be an object.",
     "list_type": "The {label} field must be a list.",
     "too_long": "The {label} field must not have more than {max_length} items.",
+    "too_short": "The {label} field must have at least {min_length} item.",
     "json_invalid": "The request body is not valid JSON.",
     "model_attributes_type": "The request body must be a JSON object.",
     "string_pattern_mismatch": "The {label} field format is invalid.",
@@ -52,3 +55,7 @@ NOTE_CHANGED_ELSEWHERE = "This note changed somewhere else."
 NOTE_TOO_LARGE = "This note is too large to save."
 NOTE_TOO_DEEP = "This note is nested too deeply."
 VERSION_REQUIRED_WITH_BODY = "The version field is required when body is present."
+ABILITIES_DISTINCT = "The abilities field has a duplicate value."
+ACCESS_TOKEN_LIMIT_REACHED = (
+    f"You can have up to {ACTIVE_ACCESS_TOKENS_MAX} access tokens. Revoke one to create another."
+)

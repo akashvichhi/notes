@@ -39,6 +39,10 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "S", "RUF", "C4", "PTH", "R
 "tests/**" = ["S101", "S105", "S106"]
 "migrations/**" = ["N999"]
 
+[tool.ruff.lint.isort]
+# Explicit, so imports of modules that do not exist yet (a red test) sort the same way.
+known-first-party = ["app", "tests"]
+
 [tool.mypy]
 strict = true
 python_version = "3.14"

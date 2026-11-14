@@ -834,10 +834,10 @@
                 }
             ]
         },
-        "plain_text": "nul\u0000char",
-        "excerpt": "nul\u0000char",
+        "plain_text": "nulchar",
+        "excerpt": "nulchar",
         "word_count": 1,
-        "title": "nul\u0000char"
+        "title": "nulchar"
     },
     {
         "body": {

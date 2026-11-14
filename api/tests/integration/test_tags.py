@@ -85,9 +85,7 @@ def test_create_rejects_a_blank_name(authenticated_client: TestClient) -> None:
 def test_create_rejects_a_name_over_60_characters(authenticated_client: TestClient) -> None:
     response = authenticated_client.post(TAGS, json={"name": "x" * 61})
 
-    assert response.json()["details"] == [
-        {"field": "name", "message": "The name field must not be greater than 60 characters."}
-    ]
+    assert response.json()["details"] == [{"field": "name", "message": "Name must be at most 60 characters."}]
 
 
 def test_create_rejects_a_name_that_has_no_slug(authenticated_client: TestClient) -> None:

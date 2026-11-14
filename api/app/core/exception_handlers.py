@@ -61,7 +61,8 @@ def _validation_detail(error: Mapping[str, object]) -> ErrorDetail:
     field = _field_of(error, context)
     template = messages.VALIDATION_MESSAGE_TEMPLATES.get(str(error.get("type")))
     if template is not None:
-        label = field.replace("_", " ").replace(".", " ")
+        words = field.replace("_", " ").replace(".", " ")
+        label = words[:1].upper() + words[1:]
         message = template.format_map(_MessageContext(context, label=label))
     else:
         message = str(error.get("msg", messages.VALIDATION_FAILED)).removeprefix(

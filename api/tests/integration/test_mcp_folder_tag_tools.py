@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.constants import messages
 from app.models.user_model import User
 from tests.factories import make_folder, make_note, make_tag, make_user, tag_note
 from tests.fakes import START_TIME
@@ -69,7 +70,7 @@ def test_create_folder_refuses_a_taken_name_or_an_unknown_parent(
 ) -> None:
     make_folder(db_session, user, name="Work")
 
-    assert "The name has already been taken." in mcp.error("create_folder", name="work")
+    assert messages.NAME_TAKEN in mcp.error("create_folder", name="work")
     assert "No folder with that id" in mcp.error("create_folder", name="New", parent_id=UNKNOWN_ID)
 
 
@@ -130,7 +131,7 @@ def test_create_tag_refuses_a_name_whose_slug_is_taken(
 ) -> None:
     make_tag(db_session, user, name="Work", slug="work")
 
-    assert "The name has already been taken." in mcp.error("create_tag", name="WORK")
+    assert messages.NAME_TAKEN in mcp.error("create_tag", name="WORK")
 
 
 def test_an_unknown_tag_is_not_found(mcp: McpClient) -> None:

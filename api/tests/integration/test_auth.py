@@ -86,7 +86,7 @@ def test_register_says_how_long_a_password_must_be(client: TestClient) -> None:
     response = client.post(REGISTER, json=_registration(password="short", password_confirmation="short"))
 
     assert response.json()["details"] == [
-        {"field": "password", "message": "The password field must be at least 8 characters."}
+        {"field": "password", "message": "Password must be at least 8 characters."}
     ]
 
 
@@ -102,7 +102,7 @@ def test_missing_field_says_it_is_required(client: TestClient) -> None:
     response = client.post(LOGIN, json={"email": "asha@example.com"})
 
     assert response.status_code == 422
-    assert response.json()["details"] == [{"field": "password", "message": "The password field is required."}]
+    assert response.json()["details"] == [{"field": "password", "message": "Password is required."}]
 
 
 def test_login_returns_the_user_and_sets_the_session_cookie(client: TestClient, user: User) -> None:
@@ -292,3 +292,10 @@ def test_login_from_a_foreign_origin_is_rejected(client: TestClient, user: User)
     )
 
     assert response.status_code == 403
+
+
+def test_wrong_credentials_say_so_plainly(client: TestClient, user: User) -> None:
+    response = client.post(LOGIN, json={"email": user.email, "password": "not the password"})
+
+    assert response.status_code == 401
+    assert response.json() == {"error": "Incorrect email or password."}

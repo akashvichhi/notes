@@ -15,43 +15,43 @@ CONFLICT = "This conflicts with something that already exists."
 # Pydantic prefixes messages raised from our own validators; the user only needs the message.
 PYDANTIC_VALUE_ERROR_PREFIX = "Value error, "
 
-# Auth. One message for a wrong email and a wrong password: it never says which.
-INVALID_CREDENTIALS = "These credentials do not match our records."
-EMAIL_TAKEN = "The email has already been taken."
-PASSWORD_CONFIRMATION_MISMATCH = "The password field confirmation does not match."  # noqa: S105 - a message
+INVALID_CREDENTIALS = "Incorrect email or password."
+EMAIL_TAKEN = "An account with this email already exists."
+PASSWORD_CONFIRMATION_MISMATCH = "The passwords do not match."  # noqa: S105 - a message
 
-# Validation messages by Pydantic error type. {label} is the field's name in words
-# ("per_page" -> "per page"); the other placeholders come from the error's context.
+# Validation messages by Pydantic error type. {label} is the field's name in words, with a
+# capital first letter ("per_page" -> "Per page"); the other placeholders come from the
+# error's context.
 VALIDATION_MESSAGE_TEMPLATES: dict[str, str] = {
-    "missing": "The {label} field is required.",
-    "required": "The {label} field is required.",
-    "string_too_short": "The {label} field must be at least {min_length} characters.",
-    "string_too_long": "The {label} field must not be greater than {max_length} characters.",
-    "string_type": "The {label} field must be a string.",
-    "email": "The {label} field must be a valid email address.",
-    "int_type": "The {label} field must be an integer.",
-    "int_parsing": "The {label} field must be an integer.",
-    "bool_type": "The {label} field must be true or false.",
-    "bool_parsing": "The {label} field must be true or false.",
-    "uuid_type": "The {label} field must be a valid UUID.",
-    "uuid_parsing": "The {label} field must be a valid UUID.",
-    "greater_than_equal": "The {label} field must be at least {ge}.",
-    "less_than_equal": "The {label} field must not be greater than {le}.",
-    "enum": "The selected {label} is invalid.",
-    "literal_error": "The selected {label} is invalid.",
-    "dict_type": "The {label} field must be an object.",
-    "list_type": "The {label} field must be a list.",
-    "too_long": "The {label} field must not have more than {max_length} items.",
-    "too_short": "The {label} field must have at least {min_length} item.",
+    "missing": "{label} is required.",
+    "required": "{label} is required.",
+    "string_too_short": "{label} must be at least {min_length} characters.",
+    "string_too_long": "{label} must be at most {max_length} characters.",
+    "string_type": "{label} must be text.",
+    "email": "Enter a valid email address.",
+    "int_type": "{label} must be a whole number.",
+    "int_parsing": "{label} must be a whole number.",
+    "bool_type": "{label} must be true or false.",
+    "bool_parsing": "{label} must be true or false.",
+    "uuid_type": "{label} must be a valid UUID.",
+    "uuid_parsing": "{label} must be a valid UUID.",
+    "greater_than_equal": "{label} must be at least {ge}.",
+    "less_than_equal": "{label} must be at most {le}.",
+    "enum": "{label} is not one of the allowed values.",
+    "literal_error": "{label} is not one of the allowed values.",
+    "dict_type": "{label} must be an object.",
+    "list_type": "{label} must be a list.",
+    "too_long": "{label} can have at most {max_length} items.",
+    "too_short": "{label} must have at least {min_length} item(s).",
     "json_invalid": "The request body is not valid JSON.",
     "model_attributes_type": "The request body must be a JSON object.",
-    "string_pattern_mismatch": "The {label} field format is invalid.",
-    "nul_character": "The {label} field must not contain a NUL character.",
+    "string_pattern_mismatch": "{label} has an invalid format.",
+    "nul_character": "{label} must not contain a NUL character.",
 }
 
-CURRENT_PASSWORD_INCORRECT = "The password is incorrect."  # noqa: S105 - a message
-NAME_TAKEN = "The name has already been taken."
-TAG_NAME_WITHOUT_SLUG = "The name must contain a letter or number that has a Latin spelling."
+CURRENT_PASSWORD_INCORRECT = "The current password is incorrect."  # noqa: S105 - a message
+NAME_TAKEN = "This name is already in use."
+TAG_NAME_WITHOUT_SLUG = "Name must include a letter or digit that can be written in Latin letters."
 NOTE_CHANGED_ELSEWHERE = "This note changed somewhere else."
 NOTE_TOO_LARGE = "This note is too large to save."
 NOTE_TOO_DEEP = "This note is nested too deeply."
@@ -60,8 +60,8 @@ IMAGE_SOURCE_NOT_ALLOWED = "Images must use an http(s) URL or an existing note-i
 UNKNOWN_IMAGE_PLACEHOLDER = (
     "Unknown image placeholder {placeholder}. Keep the placeholders exactly as get_note returned them."
 )
-VERSION_REQUIRED_WITH_BODY = "The version field is required when body is present."
-ABILITIES_DISTINCT = "The abilities field has a duplicate value."
+VERSION_REQUIRED_WITH_BODY = "Version is required when saving the body."
+ABILITIES_DISTINCT = "Abilities must not list the same value twice."
 ACCESS_TOKEN_LIMIT_REACHED = (
     f"You can have up to {ACTIVE_ACCESS_TOKENS_MAX} access tokens. Revoke one to create another."
 )

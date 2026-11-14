@@ -52,7 +52,7 @@ def test_validation_errors_list_each_field(build_app: AppFactory, test_settings:
     assert response.status_code == 422
     body = response.json()
     assert body["error"] == messages.VALIDATION_FAILED
-    assert [detail["field"] for detail in body["details"]] == ["per_page"]
+    assert body["details"] == [{"field": "per_page", "message": "Per page must be at least 1."}]
 
 
 def test_domain_error_about_one_field_returns_its_status_and_details(

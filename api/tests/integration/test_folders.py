@@ -126,7 +126,7 @@ def test_create_rejects_a_name_over_120_characters(authenticated_client: TestCli
     response = authenticated_client.post(FOLDERS, json={"name": "x" * 121})
 
     assert response.json()["details"] == [
-        {"field": "name", "message": "The name field must not be greater than 120 characters."}
+        {"field": "name", "message": "Name must be at most 120 characters."}
     ]
 
 

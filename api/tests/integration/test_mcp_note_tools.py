@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.note_model import Note
 from app.models.user_model import User
 from app.schemas.common.json_types import JsonObject
-from tests.factories import make_folder, make_note, make_tag
+from tests.factories import make_folder, make_note, make_tag, tag_note
 from tests.fakes import START_TIME
 from tests.mcp_client import McpClient
 
@@ -39,7 +39,7 @@ def test_get_note_returns_the_body_as_markdown(mcp: McpClient, db_session: Sessi
     parent = make_folder(db_session, user, name="Work")
     folder = make_folder(db_session, user, name="Projects", parent=parent)
     note = make_note(db_session, user, title="Plan", folder=folder, body=_doc(_paragraph("Hello world")))
-    note.tags = [make_tag(db_session, user, name="Ideas")]
+    tag_note(db_session, note, make_tag(db_session, user, name="Ideas"))
     db_session.flush()
 
     data = mcp.ok("get_note", uuid=str(note.uuid))
@@ -96,7 +96,7 @@ def test_list_notes_filters_by_folder_tag_and_star(mcp: McpClient, db_session: S
     folder = make_folder(db_session, user, name="Work")
     in_folder = make_note(db_session, user, title="In folder", folder=folder)
     tagged = make_note(db_session, user, title="Tagged")
-    tagged.tags = [make_tag(db_session, user, name="Read Later", slug="read-later")]
+    tag_note(db_session, tagged, make_tag(db_session, user, name="Read Later", slug="read-later"))
     starred = make_note(db_session, user, title="Starred")
     starred.is_starred = True
     db_session.flush()
@@ -283,7 +283,7 @@ def test_set_note_starred(mcp: McpClient, db_session: Session, user: User) -> No
 def test_duplicate_note_copies_the_body_and_tags(mcp: McpClient, db_session: Session, user: User) -> None:
     note = make_note(db_session, user, title="Recipe", body=_doc(_paragraph("Flour")))
     note.title_locked = True
-    note.tags = [make_tag(db_session, user, name="Food")]
+    tag_note(db_session, note, make_tag(db_session, user, name="Food"))
     db_session.flush()
 
     data = mcp.ok("duplicate_note", uuid=str(note.uuid))

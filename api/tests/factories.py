@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.models.access_token_model import AccessToken
 from app.models.folder_model import Folder
-from app.models.note_model import Note
+from app.models.note_model import Note, note_tag
 from app.models.tag_model import Tag
 from app.models.user_model import User
 from app.schemas.common.json_types import JsonObject
@@ -70,6 +70,13 @@ def make_note(
     session.add(note)
     session.flush()
     return note
+
+
+def tag_note(session: Session, note: Note, *tags: Tag) -> None:
+    """Rows in note_tag, written directly: Note.tags is lazy="raise", so assigning to it
+    would need the current tags loaded first."""
+    session.execute(note_tag.insert(), [{"note_id": note.id, "tag_id": tag.id} for tag in tags])
+    session.flush()
 
 
 def make_access_token(

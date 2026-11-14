@@ -6,11 +6,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.constants import messages
-from app.models.note_model import Note, note_tag
+from app.models.note_model import Note
 from app.models.tag_model import Tag
 from app.models.user_model import User
 from app.schemas.common.json_types import JsonObject
-from tests.factories import make_folder, make_note, make_tag, make_user
+from tests.factories import make_folder, make_note, make_tag, make_user, tag_note
 from tests.fakes import FakeClock
 
 NOTES = "/api/v1/notes"
@@ -36,10 +36,6 @@ def _doc(*paragraphs: str) -> JsonObject:
 def _trash(note: Note, clock: FakeClock, db_session: Session) -> None:
     note.deleted_at = clock.now()
     db_session.flush()
-
-
-def _tag(db_session: Session, note: Note, tag: Tag) -> None:
-    db_session.execute(note_tag.insert().values(note_id=note.id, tag_id=tag.id))
 
 
 def test_notes_need_a_session(client: TestClient) -> None:
@@ -185,7 +181,7 @@ def test_list_filters_by_folder_tag_and_star(
     in_folder = make_note(db_session, user, title="In folder", folder=folder)
     tagged = make_note(db_session, user, title="Tagged")
     starred = make_note(db_session, user, title="Starred")
-    _tag(db_session, tagged, tag)
+    tag_note(db_session, tagged, tag)
     starred.is_starred = True
     db_session.flush()
 
@@ -404,7 +400,7 @@ def test_duplicate_copies_the_note_its_tags_and_names_the_copy(
     folder = make_folder(db_session, user, name="Work")
     note = make_note(db_session, user, title="Plan", body=_doc("Plan"), folder=folder)
     note.version = 7
-    _tag(db_session, note, make_tag(db_session, user, name="work", slug="work"))
+    tag_note(db_session, note, make_tag(db_session, user, name="work", slug="work"))
     db_session.flush()
 
     response = authenticated_client.post(_note_path(note, "/duplicate"))
@@ -434,7 +430,7 @@ def test_set_tags_replaces_the_set_and_creates_missing_tags(
 ) -> None:
     note = make_note(db_session, user)
     existing = make_tag(db_session, user, name="Side projects", slug="side-projects")
-    _tag(db_session, note, make_tag(db_session, user, name="old", slug="old"))
+    tag_note(db_session, note, make_tag(db_session, user, name="old", slug="old"))
 
     response = authenticated_client.put(
         _note_path(note, "/tags"), json={"names": ["Work", " work ", "side_projects", "日本語", ""]}

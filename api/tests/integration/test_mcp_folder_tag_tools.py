@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.user_model import User
-from tests.factories import make_folder, make_note, make_tag, make_user
+from tests.factories import make_folder, make_note, make_tag, make_user, tag_note
 from tests.fakes import START_TIME
 from tests.mcp_client import McpClient
 
@@ -106,8 +106,8 @@ def test_list_tags_counts_notes_outside_the_trash(mcp: McpClient, db_session: Se
     note = make_note(db_session, user)
     trashed = make_note(db_session, user)
     trashed.deleted_at = START_TIME
-    note.tags = [work]
-    trashed.tags = [work, ideas]
+    tag_note(db_session, note, work)
+    tag_note(db_session, trashed, work, ideas)
     db_session.flush()
 
     assert mcp.ok("list_tags")["tags"] == [

@@ -1,10 +1,12 @@
 """Deterministic test-data builders. Each adds a row to the test's session and flushes,
 so the row has its id and database defaults without committing."""
 
+from datetime import datetime
 from itertools import count
 
 from sqlalchemy.orm import Session
 
+from app.models.access_token_model import AccessToken
 from app.models.folder_model import Folder
 from app.models.note_model import Note
 from app.models.tag_model import Tag
@@ -68,3 +70,24 @@ def make_note(
     session.add(note)
     session.flush()
     return note
+
+
+def make_access_token(
+    session: Session,
+    user: User,
+    *,
+    name: str = "Claude",
+    abilities: list[str] | None = None,
+    expires_at: datetime | None = None,
+) -> AccessToken:
+    token = AccessToken(
+        user_id=user.id,
+        name=name,
+        # Unique per row; no test signs in with it.
+        token_hash=f"{next(_sequence):064x}",
+        abilities=abilities or ["notes:read"],
+        expires_at=expires_at,
+    )
+    session.add(token)
+    session.flush()
+    return token

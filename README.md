@@ -9,7 +9,7 @@ A cross-platform notes app: one React codebase ships as a web app and as Tauri d
 
 ## Features
 
-- **Two containers.** Notes live in **Cloud**, synced to your account, or in **On This Device**, which is stored in a local SQLite file and never reaches the server. Each container has its own folders, tags and Trash. The desktop app works without an account; signing in adds Cloud.
+- **Two containers.** Notes live in **Cloud**, synced to your account, or, in the desktop app, in **On This Device**: a local SQLite file that never reaches the server. Each container has its own folders, tags and Trash. The desktop app works without an account; signing in adds Cloud.
 - **Offline editing with sync.** In the desktop app, Cloud notes are cached locally and stay editable without a network. Changes queue in a local outbox and sync when the connection returns. If another device changed the same note, you choose what to keep.
 - **Folders, tags and stars.** Nested, coloured folders, tags on any note, and a starred view.
 - **Search.** A global search (⌘K / Ctrl+K) across notes, backed by MySQL full-text search on the server and SQLite FTS5 on the device, plus a filter scoped to the current list.
@@ -151,11 +151,11 @@ Defined in [`api/app/Mcp/Tools/`](api/app/Mcp/Tools) and registered in [`NotesSe
 
 The architecture document describes a per-account revision counter with tombstones and a dedicated pull endpoint. That design is not built yet: today's pull fetches the current notes, folders and tags.
 
-**Cloud vs On This Device.** Some notes should never leave the machine, and the app should be useful without an account. On This Device notes live only in a local SQLite file, which the OS backs it up like any other file. IndexedDB was rejected because the browser engine can evict it under storage pressure, and for notes that exist nowhere else, eviction is data loss. The app warns that these notes are not backed up and disappear if it is uninstalled.
+**Cloud vs On This Device.** Some notes should never leave the machine, and the app should be useful without an account. On This Device notes live only in a local SQLite file, which the OS backs up like any other file. IndexedDB was rejected because the browser engine can evict it under storage pressure, and for notes that exist nowhere else, eviction is data loss. The app warns that these notes are not backed up and disappear if it is uninstalled.
 
 **Token scopes are checked inside each MCP tool.** The `/mcp` route only admits tokens that carry at least one notes scope. Each tool then declares the scope it needs and checks it before doing anything. A read-only token can still list the write tools, and calling one returns a clear error naming the missing scope. The tools call the same services and policies as the REST API, so the MCP server has no data access of its own. Personal access tokens are never given the `account` ability, which keeps every delete, trash, restore and account route out of their reach.
 
-**Laravel and MySQL.** Laravel and MySQL were chosen because the app is deployed on shared PHP hosting; on a VPS I would use FastAPI with Docker.
+**Why Laravel.** Laravel and MySQL were chosen because the app is deployed on shared PHP hosting; on a VPS I would use FastAPI with Docker.
 
 Numbered decision records are in [`docs/decisions.md`](docs/decisions.md). The reasoning behind earlier design choices is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
 

@@ -1,4 +1,5 @@
 import json
+from collections.abc import Mapping
 from typing import Annotated, Self
 from uuid import UUID
 
@@ -33,14 +34,22 @@ def body_depth(node: object, level: int = 0) -> int:
     return deepest
 
 
+def body_limit_error(body: Mapping[str, object]) -> tuple[str, str] | None:
+    """The error type and message when a body is too large or too deeply nested to save."""
+    if len(json.dumps(body, separators=(",", ":")).encode()) > NOTE_BODY_MAX_BYTES:
+        return "note_too_large", messages.NOTE_TOO_LARGE
+    if body_depth(body) > NOTE_BODY_MAX_DEPTH:
+        return "note_too_deep", messages.NOTE_TOO_DEEP
+    return None
+
+
 def _check_body_limits(value: object) -> object:
     """Runs before the body is validated as JSON, so a huge or deep body fails fast."""
     if not isinstance(value, dict):
         return value
-    if len(json.dumps(value, separators=(",", ":")).encode()) > NOTE_BODY_MAX_BYTES:
-        raise PydanticCustomError("note_too_large", messages.NOTE_TOO_LARGE)
-    if body_depth(value) > NOTE_BODY_MAX_DEPTH:
-        raise PydanticCustomError("note_too_deep", messages.NOTE_TOO_DEEP)
+    error = body_limit_error(value)
+    if error is not None:
+        raise PydanticCustomError(*error)
     return value
 
 
@@ -79,6 +88,16 @@ class UpdateNoteRequest(BaseModel):
         if self.body is not None and self.version is None:
             raise field_error("version", messages.VERSION_REQUIRED_WITH_BODY)
         return self
+
+
+class WriteNoteRequest(BaseModel):
+    """A note written in one go, as an assistant does: the title is the user's choice, so it
+    stays when the body changes."""
+
+    title: NoteTitle
+    body: NoteBody | None = None
+    folder_id: UUID | None = None
+    tag_names: Annotated[list[TagNameInput], Field(max_length=NOTE_TAG_NAMES_MAX)] = []
 
 
 class SetNoteTagsRequest(BaseModel):

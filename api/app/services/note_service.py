@@ -23,6 +23,7 @@ from app.schemas.requests.note_request import (
     RestoreNoteRequest,
     SetNoteTagsRequest,
     UpdateNoteRequest,
+    WriteNoteRequest,
 )
 from app.schemas.resources.note_resource import NoteListItemResource, NoteResource
 from app.services.create_result import CreateResult
@@ -68,6 +69,20 @@ class NoteService:
         note_id = self._notes.add(note).id
         self._commit()
         return CreateResult(self._resource(note_id), created=True)
+
+    def write(self, user: User, request: WriteNoteRequest) -> NoteResource:
+        """Creates a note with its title, body, folder and tags in one transaction."""
+        note = Note(
+            user_id=user.id,
+            folder_id=self._folder_id(user, request.folder_id),
+            title=request.title,
+            title_locked=True,
+            is_starred=False,
+            version=1,
+        )
+        _apply_body(note, request.body if request.body is not None else json.loads(EMPTY_DOCUMENT_JSON))
+        note.tags = self._tags.resolve_names(user, request.tag_names)
+        return self._commit_and_load(self._notes.add(note).id)
 
     def update(self, user: User, note_uuid: UUID, request: UpdateNoteRequest) -> NoteResource:
         """A body save must name the version it edited; if the note moved on (or went to the

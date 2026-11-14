@@ -19,6 +19,9 @@ class AccessTokenRepository:
             )
         )
 
+    def find(self, token_id: int) -> AccessToken | None:
+        return self._session.get(AccessToken, token_id)
+
     def find_of_user(self, user_id: int, token_id: int) -> AccessToken | None:
         return self._session.scalar(
             select(AccessToken).where(AccessToken.user_id == user_id, AccessToken.id == token_id)

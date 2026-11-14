@@ -64,3 +64,19 @@ ABILITIES_DISTINCT = "The abilities field has a duplicate value."
 ACCESS_TOKEN_LIMIT_REACHED = (
     f"You can have up to {ACTIVE_ACCESS_TOKENS_MAX} access tokens. Revoke one to create another."
 )
+
+# The MCP tools. The caller is an assistant, so each message says what to do next.
+MCP_ABILITY_MISSING = (
+    "This access token does not have the {ability} scope. "
+    "Create a token with it under Settings → Access tokens."
+)
+MCP_NOTE_NOT_FOUND = "No note with that uuid. Use search_notes or list_notes to find it."
+MCP_FOLDER_NOT_FOUND = "No folder with that id. Use list_folders to see the folders."
+MCP_TAG_NOT_FOUND = "No tag with that id. Use list_tags to see the tags."
+MCP_NOTE_IN_TRASH = "This note is in Trash. It can only be restored from the Notes app."
+MCP_NOTE_VERSION_CONFLICT = (
+    "This note changed since you read it (it is now at version {version}). "
+    "Call get_note again and reapply your change to the new content."
+)
+MCP_NOTHING_TO_CHANGE = "Nothing to change: pass a title, markdown, or both."
+MCP_TOO_MANY_TAGS = "A note can have at most {maximum} tags."

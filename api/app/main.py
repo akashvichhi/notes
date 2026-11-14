@@ -8,10 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.concurrency import run_in_threadpool
+from starlette.routing import Route
 
 from app.api.health_router import health_router
 from app.api.v1.api_router import api_router
 from app.constants.http_constants import GZIP_MINIMUM_BYTES
+from app.constants.mcp_constants import MCP_PATH
 from app.core.clock import Clock, SystemClock
 from app.core.config import Settings
 from app.core.database import create_database_engine, create_session_factory
@@ -24,6 +26,7 @@ from app.core.request_logging_middleware import RequestLoggingMiddleware
 from app.core.security import PasswordHasher
 from app.core.session_cookie import SessionCookie
 from app.core.startup_checks import ensure_database_has_users
+from app.mcp.mcp_server import create_mcp_app, create_mcp_server
 from app.repositories.user_repository import UserRepository
 
 APP_TITLE = "Notes API"
@@ -40,11 +43,13 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
         # In a worker thread: the database driver is synchronous.
         await run_in_threadpool(check_database, session_factory, settings)
-        yield
+        async with mcp_server.session_manager.run():
+            yield
         engine.dispose()
 
     # The API's schema is the contract in docs/, not a public interactive page.
     app = FastAPI(title=APP_TITLE, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+    mcp_server = create_mcp_server(app.state)
     app.state.settings = settings
     app.state.engine = engine
     app.state.session_factory = session_factory
@@ -60,6 +65,8 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     # API routes first: the web app only gets paths nothing else matched (the 404 handler).
     app.include_router(health_router)
     app.include_router(api_router)
+    # An exact route, not a mount: a mount would redirect /mcp to /mcp/.
+    app.router.routes.append(Route(MCP_PATH, create_mcp_app(mcp_server, app.state)))
     app.state.frontend.mount_assets(app)
     return app
 

@@ -54,3 +54,11 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
   - `linkify-it-py` (2.2.0): turns bare URLs into links; markdown-it-py's linkify rule needs it.
   - `lxml` (6.1.3): a fast, lenient HTML parser with a tree that can be rewritten in place.
 - **Consequences:** golden fixtures in `api/tests/golden/` pin the output in both directions, so a dependency upgrade that changes a conversion fails the tests. Unsafe link and image URLs are removed after parsing rather than rejected, so their text stays.
+
+## 8. The MCP server uses the official Python SDK, stateless, behind our own token check
+
+- **Context:** assistants reach the notes over MCP's streamable HTTP transport at `/mcp`, authenticated by a personal access token. The protocol has versions, capability negotiation and JSON-RPC framing that a client expects to be exact.
+- **Options:** implement the JSON-RPC methods by hand; the official `mcp` SDK with its session-keeping transport; the SDK in stateless mode with authentication in front of it.
+- **Decision:** the SDK's `MCPServer`, served stateless with JSON responses (`api/app/mcp/`). A wrapper in front of it checks the Bearer token, its expiry and abilities, and the per-token rate limit, then hands the token to the tools in the request state. Each tool runs its service call in a worker thread on its own database session. The runtime dependency:
+  - `mcp` (2.3.0): the protocol's reference server, so protocol upgrades are a version bump rather than our code.
+- **Consequences:** no MCP session is kept between requests, so the single uvicorn worker holds no per-client state beyond the rate-limit counters. The SDK validates tool arguments before our code runs, and its validation errors repeat the offending value back to the caller (never to the logs).

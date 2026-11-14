@@ -136,6 +136,17 @@ class NoteRepository:
             .options(load_only(Note.uuid, Note.title, Note.plain_text))
         ).all()
 
+    def active_by_uuids(self, user_id: int, note_uuids: Sequence[UUID]) -> dict[UUID, Note]:
+        """The user's active notes among these uuids, relations included, by uuid."""
+        notes = self._session.scalars(
+            _scoped(NoteScope.ACTIVE)
+            .where(Note.user_id == user_id, Note.uuid.in_(note_uuids))
+            .options(*_WITH_RELATIONS)
+            # A search loads only a few columns of these notes; this load fills in the rest.
+            .execution_options(populate_existing=True)
+        ).all()
+        return {note.uuid: note for note in notes}
+
     def count_active(self, user_id: int) -> int:
         return self._count(_scoped(NoteScope.ACTIVE).where(Note.user_id == user_id))
 

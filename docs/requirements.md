@@ -1,5 +1,10 @@
 # Notes App — Design Specification
 
+> **Note.** The product requirements below still apply. The stack, authentication, search
+> and schema details were written for the first version, on Laravel and MySQL; the API is
+> now FastAPI on Postgres (decision 10 in `docs/decisions.md`), described in
+> `docs/architecture.md`. Where they disagree, `docs/architecture.md` wins.
+
 **Date:** 2026-10-11 · **Status:** approved, ready for implementation
 **Supersedes:** the PWA specification of 2026-10-09
 

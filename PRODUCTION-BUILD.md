@@ -1,5 +1,9 @@
 # Production Build Guide: Serving React App from Laravel
 
+> **Historical.** Written for the first version of the app, on Laravel and MySQL. The API
+> is now FastAPI on Postgres (decision 10 in `docs/decisions.md`). For how the app works
+> and runs today, read `README.md`, `docs/architecture.md` and `docs/decisions.md`.
+
 This guide explains how to build the React application for production, clean previous builds, and serve the application directly from the Laravel root route.
 
 ---

@@ -1,5 +1,9 @@
 # How to work on this project
 
+> **Historical.** Written for the first version of the app, on Laravel and MySQL. The API
+> is now FastAPI on Postgres (decision 10 in `docs/decisions.md`). For how the app works
+> and runs today, read `README.md`, `docs/architecture.md` and `docs/decisions.md`.
+
 **This file outranks your defaults.** Where your habits and this file disagree, this
 file wins — it was written with the whole project in view and your instinct was not.
 

@@ -1,5 +1,9 @@
 # START HERE
 
+> **Historical.** Written for the first version of the app, on Laravel and MySQL. The API
+> is now FastAPI on Postgres (decision 10 in `docs/decisions.md`). For how the app works
+> and runs today, read `README.md`, `docs/architecture.md` and `docs/decisions.md`.
+
 Entry point for the coding agent. Read this file first, in full.
 
 ---

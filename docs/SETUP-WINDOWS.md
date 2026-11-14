@@ -1,5 +1,9 @@
 # Setup — Windows with Docker
 
+> **Historical.** Written for the first version of the app, on Laravel and MySQL. The API
+> is now FastAPI on Postgres (decision 10 in `docs/decisions.md`). For how the app works
+> and runs today, read `README.md`, `docs/architecture.md` and `docs/decisions.md`.
+
 PHP and MySQL run in Docker containers. **Nothing but Node is installed on Windows.**
 All commands are PowerShell, run from the repository root (`notes-app`).
 

@@ -1,5 +1,9 @@
 # When it goes wrong
 
+> **Historical.** Written for the first version of the app, on Laravel and MySQL. The API
+> is now FastAPI on Postgres (decision 10 in `docs/decisions.md`). For how the app works
+> and runs today, read `README.md`, `docs/architecture.md` and `docs/decisions.md`.
+
 For **you**, not the agent. How to spot trouble early, undo it cleanly, and correct
 course without losing good work.
 

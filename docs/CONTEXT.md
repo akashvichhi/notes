@@ -1,5 +1,9 @@
 # Project context — read this first
 
+> **Historical.** Written for the first version of the app, on Laravel and MySQL. The API
+> is now FastAPI on Postgres (decision 10 in `docs/decisions.md`). For how the app works
+> and runs today, read `README.md`, `docs/architecture.md` and `docs/decisions.md`.
+
 **Purpose:** everything decided so far, and why. If you are starting a fresh session,
 read this file, then `architecture.md`, then `requirements.md` and `PLAN.md`.
 

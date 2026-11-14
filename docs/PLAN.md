@@ -1,5 +1,9 @@
 # Notes App — Implementation Plan
 
+> **Historical.** Written for the first version of the app, on Laravel and MySQL. The API
+> is now FastAPI on Postgres (decision 10 in `docs/decisions.md`). For how the app works
+> and runs today, read `README.md`, `docs/architecture.md` and `docs/decisions.md`.
+
 > **For agentic workers:** implement this plan task-by-task, in order. Each task ends
 > with a green test run and a commit. Steps use checkbox (`- [ ]`) syntax for tracking.
 > Do not start a task before the previous one's tests pass.

@@ -1,5 +1,9 @@
 # Building with a coding agent
 
+> **Historical.** Written for the first version of the app, on Laravel and MySQL. The API
+> is now FastAPI on Postgres (decision 10 in `docs/decisions.md`). For how the app works
+> and runs today, read `README.md`, `docs/architecture.md` and `docs/decisions.md`.
+
 How this project was built: a coding agent worked from a written spec, an
 architecture document and a task plan, and stopped at each delivery gate for me to
 review and test. This file was the repository's original README. Paths in it are

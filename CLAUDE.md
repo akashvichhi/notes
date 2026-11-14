@@ -18,7 +18,7 @@ notes-app/
 - **Personal data:** account names and emails, note titles and bodies, folder and tag names.
 - **Soft-deleted tables:** notes (Trash, `deleted_at`).
 - **Time:** timestamps are shown in the user's device time zone, because notes are personal and "edited 9:14" must mean the user's 9:14. That choice lives in one constant (`web/src/constants/time_constants.ts`); nothing else reads the zone.
-- **Deployment:** `npm run release` in `web/` builds into `api/public`, commits everything as "Prod: release" and pushes `master`. Run it only when the user asks.
+- **Deployment:** every push to `master` deploys to the VPS through GitHub Actions once the checks pass (decision 6), so pushing `master` is a release. `npm run release` in `web/` still builds into `api/public`, commits everything as "Prod: release" and pushes `master`. Run either only when the user asks.
 
 ---
 

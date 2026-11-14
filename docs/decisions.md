@@ -36,3 +36,10 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 - **Options:** keep `php artisan serve`; nginx in front of PHP-FPM; Caddy (2.11.6) in front of PHP-FPM.
 - **Decision:** one multi-stage `docker/php/Dockerfile` builds the React app, then a PHP-FPM image with the build in `public/`, then a Caddy image. Compose runs `app` (PHP-FPM, which migrates and caches on start), `scheduler` (`schedule:work`), `web` (Caddy) and `mysql`, all with `restart: unless-stopped`. Caddy over nginx because it gets and renews the HTTPS certificate itself once `SITE_ADDRESS` is the domain, and its config is a few lines.
 - **Consequences:** `docker compose up -d --build` deploys. The app reads `api/.env`; the root `.env` holds only the Compose values (`.env.example`). MySQL listens on localhost only. The images hold no dev dependencies, so tests still run on local PHP and Node.
+
+## 6. A push to master deploys through GitHub Actions
+
+- **Context:** the VPS runs a clone of the repo with Docker Compose (decision 5), and a deploy should need nothing more than a push.
+- **Options:** pull on the server by hand; a cron job that polls the repo; a GitHub Actions workflow that connects over SSH after the checks pass.
+- **Decision:** `.github/workflows/deploy.yml` runs `npm run check` and the API tests, then connects with plain `ssh` (no third-party deploy action holds the key), runs `git pull --ff-only` and `docker compose up -d --build`. The server's host keys are pinned in a secret.
+- **Consequences:** a failing check blocks the deploy. The secrets `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS` and `VPS_APP_DIR` must be set in the repo. Each deploy has a few seconds of downtime while containers are replaced. `npm run release` is no longer needed, because the image builds the web app itself.

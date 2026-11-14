@@ -1,0 +1,72 @@
+# Every push to master runs the checks, then deploys to the VPS (decision 6).
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+# Never run two deploys at once; a newer push waits for the current one.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  web-checks:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 26.13.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      # ESLint and Stylelint run with --fix, so a fix they had to make means
+      # the pushed code wasn't clean.
+      - name: Fail if the linters changed files
+        run: git diff --exit-code
+
+  api-checks:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: shivammathur/setup-php@2.40.0
+        with:
+          php-version: '8.5'
+          extensions: pdo_sqlite, intl, zip, bcmath
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env && php artisan key:generate
+      - run: php artisan test
+
+  deploy:
+    needs: [web-checks, api-checks]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Deploy over SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+          APP_DIR: ${{ secrets.VPS_APP_DIR }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # --ff-only stops the deploy if files were edited on the server,
+          # instead of merging over them.
+          ssh -i ~/.ssh/deploy_key "$TARGET" \
+            "cd '$APP_DIR' && git pull --ff-only origin master \
+             && docker compose up -d --build --remove-orphans \
+             && docker image prune -f"

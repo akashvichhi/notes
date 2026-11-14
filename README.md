@@ -168,7 +168,7 @@ The app is on `http://127.0.0.1:8000`. The `app` container runs the migrations e
 - In `.env`, set a strong `DB_PASSWORD` before the first start, `SITE_ADDRESS` to the domain, `HTTP_PORT=80` and `HTTPS_PORT=443`. Caddy then gets the HTTPS certificate itself.
 - In `api/.env`, set `APP_ENV=production`, `APP_DEBUG=false`, and `APP_URL`, `SANCTUM_STATEFUL_DOMAINS` and `SESSION_DOMAIN` for the domain.
 - Run `sudo systemctl enable docker` once, so Docker, and with it the app, starts when the server boots.
-- To deploy a new version: `git pull && docker compose up -d --build`.
+- Every push to `master` deploys automatically: GitHub Actions runs the checks, then pulls and rebuilds on the server (decision 6). By hand, it's `git pull && docker compose up -d --build`.
 
 ### Develop on your machine
 

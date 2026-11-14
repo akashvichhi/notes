@@ -12,21 +12,26 @@ from starlette.concurrency import run_in_threadpool
 from app.api.health_router import health_router
 from app.api.v1.api_router import api_router
 from app.constants.http_constants import GZIP_MINIMUM_BYTES
+from app.core.clock import Clock, SystemClock
 from app.core.config import Settings
 from app.core.database import create_database_engine, create_session_factory
 from app.core.exception_handlers import register_exception_handlers
 from app.core.frontend import Frontend
 from app.core.logging_setup import configure_logging
 from app.core.origin_check_middleware import OriginCheckMiddleware
+from app.core.rate_limiter import RateLimiter
 from app.core.request_logging_middleware import RequestLoggingMiddleware
+from app.core.security import PasswordHasher
+from app.core.session_cookie import SessionCookie
 from app.core.startup_checks import ensure_database_has_users
 from app.repositories.user_repository import UserRepository
 
 APP_TITLE = "Notes API"
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, clock: Clock | None = None) -> FastAPI:
     settings = settings or Settings()
+    clock = clock or SystemClock()
     configure_logging(settings.log_level)
     engine = create_database_engine(settings.database_url)
     session_factory = create_session_factory(engine)
@@ -44,6 +49,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.engine = engine
     app.state.session_factory = session_factory
     app.state.frontend = Frontend(settings.web_dist_dir)
+    app.state.clock = clock
+    app.state.rate_limiter = RateLimiter(clock)
+    app.state.password_hasher = PasswordHasher()
+    app.state.session_cookie = SessionCookie(settings)
 
     register_exception_handlers(app)
     _add_middleware(app, settings)

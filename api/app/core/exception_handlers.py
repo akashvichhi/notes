@@ -16,8 +16,13 @@ from app.constants.http_constants import ASSETS_PATH_PREFIX, PAGE_METHODS
 from app.core.exceptions import DomainError
 from app.core.frontend import Frontend
 from app.schemas.common.error_response import ErrorDetail, ErrorResponse
+from app.schemas.common.field_types import FIELD_CONTEXT_KEY
 
 logger = logging.getLogger(__name__)
+
+# Errors about the whole body (not JSON, not an object) are reported on "body".
+BODY_FIELD = "body"
+BODY_LEVEL_ERROR_TYPES = frozenset({"json_invalid", "model_attributes_type"})
 
 STATUS_MESSAGES: dict[int, str] = {
     HTTPStatus.UNAUTHORIZED: messages.UNAUTHENTICATED,
@@ -34,20 +39,42 @@ def error_json(body: BaseModel, status_code: int, headers: Mapping[str, str] | N
     )
 
 
-def _validation_detail(error: dict[str, object]) -> ErrorDetail:
+class _MessageContext(dict[str, object]):
+    """Template values; a placeholder the error did not provide renders empty."""
+
+    def __missing__(self, key: str) -> str:
+        return ""
+
+
+def _field_of(error: Mapping[str, object], context: Mapping[str, object]) -> str:
+    if FIELD_CONTEXT_KEY in context:
+        return str(context[FIELD_CONTEXT_KEY])
+    if error.get("type") in BODY_LEVEL_ERROR_TYPES:
+        return BODY_FIELD
     location = error.get("loc", ())
     parts = [str(part) for part in location] if isinstance(location, tuple | list) else []
     # The first part says where the input was (body, query, path); the field is the rest.
-    field = ".".join(parts[1:]) or (parts[0] if parts else "")
-    message = str(error.get("msg", messages.VALIDATION_FAILED)).removeprefix(
-        messages.PYDANTIC_VALUE_ERROR_PREFIX
-    )
+    return ".".join(parts[1:]) or (parts[0] if parts else BODY_FIELD)
+
+
+def _validation_detail(error: Mapping[str, object]) -> ErrorDetail:
+    raw_context = error.get("ctx")
+    context: Mapping[str, object] = raw_context if isinstance(raw_context, Mapping) else {}
+    field = _field_of(error, context)
+    template = messages.VALIDATION_MESSAGE_TEMPLATES.get(str(error.get("type")))
+    if template is not None:
+        label = field.replace("_", " ").replace(".", " ")
+        message = template.format_map(_MessageContext(context, label=label))
+    else:
+        message = str(error.get("msg", messages.VALIDATION_FAILED)).removeprefix(
+            messages.PYDANTIC_VALUE_ERROR_PREFIX
+        )
     return ErrorDetail(field=field, message=message)
 
 
 def handle_validation_error(_request: Request, exc: Exception) -> Response:
     assert isinstance(exc, RequestValidationError)  # noqa: S101 - narrows the type FastAPI registers
-    details = [_validation_detail(dict(error)) for error in exc.errors()]
+    details = [_validation_detail(error) for error in exc.errors()]
     return error_json(
         ErrorResponse(error=messages.VALIDATION_FAILED, details=details), HTTPStatus.UNPROCESSABLE_CONTENT
     )

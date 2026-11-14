@@ -65,7 +65,7 @@ export const CreateTokenForm: React.MemoExoticComponent<({ onCancel, onCreated, 
 
       createToken.mutate(
         {
-          name:            name.trim(),
+          name:          name.trim(),
           abilities,
           expiresInDays: expiry === 'never' ? null : Number(expiry),
         },

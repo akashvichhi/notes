@@ -18,11 +18,11 @@ export interface IPreferences {
 }
 
 export interface IFolder {
-  uuid:        TUuid
-  name:        string
+  uuid:       TUuid
+  name:       string
   parentUuid: TUuid | null
-  color:       string | null
-  position:    number
+  color:      string | null
+  position:   number
 }
 
 export interface ITag {
@@ -53,7 +53,7 @@ export interface INoteListItem {
 export type TProseMirrorDoc = JSONContent
 
 export interface INote extends INoteListItem {
-  body:         TProseMirrorDoc | null
+  body:        TProseMirrorDoc | null
   version:     number
   wordCount:   number
   titleLocked: boolean
@@ -115,9 +115,9 @@ export type TAccessTokenAbility = 'notes:read' | 'notes:write'
 
 /** A personal access token, for Claude and other MCP clients. The token itself is never listed. */
 export interface IAccessToken {
-  id:           number
-  name:         string
-  abilities:    TAccessTokenAbility[]
+  id:         number
+  name:       string
+  abilities:  TAccessTokenAbility[]
   createdAt:  TIsoDate
   lastUsedAt: TIsoDate | null
   expiresAt:  TIsoDate | null

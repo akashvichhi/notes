@@ -5,12 +5,12 @@ import type { INoteListItem } from '@src/types/api'
 import { filterNotes } from './filter_notes'
 
 const note: (overrides: Partial<INoteListItem>) => INoteListItem = (overrides: Partial<INoteListItem>): INoteListItem => ({
-  uuid:       '00000000-0000-7000-8000-000000000001',
-  title:      'Untitled',
-  excerpt:    '',
+  uuid:      '00000000-0000-7000-8000-000000000001',
+  title:     'Untitled',
+  excerpt:   '',
   isStarred: false,
-  folder:     null,
-  tags:       [],
+  folder:    null,
+  tags:      [],
   updatedAt: '2026-01-01T00:00:00+00:00',
   deletedAt: null,
   ...overrides,

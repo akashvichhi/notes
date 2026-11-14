@@ -4,6 +4,6 @@ export interface ILoginCredentials {
 }
 
 export interface IRegisterCredentials extends ILoginCredentials {
-  name:                  string
+  name:                 string
   passwordConfirmation: string
 }

@@ -32,10 +32,10 @@ export function useCreateFolder(): UseMutationResult<IFolder, IApiError, { name:
       payload.uuid = tempUuid
 
       const optimisticFolder: IFolder = {
-        uuid:        tempUuid,
-        name:        payload.name,
-        color:       payload.color ?? null,
-        position:    previous ? getFoldersArray(previous.folders).length : 0,
+        uuid:       tempUuid,
+        name:       payload.name,
+        color:      payload.color ?? null,
+        position:   previous ? getFoldersArray(previous.folders).length : 0,
         parentUuid: payload.parentUuid ?? null,
       }
 

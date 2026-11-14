@@ -26,9 +26,9 @@ export const RegisterPage: React.MemoExoticComponent<() => React.JSX.Element> = 
   const form: UseFormReturnType<IRegisterCredentials> = useForm<IRegisterCredentials>({
     initialValues: { name: '', email: '', password: '', passwordConfirmation: '' },
     validate:      {
-      name:                  (v: string) => (v.trim().length > 0 ? null : 'Enter your name'),
-      email:                 validateEmail,
-      password:              validatePassword,
+      name:                 (v: string) => (v.trim().length > 0 ? null : 'Enter your name'),
+      email:                validateEmail,
+      password:             validatePassword,
       passwordConfirmation: validatePasswordConfirmation,
     },
   })

@@ -99,8 +99,8 @@ export function useAutosave(note: INote, editor: Editor | null): IAutosave {
                 n.uuid === note.uuid
                   ? {
                     ...n,
-                    title:      updated.title ?? n.title,
-                    excerpt:    updated.excerpt ?? n.excerpt,
+                    title:     updated.title ?? n.title,
+                    excerpt:   updated.excerpt ?? n.excerpt,
                     updatedAt: updated.updatedAt ?? n.updatedAt,
                   }
                   : n

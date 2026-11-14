@@ -267,15 +267,15 @@ export function useCreateNote(): TCreateNoteMutation {
 
       const optimisticNote: INote = {
         uuid,
-        title:        DEFAULT_NOTE_TITLE,
+        title:       DEFAULT_NOTE_TITLE,
         titleLocked: false,
-        body:         { type: 'doc', content: [] },
-        excerpt:      '',
+        body:        { type: 'doc', content: [] },
+        excerpt:     '',
         isStarred:   false,
-        version:      1,
+        version:     1,
         wordCount:   0,
-        folder:       currentFolder,
-        tags:         [],
+        folder:      currentFolder,
+        tags:        [],
         updatedAt:   new Date().toISOString(),
         deletedAt:   null,
       }
@@ -284,11 +284,11 @@ export function useCreateNote(): TCreateNoteMutation {
       // 3. Prepend to note list queries
       const optimisticListItem: INoteListItem = {
         uuid,
-        title:      DEFAULT_NOTE_TITLE,
-        excerpt:    '',
+        title:     DEFAULT_NOTE_TITLE,
+        excerpt:   '',
         isStarred: false,
-        folder:     currentFolder,
-        tags:       [],
+        folder:    currentFolder,
+        tags:      [],
         updatedAt: new Date().toISOString(),
         deletedAt: null,
       }
@@ -590,7 +590,7 @@ export function useDuplicateNote(): TDuplicateNoteMutation {
       const excerpt: string = sourceItem?.excerpt ?? ''
 
       const optimisticListItem: INoteListItem = {
-        uuid:       tempUuid,
+        uuid:      tempUuid,
         title,
         excerpt,
         isStarred: false,
@@ -604,9 +604,9 @@ export function useDuplicateNote(): TDuplicateNoteMutation {
       if (prevSingle) {
         const optimisticNote: INote = {
           ...prevSingle,
-          uuid:         tempUuid,
+          uuid:        tempUuid,
           title,
-          version:      1,
+          version:     1,
           titleLocked: sourceItem ? sourceItem.title !== '' : true,
           updatedAt:   new Date().toISOString(),
           deletedAt:   null,

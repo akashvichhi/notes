@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from '@src/constants/api_endpoints'
-import type { IDataResponse } from '@src/types/api_response'
 import type { INote, INoteListItem, TProseMirrorDoc, TUuid } from '@src/types/api'
+import type { IDataResponse } from '@src/types/api_response'
 import type { IPaginatedResponse } from '@src/types/pagination'
 
 import { api } from './api_client'

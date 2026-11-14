@@ -48,7 +48,7 @@ export const ChangePasswordModal: React.MemoExoticComponent<({ onClose, }: { onC
       updatePassword.mutate(
         {
           currentPassword:      currentPassword,
-          password:              newPassword,
+          password:             newPassword,
           passwordConfirmation: confirmPassword,
         },
         {

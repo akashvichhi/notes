@@ -7,13 +7,16 @@ from email_validator import EmailNotValidError, validate_email
 from pydantic import AfterValidator, BeforeValidator, Field, StringConstraints
 from pydantic_core import PydanticCustomError
 
+from app.constants import messages
 from app.constants.folder_constants import (
     FOLDER_COLOR_PATTERN,
     FOLDER_NAME_MAX_LENGTH,
     FOLDER_POSITION_MAX,
     FOLDER_POSITION_MIN,
 )
+from app.constants.tag_constants import TAG_NAME_MAX_LENGTH
 from app.constants.user_constants import PASSWORD_MIN_LENGTH, USER_EMAIL_MAX_LENGTH, USER_NAME_MAX_LENGTH
+from app.content.slug import slugify
 
 # Error context key that moves an error raised by a whole-model validator onto one field.
 FIELD_CONTEXT_KEY = "field"
@@ -69,3 +72,18 @@ FolderName = Annotated[
 ]
 HexColor = Annotated[str, StringConstraints(strip_whitespace=True, pattern=FOLDER_COLOR_PATTERN)]
 FolderPosition = Annotated[int, Field(ge=FOLDER_POSITION_MIN, le=FOLDER_POSITION_MAX)]
+
+
+def require_slug(value: str) -> str:
+    """A tag is found by its slug, and a name like "日本語" has none (content/slug.py)."""
+    if slugify(value) == "":
+        raise PydanticCustomError("tag_name_without_slug", messages.TAG_NAME_WITHOUT_SLUG)
+    return value
+
+
+TagName = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, max_length=TAG_NAME_MAX_LENGTH),
+    AfterValidator(require_text),
+    AfterValidator(require_slug),
+]

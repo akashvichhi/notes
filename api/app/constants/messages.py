@@ -47,3 +47,4 @@ VALIDATION_MESSAGE_TEMPLATES: dict[str, str] = {
 
 CURRENT_PASSWORD_INCORRECT = "The password is incorrect."  # noqa: S105 - a message
 NAME_TAKEN = "The name has already been taken."
+TAG_NAME_WITHOUT_SLUG = "The name must contain a letter or number that has a Latin spelling."

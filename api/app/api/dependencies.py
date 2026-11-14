@@ -16,12 +16,14 @@ from app.models.user_model import User
 from app.repositories.access_token_repository import AccessTokenRepository
 from app.repositories.folder_repository import FolderRepository
 from app.repositories.health_repository import HealthRepository
+from app.repositories.tag_repository import TagRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
 from app.services.auth_service import Authenticated, AuthService
 from app.services.folder_service import FolderService
 from app.services.health_service import HealthService
 from app.services.profile_service import ProfileService
+from app.services.tag_service import TagService
 from app.services.user_session_service import UserSessionService
 
 DbSession = Annotated[Session, Depends(get_db_session)]
@@ -135,3 +137,10 @@ def get_folder_service(session: DbSession) -> FolderService:
 
 
 FolderServiceDependency = Annotated[FolderService, Depends(get_folder_service)]
+
+
+def get_tag_service(session: DbSession) -> TagService:
+    return TagService(session, TagRepository(session))
+
+
+TagServiceDependency = Annotated[TagService, Depends(get_tag_service)]

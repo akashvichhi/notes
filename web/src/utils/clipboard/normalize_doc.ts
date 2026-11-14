@@ -7,7 +7,7 @@ import { ALIGNMENTS, IMAGE_SCHEMES, INLINE_NODES, LINK_REL, LINK_TARGET, LISTS, 
  * Makes parsed markdown valid for the editor's schema: inline runs inside block
  * containers get a paragraph, block images are lifted out of paragraphs, list
  * items start with a paragraph, cells are never empty, and attrs get the
- * editor's defaults. A port of api/app/Support/Content/DocumentNormalizer.php;
+ * editor's defaults. A port of api-laravel/app/Support/Content/DocumentNormalizer.php;
  * the one difference is that an image the editor cannot show is dropped
  * rather than rejected, because a paste must never fail.
  */

@@ -2,13 +2,13 @@
 
 A web notes app: a React single-page app on a Laravel API with MySQL, plus an MCP server for AI assistants. The app is web-only (decision 1). Design lives in `docs/ARCHITECTURE.md` and `docs/SPEC.md`.
 
-These rules apply to AI agents and humans working anywhere in this repo. **MUST** and **NEVER** are hard rules; everything else is the strong default. Frontend rules are in `web/CLAUDE.md`; API rules are in `api/CLAUDE.md`.
+These rules apply to AI agents and humans working anywhere in this repo. **MUST** and **NEVER** are hard rules; everything else is the strong default. Frontend rules are in `web/CLAUDE.md`; API rules are in `api-laravel/CLAUDE.md`.
 
 ## Repo layout
 
 ```
 notes-app/
-├── api/            Laravel API (MySQL); also serves the web build from api/public
+├── api-laravel/    Laravel API (MySQL); also serves the web build from api-laravel/public
 ├── web/            React app (TypeScript + Vite + Mantine)
 ├── docs/           architecture, spec, decisions
 └── CLAUDE.md
@@ -18,7 +18,7 @@ notes-app/
 - **Personal data:** account names and emails, note titles and bodies, folder and tag names.
 - **Soft-deleted tables:** notes (Trash, `deleted_at`).
 - **Time:** timestamps are shown in the user's device time zone, because notes are personal and "edited 9:14" must mean the user's 9:14. That choice lives in one constant (`web/src/constants/time_constants.ts`); nothing else reads the zone.
-- **Deployment:** every push to `master` deploys to the VPS through GitHub Actions once the checks pass (decision 6), so pushing `master` is a release. `npm run release` in `web/` still builds into `api/public`, commits everything as "Prod: release" and pushes `master`. Run either only when the user asks.
+- **Deployment:** every push to `master` deploys to the VPS through GitHub Actions once the checks pass (decision 6), so pushing `master` is a release. `npm run release` in `web/` still builds into `api-laravel/public`, commits everything as "Prod: release" and pushes `master`. Run either only when the user asks.
 
 ---
 
@@ -31,7 +31,7 @@ notes-app/
 - Keep it simple. Build only what the spec asks for. No features or configuration options nobody requested.
 
 ## Organisation and readability
-- **MUST** keep each file in the folder of its layer (see `web/CLAUDE.md` and `api/CLAUDE.md`). If it's unclear where a file belongs, the structure is wrong; fix the structure.
+- **MUST** keep each file in the folder of its layer (see `web/CLAUDE.md` and `api-laravel/CLAUDE.md`). If it's unclear where a file belongs, the structure is wrong; fix the structure.
 - Frontend file and folder names are **snake_case** (`note_row.tsx`). The API follows Laravel's conventions.
 - Functions are small and do one thing. Prefer early returns over nested `if`s.
 - No magic numbers or strings: put them in named constants.
@@ -46,13 +46,13 @@ notes-app/
 
 ## Security, privacy and configuration
 - **NEVER** commit secrets, `.env` files or database files. Commit a `.env.example` listing every variable.
-- Configuration comes from environment variables, read in **exactly one place** per app (`api/config/*.php` via `env()`, `web/src/config/env.ts`).
+- Configuration comes from environment variables, read in **exactly one place** per app (`api-laravel/config/*.php` via `env()`, `web/src/config/env.ts`).
 - The browser authenticates with the Sanctum session in an **httpOnly cookie**; JavaScript never sees it. Personal access tokens exist only for MCP clients.
 - **Personal data:** **NEVER** log names, emails, note titles or bodies, or request/response bodies that contain them. Logs may contain IDs, routes, status codes and timings only. Error messages never echo personal data back.
 - **NEVER** show stack traces, SQL, file paths or other internals to users.
 
 ## Dependencies
-- Lock files are **always committed** (`api/composer.lock`, `web/package-lock.json`), and installs use them (`composer install`, `npm ci`).
+- Lock files are **always committed** (`api-laravel/composer.lock`, `web/package-lock.json`), and installs use them (`composer install`, `npm ci`).
 - Pin exact versions; no `latest`, no ranges.
 - Add a library only when it clearly beats a few lines of our own code. Every new runtime dependency gets a one-line reason in `docs/decisions.md`.
 - Hold a tool back when its plugins don't support its newest major yet, and record why next to its version.
@@ -71,7 +71,7 @@ notes-app/
 ## Quality checks
 - Run the full checks **once, when the work is finished and before committing**, only for the side(s) the change touched:
   - Frontend: `npm run check` in `web/` (ESLint, Stylelint, type check, tests)
-  - API: the checks listed in `api/CLAUDE.md`
+  - API: the checks listed in `api-laravel/CLAUDE.md`
 - If a check fails, fix it and run the full check again.
 - **Definition of done:** all checks pass and docs are updated if behaviour changed.
 

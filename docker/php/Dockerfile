@@ -7,7 +7,7 @@ COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
 # Vite writes into Laravel's public folder (decision 2), so it has to exist here.
-COPY api/public/ ../api/public/
+COPY api-laravel/public/ ../api-laravel/public/
 RUN npm run build:prod
 
 FROM php:8.5.11-fpm-bookworm AS app
@@ -17,10 +17,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends unzip libzip-de
 COPY --from=composer:2.9.7 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 # Dependencies first, so a code change doesn't reinstall them.
-COPY api/composer.json api/composer.lock ./
+COPY api-laravel/composer.json api-laravel/composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
-COPY api/ ./
-COPY --from=frontend /src/api/public/ ./public/
+COPY api-laravel/ ./
+COPY --from=frontend /src/api-laravel/public/ ./public/
 RUN composer dump-autoload --optimize --no-dev --no-interaction \
     && chown -R www-data:www-data storage bootstrap/cache
 COPY --chmod=755 docker/php/start.sh /usr/local/bin/start-app

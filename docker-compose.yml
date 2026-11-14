@@ -6,7 +6,7 @@ x-laravel: &laravel
     context: .
     dockerfile: docker/php/Dockerfile
     target: app
-  env_file: api/.env
+  env_file: api-laravel/.env
   environment:
     DB_CONNECTION: mysql
     DB_HOST: mysql

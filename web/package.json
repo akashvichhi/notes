@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "clean": "node -e \"import('node:fs').then(fs => { fs.rmSync('../api/public/assets', { recursive: true, force: true }); fs.rmSync('../api/public/index.html', { force: true }); })\"",
+    "clean": "node -e \"import('node:fs').then(fs => { fs.rmSync('../api-laravel/public/assets', { recursive: true, force: true }); fs.rmSync('../api-laravel/public/index.html', { force: true }); })\"",
     "build": "tsc -b && vite build",
     "build:prod": "npm run clean && npm run build",
     "deploy": "cd .. && git add . && git commit -m \"Prod: release\" && git push origin master",

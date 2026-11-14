@@ -66,7 +66,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     build: {
       // The web build is served by Laravel: write straight into its public folder,
       // without emptying it (index.php and Laravel's own files live there).
-      outDir:                path.resolve(import.meta.dirname, '../api/public'),
+      outDir:                path.resolve(import.meta.dirname, '../api-laravel/public'),
       emptyOutDir:           false,
       chunkSizeWarningLimit: 600,
       // Vite 8 bundles with Rolldown: `codeSplitting.groups` replaces Rollup's `manualChunks`.

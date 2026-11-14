@@ -81,11 +81,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         },
       },
     },
-    // Tauri prints its own output in the same terminal.
-    clearScreen: false,
-    server:      {
+    server: {
       port:  DEV_SERVER_PORT,
-      watch: { ignored: ['**/src-tauri/**'] },
       proxy: {
         '/api':     apiProxy(apiTarget),
         '/sanctum': apiProxy(apiTarget),

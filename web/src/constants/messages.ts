@@ -1,5 +1,4 @@
 type TMessageKey =
-  | 'SYNC_CHANGE_REJECTED'
   | 'CRASH_TITLE'
   | 'CRASH_PAGE'
   | 'CRASH_APP'
@@ -44,7 +43,6 @@ type TMessageKey =
 
 /** User-facing texts that are not tied to one component. */
 export const MESSAGES: Readonly<Record<TMessageKey, string>> = {
-  SYNC_CHANGE_REJECTED:   'Some changes could not be saved to the cloud. They are still on this device.',
   CRASH_TITLE:            'Something went wrong',
   CRASH_PAGE:             'This part of the app stopped working. Your notes are safe.',
   CRASH_APP:              'The app stopped working. Your notes are safe; reload to continue.',
@@ -67,7 +65,7 @@ export const MESSAGES: Readonly<Record<TMessageKey, string>> = {
   PASSWORD_CHANGE_FAILED: 'Failed to change password',
   COPY_SAVED:             'Saved your changes as a new note.',
   COPY_SAVE_FAILED:       "Couldn't save copy of note.",
-  REFRESH_OFFLINE:        'Offline. Cannot sync with remote server.',
+  REFRESH_OFFLINE:        'You are offline. Connect to the internet and try again.',
   REFRESH_DONE:           'All notes and data refreshed from server',
   REFRESH_FAILED:         'Could not sync with remote server. Check your connection.',
   FOLDER_CREATE_FAILED:   "Couldn't create folder.",

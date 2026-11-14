@@ -1,11 +1,9 @@
 import { AxiosError, type AxiosResponse, HttpStatusCode, type InternalAxiosRequestConfig } from 'axios'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { MESSAGES } from '@src/constants/messages'
 
 import { api, type ApiError, normalizeError } from './api_client'
-
-vi.mock('@src/platform/is_native', () => ({ isNative: (): boolean => false }))
 
 function failingAdapter(status: number, data: object): (config: InternalAxiosRequestConfig) => Promise<never> {
   return async (config: InternalAxiosRequestConfig): Promise<never> => {

@@ -14,9 +14,6 @@
     "tsc": "tsc -b --noEmit",
     "check": "npm run lint && npm run lint:style && npm run tsc && npm run test",
     "preview": "vite preview",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
     "lint:style": "stylelint \"src/**/*.{css,scss}\" --fix",
     "test": "vitest run"
   },
@@ -31,9 +28,6 @@
     "@mantine/tiptap": "9.7.4",
     "@tabler/icons-react": "3.50.0",
     "@tanstack/react-query": "5.105.0",
-    "@tauri-apps/api": "2.12.4",
-    "@tauri-apps/plugin-os": "2.4.0",
-    "@tauri-apps/plugin-sql": "2.6.0",
     "@tiptap/extension-character-count": "3.32.2",
     "@tiptap/extension-code-block-lowlight": "3.32.2",
     "@tiptap/extension-color": "3.32.2",
@@ -73,7 +67,6 @@
   "devDependencies": {
     "@eslint/js": "9.39.5",
     "@stylistic/eslint-plugin": "5.10.0",
-    "@tauri-apps/cli": "2.12.4",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",

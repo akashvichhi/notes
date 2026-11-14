@@ -8,7 +8,6 @@ import type { UseFormReturnType } from '@mantine/form'
 import type { UseMutationResult } from '@tanstack/react-query'
 
 import type { ApiError } from '@src/api/api_client'
-import { isNative } from '@src/platform/is_native'
 import { useLogin } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
 import type { User } from '@src/types/api'
@@ -19,7 +18,6 @@ import { validateEmail } from '@src/validations/auth_validations'
 export const LoginPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function LoginPage() {
   const navigate: NavigateFunction = useNavigate()
   const login: UseMutationResult<User, ApiError, ILoginCredentials> = useLogin()
-  const native: boolean = isNative()
 
   const form: UseFormReturnType<ILoginCredentials> = useForm<ILoginCredentials>({
     initialValues: { email: '', password: '' },
@@ -62,12 +60,6 @@ export const LoginPage: React.MemoExoticComponent<() => React.JSX.Element> = mem
             <Button component={Link} to={ROUTE_PATHS.REGISTER} variant="white">
               Create an account
             </Button>
-
-            {native && (
-              <Button component={Link} to={ROUTE_PATHS.HOME} variant="subtle">
-                Continue without signing in (local notes)
-              </Button>
-            )}
           </Stack>
         </form>
       </Paper>

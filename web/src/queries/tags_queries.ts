@@ -6,8 +6,6 @@ import * as tagsApi from '@src/api/tags_api'
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
 import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
-import { tagsRepo } from '@src/db/tags_repo'
-import { isNative } from '@src/platform/is_native'
 import { useUiStore } from '@src/stores/ui_store'
 import type { Scope } from '@src/stores/ui_store'
 import type { Bootstrap, Note, Tag, UUID } from '@src/types/api'
@@ -62,18 +60,7 @@ export function useCreateTag(): UseMutationResult<Tag, ApiError, { name: string;
       if (ctx?.previous) qc.setQueryData(BOOTSTRAP_KEY, ctx.previous)
       showErrorToast(MESSAGES.TAG_CREATE_FAILED)
     },
-    onSuccess: async (realTag: Tag, _v: { name: string; uuid?: UUID; }, ctx: { previous: Bootstrap | undefined; tempUuid: string; }) => {
-      if (isNative()) {
-        await tagsRepo.upsert({
-          uuid:            realTag.uuid,
-          container:       'cloud',
-          name:            realTag.name,
-          slug:            realTag.slug,
-          deleted_at:      null,
-          dirty:           false,
-          server_revision: null,
-        })
-      }
+    onSuccess: (realTag: Tag, _v: { name: string; uuid?: UUID; }, ctx: { previous: Bootstrap | undefined; tempUuid: string; }) => {
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old: NoInfer<Bootstrap> | undefined) => {
         if (!old) return old
         const current: Tag[] = getTagsArray(old.tags)
@@ -140,19 +127,6 @@ export function useRenameTag(): TRenameTagMutation {
       }
       showErrorToast(MESSAGES.TAG_RENAME_FAILED)
     },
-    onSuccess: async (realTag: Tag) => {
-      if (isNative()) {
-        await tagsRepo.upsert({
-          uuid:            realTag.uuid,
-          container:       'cloud',
-          name:            realTag.name,
-          slug:            realTag.slug,
-          deleted_at:      null,
-          dirty:           false,
-          server_revision: null,
-        })
-      }
-    },
   })
 }
 
@@ -217,11 +191,6 @@ export function useDeleteTag(): TDeleteTagMutation {
         ctx.prevNotes.forEach(([queryKey, data]: [readonly unknown[], unknown]) => qc.setQueryData(queryKey, data))
       }
       showErrorToast(MESSAGES.TAG_DELETE_FAILED)
-    },
-    onSuccess: async (_data: void, uuid: string) => {
-      if (isNative()) {
-        await tagsRepo.hardDelete(uuid, 'cloud')
-      }
     },
   })
 }

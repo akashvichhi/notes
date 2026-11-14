@@ -7,8 +7,6 @@ import type { NotesPage } from '@src/api/notes_api'
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
 import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTES_KEY } from '@src/constants/query_keys'
-import { foldersRepo } from '@src/db/folders_repo'
-import { isNative } from '@src/platform/is_native'
 import { useUiStore } from '@src/stores/ui_store'
 import type { Scope } from '@src/stores/ui_store'
 import type { Bootstrap, Folder, NoteListItem, UUID } from '@src/types/api'
@@ -63,20 +61,7 @@ export function useCreateFolder(): UseMutationResult<Folder, ApiError, { name: s
       if (ctx?.previous) qc.setQueryData(BOOTSTRAP_KEY, ctx.previous)
       showErrorToast(MESSAGES.FOLDER_CREATE_FAILED)
     },
-    onSuccess: async (realFolder: Folder, _v: { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID; }, ctx: { previous: Bootstrap | undefined; tempUuid: string; }) => {
-      if (isNative()) {
-        await foldersRepo.upsert({
-          uuid:            realFolder.uuid,
-          container:       'cloud',
-          parent_uuid:     realFolder.parent_uuid ?? null,
-          name:            realFolder.name,
-          color:           realFolder.color ?? null,
-          position:        realFolder.position ?? 0,
-          deleted_at:      null,
-          dirty:           false,
-          server_revision: null,
-        })
-      }
+    onSuccess: (realFolder: Folder, _v: { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID; }, ctx: { previous: Bootstrap | undefined; tempUuid: string; }) => {
       qc.setQueryData<Bootstrap>(BOOTSTRAP_KEY, (old: NoInfer<Bootstrap> | undefined) => {
         if (!old) return old
         const current: Folder[] = getFoldersArray(old.folders)
@@ -141,21 +126,6 @@ export function useRenameFolder(): TRenameFolderMutation {
       }
       showErrorToast(MESSAGES.FOLDER_RENAME_FAILED)
     },
-    onSuccess: async (realFolder: Folder) => {
-      if (isNative()) {
-        const existing: Folder | null = await foldersRepo.get(realFolder.uuid, 'cloud')
-        if (existing) {
-          await foldersRepo.upsert({
-            ...existing,
-            container:       'cloud',
-            name:            realFolder.name,
-            deleted_at:      null,
-            dirty:           false,
-            server_revision: null,
-          })
-        }
-      }
-    },
   })
 }
 
@@ -215,11 +185,6 @@ export function useDeleteFolder(): TDeleteFolderMutation {
         ctx.prevNotes.forEach(([queryKey, data]: [readonly unknown[], unknown]) => qc.setQueryData(queryKey, data))
       }
       showErrorToast(MESSAGES.FOLDER_DELETE_FAILED)
-    },
-    onSuccess: async (_data: void, uuid: string) => {
-      if (isNative()) {
-        await foldersRepo.hardDelete(uuid, 'cloud')
-      }
     },
   })
 }

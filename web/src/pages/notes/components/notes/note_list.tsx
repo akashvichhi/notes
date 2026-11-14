@@ -1,6 +1,4 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
-import type { NavigateFunction } from 'react-router'
 
 import {
   Box,
@@ -15,7 +13,7 @@ import {
   Text,
   TextInput,
 } from '@mantine/core'
-import { IconCloud, IconFolder, IconPlus } from '@tabler/icons-react'
+import { IconFolder, IconPlus } from '@tabler/icons-react'
 import type { UseMutationResult } from '@tanstack/react-query'
 
 import type { ApiError } from '@src/api/api_client'
@@ -23,9 +21,7 @@ import type { NotesPage } from '@src/api/notes_api'
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { MAX_NOTE_TITLE_LENGTH } from '@src/constants/limits'
 import { useIsPhone } from '@src/hooks/use_is_phone'
-import { isNative } from '@src/platform/is_native'
-import { useMe } from '@src/queries/auth_queries'
-import { useBootstrap, useLocalSidebar } from '@src/queries/bootstrap_queries'
+import { useBootstrap } from '@src/queries/bootstrap_queries'
 import {
   useCreateNote,
   useDuplicateNote,
@@ -38,7 +34,6 @@ import {
   useTrashNote,
 } from '@src/queries/notes_queries'
 import type { TCreateNoteMutation, TDuplicateNoteMutation, TMoveNoteMutation, TRenameNoteMutation, TStarNoteMutation } from '@src/queries/notes_queries'
-import { ROUTE_PATHS } from '@src/routes/route_paths'
 import { useTabsStore } from '@src/stores/tabs_store'
 import type { TabsState } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
@@ -60,24 +55,19 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
   activeUuid,
   onSelectNote,
 }: INoteListProps): React.JSX.Element {
-  const navigate: NavigateFunction = useNavigate()
-  const { data: user } = useMe()
   const { scope, filter, setView } = useUiStore()
-  const isCloudSignedOut: boolean = scope.container === 'cloud' && !user
   const isPhone: boolean = useIsPhone()
   const closeTab: (uuid: UUID) => void = useTabsStore((s: TabsState) => s.close)
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotes(scope)
-  const { folders: cloudFolders } = useBootstrap()
-  const { data: localData } = useLocalSidebar()
-  const localFolders: Folder[] = localData?.folders ?? []
+  const { folders } = useBootstrap()
 
   const starNote: TStarNoteMutation = useStarNote(scope)
-  const trashNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; prevLocal: unknown; }> = useTrashNote()
+  const trashNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; }> = useTrashNote()
   const duplicateNote: TDuplicateNoteMutation = useDuplicateNote()
   const createNote: TCreateNoteMutation = useCreateNote()
-  const restoreNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; prevLocal: unknown; }> = useRestoreNote()
-  const forceDeleteNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; prevLocal: unknown; }> = useForceDeleteNote()
+  const restoreNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; }> = useRestoreNote()
+  const forceDeleteNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; }> = useForceDeleteNote()
   const renameNote: TRenameNoteMutation = useRenameNote()
   const moveNoteFolder: TMoveNoteMutation = useMoveNoteFolder()
 
@@ -85,12 +75,6 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
   const [moveModalNote, setMoveModalNote] = useState<NoteListItem | null>(null)
   const [renameModalNote, setRenameModalNote] = useState<NoteListItem | null>(null)
   const [renameTitle, setRenameTitle] = useState('')
-
-  const moveModalContainer: 'cloud' | 'local' = moveModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
-  const moveModalFolders: Folder[] = moveModalContainer === 'local' ? localFolders : cloudFolders
-
-  const restoreModalContainer: 'cloud' | 'local' = restoreModalNote?.container ?? scope.container ?? (isNative() ? 'local' : 'cloud')
-  const restoreModalFolders: Folder[] = restoreModalContainer === 'local' ? localFolders : cloudFolders
 
   const allNotes: NoteListItem[] = useMemo(() => {
     return data?.pages.flatMap((page: NotesPage) => page.data) ?? []
@@ -219,7 +203,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
             {totalCount} {totalCount === 1 ? 'note' : 'notes'}
           </Text>
         </Group>
-        {scope.kind !== 'trash' && !isCloudSignedOut && (
+        {scope.kind !== 'trash' && (
           <Button
             aria-label="Create note"
             leftSection={<IconPlus size={14} />}
@@ -241,22 +225,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
       />
 
       <ScrollArea style={{ flex: 1 }} onBottomReached={handleBottomReached}>
-        {isCloudSignedOut ? (
-          <Center h={240}>
-            <Stack align="center" gap="xs" maw={280} ta="center">
-              <IconCloud opacity={0.4} size={36} />
-              <Text fw={600} size="sm">
-                Cloud sync is inactive
-              </Text>
-              <Text c="dimmed" size="xs">
-                Sign in to access, create, and sync Cloud notes across devices.
-              </Text>
-              <Button size="xs" variant="light" onClick={() => navigate(ROUTE_PATHS.LOGIN)}>
-                Sign in to Cloud
-              </Button>
-            </Stack>
-          </Center>
-        ) : isLoading ? (
+        {isLoading ? (
           <ListSkeleton />
         ) : filtered.length === 0 ? (
           <Center h={180}>
@@ -328,7 +297,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
             leftSection={<IconFolder size={16} />}
             onClick={() => handleMoveToFolder(null)}
           />
-          {moveModalFolders.map((folder: Folder) => (
+          {folders.map((folder: Folder) => (
             <NavLink
               key={folder.uuid}
               active={moveModalNote?.folder?.uuid === folder.uuid}
@@ -353,7 +322,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
             leftSection={<IconFolder size={16} />}
             onClick={() => handleRestoreToFolder(null)}
           />
-          {restoreModalFolders.map((folder: Folder) => (
+          {folders.map((folder: Folder) => (
             <NavLink
               key={folder.uuid}
               label={folder.name}

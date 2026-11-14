@@ -1,7 +1,4 @@
 .DS_Store
 node_modules/
 vendor/
-target/
-src-tauri/target/
-web/src-tauri/target/
 

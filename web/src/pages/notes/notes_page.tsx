@@ -149,12 +149,11 @@ export const AppPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(
   const statusSlot: React.JSX.Element = useMemo(
     () => (
       <StatusBar
-        container={note?.container ?? scope.container}
         folderPath={note?.folder?.name ?? null}
         words={note?.word_count ?? 0}
       />
     ),
-    [note?.word_count, note?.folder?.name, note?.container, scope.container]
+    [note?.word_count, note?.folder?.name]
   )
 
   return (

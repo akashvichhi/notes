@@ -2,47 +2,6 @@ import type { JSONContent } from '@tiptap/core'
 
 export type UUID = string
 export type ISODate = string
-export type Container = 'cloud' | 'local'
-
-export interface LocalNote {
-  uuid:            UUID
-  container:       Container
-  folder_uuid:     UUID | null
-  title:           string
-  title_locked:    boolean
-  body:            ProseMirrorDoc | null
-  plain_text:      string
-  excerpt:         string
-  is_starred:      boolean
-  word_count:      number
-  deleted_at:      ISODate | null
-  updated_at:      ISODate
-  server_version:  number | null
-  server_revision: number | null
-  dirty:           boolean
-}
-
-export interface LocalFolder {
-  uuid:            UUID
-  container:       Container
-  parent_uuid:     UUID | null
-  name:            string
-  color:           string | null
-  position:        number
-  deleted_at:      ISODate | null
-  dirty:           boolean
-  server_revision: number | null
-}
-
-export interface LocalTag {
-  uuid:            UUID
-  container:       Container
-  name:            string
-  slug:            string
-  deleted_at:      ISODate | null
-  dirty:           boolean
-  server_revision: number | null
-}
 
 export interface User {
   uuid:        UUID
@@ -74,7 +33,6 @@ export interface Tag {
 
 export interface NoteListItem {
   uuid:       UUID
-  container?: Container
   title:      string
   excerpt:    string
   is_starred: boolean

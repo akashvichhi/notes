@@ -8,7 +8,6 @@ import type { UseFormReturnType } from '@mantine/form'
 import type { UseMutationResult } from '@tanstack/react-query'
 
 import type { ApiError } from '@src/api/api_client'
-import { isNative } from '@src/platform/is_native'
 import { useRegister } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
 import type { User } from '@src/types/api'
@@ -23,7 +22,6 @@ import {
 export const RegisterPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function RegisterPage() {
   const navigate: NavigateFunction = useNavigate()
   const register: UseMutationResult<User, ApiError, IRegisterCredentials> = useRegister()
-  const native: boolean = isNative()
 
   const form: UseFormReturnType<IRegisterCredentials> = useForm<IRegisterCredentials>({
     initialValues: { name: '', email: '', password: '', password_confirmation: '' },
@@ -73,12 +71,6 @@ export const RegisterPage: React.MemoExoticComponent<() => React.JSX.Element> = 
             <Button component={Link} to={ROUTE_PATHS.LOGIN} variant="white">
               Already have an account? Sign in
             </Button>
-
-            {native && (
-              <Button component={Link} to={ROUTE_PATHS.HOME} variant="subtle">
-                Continue without signing in (local notes)
-              </Button>
-            )}
           </Stack>
         </form>
       </Paper>

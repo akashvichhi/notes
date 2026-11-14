@@ -9,7 +9,7 @@ import { NOTES_KEY, queryKeys } from './query_keys'
 describe('queryKeys.notes.filter', () => {
   it('is refreshed with every other note list when a note changes', async () => {
     const qc: QueryClient = new QueryClient()
-    const scope: Scope = { kind: 'all', container: 'cloud', label: ALL_NOTES_LABEL }
+    const scope: Scope = { kind: 'all', label: ALL_NOTES_LABEL }
     const key: readonly unknown[] = queryKeys.notes.filter(scope, 'draft')
     qc.setQueryData(key, { data: [] })
 

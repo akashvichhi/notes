@@ -3,20 +3,13 @@ import { memo, useCallback, useMemo, useState } from 'react'
 import { ActionIcon, Badge, Button, Group, Popover, Stack, TextInput } from '@mantine/core'
 import { IconCheck, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 
-import { isNative } from '@src/platform/is_native'
-import { useBootstrap, useLocalSidebar } from '@src/queries/bootstrap_queries'
+import { useBootstrap } from '@src/queries/bootstrap_queries'
 import { useSyncNoteTags } from '@src/queries/notes_queries'
 import type { TNoteTagsMutation } from '@src/queries/notes_queries'
-import { useUiStore } from '@src/stores/ui_store'
 import type { Note, Tag } from '@src/types/api'
 
 export const TagStrip: React.MemoExoticComponent<({ note }: { note: Note; }) => React.JSX.Element> = memo(function TagStrip({ note }: { note: Note }) {
-  const { tags: cloudTags } = useBootstrap()
-  const { data: localData } = useLocalSidebar()
-  const localTags: Tag[] = localData?.tags ?? []
-
-  const isLocal: boolean = note.container === 'local' || (!note.container && isNative() && useUiStore.getState().scope.container === 'local')
-  const tags: Tag[] = isLocal ? localTags : cloudTags
+  const { tags } = useBootstrap()
   const syncTags: TNoteTagsMutation = useSyncNoteTags()
   const [opened, setOpened] = useState(false)
   const [query, setQuery] = useState('')

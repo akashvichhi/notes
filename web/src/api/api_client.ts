@@ -2,8 +2,6 @@ import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosReques
 
 import { API_URL, IS_DEV } from '@src/config/env'
 import { MESSAGES } from '@src/constants/messages'
-import { isNative } from '@src/platform/is_native'
-import { loadToken } from '@src/platform/secure_store'
 import type { Note } from '@src/types/api'
 
 export interface ApiError {
@@ -14,9 +12,9 @@ export interface ApiError {
 }
 
 const getBaseUrl: () => string = (): string => {
-  // In browser development, always route through Vite's proxy (relative path)
+  // In development, always route through Vite's proxy (relative path)
   // so requests are same-origin and proxy to whatever VITE_API_URL is configured to.
-  if (IS_DEV && !isNative()) {
+  if (IS_DEV) {
     return ''
   }
   return API_URL
@@ -25,26 +23,9 @@ const getBaseUrl: () => string = (): string => {
 export const api: AxiosInstance = axios.create({
   baseURL:         getBaseUrl() + '/api/v1',
   headers:         { Accept: 'application/json' },
-  // Cookies are for the browser build only. A packaged app is a different
-  // origin, so SameSite cookies are never sent and these flags do nothing.
-  withCredentials: !isNative(),
-  withXSRFToken:   !isNative(),
+  withCredentials: true,
+  withXSRFToken:   true,
 })
-
-api.interceptors.request.use(async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
-  if (isNative()) {
-    const token: string | null = await loadToken()
-    if (token) {
-      if (typeof config.headers?.set === 'function') {
-        config.headers.set('Authorization', `Bearer ${token}`)
-      } else {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-    }
-  }
-  return config
-})
-
 
 /** A request the CSRF retry has already re-sent once. */
 interface IRetriableConfig extends InternalAxiosRequestConfig { __retried?: boolean }
@@ -52,7 +33,7 @@ interface IRetriableConfig extends InternalAxiosRequestConfig { __retried?: bool
 let csrfPrimed: boolean = false
 
 export async function ensureCsrf(): Promise<void> {
-  if (isNative() || csrfPrimed) return
+  if (csrfPrimed) return
   await axios.get(getBaseUrl() + '/sanctum/csrf-cookie', { withCredentials: true })
   csrfPrimed = true
 }
@@ -75,8 +56,8 @@ export function normalizeError(e: unknown): ApiError {
 
   const err: IErrorWithResponse = e as IErrorWithResponse
 
-  // Without a response the text comes from axios or our own code (SQLite, the
-  // secure store) and may hold internals, so the user gets a fixed message.
+  // Without a response the text comes from axios or our own code and may
+  // hold internals, so the user gets a fixed message.
   if (!err.response) {
     return { status: 0, message: isAxiosError(e) ? MESSAGES.NETWORK_ERROR : MESSAGES.UNEXPECTED_ERROR }
   }

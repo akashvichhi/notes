@@ -12,14 +12,10 @@ import { type NotesPage, patchNote } from '@src/api/notes_api'
 import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { clearDraft, saveDraft } from '@src/db/drafts_store'
-import { notesRepo } from '@src/db/notes_repo'
-import { isNative } from '@src/platform/is_native'
 import { type TNoteListMutation, useRestoreNote } from '@src/queries/notes_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
 import type { TabsState } from '@src/stores/tabs_store'
 import { type SaveStatus, type UiState, useUiStore } from '@src/stores/ui_store'
-import { syncEngine } from '@src/sync/engine'
-import { outbox } from '@src/sync/outbox'
 import type { Note, NoteListItem, UUID } from '@src/types/api'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
@@ -81,64 +77,8 @@ export function useAutosave(note: Note, editor: Editor | null): IAutosave {
       setSaveStatus('saving')
 
       try {
-        let updated: Note
-        const isLocal: boolean = note.container === 'local' || (!note.container && isNative())
-
-        if (isNative()) {
-          const plainText: string = editor.getText()
-          const excerpt: string = plainText.slice(0, 150)
-          const wordCount: number = plainText.trim() ? plainText.trim().split(/\s+/).length : 0
-          const nowStr: string = new Date().toISOString()
-          const existing: Note | null = await notesRepo.get(note.uuid)
-          const title: string = existing?.title ?? note.title
-
-          await notesRepo.upsert({
-            uuid:            note.uuid,
-            container:       note.container ?? 'local',
-            folder_uuid:     note.folder?.uuid ?? null,
-            title,
-            title_locked:    Boolean(note.title_locked),
-            body,
-            plain_text:      plainText,
-            excerpt,
-            is_starred:      Boolean(note.is_starred),
-            word_count:      wordCount,
-            updated_at:      nowStr,
-            deleted_at:      null,
-            server_version:  note.version,
-            server_revision: null,
-            dirty:           !isLocal,
-          })
-
-          if (!isLocal) {
-            await outbox.enqueue({
-              kind:      'body',
-              uuid:      note.uuid,
-              body,
-              version:   version.current,
-              container: 'cloud',
-            })
-            setTimeout(() => void syncEngine.run(), 2000)
-            updated = {
-              ...note,
-              body,
-              excerpt,
-              word_count: wordCount,
-              updated_at: nowStr,
-            }
-          } else {
-            updated = {
-              ...note,
-              body,
-              excerpt,
-              word_count: wordCount,
-              updated_at: nowStr,
-            }
-          }
-        } else {
-          updated = await patchNote(note.uuid, { body, version: version.current })
-          version.current = updated.version
-        }
+        const updated: Note = await patchNote(note.uuid, { body, version: version.current })
+        version.current = updated.version
 
         retries.current = 0
 

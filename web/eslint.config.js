@@ -15,8 +15,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  // src-tauri holds the Rust shell and its generated files, not frontend code.
-  { ignores: ['dist', 'coverage', 'node_modules', 'src-tauri'] },
+  { ignores: ['dist', 'coverage', 'node_modules'] },
   {
     files:   ['**/*.{ts,tsx}'],
     extends: [

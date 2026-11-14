@@ -30,7 +30,6 @@ class Settings(BaseSettings):
     access_token_prefix: str = "notes_pat_"  # noqa: S105 - a public prefix, not a secret
     web_dist_dir: Path = Path("../web/dist")
     log_level: str = "INFO"
-    allow_empty_database: bool = False
 
     @field_validator("allowed_origins", "cors_origins", mode="before")
     @classmethod

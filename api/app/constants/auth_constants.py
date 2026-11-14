@@ -1,4 +1,4 @@
-# Sign-in and sign-up attempts per IP address per minute, as before the migration.
+# Sign-in and sign-up attempts per IP address per minute.
 AUTH_ATTEMPTS_PER_IP = 5
 # Failed sign-ins per email address per minute, whatever the IP.
 FAILED_LOGINS_PER_EMAIL = 5

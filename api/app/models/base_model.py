@@ -19,8 +19,8 @@ class Base(DeclarativeBase):
 
 
 class IdMixin:
-    # BY DEFAULT, not ALWAYS: the data migration keeps every row's id, so tokens
-    # ("{id}|...") and references stay valid; it then moves the sequences past them.
+    # BY DEFAULT, not ALWAYS: rows loaded from a backup or an import keep their ids,
+    # so tokens ("{id}|...") and references stay valid; reset the sequences afterwards.
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=False), primary_key=True)
 
 

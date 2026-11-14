@@ -43,7 +43,6 @@ def test_settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
         session_cookie_secure=True,
         # No build: tests that need the web app create their own (tests/integration/test_frontend.py).
         web_dist_dir=tmp_path_factory.mktemp("no_web_build"),
-        allow_empty_database=True,
     )
 
 

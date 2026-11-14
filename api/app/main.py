@@ -6,8 +6,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from sqlalchemy.orm import Session, sessionmaker
-from starlette.concurrency import run_in_threadpool
 from starlette.routing import Route
 
 from app.api.health_router import health_router
@@ -25,9 +23,7 @@ from app.core.rate_limiter import RateLimiter
 from app.core.request_logging_middleware import RequestLoggingMiddleware
 from app.core.security import PasswordHasher
 from app.core.session_cookie import SessionCookie
-from app.core.startup_checks import ensure_database_has_users
 from app.mcp.mcp_server import create_mcp_app, create_mcp_server
-from app.repositories.user_repository import UserRepository
 
 APP_TITLE = "Notes API"
 
@@ -41,8 +37,6 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
-        # In a worker thread: the database driver is synchronous.
-        await run_in_threadpool(check_database, session_factory, settings)
         async with mcp_server.session_manager.run():
             yield
         engine.dispose()
@@ -69,11 +63,6 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.router.routes.append(Route(MCP_PATH, create_mcp_app(mcp_server, app.state)))
     app.state.frontend.mount_assets(app)
     return app
-
-
-def check_database(session_factory: sessionmaker[Session], settings: Settings) -> None:
-    with session_factory() as session:
-        ensure_database_has_users(UserRepository(session), settings.allow_empty_database)
 
 
 def _add_middleware(app: FastAPI, settings: Settings) -> None:

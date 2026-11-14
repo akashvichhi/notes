@@ -4,9 +4,15 @@ errors carry a type that core/exception_handlers.py turns into a readable messag
 from typing import Annotated
 
 from email_validator import EmailNotValidError, validate_email
-from pydantic import AfterValidator, BeforeValidator, StringConstraints
+from pydantic import AfterValidator, BeforeValidator, Field, StringConstraints
 from pydantic_core import PydanticCustomError
 
+from app.constants.folder_constants import (
+    FOLDER_COLOR_PATTERN,
+    FOLDER_NAME_MAX_LENGTH,
+    FOLDER_POSITION_MAX,
+    FOLDER_POSITION_MIN,
+)
 from app.constants.user_constants import PASSWORD_MIN_LENGTH, USER_EMAIL_MAX_LENGTH, USER_NAME_MAX_LENGTH
 
 # Error context key that moves an error raised by a whole-model validator onto one field.
@@ -56,3 +62,10 @@ UserName = Annotated[
 # Passwords are never trimmed: a space is a valid character.
 NewPassword = Annotated[str, StringConstraints(min_length=PASSWORD_MIN_LENGTH)]
 GivenPassword = Annotated[str, AfterValidator(require_text)]
+FolderName = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, max_length=FOLDER_NAME_MAX_LENGTH),
+    AfterValidator(require_text),
+]
+HexColor = Annotated[str, StringConstraints(strip_whitespace=True, pattern=FOLDER_COLOR_PATTERN)]
+FolderPosition = Annotated[int, Field(ge=FOLDER_POSITION_MIN, le=FOLDER_POSITION_MAX)]

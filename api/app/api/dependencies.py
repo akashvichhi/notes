@@ -14,10 +14,12 @@ from app.core.security import PasswordHasher
 from app.core.session_cookie import SessionCookie
 from app.models.user_model import User
 from app.repositories.access_token_repository import AccessTokenRepository
+from app.repositories.folder_repository import FolderRepository
 from app.repositories.health_repository import HealthRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
 from app.services.auth_service import Authenticated, AuthService
+from app.services.folder_service import FolderService
 from app.services.health_service import HealthService
 from app.services.profile_service import ProfileService
 from app.services.user_session_service import UserSessionService
@@ -126,3 +128,10 @@ def get_profile_service(
 
 
 ProfileServiceDependency = Annotated[ProfileService, Depends(get_profile_service)]
+
+
+def get_folder_service(session: DbSession) -> FolderService:
+    return FolderService(session, FolderRepository(session))
+
+
+FolderServiceDependency = Annotated[FolderService, Depends(get_folder_service)]

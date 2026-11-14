@@ -95,7 +95,9 @@ def upgrade() -> None:
         _id(),
         _uuid(),
         _user_id(),
-        sa.Column("parent_id", sa.BigInteger(), sa.ForeignKey("folders.id")),
+        sa.Column(
+            "parent_id", sa.BigInteger(), sa.ForeignKey("folders.id", deferrable=True, initially="DEFERRED")
+        ),
         sa.Column("name", _case_insensitive(120), nullable=False),
         sa.Column("color", sa.CHAR(7)),
         sa.Column("position", sa.Integer(), server_default="0", nullable=False),

@@ -15,8 +15,11 @@ class Folder(IdMixin, UuidMixin, TimestampMixin, Base):
     )
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    # No ON DELETE: deleting a folder first moves its children (services/folder_service.py).
-    parent_id: Mapped[int | None] = mapped_column(ForeignKey("folders.id"), index=True)
+    # Deferred: deleting a folder removes it first, then moves its children up, so a child
+    # may take the deleted folder's own name (services/folder_service.py).
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("folders.id", deferrable=True, initially="DEFERRED"), index=True
+    )
     name: Mapped[str] = mapped_column(String(FOLDER_NAME_MAX_LENGTH, collation=CASE_INSENSITIVE_COLLATION))
     color: Mapped[str | None] = mapped_column(CHAR(FOLDER_COLOR_LENGTH))
     position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")

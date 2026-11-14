@@ -42,6 +42,8 @@ VALIDATION_MESSAGE_TEMPLATES: dict[str, str] = {
     "too_long": "The {label} field must not have more than {max_length} items.",
     "json_invalid": "The request body is not valid JSON.",
     "model_attributes_type": "The request body must be a JSON object.",
+    "string_pattern_mismatch": "The {label} field format is invalid.",
 }
 
 CURRENT_PASSWORD_INCORRECT = "The password is incorrect."  # noqa: S105 - a message
+NAME_TAKEN = "The name has already been taken."

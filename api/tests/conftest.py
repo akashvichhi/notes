@@ -4,7 +4,7 @@ transaction that is rolled back, so tests never see each other's data."""
 
 import os
 from collections.abc import Callable, Iterator
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
 from pathlib import Path
 
 import pytest
@@ -21,6 +21,7 @@ from app.main import create_app
 from app.models.user_model import User
 from tests.factories import PASSWORD, make_user
 from tests.fakes import START_TIME, FakeClock
+from tests.mcp_client import McpClient, issue_token
 
 DEFAULT_TEST_DATABASE_URL = "postgresql+psycopg://notes:secret@127.0.0.1:5432/notes_test"
 ALLOWED_ORIGIN = "https://notes.test"
@@ -87,6 +88,8 @@ def build_app(db_session: Session, clock: FakeClock) -> AppFactory:
     def build(settings: Settings) -> FastAPI:
         app = create_app(settings, clock=clock)
         app.dependency_overrides[get_db_session] = lambda: db_session
+        # The MCP tools open their sessions from the factory, outside FastAPI's dependencies.
+        app.state.session_factory = lambda: nullcontext(db_session)
         return app
 
     return build
@@ -110,6 +113,12 @@ def client(build_client: ClientFactory, test_settings: Settings) -> TestClient:
 @pytest.fixture
 def user(db_session: Session) -> User:
     return make_user(db_session)
+
+
+@pytest.fixture
+def mcp(client: TestClient, db_session: Session, user: User) -> McpClient:
+    """An MCP client for `user`, with a token that can read and write."""
+    return McpClient(client, issue_token(db_session, user))
 
 
 @pytest.fixture

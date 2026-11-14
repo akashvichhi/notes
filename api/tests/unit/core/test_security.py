@@ -1,6 +1,6 @@
 from app.core.security import PasswordHasher, hash_token, new_session_token
 
-# Hashes made by the previous API (PHP's password_hash, bcrypt, cost 4 to keep tests fast).
+# bcrypt hashes in the "$2y$" variant that imported accounts carry (cost 4, to keep tests fast).
 LEGACY_HASH_OF_PASSWORD = "$2y$04$HkBHQP..Y6zP0iF4a.FtSO6q7.1bH2U1VtXNeRYu4d4zG3O/29VHG"
 LEGACY_HASH_OF_72_AS = "$2y$04$RgjwbjSTOd3lluTIDZKcuOsERByy3To9Nv2NP4jkte9EjTlwB3IKS"
 
@@ -14,14 +14,14 @@ def test_hashed_password_verifies_and_a_wrong_one_does_not() -> None:
     assert not hasher.verify(password_hash, "wrong horse")
 
 
-def test_legacy_bcrypt_hash_from_the_previous_api_verifies() -> None:
+def test_imported_bcrypt_hash_verifies() -> None:
     hasher = PasswordHasher()
 
     assert hasher.verify(LEGACY_HASH_OF_PASSWORD, "password")
     assert not hasher.verify(LEGACY_HASH_OF_PASSWORD, "Password")
 
 
-def test_legacy_bcrypt_ignores_bytes_after_72_like_php_did() -> None:
+def test_imported_bcrypt_hash_ignores_bytes_after_72() -> None:
     assert PasswordHasher().verify(LEGACY_HASH_OF_72_AS, "a" * 72 + "anything after is ignored")
 
 

@@ -1,9 +1,10 @@
-"""Tag slugs, exactly as the Laravel API's Str::slug made them, so a tag typed again after
-the migration finds the slug already in the database.
+"""Tag slugs: the name transliterated to ASCII, lowercased, with "@" spelled "at" and
+words joined by "-". Tags are unique by slug, so "Side Projects" and "side_projects"
+are one tag.
 
-data/ascii_replacements.json is the English replacement map of voku/portable-ascii 2.1.1
-(MIT licence), which Str::slug transliterates with. Scripts it has no entry for (Chinese,
-Japanese, Korean, Hebrew, ...) are dropped, as they were before."""
+data/ascii_replacements.json is the transliteration table, taken from the portable-ascii
+project (MIT licence). Scripts it has no entry for (Chinese, Japanese, Korean, Hebrew,
+...) are dropped, so a name written only in them has no slug."""
 
 import json
 import re
@@ -13,12 +14,12 @@ from typing import Final
 _REPLACEMENTS: Final[dict[str, str]] = json.loads(
     (Path(__file__).parent / "data" / "ascii_replacements.json").read_text(encoding="utf-8")
 )
-# Longest key first: like PHP's strtr, a two-letter Greek digraph wins over its first letter.
+# Longest key first, so a two-letter Greek digraph wins over its first letter.
 _REPLACEMENT_PATTERN: Final = re.compile(
     "|".join(re.escape(key) for key in sorted(_REPLACEMENTS, key=len, reverse=True))
 )
 _LINE_BREAKS_AND_TABS: Final = re.compile(r"\r\n|[\n\r\t]")
-# portable-ascii's own list of characters it keeps (\x10 and \x13 included).
+# What transliterated text may keep: the table's own list, \x10 and \x13 included.
 _UNSUPPORTED_CHARACTERS: Final = re.compile(r"[^\x09\x10\x13\x0A\x0D\x20-\x7E]")
 _UNDERSCORES: Final = re.compile(r"_+")
 _NOT_SLUG_CHARACTERS: Final = re.compile(r"[^-a-z0-9\s]+")

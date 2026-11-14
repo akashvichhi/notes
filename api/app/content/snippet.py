@@ -1,13 +1,11 @@
 """Search result snippets: plain text around the first matching term. They carry no
-markup; the web app escapes them and highlights the terms itself.
-
-The Laravel API also ran strip_tags() here, which hid text a user had typed such as
-"<div>"; the port keeps it, since nothing in a snippet is ever rendered as HTML."""
+markup and keep text that looks like HTML as typed: the web app escapes them and
+highlights the terms itself."""
 
 from collections.abc import Sequence
 
 from app.constants.search_constants import SNIPPET_ELLIPSIS, SNIPPET_RADIUS
-from app.content.php_text import collapse_whitespace, fold_case
+from app.content.text_rules import collapse_whitespace, fold_case
 
 
 def build_snippet(text: str, terms: Sequence[str]) -> str:

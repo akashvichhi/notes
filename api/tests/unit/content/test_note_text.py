@@ -6,15 +6,15 @@ import pytest
 from app.content.note_text import derive_note_text
 from app.schemas.common.json_types import JsonObject
 
-# Generated from the Laravel API's DeriveNoteFields, so notes saved before and after the
-# migration have the same plain text, excerpt, word count and title.
+# Golden cases pin the plain text, excerpt, word count and title, edge cases included
+# (Unicode spaces, NUL, wide characters, long titles), so derived text never drifts.
 GOLDEN_CASES = json.loads(
     (Path(__file__).parents[2] / "golden" / "note_text.json").read_text(encoding="utf-8")
 )
 
 
 @pytest.mark.parametrize("case", GOLDEN_CASES, ids=[f"case{index}" for index in range(len(GOLDEN_CASES))])
-def test_note_text_matches_the_previous_api(case: dict[str, object]) -> None:
+def test_note_text_matches_the_golden_cases(case: dict[str, object]) -> None:
     body = case["body"]
     assert isinstance(body, dict)
 

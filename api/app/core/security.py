@@ -8,10 +8,11 @@ from argon2 import PasswordHasher as Argon2Hasher
 from argon2.exceptions import InvalidHashError, VerificationError
 
 SESSION_TOKEN_BYTES = 32
-# The previous API hashed with PHP's bcrypt, which writes "$2y$" and reads only the first
-# 72 bytes. The bcrypt library writes "$2b$" (the same algorithm) and rejects longer input.
+# Imported accounts carry bcrypt hashes, mostly in the "$2y$" variant, made by a hasher
+# that read only the first 72 bytes. The bcrypt library writes "$2b$" (the same
+# algorithm) and rejects longer input.
 LEGACY_BCRYPT_PREFIXES = ("$2y$", "$2b$", "$2a$")
-PHP_BCRYPT_PREFIX = "$2y$"
+BCRYPT_2Y_PREFIX = "$2y$"
 BCRYPT_PREFIX = "$2b$"
 BCRYPT_MAX_PASSWORD_BYTES = 72
 TEXT_ENCODING = "utf-8"
@@ -44,7 +45,7 @@ class PasswordHasher:
 
     @staticmethod
     def _verify_legacy_bcrypt(password_hash: str, password: str) -> bool:
-        stored = password_hash.replace(PHP_BCRYPT_PREFIX, BCRYPT_PREFIX, 1).encode(TEXT_ENCODING)
+        stored = password_hash.replace(BCRYPT_2Y_PREFIX, BCRYPT_PREFIX, 1).encode(TEXT_ENCODING)
         candidate = password.encode(TEXT_ENCODING)[:BCRYPT_MAX_PASSWORD_BYTES]
         try:
             return bcrypt.checkpw(candidate, stored)

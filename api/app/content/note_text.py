@@ -5,12 +5,12 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 
 from app.constants.note_constants import NOTE_DERIVED_TITLE_MAX_LENGTH, NOTE_EXCERPT_WIDTH
-from app.content.php_text import (
-    PHP_WHITESPACE_RUNS,
+from app.content.text_rules import (
+    WHITESPACE_RUNS,
     collapse_whitespace,
     display_width,
-    php_rtrim,
-    php_trim,
+    rtrim_ascii,
+    trim_ascii,
     truncate_to_width,
 )
 from app.schemas.common.json_types import JsonObject, JsonValue
@@ -32,7 +32,7 @@ def derive_note_text(body: JsonObject) -> NoteText:
     return NoteText(
         plain_text=plain_text,
         excerpt=_excerpt(plain_text),
-        word_count=0 if plain_text == "" else len(PHP_WHITESPACE_RUNS.split(plain_text)),
+        word_count=0 if plain_text == "" else len(WHITESPACE_RUNS.split(plain_text)),
         title=_title(body),
     )
 
@@ -40,7 +40,7 @@ def derive_note_text(body: JsonObject) -> NoteText:
 def _excerpt(plain_text: str) -> str:
     if display_width(plain_text) <= NOTE_EXCERPT_WIDTH:
         return plain_text
-    return php_rtrim(truncate_to_width(plain_text, NOTE_EXCERPT_WIDTH))
+    return rtrim_ascii(truncate_to_width(plain_text, NOTE_EXCERPT_WIDTH))
 
 
 def _title(body: JsonObject) -> str:
@@ -49,7 +49,7 @@ def _title(body: JsonObject) -> str:
     blocks = [block for block in _children(body) if isinstance(block, dict)]
     headings = [block for block in blocks if block.get("type") == _HEADING_TYPE]
     for block in (*headings, *blocks):
-        text = php_trim(" ".join(_texts(block)))
+        text = trim_ascii(" ".join(_texts(block)))
         if text != "":
             return text[:NOTE_DERIVED_TITLE_MAX_LENGTH]
     return ""

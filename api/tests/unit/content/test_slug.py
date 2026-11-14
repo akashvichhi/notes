@@ -5,8 +5,8 @@ import pytest
 
 from app.content.slug import slugify
 
-# Generated from the Laravel API's Str::slug: tag slugs already in the database came
-# from it, so a tag typed again after the migration must find the same slug.
+# Golden cases pin the slug of every character in the transliteration table, alone and
+# between letters: tags are found by slug, so a slug must never change.
 GOLDEN_CASES = json.loads((Path(__file__).parents[2] / "golden" / "slugs.json").read_text(encoding="utf-8"))
 
 
@@ -15,7 +15,7 @@ GOLDEN_CASES = json.loads((Path(__file__).parents[2] / "golden" / "slugs.json").
     [(case["name"], case["slug"]) for case in GOLDEN_CASES],
     ids=[f"case{index}" for index in range(len(GOLDEN_CASES))],
 )
-def test_slug_matches_the_previous_api(name: str, slug: str) -> None:
+def test_slug_matches_the_golden_cases(name: str, slug: str) -> None:
     assert slugify(name) == slug
 
 

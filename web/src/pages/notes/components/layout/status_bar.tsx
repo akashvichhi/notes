@@ -5,12 +5,12 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
 import { useUiStore } from '@src/stores/ui_store'
-import type { EditorStats, SaveStatus, UiState } from '@src/stores/ui_store'
+import type { IEditorStats, TSaveStatus, IUiState } from '@src/stores/ui_store'
 
 dayjs.extend(relativeTime)
 
 export interface IStatusBarProps {
-  status?:     SaveStatus
+  status?:     TSaveStatus
   savedAt?:    number | null
   words?:      number
   folderPath?: string | null
@@ -24,14 +24,14 @@ export const StatusBar: React.NamedExoticComponent<IStatusBarProps> = memo(funct
   folderPath = null,
   onRetry,
 }: IStatusBarProps): React.JSX.Element {
-  const storeStatus: SaveStatus = useUiStore((s: UiState) => s.saveStatus)
-  const storeSavedAt: number | null = useUiStore((s: UiState) => s.savedAt)
-  const editorStats: EditorStats | null = useUiStore((s: UiState) => s.editorStats)
-  const storeRetry: (() => Promise<void> | void) | null = useUiStore((s: UiState) => s.retrySave)
+  const storeStatus: TSaveStatus = useUiStore((s: IUiState) => s.saveStatus)
+  const storeSavedAt: number | null = useUiStore((s: IUiState) => s.savedAt)
+  const editorStats: IEditorStats | null = useUiStore((s: IUiState) => s.editorStats)
+  const storeRetry: (() => Promise<void> | void) | null = useUiStore((s: IUiState) => s.retrySave)
 
   const handleRetry: (() => void) | undefined = onRetry ?? (storeRetry ? (): void | Promise<void> => storeRetry() : undefined)
 
-  const status: SaveStatus = propStatus ?? storeStatus
+  const status: TSaveStatus = propStatus ?? storeStatus
   const savedAt: number | null = propSavedAt ?? storeSavedAt
 
   const savedAtText: string | null = useMemo(() => {

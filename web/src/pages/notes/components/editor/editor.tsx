@@ -10,8 +10,8 @@ import { useIsPhone } from '@src/hooks/use_is_phone'
 import { useAutosave } from '@src/pages/notes/hooks/use_autosave'
 import { useKeyboardInset } from '@src/pages/notes/hooks/use_visual_viewport'
 import { useUiStore } from '@src/stores/ui_store'
-import type { EditorStats, UiState } from '@src/stores/ui_store'
-import type { Note } from '@src/types/api'
+import type { IEditorStats, IUiState } from '@src/stores/ui_store'
+import type { INote } from '@src/types/api'
 import { sanitizeProseMirrorDoc } from '@src/utils/prosemirror'
 
 import { ConflictSheet } from './conflict_sheet'
@@ -22,10 +22,10 @@ import { TableBar } from './table_bar'
 import { TagStrip } from './tag_strip'
 
 
-export const Editor: React.MemoExoticComponent<({ note }: { note: Note; }) => React.JSX.Element> = memo(function Editor({ note }: { note: Note }) {
+export const Editor: React.MemoExoticComponent<({ note }: { note: INote; }) => React.JSX.Element> = memo(function Editor({ note }: { note: INote }) {
   const isPhone: boolean = useIsPhone()
   const keyboardInset: number = useKeyboardInset()
-  const setEditorStats: (editorStats: EditorStats | null) => void = useUiStore((s: UiState) => s.setEditorStats)
+  const setEditorStats: (editorStats: IEditorStats | null) => void = useUiStore((s: IUiState) => s.setEditorStats)
 
   const sanitizedContent: JSONContent = useMemo(() => {
     return sanitizeProseMirrorDoc(note.body)

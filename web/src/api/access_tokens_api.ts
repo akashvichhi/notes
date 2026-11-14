@@ -1,20 +1,20 @@
-import type { AccessToken, AccessTokenAbility } from '@src/types/api'
+import type { IAccessToken, TAccessTokenAbility } from '@src/types/api'
 
 import { api } from './api_client'
 
 
 
-export async function fetchAccessTokens(): Promise<AccessToken[]> {
-  const { data } = await api.get<{ data: AccessToken[] }>('/me/access-tokens')
+export async function fetchAccessTokens(): Promise<IAccessToken[]> {
+  const { data } = await api.get<{ data: IAccessToken[] }>('/me/access-tokens')
   return data.data
 }
 
 export async function createAccessToken(payload: {
   name:            string
-  abilities:       AccessTokenAbility[]
+  abilities:       TAccessTokenAbility[]
   expires_in_days: number | null
-}): Promise<{ token: string; access_token: AccessToken }> {
-  const { data } = await api.post<{ token: string; access_token: AccessToken }>('/me/access-tokens', payload)
+}): Promise<{ token: string; access_token: IAccessToken }> {
+  const { data } = await api.post<{ token: string; access_token: IAccessToken }>('/me/access-tokens', payload)
   return data
 }
 

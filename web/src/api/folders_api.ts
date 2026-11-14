@@ -1,19 +1,19 @@
-import type { Folder, UUID } from '@src/types/api'
+import type { IFolder, TUuid } from '@src/types/api'
 
 import { api } from './api_client'
 
 
 
-export async function createFolder(payload: { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID }): Promise<Folder> {
-  const { data } = await api.post<{ data: Folder }>('/folders', payload)
+export async function createFolder(payload: { name: string; parent_uuid?: TUuid; color?: string; uuid?: TUuid }): Promise<IFolder> {
+  const { data } = await api.post<{ data: IFolder }>('/folders', payload)
   return data.data
 }
 
-export async function renameFolder(uuid: UUID, name: string): Promise<Folder> {
-  const { data } = await api.patch<{ data: Folder }>(`/folders/${uuid}`, { name })
+export async function renameFolder(uuid: TUuid, name: string): Promise<IFolder> {
+  const { data } = await api.patch<{ data: IFolder }>(`/folders/${uuid}`, { name })
   return data.data
 }
 
-export async function deleteFolder(uuid: UUID): Promise<void> {
+export async function deleteFolder(uuid: TUuid): Promise<void> {
   await api.delete(`/folders/${uuid}`)
 }

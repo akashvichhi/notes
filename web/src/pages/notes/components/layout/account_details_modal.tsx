@@ -3,10 +3,10 @@ import { memo, type SyntheticEvent, useCallback, useEffect, useState } from 'rea
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
 import type { UseMutationResult } from '@tanstack/react-query'
 
-import type { ApiError } from '@src/api/api_client'
+import type { IApiError } from '@src/api/api_client'
 import { MESSAGES } from '@src/constants/messages'
 import { useMe, useUpdateProfile } from '@src/queries/auth_queries'
-import type { User } from '@src/types/api'
+import type { IUser } from '@src/types/api'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
 export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onClose: () => void; }) => React.JSX.Element> = memo(function AccountDetailsModal({
@@ -15,7 +15,7 @@ export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onC
   onClose: () => void
 }) {
   const { data: user } = useMe()
-  const updateProfile: UseMutationResult<User, ApiError, { name?: string; email?: string; }, unknown> = useUpdateProfile()
+  const updateProfile: UseMutationResult<IUser, IApiError, { name?: string; email?: string; }, unknown> = useUpdateProfile()
 
   const [name, setName] = useState(user?.name ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
@@ -45,7 +45,7 @@ export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onC
             showSuccessToast(MESSAGES.ACCOUNT_UPDATED)
             onClose()
           },
-          onError: (err: ApiError) => showErrorToast(err.message || MESSAGES.ACCOUNT_UPDATE_FAILED),
+          onError: (err: IApiError) => showErrorToast(err.message || MESSAGES.ACCOUNT_UPDATE_FAILED),
         },
       )
     },

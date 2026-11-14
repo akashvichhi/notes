@@ -12,19 +12,19 @@ import { ALIGNMENTS, IMAGE_SCHEMES, INLINE_NODES, LINK_REL, LINK_TARGET, LISTS, 
  * rather than rejected, because a paste must never fail.
  */
 
-type Node = JSONContent
-type Mark = NonNullable<JSONContent['marks']>[number]
+type TNode = JSONContent
+type TMark = NonNullable<JSONContent['marks']>[number]
 
-const isNode: (n: unknown) => n is Node = (n: unknown): n is Node => typeof n === 'object' && n !== null && typeof (n as Node).type === 'string'
+const isNode: (n: unknown) => n is TNode = (n: unknown): n is TNode => typeof n === 'object' && n !== null && typeof (n as TNode).type === 'string'
 
-export function normalizeDoc(doc: Node): Node {
+export function normalizeDoc(doc: TNode): TNode {
   return { type: 'doc', content: blocks(doc.content ?? []) }
 }
 
 /** Any mix of nodes → a list of valid block nodes. */
-function blocks(children: unknown[]): Node[] {
-  const out: Node[] = []
-  let inlineRun: Node[] = []
+function blocks(children: unknown[]): TNode[] {
+  const out: TNode[] = []
+  let inlineRun: TNode[] = []
 
   const flush: () => void = (): void => {
     if (inlineRun.length > 0) {
@@ -51,7 +51,7 @@ function blocks(children: unknown[]): Node[] {
 }
 
 /** Zero or more block nodes. */
-function block(node: Node): Node[] {
+function block(node: TNode): TNode[] {
   switch (node.type) {
     case 'paragraph':
     case 'heading':
@@ -82,7 +82,7 @@ function block(node: Node): Node[] {
   }
 }
 
-function blocksOrEmpty(children: unknown[]): Node[] {
+function blocksOrEmpty(children: unknown[]): TNode[] {
   const out: JSONContent[] = blocks(children)
   return out.length > 0 ? out : [{ type: 'paragraph' }]
 }
@@ -91,7 +91,7 @@ function blocksOrEmpty(children: unknown[]): Node[] {
  * A paragraph or heading. Block nodes found inside (usually an image, since
  * markdown puts `![](…)` in a paragraph) split it, so this may return several.
  */
-function paragraphs(node: Node): Node[] {
+function paragraphs(node: TNode): TNode[] {
   const attrs: Record<string, unknown> = {}
   if (node.type === 'heading') {
     const level: number = Number.parseInt(String(node.attrs?.level ?? 1), 10)
@@ -102,16 +102,16 @@ function paragraphs(node: Node): Node[] {
     attrs.textAlign = align
   }
 
-  const make: (run: Node[]) => Node = (run: Node[]): Node => {
-    const p: Node = { type: node.type }
+  const make: (run: TNode[]) => TNode = (run: TNode[]): TNode => {
+    const p: TNode = { type: node.type }
     if (Object.keys(attrs).length > 0) p.attrs = { ...attrs }
     const content: JSONContent[] = inline(run)
     if (content.length > 0) p.content = content
     return p
   }
 
-  const out: Node[] = []
-  let run: Node[] = []
+  const out: TNode[] = []
+  let run: TNode[] = []
   let split: boolean = false
 
   for (const child of node.content ?? []) {
@@ -134,8 +134,8 @@ function paragraphs(node: Node): Node[] {
 }
 
 /** Text and hard breaks with clean marks; adjacent text with equal marks merged. */
-function inline(nodes: Node[], allowBreaks: boolean = true): Node[] {
-  const out: Node[] = []
+function inline(nodes: TNode[], allowBreaks: boolean = true): TNode[] {
+  const out: TNode[] = []
 
   for (const node of nodes) {
     if (node.type === 'hardBreak') {
@@ -146,8 +146,8 @@ function inline(nodes: Node[], allowBreaks: boolean = true): Node[] {
     if (node.type !== 'text' || typeof node.text !== 'string' || node.text === '') continue
 
     // A soft line break in markdown is a space in the editor (commonmark renders it so).
-    const text: Node = { type: 'text', text: node.text.replace(/\r?\n/g, ' ') }
-    const marks: Mark[] = cleanMarks(node.marks ?? [])
+    const text: TNode = { type: 'text', text: node.text.replace(/\r?\n/g, ' ') }
+    const marks: TMark[] = cleanMarks(node.marks ?? [])
     if (marks.length > 0) text.marks = marks
 
     const last: JSONContent | undefined = out[out.length - 1]
@@ -161,8 +161,8 @@ function inline(nodes: Node[], allowBreaks: boolean = true): Node[] {
   return out
 }
 
-function cleanMarks(marks: Mark[]): Mark[] {
-  const byType: Map<string, Mark> = new Map<string, Mark>()
+function cleanMarks(marks: TMark[]): TMark[] {
+  const byType: Map<string, TMark> = new Map<string, TMark>()
 
   for (const mark of marks) {
     const type: string = mark?.type
@@ -197,10 +197,10 @@ function cleanMarks(marks: Mark[]): Mark[] {
   return MARKS.filter((t: 'code' | 'link' | 'bold' | 'strike' | 'italic' | 'underline' | 'textStyle' | 'highlight' | 'subscript' | 'superscript') => byType.has(t)).map((t: 'code' | 'link' | 'bold' | 'strike' | 'italic' | 'underline' | 'textStyle' | 'highlight' | 'subscript' | 'superscript') => byType.get(t)!)
 }
 
-function list(node: Node): Node[] {
+function list(node: TNode): TNode[] {
   const type: string = node.type!
   const itemType: 'listItem' | 'taskItem' = LISTS[type] ?? 'listItem'
-  const items: Node[] = []
+  const items: TNode[] = []
 
   for (const child of node.content ?? []) {
     if (!isNode(child)) continue
@@ -217,7 +217,7 @@ function list(node: Node): Node[] {
 
   if (items.length === 0) return []
 
-  const out: Node = { type, content: items }
+  const out: TNode = { type, content: items }
 
   if (type === 'orderedList') {
     const start: number = Number.parseInt(String(node.attrs?.start ?? 1), 10)
@@ -227,13 +227,13 @@ function list(node: Node): Node[] {
   return [out]
 }
 
-function listItem(itemType: string, node: Node): Node {
+function listItem(itemType: string, node: TNode): TNode {
   const content: JSONContent[] = blocks(node.content ?? [])
 
   // listItem and taskItem are "paragraph block*".
   if (content[0]?.type !== 'paragraph') content.unshift({ type: 'paragraph' })
 
-  const item: Node = { type: itemType }
+  const item: TNode = { type: itemType }
   if (itemType === 'taskItem') {
     const checked: unknown = node.attrs?.checked
     item.attrs = { checked: checked === true || checked === 'true' || checked === 'checked' || checked === 1 }
@@ -243,12 +243,12 @@ function listItem(itemType: string, node: Node): Node {
   return item
 }
 
-function codeBlock(node: Node): Node {
+function codeBlock(node: TNode): TNode {
   let text: string = textOf(node)
   if (text.endsWith('\n')) text = text.slice(0, -1)
 
   const language: unknown = node.attrs?.language
-  const out: Node = {
+  const out: TNode = {
     type:  'codeBlock',
     attrs: { language: typeof language === 'string' && language !== '' ? language : null },
   }
@@ -258,14 +258,14 @@ function codeBlock(node: Node): Node {
   return out
 }
 
-function textOf(node: Node): string {
+function textOf(node: TNode): string {
   if (node.type === 'text') return String(node.text ?? '')
   if (node.type === 'hardBreak') return '\n'
 
   return (node.content ?? []).map((c: JSONContent) => (isNode(c) ? textOf(c) : '')).join('')
 }
 
-function image(node: Node): Node | null {
+function image(node: TNode): TNode | null {
   const attrs: Record<string, unknown> = (node.attrs ?? {}) as Record<string, unknown>
   const src: string = String(attrs.src ?? '').trim()
 
@@ -289,13 +289,13 @@ function image(node: Node): Node | null {
   }
 }
 
-function table(node: Node): Node[] {
-  const rows: Node[][] = []
+function table(node: TNode): TNode[] {
+  const rows: TNode[][] = []
 
   for (const row of node.content ?? []) {
     if (!isNode(row)) continue
 
-    const cells: Node[] = []
+    const cells: TNode[] = []
     for (const c of row.type === 'tableRow' ? (row.content ?? []) : [row]) {
       if (!isNode(c)) continue
       cells.push(cell(c.type === 'tableCell' || c.type === 'tableHeader' ? c : { type: 'tableCell', content: [c] }))
@@ -307,7 +307,7 @@ function table(node: Node): Node[] {
   if (rows.length === 0) return []
 
   // ProseMirror tables must be rectangular.
-  const span: (cells: Node[]) => number = (cells: Node[]): number => cells.reduce((sum: number, c: JSONContent) => sum + (c.attrs!.colspan as number), 0)
+  const span: (cells: TNode[]) => number = (cells: TNode[]): number => cells.reduce((sum: number, c: JSONContent) => sum + (c.attrs!.colspan as number), 0)
   const width: number = Math.max(...rows.map(span))
 
   const content: { type: string; content: JSONContent[]; }[] = rows.map((cells: JSONContent[]) => {
@@ -321,7 +321,7 @@ function table(node: Node): Node[] {
   return [{ type: 'table', content }]
 }
 
-function cell(node: Node): Node {
+function cell(node: TNode): TNode {
   const attrs: Record<string, unknown> = (node.attrs ?? {}) as Record<string, unknown>
   const int: (v: unknown) => number = (v: unknown): number => {
     const n: number = Number.parseInt(String(v ?? 1), 10)
@@ -340,8 +340,8 @@ function cell(node: Node): Node {
   }
 }
 
-function details(node: Node): Node {
-  let summary: Node[] = []
+function details(node: TNode): TNode {
+  let summary: TNode[] = []
   let haveSummary: boolean = false
   const body: unknown[] = []
 
@@ -357,7 +357,7 @@ function details(node: Node): Node {
     }
   }
 
-  const summaryNode: Node = { type: 'detailsSummary' }
+  const summaryNode: TNode = { type: 'detailsSummary' }
   if (summary.length > 0) summaryNode.content = summary
 
   return {

@@ -1,96 +1,96 @@
 import type { JSONContent } from '@tiptap/core'
 
-export type UUID = string
-export type ISODate = string
+export type TUuid = string
+export type TIsoDate = string
 
-export interface User {
-  uuid:        UUID
+export interface IUser {
+  uuid:        TUuid
   name:        string
   email:       string
-  preferences: Preferences
+  preferences: IPreferences
 }
 
-export interface Preferences {
+export interface IPreferences {
   theme?:         'light' | 'dark' | 'system'
   sort?:          'updated' | 'created' | 'title'
   group_by_date?: boolean
   show_snippets?: boolean
 }
 
-export interface Folder {
-  uuid:        UUID
+export interface IFolder {
+  uuid:        TUuid
   name:        string
-  parent_uuid: UUID | null
+  parent_uuid: TUuid | null
   color:       string | null
   position:    number
 }
 
-export interface Tag {
-  uuid: UUID
+export interface ITag {
+  uuid: TUuid
   name: string
   slug: string
 }
 
-export interface NoteListItem {
-  uuid:       UUID
+export interface INoteListItem {
+  uuid:       TUuid
   title:      string
   excerpt:    string
   is_starred: boolean
-  folder:     { uuid: UUID; name: string } | null
+  folder:     { uuid: TUuid; name: string } | null
   tags:       string[]
-  updated_at: ISODate
-  deleted_at: ISODate | null
+  updated_at: TIsoDate
+  deleted_at: TIsoDate | null
 }
 
 /** A ProseMirror document. Opaque to everything outside the editor. */
-export type ProseMirrorDoc = JSONContent
+export type TProseMirrorDoc = JSONContent
 
-export interface Note extends NoteListItem {
-  body:         ProseMirrorDoc | null
+export interface INote extends INoteListItem {
+  body:         TProseMirrorDoc | null
   version:      number
   word_count:   number
   title_locked: boolean
   plain_text?:  string
 }
 
-export interface Counts {
+export interface INoteCounts {
   all:     number
   starred: number
   trashed: number
-  folders: Record<UUID, number>
+  folders: Record<TUuid, number>
   tags:    Record<string, number>
 }
 
-export interface Bootstrap {
-  user:    User | { data: User }
-  folders: Folder[] | { data: Folder[] }
-  tags:    Tag[] | { data: Tag[] }
-  counts:  Counts
-  notes:   NoteListItem[] | { data: NoteListItem[] }
+export interface IBootstrap {
+  user:    IUser | { data: IUser }
+  folders: IFolder[] | { data: IFolder[] }
+  tags:    ITag[] | { data: ITag[] }
+  counts:  INoteCounts
+  notes:   INoteListItem[] | { data: INoteListItem[] }
 }
 
-export interface SearchHit {
-  uuid:    UUID
+export interface ISearchHit {
+  uuid:    TUuid
   title:   string
   /** Plain text. The server never sends HTML; the client highlights `terms`. */
   snippet: string
   terms:   string[]
 }
 
-export interface SearchResults {
-  notes:   SearchHit[]
-  folders: { uuid: UUID; name: string }[]
-  tags:    Tag[]
+export interface ISearchResults {
+  notes:   ISearchHit[]
+  folders: { uuid: TUuid; name: string }[]
+  tags:    ITag[]
 }
 
-export type AccessTokenAbility = 'notes:read' | 'notes:write'
+export type TAccessTokenAbility = 'notes:read' | 'notes:write'
 
 /** A personal access token, for Claude and other MCP clients. The token itself is never listed. */
-export interface AccessToken {
+export interface IAccessToken {
   id:           number
   name:         string
-  abilities:    AccessTokenAbility[]
-  created_at:   ISODate
-  last_used_at: ISODate | null
-  expires_at:   ISODate | null
+  abilities:    TAccessTokenAbility[]
+  created_at:   TIsoDate
+  last_used_at: TIsoDate | null
+  expires_at:   TIsoDate | null
 }

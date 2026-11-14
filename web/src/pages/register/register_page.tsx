@@ -7,10 +7,10 @@ import { useForm } from '@mantine/form'
 import type { UseFormReturnType } from '@mantine/form'
 import type { UseMutationResult } from '@tanstack/react-query'
 
-import type { ApiError } from '@src/api/api_client'
+import type { IApiError } from '@src/api/api_client'
 import { useRegister } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
-import type { User } from '@src/types/api'
+import type { IUser } from '@src/types/api'
 import type { IRegisterCredentials } from '@src/types/auth'
 import {
   validateEmail,
@@ -21,7 +21,7 @@ import {
 
 export const RegisterPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function RegisterPage() {
   const navigate: NavigateFunction = useNavigate()
-  const register: UseMutationResult<User, ApiError, IRegisterCredentials> = useRegister()
+  const register: UseMutationResult<IUser, IApiError, IRegisterCredentials> = useRegister()
 
   const form: UseFormReturnType<IRegisterCredentials> = useForm<IRegisterCredentials>({
     initialValues: { name: '', email: '', password: '', password_confirmation: '' },
@@ -33,7 +33,7 @@ export const RegisterPage: React.MemoExoticComponent<() => React.JSX.Element> = 
     },
   })
 
-  const error: ApiError | null = register.error
+  const error: IApiError | null = register.error
 
   const handleSubmit: (values: IRegisterCredentials) => void = useCallback(
     (values: IRegisterCredentials): void => {

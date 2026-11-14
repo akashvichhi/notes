@@ -2,10 +2,10 @@ import { memo } from 'react'
 
 import { Button, Group, Modal, Stack, Text } from '@mantine/core'
 
-import type { Note } from '@src/types/api'
+import type { INote } from '@src/types/api'
 
 export interface IConflictSheetProps {
-  serverCopy:    Note
+  serverCopy:    INote
   onKeepMine:    () => void
   onKeepTheirs:  () => void
   onSaveCopy:    () => void

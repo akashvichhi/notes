@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import { MESSAGES } from '@src/constants/messages'
 
-import { api, type ApiError, normalizeError } from './api_client'
+import { api, type IApiError, normalizeError } from './api_client'
 
 function failingAdapter(status: number, data: object): (config: InternalAxiosRequestConfig) => Promise<never> {
   return async (config: InternalAxiosRequestConfig): Promise<never> => {
@@ -42,7 +42,7 @@ describe('normalizeError', () => {
   })
 
   it('returns an error that is already normalised unchanged', () => {
-    const error: ApiError = { status: HttpStatusCode.Conflict, message: 'Changed', serverCopy: undefined }
+    const error: IApiError = { status: HttpStatusCode.Conflict, message: 'Changed', serverCopy: undefined }
 
     expect(normalizeError(error)).toEqual(error)
   })

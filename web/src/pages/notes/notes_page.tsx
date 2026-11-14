@@ -25,7 +25,7 @@ import type { TCreateNoteMutation } from '@src/queries/notes_queries'
 import { notePath, ROUTE_PATHS } from '@src/routes/route_paths'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
-import type { Note } from '@src/types/api'
+import type { INote } from '@src/types/api'
 import { EditorSkeleton } from '@src/ui/skeletons/skeletons'
 
 
@@ -85,7 +85,7 @@ export const AppPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(
     createNote.mutate(
       {},
       {
-        onSuccess: (newNote: Note) => {
+        onSuccess: (newNote: INote) => {
           openTab(newNote.uuid, newNote.title || DEFAULT_NOTE_TITLE)
           if (isPhone) {
             setView('editor')

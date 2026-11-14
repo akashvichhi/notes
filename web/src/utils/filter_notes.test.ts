@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import type { NoteListItem } from '@src/types/api'
+import type { INoteListItem } from '@src/types/api'
 
 import { filterNotes } from './filter_notes'
 
-const note: (overrides: Partial<NoteListItem>) => NoteListItem = (overrides: Partial<NoteListItem>): NoteListItem => ({
+const note: (overrides: Partial<INoteListItem>) => INoteListItem = (overrides: Partial<INoteListItem>): INoteListItem => ({
   uuid:       '00000000-0000-7000-8000-000000000001',
   title:      'Untitled',
   excerpt:    '',
@@ -17,8 +17,8 @@ const note: (overrides: Partial<NoteListItem>) => NoteListItem = (overrides: Par
 })
 
 describe('filterNotes', (): void => {
-  const groceries: NoteListItem = note({ uuid: '00000000-0000-7000-8000-000000000002', title: 'Groceries', excerpt: 'Milk and eggs' })
-  const trip: NoteListItem = note({ uuid: '00000000-0000-7000-8000-000000000003', title: 'Trip plan', excerpt: 'Book the train' })
+  const groceries: INoteListItem = note({ uuid: '00000000-0000-7000-8000-000000000002', title: 'Groceries', excerpt: 'Milk and eggs' })
+  const trip: INoteListItem = note({ uuid: '00000000-0000-7000-8000-000000000003', title: 'Trip plan', excerpt: 'Book the train' })
 
   it('returns every note for a blank query', (): void => {
     expect(filterNotes([groceries, trip], '   ')).toEqual([groceries, trip])

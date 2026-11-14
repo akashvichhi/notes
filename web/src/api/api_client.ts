@@ -2,13 +2,13 @@ import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosReques
 
 import { API_URL, IS_DEV } from '@src/config/env'
 import { MESSAGES } from '@src/constants/messages'
-import type { Note } from '@src/types/api'
+import type { INote } from '@src/types/api'
 
-export interface ApiError {
+export interface IApiError {
   status:      number
   message:     string
   errors?:     Record<string, string[]>
-  serverCopy?: Note
+  serverCopy?: INote
 }
 
 const getBaseUrl: () => string = (): string => {
@@ -42,16 +42,16 @@ interface IErrorWithResponse {
   response?: { status: number; data?: Record<string, unknown> }
 }
 
-function isApiError(e: unknown): e is ApiError {
+function isApiError(e: unknown): e is IApiError {
   return typeof e === 'object' && e !== null && !('response' in e) && !('isAxiosError' in e)
-    && typeof (e as ApiError).status === 'number' && typeof (e as ApiError).message === 'string'
+    && typeof (e as IApiError).status === 'number' && typeof (e as IApiError).message === 'string'
 }
 
 /**
  * Turns any failure into an ApiError. The client already rejects with one, so
  * this is a no-op for API calls; it covers errors thrown by other code.
  */
-export function normalizeError(e: unknown): ApiError {
+export function normalizeError(e: unknown): IApiError {
   if (isApiError(e)) return e
 
   const err: IErrorWithResponse = e as IErrorWithResponse
@@ -64,7 +64,7 @@ export function normalizeError(e: unknown): ApiError {
 
   const data: Record<string, unknown> = err.response.data ?? {}
   // The API sends the conflicting note unwrapped: `{ message, server_copy: {...note} }`.
-  const serverCopy: Note | undefined = data.server_copy as Note | undefined
+  const serverCopy: INote | undefined = data.server_copy as INote | undefined
 
   return {
     status:  err.response.status,

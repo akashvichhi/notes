@@ -2,11 +2,11 @@ import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 
 import { Button, Checkbox, Group, Select, Stack, Text, TextInput } from '@mantine/core'
 
-import type { ApiError } from '@src/api/api_client'
+import type { IApiError } from '@src/api/api_client'
 import { MESSAGES } from '@src/constants/messages'
 import { useCreateAccessToken } from '@src/queries/access_tokens_queries'
 import type { TCreateAccessTokenMutation } from '@src/queries/access_tokens_queries'
-import type { AccessToken, AccessTokenAbility } from '@src/types/api'
+import type { IAccessToken, TAccessTokenAbility } from '@src/types/api'
 import { showErrorToast } from '@src/utils/notifications'
 
 const MAX_NAME_LENGTH: number = 60
@@ -54,7 +54,7 @@ export const CreateTokenForm: React.MemoExoticComponent<({ onCancel, onCreated, 
   const handleSubmit: (e: SyntheticEvent<HTMLFormElement>) => void = useCallback(
     (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault()
-      const abilities: AccessTokenAbility[] = []
+      const abilities: TAccessTokenAbility[] = []
       if (canRead || canWrite) abilities.push('notes:read')
       if (canWrite) abilities.push('notes:write')
 
@@ -70,8 +70,8 @@ export const CreateTokenForm: React.MemoExoticComponent<({ onCancel, onCreated, 
           expires_in_days: expiry === 'never' ? null : Number(expiry),
         },
         {
-          onSuccess: ({ token, access_token }: { token: string; access_token: AccessToken; }) => onCreated(token, access_token.name),
-          onError:   (err: ApiError) => showErrorToast(err.message || MESSAGES.TOKEN_CREATE_FAILED),
+          onSuccess: ({ token, access_token }: { token: string; access_token: IAccessToken; }) => onCreated(token, access_token.name),
+          onError:   (err: IApiError) => showErrorToast(err.message || MESSAGES.TOKEN_CREATE_FAILED),
         },
       )
     },

@@ -7,17 +7,17 @@ import { useForm } from '@mantine/form'
 import type { UseFormReturnType } from '@mantine/form'
 import type { UseMutationResult } from '@tanstack/react-query'
 
-import type { ApiError } from '@src/api/api_client'
+import type { IApiError } from '@src/api/api_client'
 import { useLogin } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
-import type { User } from '@src/types/api'
+import type { IUser } from '@src/types/api'
 import type { ILoginCredentials } from '@src/types/auth'
 import { validateEmail } from '@src/validations/auth_validations'
 
 
 export const LoginPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function LoginPage() {
   const navigate: NavigateFunction = useNavigate()
-  const login: UseMutationResult<User, ApiError, ILoginCredentials> = useLogin()
+  const login: UseMutationResult<IUser, IApiError, ILoginCredentials> = useLogin()
 
   const form: UseFormReturnType<ILoginCredentials> = useForm<ILoginCredentials>({
     initialValues: { email: '', password: '' },
@@ -27,7 +27,7 @@ export const LoginPage: React.MemoExoticComponent<() => React.JSX.Element> = mem
     },
   })
 
-  const error: ApiError | null = login.error
+  const error: IApiError | null = login.error
 
   const handleSubmit: (values: ILoginCredentials) => void = useCallback(
     (values: ILoginCredentials): void => {

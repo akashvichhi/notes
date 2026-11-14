@@ -6,20 +6,20 @@ import type { UseMutationResult } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-import type { ApiError } from '@src/api/api_client'
+import type { IApiError } from '@src/api/api_client'
 import { MESSAGES } from '@src/constants/messages'
 import { useAccessTokens, useRevokeAccessToken } from '@src/queries/access_tokens_queries'
-import type { AccessToken } from '@src/types/api'
+import type { IAccessToken } from '@src/types/api'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
 dayjs.extend(relativeTime)
 
 const formatDate: (iso: string | null, fallback: string) => string = (iso: string | null, fallback: string): string => (iso ? dayjs(iso).format('D MMM YYYY') : fallback)
 
-const isExpired: (token: AccessToken) => boolean = (token: AccessToken): boolean => token.expires_at !== null && dayjs(token.expires_at).isBefore(dayjs())
+const isExpired: (token: IAccessToken) => boolean = (token: IAccessToken): boolean => token.expires_at !== null && dayjs(token.expires_at).isBefore(dayjs())
 
-const TokenRow: React.MemoExoticComponent<({ token }: { token: AccessToken; }) => React.JSX.Element> = memo(function TokenRow({ token }: { token: AccessToken }) {
-  const revoke: UseMutationResult<void, ApiError, number, unknown> = useRevokeAccessToken()
+const TokenRow: React.MemoExoticComponent<({ token }: { token: IAccessToken; }) => React.JSX.Element> = memo(function TokenRow({ token }: { token: IAccessToken }) {
+  const revoke: UseMutationResult<void, IApiError, number, unknown> = useRevokeAccessToken()
   const expired: boolean = isExpired(token)
 
   const handleRevoke: () => void = useCallback(() => {
@@ -31,7 +31,7 @@ const TokenRow: React.MemoExoticComponent<({ token }: { token: AccessToken; }) =
       onConfirm:    () => {
         revoke.mutate(token.id, {
           onSuccess: () => showSuccessToast(`Revoked “${token.name}”`),
-          onError:   (err: ApiError) => showErrorToast(err.message || MESSAGES.TOKEN_REVOKE_FAILED),
+          onError:   (err: IApiError) => showErrorToast(err.message || MESSAGES.TOKEN_REVOKE_FAILED),
         })
       },
     })
@@ -125,7 +125,7 @@ export const TokenList: React.MemoExoticComponent<() => React.JSX.Element> = mem
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {tokens.map((token: AccessToken) => (
+          {tokens.map((token: IAccessToken) => (
             <TokenRow key={token.id} token={token} />
           ))}
         </Table.Tbody>

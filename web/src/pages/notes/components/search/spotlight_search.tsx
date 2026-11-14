@@ -12,10 +12,10 @@ import { useCreateNote } from '@src/queries/notes_queries'
 import type { TCreateNoteMutation } from '@src/queries/notes_queries'
 import { MIN_QUERY, useSearch } from '@src/queries/search_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
-import type { TabsState } from '@src/stores/tabs_store'
+import type { ITabsState } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
-import type { Scope, UiState } from '@src/stores/ui_store'
-import type { SearchHit, UUID } from '@src/types/api'
+import type { TScope, IUiState } from '@src/stores/ui_store'
+import type { ISearchHit, TUuid } from '@src/types/api'
 
 import { HighlightTerms } from './highlight'
 
@@ -25,8 +25,8 @@ export const SpotlightSearch: React.MemoExoticComponent<() => React.JSX.Element>
   const [query, setQuery] = useState('')
   const { data, isFetching } = useSearch(query)
   const showBar: boolean = useDelayedLoading(isFetching)
-  const openTab: (uuid: UUID, title: string) => void = useTabsStore((s: TabsState) => s.open)
-  const setScope: (s: Scope) => void = useUiStore((s: UiState) => s.setScope)
+  const openTab: (uuid: TUuid, title: string) => void = useTabsStore((s: ITabsState) => s.open)
+  const setScope: (s: TScope) => void = useUiStore((s: IUiState) => s.setScope)
   const createNote: TCreateNoteMutation = useCreateNote()
 
   const trimmedQuery: string = useMemo(() => query.trim(), [query])
@@ -57,7 +57,7 @@ export const SpotlightSearch: React.MemoExoticComponent<() => React.JSX.Element>
           <Text c="dimmed" p="md" size="sm" ta="center">Type at least {MIN_QUERY} characters</Text>
         )}
 
-        {data?.notes.map((hit: SearchHit) => (
+        {data?.notes.map((hit: ISearchHit) => (
           <Spotlight.Action key={hit.uuid} leftSection={<IconNote size={18} />}
             onClick={() => {
               openTab(hit.uuid, hit.title)
@@ -70,7 +70,7 @@ export const SpotlightSearch: React.MemoExoticComponent<() => React.JSX.Element>
           </Spotlight.Action>
         ))}
 
-        {data?.folders.map((f: { uuid: UUID; name: string; }) => (
+        {data?.folders.map((f: { uuid: TUuid; name: string; }) => (
           <Spotlight.Action key={f.uuid} leftSection={<IconFolder size={18} />}
             onClick={() => setScope({ kind: 'folder', uuid: f.uuid, label: f.name })}>
             {f.name}

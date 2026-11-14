@@ -1,7 +1,7 @@
 import type { QueryKey } from '@tanstack/react-query'
 
-import type { Scope } from '@src/stores/ui_store'
-import type { Bootstrap, Note } from '@src/types/api'
+import type { TScope } from '@src/stores/ui_store'
+import type { IBootstrap, INote } from '@src/types/api'
 
 /** What optimistic updates save so they can roll back: every cached list they touched. */
 export type TQuerySnapshot = [QueryKey, unknown][]
@@ -9,14 +9,14 @@ export type TQuerySnapshot = [QueryKey, unknown][]
 /** Trash, restore and permanent delete: the note leaves one list for another. */
 export interface INoteListContext {
   prevNotes:     TQuerySnapshot
-  prevBootstrap: Bootstrap | undefined
+  prevBootstrap: IBootstrap | undefined
 }
 
 /** Rename: the note's title changes in lists and its open copy. */
 export interface IRenameNoteContext {
   prevNotes:      TQuerySnapshot
-  prevSingleNote: Note | undefined
-  prevBootstrap:  Bootstrap | undefined
+  prevSingleNote: INote | undefined
+  prevBootstrap:  IBootstrap | undefined
 }
 
 /** Star and move: also changes sidebar counts. */
@@ -24,7 +24,7 @@ export type INoteEditContext = IRenameNoteContext
 
 export interface ICreateNoteContext {
   prevNotes:     TQuerySnapshot
-  prevBootstrap: Bootstrap | undefined
+  prevBootstrap: IBootstrap | undefined
   uuid:          string
 }
 
@@ -33,19 +33,19 @@ export interface IDuplicateNoteContext extends INoteListContext {
 }
 
 export interface INoteTagsContext {
-  prevNote:      Note | undefined
-  prevBootstrap: Bootstrap | undefined
+  prevNote:      INote | undefined
+  prevBootstrap: IBootstrap | undefined
 }
 
 /** Creating a folder or tag shows it at once under a temporary uuid. */
 export interface ICreateSidebarItemContext {
-  previous: Bootstrap | undefined
+  previous: IBootstrap | undefined
   tempUuid: string
 }
 
 /** Renaming or deleting a folder or tag; the open scope may point at it. */
 export interface ISidebarItemContext {
-  prevBootstrap: Bootstrap | undefined
+  prevBootstrap: IBootstrap | undefined
   prevNotes:     TQuerySnapshot
-  prevScope:     Scope | null
+  prevScope:     TScope | null
 }

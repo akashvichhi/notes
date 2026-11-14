@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useState } from 'react'
 
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
 
-interface RenameItemModalProps {
+interface IRenameItemModalProps {
   opened:       boolean
   title:        string
   label:        string
@@ -13,7 +13,7 @@ interface RenameItemModalProps {
   onConfirm:    (newName: string) => void
 }
 
-export const RenameItemModal: React.MemoExoticComponent<({ opened, title, label, placeholder, initialValue, maxLength, onClose, onConfirm, }: RenameItemModalProps) => React.JSX.Element> = memo(function RenameItemModal({
+export const RenameItemModal: React.MemoExoticComponent<({ opened, title, label, placeholder, initialValue, maxLength, onClose, onConfirm, }: IRenameItemModalProps) => React.JSX.Element> = memo(function RenameItemModal({
   opened,
   title,
   label,
@@ -22,7 +22,7 @@ export const RenameItemModal: React.MemoExoticComponent<({ opened, title, label,
   maxLength,
   onClose,
   onConfirm,
-}: RenameItemModalProps) {
+}: IRenameItemModalProps) {
   const [value, setValue] = useState(initialValue)
 
   useEffect(() => {

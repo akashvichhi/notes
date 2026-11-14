@@ -16,8 +16,8 @@ import {
 import { IconFolder, IconPlus } from '@tabler/icons-react'
 import type { UseMutationResult } from '@tanstack/react-query'
 
-import type { ApiError } from '@src/api/api_client'
-import type { NotesPage } from '@src/api/notes_api'
+import type { IApiError } from '@src/api/api_client'
+import type { INotesPage } from '@src/api/notes_api'
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { MAX_NOTE_TITLE_LENGTH } from '@src/constants/limits'
 import { useIsPhone } from '@src/hooks/use_is_phone'
@@ -35,9 +35,9 @@ import {
 } from '@src/queries/notes_queries'
 import type { TCreateNoteMutation, TDuplicateNoteMutation, TMoveNoteMutation, TRenameNoteMutation, TStarNoteMutation } from '@src/queries/notes_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
-import type { TabsState } from '@src/stores/tabs_store'
+import type { ITabsState } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
-import type { Bootstrap, Folder, Note, NoteListItem, UUID } from '@src/types/api'
+import type { IBootstrap, IFolder, INote, INoteListItem, TUuid } from '@src/types/api'
 import { ListSkeleton } from '@src/ui/skeletons/skeletons'
 import { filterNotes } from '@src/utils/filter_notes'
 
@@ -57,30 +57,30 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
 }: INoteListProps): React.JSX.Element {
   const { scope, filter, setView } = useUiStore()
   const isPhone: boolean = useIsPhone()
-  const closeTab: (uuid: UUID) => void = useTabsStore((s: TabsState) => s.close)
+  const closeTab: (uuid: TUuid) => void = useTabsStore((s: ITabsState) => s.close)
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotes(scope)
   const { folders } = useBootstrap()
 
   const starNote: TStarNoteMutation = useStarNote(scope)
-  const trashNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; }> = useTrashNote()
+  const trashNote: UseMutationResult<void, IApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: IBootstrap | undefined; }> = useTrashNote()
   const duplicateNote: TDuplicateNoteMutation = useDuplicateNote()
   const createNote: TCreateNoteMutation = useCreateNote()
-  const restoreNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; }> = useRestoreNote()
-  const forceDeleteNote: UseMutationResult<void, ApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: Bootstrap | undefined; }> = useForceDeleteNote()
+  const restoreNote: UseMutationResult<void, IApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: IBootstrap | undefined; }> = useRestoreNote()
+  const forceDeleteNote: UseMutationResult<void, IApiError, string, { prevNotes: [readonly unknown[], unknown][]; prevBootstrap: IBootstrap | undefined; }> = useForceDeleteNote()
   const renameNote: TRenameNoteMutation = useRenameNote()
   const moveNoteFolder: TMoveNoteMutation = useMoveNoteFolder()
 
-  const [restoreModalNote, setRestoreModalNote] = useState<NoteListItem | null>(null)
-  const [moveModalNote, setMoveModalNote] = useState<NoteListItem | null>(null)
-  const [renameModalNote, setRenameModalNote] = useState<NoteListItem | null>(null)
+  const [restoreModalNote, setRestoreModalNote] = useState<INoteListItem | null>(null)
+  const [moveModalNote, setMoveModalNote] = useState<INoteListItem | null>(null)
+  const [renameModalNote, setRenameModalNote] = useState<INoteListItem | null>(null)
   const [renameTitle, setRenameTitle] = useState('')
 
-  const allNotes: NoteListItem[] = useMemo(() => {
-    return data?.pages.flatMap((page: NotesPage) => page.data) ?? []
+  const allNotes: INoteListItem[] = useMemo(() => {
+    return data?.pages.flatMap((page: INotesPage) => page.data) ?? []
   }, [data])
 
-  const filtered: NoteListItem[] = useMemo(() => {
+  const filtered: INoteListItem[] = useMemo(() => {
     return filterNotes(allNotes, filter)
   }, [allNotes, filter])
 
@@ -92,8 +92,8 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
     [onSelectNote, isPhone, setView],
   )
 
-  const handleRestoreToFolder: (folderId: UUID | null) => Promise<void> = useCallback(
-    async (folderId: UUID | null) => {
+  const handleRestoreToFolder: (folderId: TUuid | null) => Promise<void> = useCallback(
+    async (folderId: TUuid | null) => {
       if (!restoreModalNote) return
       const uuid: string = restoreModalNote.uuid
       setRestoreModalNote(null)
@@ -105,8 +105,8 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
     [restoreModalNote, restoreNote, moveNoteFolder],
   )
 
-  const handleMoveToFolder: (folderId: UUID | null) => void = useCallback(
-    (folderId: UUID | null) => {
+  const handleMoveToFolder: (folderId: TUuid | null) => void = useCallback(
+    (folderId: TUuid | null) => {
       if (!moveModalNote) return
       const uuid: string = moveModalNote.uuid
       setMoveModalNote(null)
@@ -120,7 +120,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
     createNote.mutate(
       { ...(scope.kind === 'folder' ? { folder_id: scope.uuid } : {}), uuid },
       {
-        onSuccess: (newNote: Note) => {
+        onSuccess: (newNote: INote) => {
           onSelectNote(newNote.uuid, newNote.title || DEFAULT_NOTE_TITLE)
           if (isPhone) {
             setView('editor')
@@ -138,7 +138,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
     setRestoreModalNote(null)
   }, [])
 
-  const handleOpenRename: (note: NoteListItem) => void = useCallback((note: NoteListItem) => {
+  const handleOpenRename: (note: INoteListItem) => void = useCallback((note: INoteListItem) => {
     setRenameModalNote(note)
     setRenameTitle(note.title || '')
   }, [])
@@ -248,7 +248,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
           </Center>
         ) : (
           <Stack gap={4}>
-            {filtered.map((note: NoteListItem) => (
+            {filtered.map((note: INoteListItem) => (
               <NoteRow
                 key={note.uuid}
                 active={note.uuid === activeUuid}
@@ -297,7 +297,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
             leftSection={<IconFolder size={16} />}
             onClick={() => handleMoveToFolder(null)}
           />
-          {folders.map((folder: Folder) => (
+          {folders.map((folder: IFolder) => (
             <NavLink
               key={folder.uuid}
               active={moveModalNote?.folder?.uuid === folder.uuid}
@@ -322,7 +322,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
             leftSection={<IconFolder size={16} />}
             onClick={() => handleRestoreToFolder(null)}
           />
-          {folders.map((folder: Folder) => (
+          {folders.map((folder: IFolder) => (
             <NavLink
               key={folder.uuid}
               label={folder.name}

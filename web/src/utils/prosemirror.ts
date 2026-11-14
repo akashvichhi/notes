@@ -1,13 +1,13 @@
 import type { JSONContent } from '@tiptap/react'
 
-import type { ProseMirrorDoc } from '@src/types/api'
+import type { TProseMirrorDoc } from '@src/types/api'
 
 /**
  * Sanitizes a ProseMirror document to ensure it conforms to ProseMirror's strict schema.
  * Drops any text nodes with null, undefined, or non-string text values that would otherwise
  * cause ProseMirror to throw RangeError: "Invalid text node in JSON".
  */
-export function sanitizeProseMirrorDoc(doc: unknown): ProseMirrorDoc {
+export function sanitizeProseMirrorDoc(doc: unknown): TProseMirrorDoc {
   if (!doc || typeof doc !== 'object') {
     return { type: 'doc', content: [] }
   }
@@ -51,6 +51,6 @@ export function sanitizeProseMirrorDoc(doc: unknown): ProseMirrorDoc {
     return n
   }
 
-  const cleaned: JSONContent = cleanNode(raw) as ProseMirrorDoc
+  const cleaned: JSONContent = cleanNode(raw) as TProseMirrorDoc
   return cleaned ?? { type: 'doc', content: [] }
 }

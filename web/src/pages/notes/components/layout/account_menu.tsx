@@ -6,7 +6,7 @@ import { Avatar, Button, Loader, Menu, Overlay, Stack, Text } from '@mantine/cor
 import { IconKey, IconLock, IconLogout, IconUser } from '@tabler/icons-react'
 import type { UseMutationResult } from '@tanstack/react-query'
 
-import type { ApiError } from '@src/api/api_client'
+import type { IApiError } from '@src/api/api_client'
 import { useLogout, useMe } from '@src/queries/auth_queries'
 import { ROUTE_PATHS } from '@src/routes/route_paths'
 
@@ -16,7 +16,7 @@ import { ChangePasswordModal } from './change_password_modal'
 
 export const AccountMenu: React.MemoExoticComponent<() => React.JSX.Element> = memo(function AccountMenu() {
   const { data: user } = useMe()
-  const logout: UseMutationResult<void, ApiError, void, unknown> = useLogout()
+  const logout: UseMutationResult<void, IApiError, void, unknown> = useLogout()
   const navigate: NavigateFunction = useNavigate()
   const [accountDetailsOpen, setAccountDetailsOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)

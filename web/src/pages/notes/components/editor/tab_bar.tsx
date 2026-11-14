@@ -11,12 +11,12 @@ import { useIsPhone } from '@src/hooks/use_is_phone'
 import { useCreateNote } from '@src/queries/notes_queries'
 import type { TCreateNoteMutation } from '@src/queries/notes_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
-import type { Tab } from '@src/stores/tabs_store'
+import type { ITab } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
-import type { SaveStatus, UiState } from '@src/stores/ui_store'
+import type { TSaveStatus, IUiState } from '@src/stores/ui_store'
 
-interface TabItemProps {
-  tab:           Tab
+interface ITabItemProps {
+  tab:           ITab
   isActive:      boolean
   onActivate:    (uuid: string) => void
   onClose:       (uuid: string) => void
@@ -25,7 +25,7 @@ interface TabItemProps {
   onReopen:      () => void
 }
 
-const TabItem: React.MemoExoticComponent<({ tab, isActive, onActivate, onClose, onCloseOthers, onCloseAll, onReopen, }: TabItemProps) => React.JSX.Element> = memo(function TabItem({
+const TabItem: React.MemoExoticComponent<({ tab, isActive, onActivate, onClose, onCloseOthers, onCloseAll, onReopen, }: ITabItemProps) => React.JSX.Element> = memo(function TabItem({
   tab,
   isActive,
   onActivate,
@@ -33,7 +33,7 @@ const TabItem: React.MemoExoticComponent<({ tab, isActive, onActivate, onClose, 
   onCloseOthers,
   onCloseAll,
   onReopen,
-}: TabItemProps) {
+}: ITabItemProps) {
   const handleActivate: () => void = useCallback(() => {
     onActivate(tab.uuid)
   }, [onActivate, tab.uuid])
@@ -64,7 +64,7 @@ const TabItem: React.MemoExoticComponent<({ tab, isActive, onActivate, onClose, 
     [handleActivate]
   )
 
-  const saveStatus: SaveStatus = useUiStore((s: UiState) => s.saveStatus)
+  const saveStatus: TSaveStatus = useUiStore((s: IUiState) => s.saveStatus)
   const isSaving: boolean = isActive && saveStatus === 'saving'
 
   return (
@@ -152,7 +152,7 @@ export const TabBar: React.MemoExoticComponent<() => React.JSX.Element | null> =
     >
       <ScrollArea style={{ flex: 1 }} type="never">
         <Group gap={4} wrap="nowrap">
-          {tabs.map((tab: Tab) => (
+          {tabs.map((tab: ITab) => (
             <TabItem
               key={tab.uuid}
               isActive={tab.uuid === activeUuid}

@@ -6,9 +6,9 @@ import { IconCheck, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 import { useBootstrap } from '@src/queries/bootstrap_queries'
 import { useSyncNoteTags } from '@src/queries/notes_queries'
 import type { TNoteTagsMutation } from '@src/queries/notes_queries'
-import type { Note, Tag } from '@src/types/api'
+import type { INote, ITag } from '@src/types/api'
 
-export const TagStrip: React.MemoExoticComponent<({ note }: { note: Note; }) => React.JSX.Element> = memo(function TagStrip({ note }: { note: Note }) {
+export const TagStrip: React.MemoExoticComponent<({ note }: { note: INote; }) => React.JSX.Element> = memo(function TagStrip({ note }: { note: INote }) {
   const { tags } = useBootstrap()
   const syncTags: TNoteTagsMutation = useSyncNoteTags()
   const [opened, setOpened] = useState(false)
@@ -36,15 +36,15 @@ export const TagStrip: React.MemoExoticComponent<({ note }: { note: Note; }) => 
     setQuery('')
   }, [handleToggle, query])
 
-  const filtered: Tag[] = useMemo(() => {
+  const filtered: ITag[] = useMemo(() => {
     const q: string = query.trim().toLowerCase()
     if (!q) return tags
-    return tags.filter((t: Tag) => t.name.toLowerCase().includes(q))
+    return tags.filter((t: ITag) => t.name.toLowerCase().includes(q))
   }, [tags, query])
 
   const hasExactMatch: boolean = useMemo(() => {
     const q: string = query.trim().toLowerCase()
-    return !q || filtered.some((t: Tag) => t.name.toLowerCase() === q)
+    return !q || filtered.some((t: ITag) => t.name.toLowerCase() === q)
   }, [filtered, query])
 
   const handleQueryChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,7 +114,7 @@ export const TagStrip: React.MemoExoticComponent<({ note }: { note: Note; }) => 
             />
 
             <Stack gap={2}>
-              {filtered.map((t: Tag) => {
+              {filtered.map((t: ITag) => {
                 const isSelected: boolean = activeNames.includes(t.name) || activeNames.includes(t.slug)
                 return (
                   <Button

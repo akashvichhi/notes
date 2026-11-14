@@ -5,7 +5,7 @@ import { useDebouncedValue } from '@mantine/hooks'
 import { IconFilter } from '@tabler/icons-react'
 import type { UseQueryResult } from '@tanstack/react-query'
 
-import type { NotesPage } from '@src/api/notes_api'
+import type { INotesPage } from '@src/api/notes_api'
 import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
 import { useNotesFilterQuery } from '@src/queries/notes_queries'
 import { useUiStore } from '@src/stores/ui_store'
@@ -28,7 +28,7 @@ export const FilterInput: React.NamedExoticComponent<IFilterInputProps> = memo(f
   const { filter, setFilter, scope } = useUiStore()
   const [debounced] = useDebouncedValue(filter, 250)
 
-  const server: UseQueryResult<NotesPage> = useNotesFilterQuery(scope, debounced, params, hasMore && debounced.trim().length > 0)
+  const server: UseQueryResult<INotesPage> = useNotesFilterQuery(scope, debounced, params, hasMore && debounced.trim().length > 0)
 
   const showSpinner: boolean = useDelayedLoading(server.isFetching)
 

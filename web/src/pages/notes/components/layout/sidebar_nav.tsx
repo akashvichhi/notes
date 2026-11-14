@@ -23,16 +23,16 @@ import {
 
 import { ALL_NOTES_LABEL, STARRED_LABEL, TRASH_LABEL } from '@src/constants/labels'
 import { MAX_FOLDER_NAME_LENGTH, MAX_TAG_NAME_LENGTH } from '@src/constants/limits'
-import { type Scope, useUiStore } from '@src/stores/ui_store'
-import type { Counts, Folder, Tag } from '@src/types/api'
+import { type TScope, useUiStore } from '@src/stores/ui_store'
+import type { INoteCounts, IFolder, ITag } from '@src/types/api'
 import { stopEventPropagation } from '@src/utils/events'
 
 import { RenameItemModal } from './rename_item_modal'
 
 interface ISidebarNavProps {
-  folders:         Folder[]
-  tags:            Tag[]
-  counts?:         Counts
+  folders:         IFolder[]
+  tags:            ITag[]
+  counts?:         INoteCounts
   onCreateFolder?: (name: string) => void
   onRenameFolder?: (uuid: string, name: string) => void
   onDeleteFolder?: (uuid: string) => void
@@ -56,11 +56,11 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
 
   const [creating, setCreating] = useState<'folder' | 'tag' | null>(null)
   const [draftName, setDraftName] = useState('')
-  const [renameFolderTarget, setRenameFolderTarget] = useState<Folder | null>(null)
-  const [renameTagTarget, setRenameTagTarget] = useState<Tag | null>(null)
+  const [renameFolderTarget, setRenameFolderTarget] = useState<IFolder | null>(null)
+  const [renameTagTarget, setRenameTagTarget] = useState<ITag | null>(null)
 
-  const pick: (next: Scope) => void = useCallback(
-    (next: Scope) => {
+  const pick: (next: TScope) => void = useCallback(
+    (next: TScope) => {
       setScope(next)
       setView('list')
     },
@@ -140,7 +140,7 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
         />
       )}
 
-      {folders.map((f: Folder) => (
+      {folders.map((f: IFolder) => (
         <NavLink
           key={f.uuid}
           active={isScopeActive('folder', f.uuid)}
@@ -214,7 +214,7 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
       )}
 
       <Group gap={4} px="xs" py={2}>
-        {tags.map((t: Tag) => (
+        {tags.map((t: ITag) => (
           <Group key={t.uuid} gap={2} wrap="nowrap">
             <UnstyledButton
               onClick={() => pick({ kind: 'tag', slug: t.slug, label: `#${t.name}` })}

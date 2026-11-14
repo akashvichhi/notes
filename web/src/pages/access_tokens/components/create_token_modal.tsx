@@ -9,10 +9,10 @@ import { CreateTokenForm } from './create_token_form'
 import { TokenCreated } from './token_created'
 
 
-type Created = { token: string; name: string }
+interface ICreatedToken { token: string; name: string }
 
 export const CreateTokenModal: React.MemoExoticComponent<({ onClose }: { onClose: () => void; }) => React.JSX.Element> = memo(function CreateTokenModal({ onClose }: { onClose: () => void }) {
-  const [created, setCreated] = useState<Created | null>(null)
+  const [created, setCreated] = useState<ICreatedToken | null>(null)
   const isPhone: boolean = useIsPhone()
 
   const handleCreated: (token: string, name: string) => void = useCallback((token: string, name: string) => {

@@ -1,11 +1,11 @@
 import { QueryClient } from '@tanstack/react-query'
 
-import { type ApiError, normalizeError } from '@src/api/api_client'
+import { type IApiError, normalizeError } from '@src/api/api_client'
 
 declare module '@tanstack/react-query' {
   // The API client rejects every request with an ApiError.
   interface Register {
-    defaultError: ApiError
+    defaultError: IApiError
   }
 }
 

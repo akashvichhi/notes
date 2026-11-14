@@ -11,9 +11,9 @@ import { useIsPhone } from '@src/hooks/use_is_phone'
 import { useRefreshFromServer } from '@src/pages/notes/hooks/use_refresh_from_server'
 import { useMe } from '@src/queries/auth_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
-import type { Tab, TabsState } from '@src/stores/tabs_store'
+import type { ITab, ITabsState } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
-import type { SaveStatus, UiState } from '@src/stores/ui_store'
+import type { TSaveStatus, IUiState } from '@src/stores/ui_store'
 
 import { AccountMenu } from './account_menu'
 
@@ -23,10 +23,10 @@ export const Header: React.MemoExoticComponent<() => React.JSX.Element> = memo(f
   const { data: user } = useMe()
   const { view, setView, toggleNav, scope } = useUiStore()
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
-  const activeTab: Tab | undefined = useTabsStore((s: TabsState) => s.tabs.find((t: Tab) => t.uuid === s.activeUuid))
+  const activeTab: ITab | undefined = useTabsStore((s: ITabsState) => s.tabs.find((t: ITab) => t.uuid === s.activeUuid))
   const isDirty: boolean = activeTab?.dirty ?? false
   const activeTitle: string | undefined = activeTab?.title
-  const saveStatus: SaveStatus = useUiStore((s: UiState) => s.saveStatus)
+  const saveStatus: TSaveStatus = useUiStore((s: IUiState) => s.saveStatus)
   const isNoteOpen: boolean = isPhone ? view === 'editor' && Boolean(activeTab) : Boolean(activeTab)
 
   const handleSave: () => Promise<void> = useCallback(async () => {

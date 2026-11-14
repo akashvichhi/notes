@@ -3,13 +3,13 @@ import { memo, useCallback } from 'react'
 import { ScrollArea, Stack } from '@mantine/core'
 import type { UseMutationResult } from '@tanstack/react-query'
 
-import type { ApiError } from '@src/api/api_client'
+import type { IApiError } from '@src/api/api_client'
 import { useBootstrap } from '@src/queries/bootstrap_queries'
 import { useCreateFolder, useDeleteFolder, useRenameFolder } from '@src/queries/folders_queries'
 import type { TDeleteFolderMutation, TRenameFolderMutation } from '@src/queries/folders_queries'
 import { useCreateTag, useDeleteTag, useRenameTag } from '@src/queries/tags_queries'
 import type { TDeleteTagMutation, TRenameTagMutation } from '@src/queries/tags_queries'
-import type { Bootstrap, Folder, Tag, UUID } from '@src/types/api'
+import type { IBootstrap, IFolder, ITag, TUuid } from '@src/types/api'
 
 import { SidebarNav } from './sidebar_nav'
 
@@ -18,10 +18,10 @@ import { SidebarNav } from './sidebar_nav'
 export const Sidebar: React.MemoExoticComponent<() => React.JSX.Element> = memo(function Sidebar() {
   const { folders, tags, counts } = useBootstrap()
 
-  const createFolder: UseMutationResult<Folder, ApiError, { name: string; parent_uuid?: UUID; color?: string; uuid?: UUID; }, { previous: Bootstrap | undefined; tempUuid: string; }> = useCreateFolder()
+  const createFolder: UseMutationResult<IFolder, IApiError, { name: string; parent_uuid?: TUuid; color?: string; uuid?: TUuid; }, { previous: IBootstrap | undefined; tempUuid: string; }> = useCreateFolder()
   const renameFolder: TRenameFolderMutation = useRenameFolder()
   const deleteFolder: TDeleteFolderMutation = useDeleteFolder()
-  const createTag: UseMutationResult<Tag, ApiError, { name: string; uuid?: UUID; }, { previous: Bootstrap | undefined; tempUuid: string; }> = useCreateTag()
+  const createTag: UseMutationResult<ITag, IApiError, { name: string; uuid?: TUuid; }, { previous: IBootstrap | undefined; tempUuid: string; }> = useCreateTag()
   const renameTag: TRenameTagMutation = useRenameTag()
   const deleteTag: TDeleteTagMutation = useDeleteTag()
 

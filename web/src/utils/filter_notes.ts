@@ -1,11 +1,11 @@
-import type { NoteListItem } from '@src/types/api'
+import type { INoteListItem } from '@src/types/api'
 
-export function filterNotes(notes: NoteListItem[], q: string): NoteListItem[] {
+export function filterNotes(notes: INoteListItem[], q: string): INoteListItem[] {
   const needle: string = q.trim().toLowerCase()
   if (!needle) return notes
 
   return notes.filter(
-    (n: NoteListItem) =>
+    (n: INoteListItem) =>
       n.title.toLowerCase().includes(needle) || n.excerpt.toLowerCase().includes(needle),
   )
 }

@@ -3,7 +3,7 @@ import { memo, type SyntheticEvent, useCallback, useState } from 'react'
 import { Button, Group, Modal, PasswordInput, Stack } from '@mantine/core'
 import type { UseMutationResult } from '@tanstack/react-query'
 
-import type { ApiError } from '@src/api/api_client'
+import type { IApiError } from '@src/api/api_client'
 import { MIN_PASSWORD_LENGTH } from '@src/constants/limits'
 import { MESSAGES } from '@src/constants/messages'
 import { useUpdatePassword } from '@src/queries/auth_queries'
@@ -14,7 +14,7 @@ export const ChangePasswordModal: React.MemoExoticComponent<({ onClose, }: { onC
 }: {
   onClose: () => void
 }) {
-  const updatePassword: UseMutationResult<void, ApiError, { current_password: string; password: string; password_confirmation: string; }, unknown> = useUpdatePassword()
+  const updatePassword: UseMutationResult<void, IApiError, { current_password: string; password: string; password_confirmation: string; }, unknown> = useUpdatePassword()
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -56,7 +56,7 @@ export const ChangePasswordModal: React.MemoExoticComponent<({ onClose, }: { onC
             showSuccessToast(MESSAGES.PASSWORD_CHANGED)
             onClose()
           },
-          onError: (err: ApiError) => showErrorToast(err.message || MESSAGES.PASSWORD_CHANGE_FAILED),
+          onError: (err: IApiError) => showErrorToast(err.message || MESSAGES.PASSWORD_CHANGE_FAILED),
         },
       )
     },

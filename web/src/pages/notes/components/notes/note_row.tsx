@@ -7,7 +7,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 
 
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
-import type { NoteListItem } from '@src/types/api'
+import type { INoteListItem } from '@src/types/api'
 
 import classes from './note_row.module.scss'
 
@@ -15,7 +15,7 @@ import classes from './note_row.module.scss'
 dayjs.extend(relativeTime)
 
 export interface INoteRowProps {
-  note:            NoteListItem
+  note:            INoteListItem
   active:          boolean
   onOpen:          () => void
   onStar:          () => void

@@ -1,7 +1,7 @@
-import type { Note } from '@src/types/api'
+import type { INote } from '@src/types/api'
 
 /** A Cloud note with sensible defaults; pass only what a test cares about. */
-export function makeNote(overrides: Partial<Note> = {}): Note {
+export function makeNote(overrides: Partial<INote> = {}): INote {
   return {
     uuid:         'note-1',
     title:        'Shopping',

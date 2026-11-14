@@ -8,9 +8,9 @@ import { fetchNote } from '@src/api/notes_api'
 import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { clearDraft } from '@src/db/drafts_store'
-import { type Tab, useTabsStore } from '@src/stores/tabs_store'
+import { type ITab, useTabsStore } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
-import type { Note, UUID } from '@src/types/api'
+import type { INote, TUuid } from '@src/types/api'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
 export interface IRefreshFromServer {
@@ -34,7 +34,7 @@ export function useRefreshFromServer(): IRefreshFromServer {
       }
 
       // Mark all tabs as not dirty and clear any localStorage drafts
-      const tabs: Tab[] = useTabsStore.getState().tabs
+      const tabs: ITab[] = useTabsStore.getState().tabs
       for (const t of tabs) {
         useTabsStore.getState().setDirty(t.uuid, false)
         void clearDraft(t.uuid)
@@ -42,9 +42,9 @@ export function useRefreshFromServer(): IRefreshFromServer {
 
       // 2. Find all notes currently loaded and cached in React Query
       const cachedNoteQueries: Query[] = qc.getQueryCache().findAll({ queryKey: NOTE_KEY })
-      const cachedNoteUuids: UUID[] = cachedNoteQueries
+      const cachedNoteUuids: TUuid[] = cachedNoteQueries
         .map((q: Query): unknown => q.queryKey[1])
-        .filter((u: unknown): u is UUID => typeof u === 'string' && Boolean(u))
+        .filter((u: unknown): u is TUuid => typeof u === 'string' && Boolean(u))
 
       if (!navigator.onLine) {
         showErrorToast(MESSAGES.REFRESH_OFFLINE)
@@ -52,9 +52,9 @@ export function useRefreshFromServer(): IRefreshFromServer {
       }
 
       await Promise.all(
-        cachedNoteUuids.map(async (uuid: UUID): Promise<void> => {
+        cachedNoteUuids.map(async (uuid: TUuid): Promise<void> => {
           try {
-            const remote: Note = await fetchNote(uuid)
+            const remote: INote = await fetchNote(uuid)
             if (remote) {
               qc.setQueryData(queryKeys.notes.detail(uuid), remote)
               useTabsStore.getState().setTitle(uuid, remote.title)

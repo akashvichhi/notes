@@ -3,12 +3,12 @@ import type { ReactNode } from 'react'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
 
 import { MESSAGES } from '@src/constants/messages'
-import type { UUID } from '@src/types/api'
+import type { TUuid } from '@src/types/api'
 import { ErrorFallback } from '@src/ui/feedback/error_fallback'
 import { logCrash } from '@src/utils/log_crash'
 
 export interface IEditorBoundaryProps {
-  noteUuid: UUID
+  noteUuid: TUuid
   children: ReactNode
 }
 

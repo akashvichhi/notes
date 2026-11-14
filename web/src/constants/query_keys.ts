@@ -1,5 +1,5 @@
-import type { Scope } from '@src/stores/ui_store'
-import type { UUID } from '@src/types/api'
+import type { TScope } from '@src/stores/ui_store'
+import type { TUuid } from '@src/types/api'
 
 export const BOOTSTRAP_KEY: readonly ['bootstrap'] = ['bootstrap'] as const
 export const NOTES_KEY: readonly ['notes'] = ['notes'] as const
@@ -14,8 +14,8 @@ export interface IQueryKeys {
   readonly notes: {
     readonly all:    typeof NOTES_KEY
     readonly list:   (scopeKey: string) => readonly ['notes', string]
-    readonly detail: (uuid?: UUID | null) => readonly ['note', UUID | null | undefined]
-    readonly filter: (scope: Scope, query: string) => readonly ['notes', 'filter', Scope, string]
+    readonly detail: (uuid?: TUuid | null) => readonly ['note', TUuid | null | undefined]
+    readonly filter: (scope: TScope, query: string) => readonly ['notes', 'filter', TScope, string]
   }
   readonly search: (query: string) => readonly ['search', string]
 }
@@ -27,9 +27,9 @@ export const queryKeys: IQueryKeys = {
   notes:        {
     all:    NOTES_KEY,
     list:   (scopeKey: string) => [...NOTES_KEY, scopeKey] as const,
-    detail: (uuid?: UUID | null) => [...NOTE_KEY, uuid] as const,
+    detail: (uuid?: TUuid | null) => [...NOTE_KEY, uuid] as const,
     // Under NOTES_KEY, so every note change refreshes filter results too.
-    filter: (scope: Scope, query: string) => [...NOTES_KEY, 'filter', scope, query] as const,
+    filter: (scope: TScope, query: string) => [...NOTES_KEY, 'filter', scope, query] as const,
   },
   search: (query: string) => ['search', query] as const,
 } as const

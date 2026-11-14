@@ -20,7 +20,8 @@ def test_unmatched_path_is_logged_without_the_path(
     client: TestClient, caplog: pytest.LogCaptureFixture
 ) -> None:
     with caplog.at_level(logging.INFO, logger="app.requests"):
-        client.get("/api/v1/tags/my-private-tag")
+        # No route has this shape; /tags/{id} would match a route and log its template.
+        client.get("/api/v1/my-private-tag")
 
     lines = [record.getMessage() for record in caplog.records if record.name == "app.requests"]
     assert len(lines) == 1

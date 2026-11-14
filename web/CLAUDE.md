@@ -165,7 +165,7 @@ Goal: **no JavaScript error ever leaves the user on a blank screen.** Use `react
 - Every page is lazy-loaded with `React.lazy` and rendered through the route boundary. **NEVER** import a page statically.
 - Paths and path builders live in `routes/route_paths.ts` (`ROUTE_PATHS`, `notePath(uuid)`). **NEVER** hardcode a path string.
 - Vendor code is split into long-cached chunks (React, Mantine, React Query, icons, Tiptap, highlight), and every build file is named by its content hash under `assets/`. The chunk checks test specific packages before generic ones (`@tanstack/react-query` and `@tabler/icons-react` contain "react").
-- `vite build` writes into `../api/public` without emptying it, because Laravel serves the web build from there. See decision 2.
+- `vite build` writes into `web/dist`, which the API serves (decision 9).
 
 ## Performance
 - `useCallback` for functions passed as props or used in dependency arrays; `useMemo` for derived data and for objects or arrays passed as props; `React.memo` for components that re-render often with the same props (note rows, sidebar items, tabs). Don't wrap trivial values.

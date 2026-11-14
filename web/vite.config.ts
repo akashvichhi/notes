@@ -31,8 +31,8 @@ function vendorChunkName(id: string): string | null {
   return null
 }
 
-// Proxies a path to the API, so the dev server is same-origin with it: Sanctum's
-// cookies and CSRF checks then work exactly as in production.
+// Proxies a path to the API, so the dev server is same-origin with it: the session
+// cookie and the origin check then work exactly as in production.
 type TProxyServer = Parameters<NonNullable<ProxyOptions['configure']>>[0]
 
 function apiProxy(target: string): ProxyOptions {
@@ -64,10 +64,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       },
     },
     build: {
-      // The web build is served by Laravel: write straight into its public folder,
-      // without emptying it (index.php and Laravel's own files live there).
-      outDir:                path.resolve(import.meta.dirname, '../api-laravel/public'),
-      emptyOutDir:           false,
+      // The API serves web/dist; each build replaces the previous one.
+      outDir:                path.resolve(import.meta.dirname, 'dist'),
+      emptyOutDir:           true,
       chunkSizeWarningLimit: 600,
       // Vite 8 bundles with Rolldown: `codeSplitting.groups` replaces Rollup's `manualChunks`.
       rolldownOptions:       {
@@ -84,8 +83,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     server: {
       port:  DEV_SERVER_PORT,
       proxy: {
-        '/api':     apiProxy(apiTarget),
-        '/sanctum': apiProxy(apiTarget),
+        '/api': apiProxy(apiTarget),
       },
     },
     test: {

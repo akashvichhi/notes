@@ -11,6 +11,8 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 
 ## 2. The web build is written into Laravel's public folder
 
+Superseded by decision 9.
+
 - **Context:** Laravel serves the SPA (`routes/web.php` falls back to `index.html`), so the built files must be in `api/public`.
 - **Options:** copy `dist/` in a deploy step; build straight into `api/public`.
 - **Decision:** `vite build` writes to `../api/public` with `emptyOutDir: false`, so `index.php` and Laravel's own files stay. `npm run clean` removes only `assets/` and `index.html` before a production build.
@@ -62,3 +64,10 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 - **Decision:** the SDK's `MCPServer`, served stateless with JSON responses (`api/app/mcp/`). A wrapper in front of it checks the Bearer token, its expiry and abilities, and the per-token rate limit, then hands the token to the tools in the request state. Each tool runs its service call in a worker thread on its own database session. The runtime dependency:
   - `mcp` (2.3.0): the protocol's reference server, so protocol upgrades are a version bump rather than our code.
 - **Consequences:** no MCP session is kept between requests, so the single uvicorn worker holds no per-client state beyond the rate-limit counters. The SDK validates tool arguments before our code runs, and its validation errors repeat the offending value back to the caller (never to the logs).
+
+## 9. The API serves the web build from web/dist
+
+- **Context:** the API serves the single-page app itself (same origin, so the session cookie needs no CORS), and decision 2's build into the server's public folder put build output into the release commit.
+- **Options:** keep writing into a server folder; build to `web/dist` and have the API serve that folder; a separate static server.
+- **Decision:** `vite build` writes to `web/dist`, emptied on each build. The API serves `/assets/*` from it with an immutable cache header and `index.html` for every other path outside `/api` and `/mcp` (`api/app/core/frontend.py`). The Docker image builds the web app and copies `dist` in, so no build output is committed.
+- **Consequences:** a release is a push of source only. Running the API locally without a build serves the API alone; the Vite dev server proxies `/api` to it.

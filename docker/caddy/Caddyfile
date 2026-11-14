@@ -1,5 +1,6 @@
-# SITE_ADDRESS is ":80" locally. On the server it is the domain (for example
-# notes.example.com), and Caddy then gets and renews the HTTPS certificate itself.
+# SITE_ADDRESS ":80" serves plain HTTP: locally, and behind a hosting proxy that handles
+# HTTPS. Set to a domain (for example notes.example.com) that points straight at the
+# server, Caddy gets and renews the HTTPS certificate itself.
 # The API compresses responses and sets the cache headers, so Caddy only proxies.
 {$SITE_ADDRESS::80} {
 	reverse_proxy app:8000

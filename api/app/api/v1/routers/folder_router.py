@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Response, status
 
+from app.api.create_response import create_response
 from app.api.dependencies import CurrentUser, FolderServiceDependency, get_current_user
 from app.schemas.common.data_response import DataResponse
 from app.schemas.requests.folder_request import CreateFolderRequest, UpdateFolderRequest
@@ -16,10 +17,7 @@ folder_router = APIRouter(prefix="/folders", tags=["folders"], dependencies=[Dep
 def create_folder(
     body: CreateFolderRequest, response: Response, user: CurrentUser, service: FolderServiceDependency
 ) -> DataResponse[FolderResource]:
-    result = service.create(user, body)
-    if not result.created:
-        response.status_code = status.HTTP_200_OK
-    return DataResponse(data=result.folder)
+    return create_response(service.create(user, body), response)
 
 
 @folder_router.patch("/{folder_uuid}", response_model=DataResponse[FolderResource])

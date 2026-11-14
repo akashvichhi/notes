@@ -1,6 +1,5 @@
 """Folders: a tree per user, with names unique among siblings."""
 
-from dataclasses import dataclass
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
@@ -14,13 +13,7 @@ from app.models.user_model import User
 from app.repositories.folder_repository import FolderRepository
 from app.schemas.requests.folder_request import CreateFolderRequest, UpdateFolderRequest
 from app.schemas.resources.folder_resource import FolderResource
-
-
-@dataclass(frozen=True)
-class CreatedFolder:
-    folder: FolderResource
-    # False when the uuid already named this user's folder (a retried create).
-    created: bool
+from app.services.create_result import CreateResult
 
 
 class FolderService:
@@ -28,13 +21,13 @@ class FolderService:
         self._db = db
         self._folders = folders
 
-    def create(self, user: User, request: CreateFolderRequest) -> CreatedFolder:
+    def create(self, user: User, request: CreateFolderRequest) -> CreateResult[FolderResource]:
         if request.uuid is not None:
             existing = self._folders.find_by_uuid(request.uuid)
             if existing is not None:
                 if existing.user_id != user.id:
                     raise ConflictError
-                return CreatedFolder(self._resource(existing), created=False)
+                return CreateResult(self._resource(existing), created=False)
         parent_id = self._parent_id(user, request.parent_uuid)
         self._ensure_name_is_free(user.id, parent_id, request.name)
         folder = Folder(user_id=user.id, parent_id=parent_id, name=request.name, color=request.color)
@@ -42,7 +35,7 @@ class FolderService:
             folder.uuid = request.uuid
         self._folders.add(folder)
         self._commit()
-        return CreatedFolder(self._resource(folder), created=True)
+        return CreateResult(self._resource(folder), created=True)
 
     def update(self, user: User, folder_uuid: UUID, request: UpdateFolderRequest) -> FolderResource:
         folder = self._get(user, folder_uuid)

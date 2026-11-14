@@ -58,6 +58,7 @@ jobs:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+          PORT: ${{ secrets.VPS_PORT }}
           APP_DIR: ${{ secrets.VPS_APP_DIR }}
         run: |
           install -m 700 -d ~/.ssh
@@ -66,7 +67,7 @@ jobs:
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           # --ff-only stops the deploy if files were edited on the server,
           # instead of merging over them.
-          ssh -i ~/.ssh/deploy_key "$TARGET" \
+          ssh -i ~/.ssh/deploy_key -p "$PORT" "$TARGET" \
             "cd '$APP_DIR' && git pull --ff-only origin master \
              && docker compose up -d --build --remove-orphans \
              && docker image prune -f"

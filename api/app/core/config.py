@@ -27,7 +27,6 @@ class Settings(BaseSettings):
     session_cookie_name: str = "notes_session"
     session_lifetime_days: int = 30
     session_cookie_secure: bool = True
-    access_token_prefix: str = "notes_pat_"  # noqa: S105 - a public prefix, not a secret
     web_dist_dir: Path = Path("../web/dist")
     log_level: str = "INFO"
 

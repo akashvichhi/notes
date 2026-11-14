@@ -1,0 +1,4097 @@
+[
+    {
+        "name": "an empty document",
+        "doc": {
+            "type": "doc",
+            "content": []
+        },
+        "markdown": "",
+        "doc_again": {
+            "type": "doc",
+            "content": []
+        }
+    },
+    {
+        "name": "no content key",
+        "doc": {
+            "type": "doc"
+        },
+        "markdown": "",
+        "doc_again": {
+            "type": "doc",
+            "content": []
+        }
+    },
+    {
+        "name": "trailing empty paragraphs",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Hi"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph"
+                },
+                {
+                    "type": "paragraph"
+                }
+            ]
+        },
+        "markdown": "Hi",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Hi"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an empty paragraph between",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph"
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "b"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "a\n\n<p></p>\n\nb",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph"
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "b"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "plain text",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Hello world"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "Hello world",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Hello world"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "markdown characters are escaped",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a *b* _c_ [d] `e` ~f~ <g> \\ h"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "a \\*b\\* \\_c\\_ \\[d\\] \\`e\\` \\~f\\~ \\<g> \\\\ h",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a *b* _c_ [d] `e` ~f~ <g> \\ h"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "snake_case stays readable",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "snake_case and _lead and trail_"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "snake_case and \\_lead and trail\\_",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "snake_case and _lead and trail_"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "entity text stays literal",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "&amp; and &#169; and & alone"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "\\&amp; and \\&#169; and & alone",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "&amp; and &#169; and & alone"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "line start characters are escaped",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "# not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "> not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "- not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "+ not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "= not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "1. not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "2) not"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "\\# not\n\n\\> not\n\n\\- not\n\n\\+ not\n\n\\= not\n\n1\\. not\n\n2\\) not",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "# not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "> not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "- not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "+ not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "= not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "1. not"
+                        }
+                    ]
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "2) not"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "bold, italic and strike",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "b",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " "
+                        },
+                        {
+                            "type": "text",
+                            "text": "i",
+                            "marks": [
+                                {
+                                    "type": "italic"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " "
+                        },
+                        {
+                            "type": "text",
+                            "text": "s",
+                            "marks": [
+                                {
+                                    "type": "strike"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "**b** *i* ~~s~~",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "b",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " "
+                        },
+                        {
+                            "type": "text",
+                            "text": "i",
+                            "marks": [
+                                {
+                                    "type": "italic"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " "
+                        },
+                        {
+                            "type": "text",
+                            "text": "s",
+                            "marks": [
+                                {
+                                    "type": "strike"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "html marks",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "u",
+                            "marks": [
+                                {
+                                    "type": "underline"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "h",
+                            "marks": [
+                                {
+                                    "type": "highlight"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "2",
+                            "marks": [
+                                {
+                                    "type": "subscript"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "3",
+                            "marks": [
+                                {
+                                    "type": "superscript"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "<u>u</u><mark>h</mark><sub>2</sub><sup>3</sup>",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "u",
+                            "marks": [
+                                {
+                                    "type": "underline"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "h",
+                            "marks": [
+                                {
+                                    "type": "highlight"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "2",
+                            "marks": [
+                                {
+                                    "type": "subscript"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "3",
+                            "marks": [
+                                {
+                                    "type": "superscript"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a coloured text",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "red",
+                            "marks": [
+                                {
+                                    "type": "textStyle",
+                                    "attrs": {
+                                        "color": "#ff0000"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "<span style=\"color:#ff0000\">red</span>",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "red",
+                            "marks": [
+                                {
+                                    "type": "textStyle",
+                                    "attrs": {
+                                        "color": "#ff0000"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an invalid colour",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "x",
+                            "marks": [
+                                {
+                                    "type": "textStyle",
+                                    "attrs": {
+                                        "color": "red;}"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "y",
+                            "marks": [
+                                {
+                                    "type": "textStyle"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "xy",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "xy"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a link",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "site",
+                            "marks": [
+                                {
+                                    "type": "link",
+                                    "attrs": {
+                                        "href": "https://example.com",
+                                        "target": "_blank",
+                                        "rel": "noopener noreferrer nofollow",
+                                        "class": null
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "[site](https://example.com)",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "site",
+                            "marks": [
+                                {
+                                    "type": "link",
+                                    "attrs": {
+                                        "href": "https://example.com",
+                                        "target": "_blank",
+                                        "rel": "noopener noreferrer nofollow",
+                                        "class": null
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a link with parentheses",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "wiki",
+                            "marks": [
+                                {
+                                    "type": "link",
+                                    "attrs": {
+                                        "href": "https://e.org/a_(b)"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "[wiki](<https://e.org/a_(b)>)",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "wiki",
+                            "marks": [
+                                {
+                                    "type": "link",
+                                    "attrs": {
+                                        "href": "https://e.org/a_(b)",
+                                        "target": "_blank",
+                                        "rel": "noopener noreferrer nofollow",
+                                        "class": null
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a link with spaces",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "odd",
+                            "marks": [
+                                {
+                                    "type": "link",
+                                    "attrs": {
+                                        "href": "https://e.org/a b<c>"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "[odd](<https://e.org/a b%3Cc%3E>)",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "odd",
+                            "marks": [
+                                {
+                                    "type": "link",
+                                    "attrs": {
+                                        "href": "https://e.org/a%20b%3Cc%3E",
+                                        "target": "_blank",
+                                        "rel": "noopener noreferrer nofollow",
+                                        "class": null
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "marks that span text nodes",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "b",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                },
+                                {
+                                    "type": "italic"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "c",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "**a*b*c**",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "b",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                },
+                                {
+                                    "type": "italic"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "c",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "marks with edge spaces",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "start "
+                        },
+                        {
+                            "type": "text",
+                            "text": " bold ",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " end"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "start  **bold**  end",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "start  "
+                        },
+                        {
+                            "type": "text",
+                            "text": "bold",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "  end"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "whitespace-only marked text",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a"
+                        },
+                        {
+                            "type": "text",
+                            "text": "  ",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": "b"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "a  b",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a  b"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "inline code",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "run "
+                        },
+                        {
+                            "type": "text",
+                            "text": "npm ci",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "run `npm ci`",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "run "
+                        },
+                        {
+                            "type": "text",
+                            "text": "npm ci",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "code with backticks",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a `b` c",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " "
+                        },
+                        {
+                            "type": "text",
+                            "text": "`edge`",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " "
+                        },
+                        {
+                            "type": "text",
+                            "text": " pad ",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "``a `b` c`` `` `edge` `` `  pad  `",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a `b` c",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " "
+                        },
+                        {
+                            "type": "text",
+                            "text": "`edge`",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "text": " "
+                        },
+                        {
+                            "type": "text",
+                            "text": " pad ",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "code excludes other marks",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "x",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                },
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "`x`",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "x",
+                            "marks": [
+                                {
+                                    "type": "code"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a hard break",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "one"
+                        },
+                        {
+                            "type": "hardBreak"
+                        },
+                        {
+                            "type": "text",
+                            "text": "two"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "one\\\ntwo",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "one"
+                        },
+                        {
+                            "type": "hardBreak"
+                        },
+                        {
+                            "type": "text",
+                            "text": "two"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a hard break inside marks",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "one",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "hardBreak"
+                        },
+                        {
+                            "type": "text",
+                            "text": "two",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "**one**\\\n**two**",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "one",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "hardBreak"
+                        },
+                        {
+                            "type": "text",
+                            "text": "two",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "text with a newline",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "one\ntwo"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "one two",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "one two"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "non-breaking spaces",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a b"
+                        },
+                        {
+                            "type": "text",
+                            "text": " ",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "a b ****",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a b ****"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an aligned paragraph",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "attrs": {
+                        "textAlign": "center"
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Centred "
+                        },
+                        {
+                            "type": "text",
+                            "text": "bold",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "<p align=\"center\">Centred <strong>bold</strong></p>",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "attrs": {
+                        "textAlign": "center"
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Centred "
+                        },
+                        {
+                            "type": "text",
+                            "text": "bold",
+                            "marks": [
+                                {
+                                    "type": "bold"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an aligned empty paragraph",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "attrs": {
+                        "textAlign": "right"
+                    }
+                }
+            ]
+        },
+        "markdown": "",
+        "doc_again": {
+            "type": "doc",
+            "content": []
+        }
+    },
+    {
+        "name": "headings",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 1
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "One"
+                        }
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 3
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Three"
+                        }
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 6
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Six"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "# One\n\n### Three\n\n###### Six",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 1
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "One"
+                        }
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 3
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Three"
+                        }
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 6
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Six"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an out of range heading",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 9
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Nine"
+                        }
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 0
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Zero"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "###### Nine\n\n# Zero",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 6
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Nine"
+                        }
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 1
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Zero"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an empty heading",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 2
+                    }
+                }
+            ]
+        },
+        "markdown": "##",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 2
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "an aligned heading",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 2,
+                        "textAlign": "right"
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Right <here>"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "<h2 align=\"right\">Right &lt;here&gt;</h2>",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 2,
+                        "textAlign": "right"
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Right <here>"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a blockquote",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "blockquote",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "one"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "two"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "> one\n>\n> two",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "blockquote",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "one"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "two"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an empty blockquote",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "blockquote",
+                    "content": []
+                }
+            ]
+        },
+        "markdown": "> <p></p>",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "blockquote",
+                    "content": [
+                        {
+                            "type": "paragraph"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a nested blockquote",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "blockquote",
+                    "content": [
+                        {
+                            "type": "blockquote",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "deep"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "> > deep",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "blockquote",
+                    "content": [
+                        {
+                            "type": "blockquote",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "deep"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a tight bullet list",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "one"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "two"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "- one\n- two",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "one"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "two"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a loose bullet list",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "one"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "more"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "two"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "- one\n\n  more\n\n- two",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "one"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "more"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "two"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a nested list",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "one"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "bulletList",
+                                    "content": [
+                                        {
+                                            "type": "listItem",
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "inner"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "- one\n  - inner",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "one"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "bulletList",
+                                    "content": [
+                                        {
+                                            "type": "listItem",
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "inner"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "adjacent lists of one kind",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "a"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "b"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "c"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "- a\n\n* b\n\n- c",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "a"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "b"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "c"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an ordered list from 5",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "orderedList",
+                    "attrs": {
+                        "start": 5,
+                        "type": null
+                    },
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "five"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "six"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "5. five\n6. six",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "orderedList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "five"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "six"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "attrs": {
+                        "start": 5,
+                        "type": null
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "adjacent ordered lists",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "orderedList",
+                    "attrs": {
+                        "start": 1,
+                        "type": null
+                    },
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "a"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "orderedList",
+                    "attrs": {
+                        "start": 1,
+                        "type": null
+                    },
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "b"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "1. a\n\n1) b",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "orderedList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "a"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "attrs": {
+                        "start": 1,
+                        "type": null
+                    }
+                },
+                {
+                    "type": "orderedList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "b"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "attrs": {
+                        "start": 1,
+                        "type": null
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "a long ordered list",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "orderedList",
+                    "attrs": {
+                        "start": 9,
+                        "type": null
+                    },
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "nine"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "para"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "ten"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "9. nine\n\n   para\n\n10. ten",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "orderedList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "nine"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "para"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "ten"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "attrs": {
+                        "start": 9,
+                        "type": null
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "a task list",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "taskList",
+                    "content": [
+                        {
+                            "type": "taskItem",
+                            "attrs": {
+                                "checked": false
+                            },
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "todo"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "taskItem",
+                            "attrs": {
+                                "checked": true
+                            },
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "done"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "- [ ] todo\n- [x] done",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "taskList",
+                    "content": [
+                        {
+                            "type": "taskItem",
+                            "attrs": {
+                                "checked": false
+                            },
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "todo"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "taskItem",
+                            "attrs": {
+                                "checked": true
+                            },
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "done"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an empty list item",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "two"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "-\n- two",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "two"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a list item with code",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "item"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "codeBlock",
+                                    "attrs": {
+                                        "language": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "x = 1"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "- item\n\n  ```\n  x = 1\n  ```",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "bulletList",
+                    "content": [
+                        {
+                            "type": "listItem",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "item"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "codeBlock",
+                                    "attrs": {
+                                        "language": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "x = 1"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a code block",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "codeBlock",
+                    "attrs": {
+                        "language": "js"
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "const a = 1;\n\nconst b = 2;"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "```js\nconst a = 1;\n\nconst b = 2;\n```",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "codeBlock",
+                    "attrs": {
+                        "language": "js"
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "const a = 1;\n\nconst b = 2;"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a code block with fences inside",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "codeBlock",
+                    "attrs": {
+                        "language": null
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "```\ninner\n````"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "`````\n```\ninner\n````\n`````",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "codeBlock",
+                    "attrs": {
+                        "language": null
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "```\ninner\n````"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a code block with an odd language",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "codeBlock",
+                    "attrs": {
+                        "language": "bad lang!"
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "x"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "```\nx\n```",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "codeBlock",
+                    "attrs": {
+                        "language": null
+                    },
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "x"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an empty code block",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "codeBlock",
+                    "attrs": {
+                        "language": null
+                    }
+                }
+            ]
+        },
+        "markdown": "```\n```",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "codeBlock",
+                    "attrs": {
+                        "language": null
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "a horizontal rule",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a"
+                        }
+                    ]
+                },
+                {
+                    "type": "horizontalRule"
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "b"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "a\n\n---\n\nb",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "a"
+                        }
+                    ]
+                },
+                {
+                    "type": "horizontalRule"
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "b"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an image",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/a.png",
+                        "alt": "An [image]",
+                        "title": "Say \"hi\"",
+                        "width": null,
+                        "height": null
+                    }
+                }
+            ]
+        },
+        "markdown": "![An \\[image\\]](https://example.com/a.png \"Say \\\"hi\\\"\")",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/a.png",
+                        "alt": "An [image]",
+                        "title": "Say \"hi\"",
+                        "width": null,
+                        "height": null
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "an image with spaces in its source",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/a b.png",
+                        "alt": null,
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                }
+            ]
+        },
+        "markdown": "![](<https://example.com/a b.png>)",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/a%20b.png",
+                        "alt": null,
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "a resized image",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/a.png",
+                        "alt": "A",
+                        "title": null,
+                        "width": 100,
+                        "height": null
+                    }
+                }
+            ]
+        },
+        "markdown": "<img src=\"https://example.com/a.png\" alt=\"A\" width=\"100\">",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/a.png",
+                        "alt": "A",
+                        "title": null,
+                        "width": 100,
+                        "height": null
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "embedded images become placeholders",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Pictures"
+                        }
+                    ]
+                },
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+                        "alt": "dot",
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                },
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/a.png",
+                        "alt": null,
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                },
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
+                        "alt": null,
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                }
+            ]
+        },
+        "markdown": "Pictures\n\n![dot](note-image:1)\n\n![](https://example.com/a.png)\n\n![](note-image:2)",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Pictures"
+                        }
+                    ]
+                },
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+                        "alt": "dot",
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                },
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/a.png",
+                        "alt": null,
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                },
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
+                        "alt": null,
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "an inline image",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "before "
+                        },
+                        {
+                            "type": "image",
+                            "attrs": {
+                                "src": "https://example.com/x.png",
+                                "alt": null,
+                                "title": null,
+                                "width": null,
+                                "height": null
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": " after"
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "before ![](https://example.com/x.png) after",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "before "
+                        }
+                    ]
+                },
+                {
+                    "type": "image",
+                    "attrs": {
+                        "src": "https://example.com/x.png",
+                        "alt": null,
+                        "title": null,
+                        "width": null,
+                        "height": null
+                    }
+                },
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": " after"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a table",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "A"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "B"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "1"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "2"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "| A | B |\n| --- | --- |\n| 1 | 2 |",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "A"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "B"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "1"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "2"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a table with a wide cell",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 2,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "wide"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "a"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "b"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "| wide |   |\n| --- | --- |\n| a | b |",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "wide"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "a"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "b"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a table cell with blocks",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "a | b"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "bulletList",
+                                            "content": [
+                                                {
+                                                    "type": "listItem",
+                                                    "content": [
+                                                        {
+                                                            "type": "paragraph",
+                                                            "content": [
+                                                                {
+                                                                    "type": "text",
+                                                                    "text": "x"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "listItem",
+                                                    "content": [
+                                                        {
+                                                            "type": "paragraph",
+                                                            "content": [
+                                                                {
+                                                                    "type": "text",
+                                                                    "text": "y"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "image",
+                                            "attrs": {
+                                                "src": "https://example.com/i.png",
+                                                "alt": null,
+                                                "title": null,
+                                                "width": null,
+                                                "height": null
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "one"
+                                                },
+                                                {
+                                                    "type": "hardBreak"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "text": "two"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "| a \\| b<br>x y<br>![](https://example.com/i.png) | one<br>two |\n| --- | --- |",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "a | b"
+                                                },
+                                                {
+                                                    "type": "hardBreak"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "text": "x y"
+                                                },
+                                                {
+                                                    "type": "hardBreak"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "image",
+                                            "attrs": {
+                                                "src": "https://example.com/i.png",
+                                                "alt": null,
+                                                "title": null,
+                                                "width": null,
+                                                "height": null
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "one"
+                                                },
+                                                {
+                                                    "type": "hardBreak"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "text": "two"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "a table with empty cells",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "x"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "|   | x |\n| --- | --- |",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "tableHeader",
+                                    "attrs": {
+                                        "colspan": 1,
+                                        "rowspan": 1,
+                                        "colwidth": null
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "x"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an empty table",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "table",
+                    "content": []
+                }
+            ]
+        },
+        "markdown": "",
+        "doc_again": {
+            "type": "doc",
+            "content": []
+        }
+    },
+    {
+        "name": "details",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "details",
+                    "content": [
+                        {
+                            "type": "detailsSummary",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "More "
+                                },
+                                {
+                                    "type": "text",
+                                    "text": "info",
+                                    "marks": [
+                                        {
+                                            "type": "bold"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "detailsContent",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Hidden"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "<details>\n<summary>More <strong>info</strong></summary>\n\nHidden\n\n</details>",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "details",
+                    "content": [
+                        {
+                            "type": "detailsSummary",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "More "
+                                },
+                                {
+                                    "type": "text",
+                                    "text": "info",
+                                    "marks": [
+                                        {
+                                            "type": "bold"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "detailsContent",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Hidden"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "empty details",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "details",
+                    "content": [
+                        {
+                            "type": "detailsSummary"
+                        },
+                        {
+                            "type": "detailsContent",
+                            "content": []
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "<details>\n<summary></summary>\n\n<p></p>\n\n</details>",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "details",
+                    "content": [
+                        {
+                            "type": "detailsSummary"
+                        },
+                        {
+                            "type": "detailsContent",
+                            "content": [
+                                {
+                                    "type": "paragraph"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an unknown node with content",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "callout",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "inside"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "inside",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "inside"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "an unknown node without content",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "mention",
+                    "attrs": {
+                        "id": 1
+                    }
+                }
+            ]
+        },
+        "markdown": "",
+        "doc_again": {
+            "type": "doc",
+            "content": []
+        }
+    },
+    {
+        "name": "an unknown mark",
+        "doc": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "x",
+                            "marks": [
+                                {
+                                    "type": "comment"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "markdown": "x",
+        "doc_again": {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "x"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+]

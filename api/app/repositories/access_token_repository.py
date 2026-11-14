@@ -50,3 +50,12 @@ class AccessTokenRepository:
 
     def delete_all_of_user(self, user_id: int) -> None:
         self._session.execute(delete(AccessToken).where(AccessToken.user_id == user_id))
+
+    def delete_expired(self, now: datetime) -> int:
+        """Tokens whose expiry has passed (a token without one never expires); the number deleted."""
+        deleted = self._session.scalars(
+            delete(AccessToken)
+            .where(AccessToken.expires_at.is_not(None), AccessToken.expires_at <= now)
+            .returning(AccessToken.id)
+        ).all()
+        return len(deleted)

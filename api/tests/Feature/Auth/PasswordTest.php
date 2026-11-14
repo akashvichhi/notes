@@ -12,33 +12,14 @@ class PasswordTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_changing_the_password_from_a_native_app_revokes_every_other_token(): void
-    {
-        $user = User::factory()->create();
-        $current = $this->deviceToken($user, 'This laptop');
-        $this->deviceToken($user, 'Old phone');
-        app(CreateAccessToken::class)($user, 'Claude', ['notes:read']);
-
-        // A bearer-token request from a native app has no session.
-        $this->withToken($current)
-            ->putJson('/api/v1/me/password', [
-                'current_password' => 'password',
-                'password' => 'a-new-password',
-                'password_confirmation' => 'a-new-password',
-            ])
-            ->assertNoContent();
-
-        $this->assertSame(['This laptop'], $user->tokens()->pluck('name')->all());
-    }
-
     public function test_changing_the_password_in_the_browser_revokes_every_token(): void
     {
         $user = User::factory()->create();
-        $this->deviceToken($user, 'Old phone');
+        $this->accessToken($user, 'Claude');
 
         // A browser request is signed in by its session cookie, not a token.
         $this->actingAs($user, 'web')
-            ->withHeader('Origin', 'http://localhost')
+            ->fromBrowser()
             ->putJson('/api/v1/me/password', [
                 'current_password' => 'password',
                 'password' => 'a-new-password',
@@ -52,7 +33,7 @@ class PasswordTest extends TestCase
     public function test_resetting_the_password_revokes_every_token(): void
     {
         $user = User::factory()->create();
-        $this->deviceToken($user, 'Stolen laptop');
+        $this->accessToken($user, 'Leaked token');
 
         $this->postJson('/api/v1/reset-password', [
             'token' => Password::createToken($user),
@@ -64,12 +45,8 @@ class PasswordTest extends TestCase
         $this->assertSame(0, $user->tokens()->count());
     }
 
-    private function deviceToken(User $user, string $device): string
+    private function accessToken(User $user, string $name): void
     {
-        return $this->postJson('/api/v1/tokens', [
-            'email' => $user->email,
-            'password' => 'password',
-            'device_name' => $device,
-        ])->assertOk()->json('token');
+        app(CreateAccessToken::class)($user, $name, ['notes:read']);
     }
 }

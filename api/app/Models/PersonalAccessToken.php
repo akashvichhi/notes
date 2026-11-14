@@ -7,9 +7,6 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
 class PersonalAccessToken extends SanctumPersonalAccessToken
 {
-    /** A native app's sign-in token: full access, created by POST /tokens. */
-    public const TYPE_DEVICE = 'device';
-
     /** A personal access token the user creates for an integration such as the MCP. */
     public const TYPE_PAT = 'pat';
 

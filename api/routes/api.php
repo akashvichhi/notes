@@ -23,14 +23,12 @@ Route::get('/user', function (Request $request) {
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn () => ['status' => 'ok']);
 
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-    Route::post('/tokens', [AuthController::class, 'issueToken'])->middleware('throttle:5,1');
-    Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:5,1');
-    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
+    Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:auth');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:auth');
 
-    // Web sessions (TransientToken) and device tokens (`*`) pass every ability
-    // check below. Personal access tokens carry only notes:read / notes:write,
+    // Web sessions (TransientToken) pass every ability check below. Personal access tokens carry only notes:read / notes:write,
     // so the `account` group — every delete, trash, restore and account route —
     // is unreachable to them.
     Route::middleware('auth:sanctum')->group(function () {
@@ -56,14 +54,13 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::middleware(TokenAbilities::MIDDLEWARE_ACCOUNT)->group(function () {
-            Route::delete('/tokens/current', [AuthController::class, 'revokeToken']);
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::get('/me', [AuthController::class, 'me']);
             Route::patch('/me', [ProfileController::class, 'update']);
             Route::put('/me/password', [ProfileController::class, 'password']);
             Route::patch('/preferences', [ProfileController::class, 'preferences']);
 
-            // Session or device token only: the `account` ability keeps PATs out.
+            // Session only: the `account` ability keeps PATs out.
             Route::get('/me/access-tokens', [AccessTokenController::class, 'index']);
             Route::post('/me/access-tokens', [AccessTokenController::class, 'store'])->middleware('throttle:10,1');
             Route::delete('/me/access-tokens/{id}', [AccessTokenController::class, 'destroy'])->whereNumber('id');

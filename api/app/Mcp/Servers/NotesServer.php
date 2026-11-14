@@ -36,8 +36,7 @@ use Laravel\Mcp\Server\Attributes\Version;
       <details><summary>); keep those tags intact when editing.
     - Images appear as placeholders like ![image 1](note-image:1). Leave them exactly as they
       are to keep the image; remove one to remove that image. Never invent new placeholders.
-    - Only the user's Cloud notes are reachable. Notes stored "On This Device" never reach the
-      server, and notes in the Trash are invisible.
+    - Notes in the Trash are invisible.
     - Nothing can be deleted: there is no tool to delete, trash or restore notes, folders or
       tags. If the user asks for that, tell them to do it in the Notes app.
     - Always call get_note immediately before update_note and pass the version it returned.

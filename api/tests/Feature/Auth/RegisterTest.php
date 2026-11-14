@@ -3,27 +3,36 @@
 namespace Tests\Feature\Auth;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class RegisterTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_a_native_app_can_register_without_a_session(): void
+    public function test_registering_signs_the_new_user_in(): void
     {
-        // A Tauri app is not a stateful origin, so the request has no session.
-        $this->postJson('/api/v1/register', $this->registration('ada@example.com'))
+        $this->register('ada@example.com')
             ->assertCreated()
             ->assertJsonPath('data.email', 'ada@example.com');
+
+        $this->assertAuthenticated('web');
     }
 
     public function test_registration_is_rate_limited(): void
     {
         foreach (range(1, 5) as $attempt) {
-            $this->postJson('/api/v1/register', $this->registration("user{$attempt}@example.com"))->assertCreated();
+            $this->register("user{$attempt}@example.com")->assertCreated();
         }
 
-        $this->postJson('/api/v1/register', $this->registration('user6@example.com'))->assertTooManyRequests();
+        $this->register('user6@example.com')->assertTooManyRequests();
+    }
+
+    /** A browser request, so the API starts a session for it. */
+    private function register(string $email): TestResponse
+    {
+        return $this->fromBrowser()
+            ->postJson('/api/v1/register', $this->registration($email));
     }
 
     /** @return array<string, string> */

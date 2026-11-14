@@ -5,14 +5,12 @@ namespace App\Support;
 /**
  * The one place token abilities are defined.
  *
- * Device sign-in tokens carry `*` and pass every check. Personal access tokens
- * carry only `notes:read` and/or `notes:write`, so they can never reach a route
- * guarded by `account` — deletes, trash, restore, profile, password, tokens.
+ * A browser session passes every check. Personal access tokens carry only
+ * `notes:read` and/or `notes:write`, so they can never reach a route guarded
+ * by `account` — deletes, trash, restore, profile, password, tokens.
  */
 class TokenAbilities
 {
-    public const ALL = '*';
-
     public const READ = 'notes:read';
 
     public const WRITE = 'notes:write';

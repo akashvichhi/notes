@@ -20,7 +20,7 @@ class ProfileController extends Controller
 
     public function password(UpdatePasswordRequest $request, ChangePassword $changePassword)
     {
-        $changePassword($request->user(), $request->validated('password'), $request->hasSession() ? $request->session() : null);
+        $changePassword($request->user(), $request->validated('password'), $request->session());
 
         return response()->noContent();
     }

@@ -8,7 +8,6 @@ class PruneExpiredAccessTokens
 {
     /**
      * Sanctum already refuses an expired token; this only removes the dead rows.
-     * Device tokens have no expiry and are never touched.
      *
      * @return int the number of tokens removed
      */

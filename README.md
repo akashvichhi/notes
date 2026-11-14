@@ -156,16 +156,14 @@ I built this app with a coding agent, working from documents I wrote first: a pr
 `docker-compose.yml` runs everything: Postgres, the FastAPI API (which also serves the React build), a scheduler that removes expired sessions and tokens once a day, and Caddy in front. Every service restarts after a crash and whenever Docker starts. The reasons are in decision 10 of [`docs/decisions.md`](docs/decisions.md).
 
 ```sh
-cp .env.example .env                              # set POSTGRES_PASSWORD and APP_ORIGIN
-cp api/.env.example api/.env.production           # then set APP_ENV=production and the values below
+cp .env.example .env
 docker compose up -d --build
 ```
 
 The app is on `http://127.0.0.1:8000`. The `app` container runs the migrations each time it starts.
 
 **On a server:**
-- In `.env`, set a strong `POSTGRES_PASSWORD` (letters and digits) before the first start, `SITE_ADDRESS` to the domain, `APP_ORIGIN` to the site's origin (`https://` and the domain), `HTTP_PORT=80` and `HTTPS_PORT=443`. Caddy then gets the HTTPS certificate itself.
-- In `api/.env.production`, set `APP_ENV=production`, `CORS_ORIGINS` empty, `SESSION_COOKIE_SECURE=true` and `WEB_DIST_DIR=/app/web/dist`. `DATABASE_URL` and `ALLOWED_ORIGINS` come from Compose.
+- Run `cp api/.env.production .env` and set a strong `POSTGRES_PASSWORD` (letters and digits) before the first start. The file holds the rest: the site's origin and domain, ports 80 and 443 (Caddy gets the HTTPS certificate itself) and the API's production settings. `DATABASE_URL` and `ALLOWED_ORIGINS` are built from it in `docker-compose.yml`.
 - Run `sudo systemctl enable docker` once, so Docker, and with it the app, starts when the server boots.
 - Every push to `master` deploys automatically: GitHub Actions runs the checks, then pulls and rebuilds on the server (decision 6). By hand, it's `git pull && docker compose up -d --build`.
 

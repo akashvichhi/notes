@@ -1,5 +1,6 @@
 # The app on one machine (decision 10). `docker compose up -d --build` builds and starts
-# everything; the values come from the root .env (.env.example). Every container has a
+# everything; the values come from the root .env (.env.example locally, api/.env.production
+# on a server). Every container has a
 # fixed name (notes-app, not notes-app-app-1): each service runs exactly once, and the API
 # must, since its rate limits are counted in memory.
 
@@ -10,10 +11,9 @@ x-api: &api
   build:
     context: .
     dockerfile: docker/api/Dockerfile
-  env_file: api/.env.production
+  env_file: .env
   environment:
-    # Here, not in api/.env.production, so the password and the domain live only in the
-    # root .env.
+    # Built from the root .env's values, so the password and the origin are set only once.
     ALLOWED_ORIGINS: ${APP_ORIGIN:?set APP_ORIGIN in .env}
     DATABASE_URL: postgresql+psycopg://notes:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/notes
   depends_on:

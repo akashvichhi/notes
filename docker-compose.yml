@@ -1,8 +1,7 @@
 # The app on one machine (decision 10). `docker compose up -d --build` builds and starts
-# everything; the values come from the root .env (.env.example locally, api/.env.production
-# on a server). Every container has a
-# fixed name (notes-app, not notes-app-app-1): each service runs exactly once, and the API
-# must, since its rate limits are counted in memory.
+# everything; the values come from the root .env (.env.example locally, .env.production on
+# a server). Every container has a fixed name (notes-app, not notes-app-app-1): each service
+# runs exactly once, and the API must, since its rate limits are counted in memory.
 
 x-api: &api
   image: notes-app

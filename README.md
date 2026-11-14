@@ -163,7 +163,7 @@ docker compose up -d --build
 The app is on `http://127.0.0.1:8000`. The `app` container runs the migrations each time it starts.
 
 **On a server:**
-- Run `cp api/.env.production .env` and set a strong `POSTGRES_PASSWORD` (letters and digits) before the first start. The file holds the rest: the site's origin and the API's production settings. The hosting provider's proxy handles HTTPS and forwards plain HTTP to port 80, so Caddy serves only HTTP. If the domain points straight at the server instead, set `SITE_ADDRESS` to the domain, `HTTPS_PORT=443` and open ports 80 and 443; Caddy then gets the HTTPS certificate itself. `DATABASE_URL` and `ALLOWED_ORIGINS` are built from it in `docker-compose.yml`.
+- Run `cp .env.production .env` and set a strong `POSTGRES_PASSWORD` (letters and digits) before the first start. The file holds the rest: the site's origin and the API's production settings. The hosting provider's proxy handles HTTPS and forwards plain HTTP to port 80, so Caddy serves only HTTP. If the domain points straight at the server instead, set `SITE_ADDRESS` to the domain, `HTTPS_PORT=443` and open ports 80 and 443; Caddy then gets the HTTPS certificate itself. `DATABASE_URL` and `ALLOWED_ORIGINS` are built from it in `docker-compose.yml`.
 - Run `sudo systemctl enable docker` once, so Docker, and with it the app, starts when the server boots.
 - Every push to `master` deploys automatically: GitHub Actions runs the checks, then pulls and rebuilds on the server (decision 6). By hand, it's `git pull && docker compose up -d --build`.
 

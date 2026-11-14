@@ -1,5 +1,7 @@
 # The app on one machine (decision 10). `docker compose up -d --build` builds and starts
-# everything; the values come from the root .env (.env.example).
+# everything; the values come from the root .env (.env.example). Every container has a
+# fixed name (notes-app, not notes-app-app-1): each service runs exactly once, and the API
+# must, since its rate limits are counted in memory.
 
 x-api: &api
   image: notes-app
@@ -22,6 +24,7 @@ x-api: &api
 services:
   app:
     <<: *api
+    container_name: notes-app
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
       interval: 10s
@@ -30,6 +33,7 @@ services:
 
   scheduler:
     <<: *api
+    container_name: notes-scheduler
     command: ["sh", "scripts/prune_daily.sh"]
     depends_on:
       # The app runs the migrations on start; the scheduler waits for them.
@@ -38,6 +42,7 @@ services:
 
   web:
     image: caddy:2.11.6-alpine
+    container_name: notes-web
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-:80}
     ports:

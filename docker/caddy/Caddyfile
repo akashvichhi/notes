@@ -1,5 +1,5 @@
 # SITE_ADDRESS is ":80" locally. On the server it is the domain (for example
-# my-notes.app), and Caddy then gets and renews the HTTPS certificate itself.
+# notes.example.com), and Caddy then gets and renews the HTTPS certificate itself.
 # The API compresses responses and sets the cache headers, so Caddy only proxies.
 {$SITE_ADDRESS::80} {
 	reverse_proxy app:8000

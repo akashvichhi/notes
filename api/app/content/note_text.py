@@ -4,6 +4,7 @@ Recomputed on every write that changes the body; clients never send these values
 from collections.abc import Iterator
 from dataclasses import dataclass
 
+from app.constants.content_constants import NUL_CHARACTER
 from app.constants.note_constants import NOTE_DERIVED_TITLE_MAX_LENGTH, NOTE_EXCERPT_WIDTH
 from app.content.text_rules import (
     WHITESPACE_RUNS,
@@ -58,7 +59,8 @@ def _title(body: JsonObject) -> str:
 def _texts(node: JsonObject) -> Iterator[str]:
     text = node.get("text")
     if isinstance(text, str):
-        yield text
+        # The body keeps it (a json column can), but the derived text columns cannot.
+        yield text.replace(NUL_CHARACTER, "")
     for child in _children(node):
         if isinstance(child, dict):
             yield from _texts(child)

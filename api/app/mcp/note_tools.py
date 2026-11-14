@@ -4,17 +4,15 @@ from typing import Annotated
 from uuid import UUID
 
 from mcp.server.mcpserver import Context, MCPServer
-from pydantic import Field, StringConstraints
+from pydantic import Field
 
 from app.constants.access_token_constants import TokenAbility
 from app.constants.mcp_constants import NoteBodyMode
 from app.constants.note_constants import NoteSort
 from app.constants.pagination_constants import DEFAULT_PAGE, DEFAULT_PER_PAGE, MAX_PER_PAGE
-from app.constants.search_constants import SEARCH_QUERY_MAX_LENGTH, SEARCH_TERM_MIN_LENGTH
-from app.constants.tag_constants import TAG_NAME_MAX_LENGTH
 from app.mcp.mcp_tool_runner import McpToolRunner
 from app.mcp.tool_arguments import READS, SETS, WRITES, NoteUuid, TagNames
-from app.schemas.common.field_types import NoteTitle
+from app.schemas.common.field_types import NoteTitle, SearchQuery, TagFilter
 from app.schemas.requests.note_request import NoteListRequest
 from app.schemas.resources.mcp_note_resource import (
     McpNoteListResource,
@@ -24,13 +22,7 @@ from app.schemas.resources.mcp_note_resource import (
     McpSearchResultsResource,
 )
 
-SearchQuery = Annotated[
-    str,
-    StringConstraints(
-        strip_whitespace=True, min_length=SEARCH_TERM_MIN_LENGTH, max_length=SEARCH_QUERY_MAX_LENGTH
-    ),
-    Field(description="The words to search for."),
-]
+SearchQueryArgument = Annotated[SearchQuery, Field(description="The words to search for.")]
 Markdown = Annotated[
     str,
     Field(
@@ -48,7 +40,7 @@ def register_note_tools(server: MCPServer, runner: McpToolRunner) -> None:
         "characters are ignored.",
         annotations=READS,
     )
-    async def search_notes(query: SearchQuery, ctx: Context) -> McpSearchResultsResource:
+    async def search_notes(query: SearchQueryArgument, ctx: Context) -> McpSearchResultsResource:
         return await runner.run(ctx, TokenAbility.READ, lambda call: call.notes.search(call.user, query))
 
     @server.tool(
@@ -65,8 +57,8 @@ def register_note_tools(server: MCPServer, runner: McpToolRunner) -> None:
             Field(description="Only notes directly in this folder (a folder id from list_folders)."),
         ] = None,
         tag: Annotated[
-            str | None,
-            Field(max_length=TAG_NAME_MAX_LENGTH, description="Only notes with this tag (its name or slug)."),
+            TagFilter | None,
+            Field(description="Only notes with this tag (its name or slug)."),
         ] = None,
         starred: Annotated[bool, Field(description="true for starred notes only.")] = False,
         sort: Annotated[

@@ -3,7 +3,7 @@ from collections.abc import Mapping
 from typing import Annotated, Self
 from uuid import UUID
 
-from pydantic import BaseModel, BeforeValidator, Field, StrictBool, StringConstraints, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, StrictBool, model_validator
 from pydantic_core import PydanticCustomError
 
 from app.constants import messages
@@ -13,8 +13,7 @@ from app.constants.note_constants import (
     NOTE_TAG_NAMES_MAX,
     NoteSort,
 )
-from app.constants.tag_constants import TAG_NAME_MAX_LENGTH
-from app.schemas.common.field_types import NoteTitle, NotNull, field_error
+from app.schemas.common.field_types import NoteTitle, NotNull, TagFilter, TagNameInput, field_error
 from app.schemas.common.json_types import JsonObject
 from app.schemas.common.pagination_request import PaginationRequest
 
@@ -54,12 +53,11 @@ def _check_body_limits(value: object) -> object:
 
 
 NoteBody = Annotated[JsonObject, BeforeValidator(_check_body_limits)]
-TagNameInput = Annotated[str, StringConstraints(strip_whitespace=True, max_length=TAG_NAME_MAX_LENGTH)]
 
 
 class NoteListRequest(PaginationRequest):
     folder_id: UUID | None = None
-    tag: Annotated[str | None, Field(max_length=TAG_NAME_MAX_LENGTH)] = None
+    tag: TagFilter | None = None
     starred: bool = False
     trashed: bool = False
     sort: NoteSort = NoteSort.UPDATED

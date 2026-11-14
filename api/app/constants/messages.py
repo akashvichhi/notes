@@ -46,6 +46,7 @@ VALIDATION_MESSAGE_TEMPLATES: dict[str, str] = {
     "json_invalid": "The request body is not valid JSON.",
     "model_attributes_type": "The request body must be a JSON object.",
     "string_pattern_mismatch": "The {label} field format is invalid.",
+    "nul_character": "The {label} field must not contain a NUL character.",
 }
 
 CURRENT_PASSWORD_INCORRECT = "The password is incorrect."  # noqa: S105 - a message

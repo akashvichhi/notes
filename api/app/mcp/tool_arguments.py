@@ -8,8 +8,7 @@ from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from app.constants.note_constants import NOTE_TAG_NAMES_MAX
-from app.schemas.common.field_types import HexColor
-from app.schemas.requests.note_request import TagNameInput
+from app.schemas.common.field_types import HexColor, TagNameInput
 
 NoteUuid = Annotated[UUID, Field(description="The note uuid.")]
 FolderId = Annotated[UUID, Field(description="The folder id from list_folders.")]

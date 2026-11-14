@@ -9,7 +9,7 @@ from app.constants.access_token_constants import (
     AccessTokenExpiryDays,
     TokenAbility,
 )
-from app.schemas.common.field_types import require_text
+from app.schemas.common.field_types import NoNulCharacter, require_text
 
 _KNOWN_ABILITIES = {ability.value for ability in TokenAbility}
 
@@ -32,6 +32,7 @@ class CreateAccessTokenRequest(BaseModel):
         str,
         StringConstraints(strip_whitespace=True, max_length=ACCESS_TOKEN_NAME_MAX_LENGTH),
         AfterValidator(require_text),
+        NoNulCharacter,
     ]
     abilities: Annotated[list[str], Field(min_length=1), AfterValidator(_normalise_abilities)]
     # Left out or null: the token never expires.

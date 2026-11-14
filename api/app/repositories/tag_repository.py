@@ -16,6 +16,23 @@ class TagRepository:
         """Any owner's tag: only for telling a reused uuid apart from a free one."""
         return self._session.scalar(select(Tag).where(Tag.uuid == tag_uuid))
 
+    def all_of_user(self, user_id: int) -> list[Tag]:
+        return list(
+            self._session.scalars(select(Tag).where(Tag.user_id == user_id).order_by(Tag.name, Tag.id))
+        )
+
+    def find_by_name_prefix(self, user_id: int, prefix: str, limit: int) -> list[Tag]:
+        # The name's collation makes this ignore case and accents; autoescape keeps % and _
+        # in the prefix literal.
+        return list(
+            self._session.scalars(
+                select(Tag)
+                .where(Tag.user_id == user_id, Tag.name.startswith(prefix, autoescape=True))
+                .order_by(Tag.name, Tag.id)
+                .limit(limit)
+            )
+        )
+
     def find_of_user(self, user_id: int, tag_uuid: UUID) -> Tag | None:
         return self._session.scalar(select(Tag).where(Tag.user_id == user_id, Tag.uuid == tag_uuid))
 

@@ -22,3 +22,7 @@ class NoteSort(StrEnum):
     UPDATED = "updated"
     CREATED = "created"
     TITLE = "title"
+
+
+# The first page of the note list, sent with the bootstrap so the app opens on it.
+BOOTSTRAP_NOTES_MAX = 50

@@ -14,6 +14,27 @@ class FolderRepository:
         """Any owner's folder: only for telling a reused uuid apart from a free one."""
         return self._session.scalar(select(Folder).where(Folder.uuid == folder_uuid))
 
+    def all_of_user(self, user_id: int) -> list[Folder]:
+        return list(
+            self._session.scalars(
+                select(Folder)
+                .where(Folder.user_id == user_id)
+                .order_by(Folder.position, Folder.name, Folder.id)
+            )
+        )
+
+    def find_by_name_prefix(self, user_id: int, prefix: str, limit: int) -> list[Folder]:
+        # The name's collation makes this ignore case and accents; autoescape keeps % and _
+        # in the prefix literal.
+        return list(
+            self._session.scalars(
+                select(Folder)
+                .where(Folder.user_id == user_id, Folder.name.startswith(prefix, autoescape=True))
+                .order_by(Folder.name, Folder.id)
+                .limit(limit)
+            )
+        )
+
     def find_of_user(self, user_id: int, folder_uuid: UUID) -> Folder | None:
         return self._session.scalar(
             select(Folder).where(Folder.user_id == user_id, Folder.uuid == folder_uuid)

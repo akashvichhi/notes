@@ -1,6 +1,7 @@
 """Wires repositories and services for Depends(). App-wide objects (settings, clock, rate
 limiter, password hasher) are created once in main.create_app and read from app.state."""
 
+from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import Depends, Request, Response
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.constants.auth_constants import RATE_LIMIT_WINDOW_SECONDS, UNKNOWN_CLIENT_ADDRESS
 from app.constants.note_constants import NOTE_SAVES_PER_MINUTE
+from app.constants.search_constants import SEARCHES_PER_MINUTE
 from app.core.clock import Clock
 from app.core.database import get_db_session
 from app.core.rate_limiter import RateLimit, RateLimiter
@@ -22,10 +24,12 @@ from app.repositories.tag_repository import TagRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
 from app.services.auth_service import Authenticated, AuthService
+from app.services.bootstrap_service import BootstrapService
 from app.services.folder_service import FolderService
 from app.services.health_service import HealthService
 from app.services.note_service import NoteService
 from app.services.profile_service import ProfileService
+from app.services.search_service import SearchService
 from app.services.tag_service import TagService
 from app.services.user_session_service import UserSessionService
 
@@ -155,9 +159,32 @@ def get_note_service(session: DbSession, tags: TagServiceDependency, clock: Cloc
 
 NoteServiceDependency = Annotated[NoteService, Depends(get_note_service)]
 
-NOTE_SAVE_LIMIT = RateLimit(NOTE_SAVES_PER_MINUTE, RATE_LIMIT_WINDOW_SECONDS)
+
+def per_user_rate_limit(bucket: str, limit: RateLimit) -> Callable[[User, RateLimiter], None]:
+    """A route dependency counting one attempt per call against the signed-in user."""
+
+    def hit(user: CurrentUser, limiter: RateLimiterDependency) -> None:
+        limiter.hit(f"{bucket}:{user.id}", limit)
+
+    return hit
 
 
-def limit_note_saves(user: CurrentUser, limiter: RateLimiterDependency) -> None:
-    """Counts a note save per user; autosave stays far below the limit."""
-    limiter.hit(f"note-saves:{user.id}", NOTE_SAVE_LIMIT)
+# Autosave sends a save every few seconds while typing, far below this.
+limit_note_saves = per_user_rate_limit(
+    "note-saves", RateLimit(NOTE_SAVES_PER_MINUTE, RATE_LIMIT_WINDOW_SECONDS)
+)
+limit_searches = per_user_rate_limit("searches", RateLimit(SEARCHES_PER_MINUTE, RATE_LIMIT_WINDOW_SECONDS))
+
+
+def get_search_service(session: DbSession) -> SearchService:
+    return SearchService(NoteRepository(session), FolderRepository(session), TagRepository(session))
+
+
+SearchServiceDependency = Annotated[SearchService, Depends(get_search_service)]
+
+
+def get_bootstrap_service(session: DbSession) -> BootstrapService:
+    return BootstrapService(NoteRepository(session), FolderRepository(session), TagRepository(session))
+
+
+BootstrapServiceDependency = Annotated[BootstrapService, Depends(get_bootstrap_service)]

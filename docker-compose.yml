@@ -1,37 +1,72 @@
+x-laravel: &laravel
+  image: notes-app
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile
+    target: app
+  env_file: api/.env
+  environment:
+    DB_CONNECTION: mysql
+    DB_HOST: mysql
+    DB_PORT: 3306
+    DB_DATABASE: ${DB_DATABASE:-notes}
+    DB_USERNAME: root
+    DB_PASSWORD: ${DB_PASSWORD:-secret}
+  volumes:
+    - storage:/var/www/html/storage
+  depends_on:
+    mysql:
+      condition: service_healthy
+  restart: unless-stopped
+
 services:
-  # app:
-  #   build: ./docker/php
-  #   container_name: notes-app
-  #   working_dir: /var/www/html
-  #   volumes:
-  #     - ./api:/var/www/html
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy
-  #   # api/ does not exist until Task B1 creates it, so wait for artisan
-  #   # to appear and only then start serving.
-  #   command: >
-  #     sh -c "while [ ! -f artisan ]; do sleep 2; done;
-  #            php artisan serve --host=0.0.0.0 --port=8000"
+  app:
+    <<: *laravel
+
+  scheduler:
+    <<: *laravel
+    command: ["php", "artisan", "schedule:work"]
+
+  web:
+    image: notes-web
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: web
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "${HTTP_PORT:-8000}:80"
+      - "${HTTPS_PORT:-8443}:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
 
   mysql:
-    image: mysql:8.4
+    image: mysql:8.4.11
     container_name: notes-mysql
+    restart: unless-stopped
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
     environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: notes
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-notes}
+    # Bound to localhost only, so the database is never reachable from outside
+    # the machine; the app reaches it over Docker's own network.
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-psecret"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 5s
       timeout: 5s
       retries: 20
 
 volumes:
   mysql-data:
+  storage:
+  caddy-data:
+  caddy-config:

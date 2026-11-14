@@ -152,12 +152,32 @@ I built this app with a coding agent, working from documents I wrote first: a pr
 
 ## Local development
 
-Prerequisites: Docker (for MySQL), Node 20 or newer, and PHP 8.3 or newer with Composer, installed on your machine. The `app` (PHP) service in `docker-compose.yml` is commented out, so Compose starts only MySQL and the API runs on your local PHP.
+### Run the whole app with Docker
 
-**1. Start MySQL** (MySQL 8.4 on port 3306, database `notes`; the root password is set in [`docker-compose.yml`](docker-compose.yml)):
+`docker-compose.yml` runs everything: MySQL, the Laravel API on PHP-FPM, Caddy serving the API and the React build, and Laravel's scheduler. Every service restarts after a crash and whenever Docker starts. The reasons are in decision 5 of [`docs/decisions.md`](docs/decisions.md).
 
 ```sh
-docker compose up -d
+cp api/.env.example api/.env       # then set APP_KEY (php artisan key:generate --show) and the mail settings
+cp .env.example .env               # optional locally; the defaults work
+docker compose up -d --build
+```
+
+The app is on `http://127.0.0.1:8000`. The `app` container runs the migrations each time it starts. To seed the demo data: `docker compose exec app php artisan db:seed --force`.
+
+**On a server:**
+- In `.env`, set a strong `DB_PASSWORD` before the first start, `SITE_ADDRESS` to the domain, `HTTP_PORT=80` and `HTTPS_PORT=443`. Caddy then gets the HTTPS certificate itself.
+- In `api/.env`, set `APP_ENV=production`, `APP_DEBUG=false`, and `APP_URL`, `SANCTUM_STATEFUL_DOMAINS` and `SESSION_DOMAIN` for the domain.
+- Run `sudo systemctl enable docker` once, so Docker, and with it the app, starts when the server boots.
+- To deploy a new version: `git pull && docker compose up -d --build`.
+
+### Develop on your machine
+
+Prerequisites: Docker (for MySQL), Node 20 or newer, and PHP 8.3 or newer with Composer, installed on your machine. The API and the web app run natively, so changes show up without rebuilding images.
+
+**1. Start only MySQL** (MySQL 8.4 on `127.0.0.1:3306`, database `notes`, root password from `DB_PASSWORD` in the root `.env`, default `secret`):
+
+```sh
+docker compose up -d mysql
 ```
 
 **2. Run the API** on `http://127.0.0.1:8000`:

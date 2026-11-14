@@ -29,3 +29,10 @@ Numbered, ADR-style. Code comments and reviews refer to them ("decision 1").
 - **Options:** CSS custom properties defined in a global sheet; SCSS with `sass` (1.107.1, dev only).
 - **Decision:** SCSS. Tokens are checked at build time, a misspelt one fails the build instead of silently resolving to nothing, and mixins keep the light and dark selector lists in one place.
 - **Consequences:** `sass` is a dev dependency; Vite compiles `*.scss` and resolves `@src` in `@use`. Its optional `@parcel/watcher` install script stays unapproved, because only `sass --watch` uses it.
+
+## 5. Docker Compose runs the whole app
+
+- **Context:** the app should run on a VPS with one command and come back by itself after a crash or a reboot. Compose used to start only MySQL, and the commented-out PHP service ran `php artisan serve`, Laravel's development server. The API needs its daily scheduler (`notes:prune-pats`); nothing is queued.
+- **Options:** keep `php artisan serve`; nginx in front of PHP-FPM; Caddy (2.11.6) in front of PHP-FPM.
+- **Decision:** one multi-stage `docker/php/Dockerfile` builds the React app, then a PHP-FPM image with the build in `public/`, then a Caddy image. Compose runs `app` (PHP-FPM, which migrates and caches on start), `scheduler` (`schedule:work`), `web` (Caddy) and `mysql`, all with `restart: unless-stopped`. Caddy over nginx because it gets and renews the HTTPS certificate itself once `SITE_ADDRESS` is the domain, and its config is a few lines.
+- **Consequences:** `docker compose up -d --build` deploys. The app reads `api/.env`; the root `.env` holds only the Compose values (`.env.example`). MySQL listens on localhost only. The images hold no dev dependencies, so tests still run on local PHP and Node.

@@ -25,3 +25,11 @@ class UserSessionRepository:
     def delete(self, user_session: UserSession) -> None:
         self._session.delete(user_session)
         self._session.flush()
+
+    def get(self, session_id: int) -> UserSession | None:
+        return self._session.get(UserSession, session_id)
+
+    def delete_others_of_user(self, user_id: int, keep_session_id: int) -> None:
+        self._session.execute(
+            delete(UserSession).where(UserSession.user_id == user_id, UserSession.id != keep_session_id)
+        )

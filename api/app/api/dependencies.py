@@ -13,11 +13,14 @@ from app.core.rate_limiter import RateLimiter
 from app.core.security import PasswordHasher
 from app.core.session_cookie import SessionCookie
 from app.models.user_model import User
+from app.repositories.access_token_repository import AccessTokenRepository
 from app.repositories.health_repository import HealthRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
-from app.services.auth_service import AuthService
+from app.services.auth_service import Authenticated, AuthService
 from app.services.health_service import HealthService
+from app.services.profile_service import ProfileService
+from app.services.user_session_service import UserSessionService
 
 DbSession = Annotated[Session, Depends(get_db_session)]
 
@@ -58,36 +61,68 @@ def get_health_service(session: DbSession) -> HealthService:
     return HealthService(HealthRepository(session))
 
 
+def get_user_session_service(
+    session: DbSession, clock: ClockDependency, cookie: SessionCookieDependency
+) -> UserSessionService:
+    return UserSessionService(UserSessionRepository(session), clock, cookie.lifetime)
+
+
+UserSessionServiceDependency = Annotated[UserSessionService, Depends(get_user_session_service)]
+
+
 def get_auth_service(
     session: DbSession,
+    session_tokens: UserSessionServiceDependency,
     hasher: PasswordHasherDependency,
     limiter: RateLimiterDependency,
     clock: ClockDependency,
-    cookie: SessionCookieDependency,
 ) -> AuthService:
     return AuthService(
         session,
         UserRepository(session),
         UserSessionRepository(session),
+        session_tokens,
         hasher,
         limiter,
         clock,
-        cookie.lifetime,
     )
 
 
 AuthServiceDependency = Annotated[AuthService, Depends(get_auth_service)]
 
 
-def get_current_user(
+def get_authentication(
     request: Request, response: Response, service: AuthServiceDependency, cookie: SessionCookieDependency
-) -> User:
-    """The signed-in user, or 401. Sends the cookie again when the session slid forward."""
+) -> Authenticated:
+    """The signed-in user and session, or 401. Sends the cookie again when the session slid forward."""
     session_token = cookie.read(request)
     authenticated = service.authenticate(session_token)
     if authenticated.session_refreshed and session_token is not None:
         cookie.write(response, session_token)
-    return authenticated.user
+    return authenticated
+
+
+CurrentAuthentication = Annotated[Authenticated, Depends(get_authentication)]
+
+
+def get_current_user(authentication: CurrentAuthentication) -> User:
+    return authentication.user
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_profile_service(
+    session: DbSession, session_tokens: UserSessionServiceDependency, hasher: PasswordHasherDependency
+) -> ProfileService:
+    return ProfileService(
+        session,
+        UserRepository(session),
+        UserSessionRepository(session),
+        AccessTokenRepository(session),
+        session_tokens,
+        hasher,
+    )
+
+
+ProfileServiceDependency = Annotated[ProfileService, Depends(get_profile_service)]

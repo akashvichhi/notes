@@ -18,6 +18,16 @@ def field_error(field: str, message: str) -> PydanticCustomError:
     return PydanticCustomError("field_error", message, {FIELD_CONTEXT_KEY: field})
 
 
+def reject_null(value: object) -> object:
+    """For optional fields of a partial update: leaving one out is fine, sending null is not."""
+    if value is None:
+        raise PydanticCustomError("required", "required")
+    return value
+
+
+NotNull = BeforeValidator(reject_null)
+
+
 def require_text(value: str) -> str:
     if value == "":
         raise PydanticCustomError("required", "required")

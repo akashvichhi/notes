@@ -6,9 +6,9 @@ from app.constants import messages
 from app.schemas.common.field_types import Email, GivenPassword, NewPassword, UserName, field_error
 
 
-class RegisterRequest(BaseModel):
-    name: UserName
-    email: Email
+class NewPasswordFields(BaseModel):
+    """A new password typed twice; shared by sign-up and password change."""
+
     password: NewPassword
     password_confirmation: str
 
@@ -17,6 +17,11 @@ class RegisterRequest(BaseModel):
         if self.password != self.password_confirmation:
             raise field_error("password", messages.PASSWORD_CONFIRMATION_MISMATCH)
         return self
+
+
+class RegisterRequest(NewPasswordFields):
+    name: UserName
+    email: Email
 
 
 class LoginRequest(BaseModel):

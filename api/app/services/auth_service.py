@@ -16,11 +16,12 @@ from app.constants.auth_constants import (
 from app.core.clock import Clock
 from app.core.exceptions import ConflictError, UnauthenticatedError
 from app.core.rate_limiter import RateLimit, RateLimiter
-from app.core.security import PasswordHasher, hash_token, new_session_token
+from app.core.security import PasswordHasher, hash_token
 from app.models.user_model import User
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_session_repository import UserSessionRepository
 from app.schemas.requests.auth_request import LoginRequest, RegisterRequest
+from app.services.user_session_service import UserSessionService
 
 AUTH_LIMIT_PER_IP = RateLimit(AUTH_ATTEMPTS_PER_IP, RATE_LIMIT_WINDOW_SECONDS)
 FAILED_LOGIN_LIMIT_PER_EMAIL = RateLimit(FAILED_LOGINS_PER_EMAIL, RATE_LIMIT_WINDOW_SECONDS)
@@ -47,18 +48,18 @@ class AuthService:
         db: Session,
         users: UserRepository,
         sessions: UserSessionRepository,
+        session_tokens: UserSessionService,
         hasher: PasswordHasher,
         limiter: RateLimiter,
         clock: Clock,
-        session_lifetime: timedelta,
     ) -> None:
         self._db = db
         self._users = users
         self._sessions = sessions
+        self._session_tokens = session_tokens
         self._hasher = hasher
         self._limiter = limiter
         self._clock = clock
-        self._session_lifetime = session_lifetime
 
     def register(self, request: RegisterRequest, client_address: str) -> SignedIn:
         self._limiter.hit(f"register:{client_address}", AUTH_LIMIT_PER_IP)
@@ -112,15 +113,15 @@ class AuthService:
         user = self._users.get(user_session.user_id)
         if user is None:
             raise UnauthenticatedError
-        refreshed = user_session.expires_at - now < self._session_lifetime - SESSION_REFRESH_INTERVAL
+        lifetime = self._session_tokens.lifetime
+        refreshed = user_session.expires_at - now < lifetime - SESSION_REFRESH_INTERVAL
         if refreshed:
-            user_session.expires_at = now + self._session_lifetime
+            user_session.expires_at = now + lifetime
             self._db.commit()
         return Authenticated(user=user, session_id=user_session.id, session_refreshed=refreshed)
 
     def _sign_in(self, user: User) -> SignedIn:
         # A new random id on every sign-in, so an id seen before sign-in is worthless after.
-        token = new_session_token()
-        self._sessions.add(user.id, hash_token(token), self._clock.now() + self._session_lifetime)
+        token = self._session_tokens.start(user.id)
         self._db.commit()
         return SignedIn(user=user, session_token=token)

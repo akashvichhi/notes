@@ -1,5 +1,7 @@
 x-laravel: &laravel
   image: notes-app
+  # Built from this repo, never pulled from a registry.
+  pull_policy: build
   build:
     context: .
     dockerfile: docker/php/Dockerfile
@@ -29,6 +31,7 @@ services:
 
   web:
     image: notes-web
+    pull_policy: build
     build:
       context: .
       dockerfile: docker/php/Dockerfile

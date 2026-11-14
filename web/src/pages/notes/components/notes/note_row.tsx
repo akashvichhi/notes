@@ -41,7 +41,7 @@ export const NoteRow: React.NamedExoticComponent<INoteRowProps> = memo(function 
   onRestoreTo,
   onForceDelete,
 }: INoteRowProps): React.JSX.Element {
-  const updatedAgo: string = useMemo(() => dayjs(note.updated_at).fromNow(), [note.updated_at])
+  const updatedAgo: string = useMemo(() => dayjs(note.updatedAt).fromNow(), [note.updatedAt])
   return (
     <Box
       className={classes.noteRow}
@@ -76,19 +76,19 @@ export const NoteRow: React.NamedExoticComponent<INoteRowProps> = memo(function 
             {note.title || DEFAULT_NOTE_TITLE}
           </Text>
 
-          {!note.deleted_at && (
+          {!note.deletedAt && (
             <ActionIcon
-              aria-label={note.is_starred ? 'Unstar' : 'Star'}
+              aria-label={note.isStarred ? 'Unstar' : 'Star'}
               className={classes.rowAction}
               size="sm"
-              style={{ pointerEvents: 'auto', ...(note.is_starred ? { opacity: 1 } : {}) }}
+              style={{ pointerEvents: 'auto', ...(note.isStarred ? { opacity: 1 } : {}) }}
               variant="subtle"
               onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
                 e.stopPropagation()
                 onStar()
               }}
             >
-              {note.is_starred ? (
+              {note.isStarred ? (
                 <IconStarFilled color="var(--mantine-color-yellow-6)" size={14} />
               ) : (
                 <IconStar size={14} />
@@ -110,7 +110,7 @@ export const NoteRow: React.NamedExoticComponent<INoteRowProps> = memo(function 
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => e.stopPropagation()}>
-                {note.deleted_at ? (
+                {note.deletedAt ? (
                   <>
                     <Menu.Item onClick={onRestore}>Restore</Menu.Item>
                     <Menu.Item onClick={onRestoreTo}>Restore to…</Menu.Item>
@@ -128,7 +128,7 @@ export const NoteRow: React.NamedExoticComponent<INoteRowProps> = memo(function 
                   <>
                     <Menu.Item onClick={onRename}>Rename</Menu.Item>
                     <Menu.Item onClick={onMoveToFolder}>Move to folder…</Menu.Item>
-                    <Menu.Item onClick={onStar}>{note.is_starred ? 'Unstar' : 'Star'}</Menu.Item>
+                    <Menu.Item onClick={onStar}>{note.isStarred ? 'Unstar' : 'Star'}</Menu.Item>
                     <Menu.Item onClick={onDuplicate}>Duplicate</Menu.Item>
                     <Menu.Divider />
                     <Menu.Item

@@ -29,22 +29,14 @@ export function useBootstrap(): TBootstrapResult {
   })
   const data: IBootstrap | undefined = query.data
 
-  const user: IUser | null = useMemo<IUser | null>(() => {
-    const raw: IUser | { data: IUser; } | undefined = data?.user
-    if (!raw) return null
-    return 'data' in raw ? raw.data : raw
-  }, [data?.user])
+  const user: IUser | null = useMemo<IUser | null>(() => data?.user ?? null, [data?.user])
 
   const folders: IFolder[] = useMemo(() => getFoldersArray(data?.folders), [data?.folders])
   const tags: ITag[] = useMemo(() => getTagsArray(data?.tags), [data?.tags])
 
   const counts: INoteCounts | null = useMemo(() => data?.counts ?? null, [data?.counts])
 
-  const initialNotes: INoteListItem[] = useMemo<INoteListItem[]>(() => {
-    const raw: INoteListItem[] | { data: INoteListItem[]; } | undefined = data?.notes
-    if (!raw) return EMPTY_NOTES
-    return Array.isArray(raw) ? raw : raw.data ?? EMPTY_NOTES
-  }, [data?.notes])
+  const initialNotes: INoteListItem[] = useMemo<INoteListItem[]>(() => data?.notes ?? EMPTY_NOTES, [data?.notes])
 
   return useMemo(
     () => ({

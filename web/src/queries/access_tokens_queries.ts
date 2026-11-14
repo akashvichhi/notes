@@ -13,16 +13,16 @@ export function useAccessTokens(): UseQueryResult<IAccessToken[], IApiError> {
   })
 }
 
-export interface ICreateAccessTokenVars { name: string; abilities: TAccessTokenAbility[]; expires_in_days: number | null }
-export interface ICreatedAccessToken { token: string; access_token: IAccessToken }
+export interface ICreateAccessTokenVars { name: string; abilities: TAccessTokenAbility[]; expiresInDays: number | null }
+export interface ICreatedAccessToken { token: string; accessToken: IAccessToken }
 export type TCreateAccessTokenMutation = UseMutationResult<ICreatedAccessToken, IApiError, ICreateAccessTokenVars>
 
 export function useCreateAccessToken(): TCreateAccessTokenMutation {
   const qc: QueryClient = useQueryClient()
   return useMutation({
     mutationFn: accessTokensApi.createAccessToken,
-    onSuccess:  ({ access_token }: { token: string; access_token: IAccessToken; }) => {
-      qc.setQueryData<IAccessToken[]>(ACCESS_TOKENS_KEY, (old: NoInfer<IAccessToken[]> | undefined) => [access_token, ...(old ?? [])])
+    onSuccess:  ({ accessToken }: { token: string; accessToken: IAccessToken; }) => {
+      qc.setQueryData<IAccessToken[]>(ACCESS_TOKENS_KEY, (old: NoInfer<IAccessToken[]> | undefined) => [accessToken, ...(old ?? [])])
     },
   })
 }

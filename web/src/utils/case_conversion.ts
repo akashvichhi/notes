@@ -26,7 +26,8 @@ function convertKeys(value: unknown, convertKey: TKeyConverter): unknown {
   return converted
 }
 
-function snakeToCamel(key: string): string {
+/** One snake_case name in camelCase. */
+export function snakeToCamel(key: string): string {
   return key.replace(/_([a-z0-9])/g, (_match: string, letter: string): string => letter.toUpperCase())
 }
 

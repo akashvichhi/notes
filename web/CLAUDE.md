@@ -1,6 +1,6 @@
 # Frontend rules: Notes
 
-Stack: React 19, TypeScript (`strict`), Vite, Mantine, TanStack React Query, React Router, axios, zustand, Tiptap, Vitest + React Testing Library. The API is Laravel with Sanctum. These rules add to the root `CLAUDE.md`.
+Stack: React 19, TypeScript (`strict`), Vite, Mantine, TanStack React Query, React Router, axios, zustand, Tiptap, Vitest + React Testing Library. The API is the FastAPI app in `api/`, following `docs/standards/api-contract.md`. These rules add to the root `CLAUDE.md`.
 
 - **NEVER** use `@tiptap-pro` packages.
 - The app runs only in the browser (decision 1).
@@ -55,22 +55,22 @@ Pages: login, register, notes (list and editor, `/` and `/notes/:uuid`), access_
 ## Environment and API client
 - `src/config/env.ts` is the only file that reads `import.meta.env`.
 - `VITE_*` variables are built into the JavaScript and readable by anyone. **NEVER** put secrets in them.
-- `api/api_client.ts` creates ONE axios instance (`baseURL: API_URL + '/api/v1'`, `withCredentials: true`). **NEVER** call `axios` or `fetch` directly anywhere else; the only other request is the Sanctum CSRF cookie fetch inside `api_client.ts`.
+- `api/api_client.ts` creates ONE axios instance (`baseURL: API_URL + '/api/v1'`, `withCredentials: true`). **NEVER** call `axios` or `fetch` directly anywhere else.
 - Endpoint paths live in `constants/api_endpoints.ts` (`NOTES: '/notes'`, `noteByUuid: (uuid: TUuid) => ...`).
 
 ## snake_case ↔ camelCase
 - Converted **once, in axios interceptors**: response body keys snake → camel; request body and query `params` keys camel → snake. Never inside API functions.
-- Pure, recursive converters in `utils/case_converter.ts`; they skip `FormData`, `Blob` and `Date`.
+- Pure, recursive converters in `utils/case_conversion.ts`; only plain objects are converted, so `FormData`, `Blob` and `Date` pass through.
 - Only **keys** are converted, never values. Values the API expects in snake_case are constants in that form.
-- **Opaque data is never converted:** a note's `body` (ProseMirror JSON; `textAlign` must stay `textAlign`) and maps keyed by data (`counts.folders` is keyed by folder uuid, `counts.tags` by tag slug).
-- In a 422, the keys of `errors` are converted to camelCase so they match the form field names.
-- The error interceptor rejects every failure as an `ApiError` (`{ status: number, message: string, errors?: Record<string, string[]>, serverCopy?: Note }`, defined in `api/api_client.ts`); a network error has `status: 0` and a fallback message. React Query's `defaultError` is `ApiError`, and `normalizeError()` turns anything else thrown into one. Components and hooks never inspect raw axios errors.
+- **Opaque data is never converted:** a note's `body` (ProseMirror JSON; `textAlign` must stay `textAlign`), wherever it appears, including a conflict's `serverCopy`. The API never keys objects by data; the bootstrap's count lists become lookup maps in `bootstrap_api.ts`, after the conversion.
+- An error's `details` (`[{ field, message }]`) become `errors`, keyed by the camelCase field name, so they match the form field names.
+- The error interceptor rejects every failure as an `IApiError` (`{ status: number, message: string, errors?: Record<string, string[]>, serverCopy?: INote }`, defined in `api/api_client.ts`; `message` is the API's `error`); a network error has `status: 0` and a fallback message. React Query's `defaultError` is `IApiError`, and `normalizeError()` turns anything else thrown into one. Components and hooks never inspect raw axios errors.
 
 ## Authentication
-- **Browser:** the Sanctum session lives in an httpOnly cookie. The frontend never sees, stores or sends a token. A 419 (expired CSRF token) is retried once inside the interceptor after refreshing the CSRF cookie.
+- **Browser:** the session lives in an httpOnly cookie. The frontend never sees, stores or sends a token; the API's origin check, not a CSRF token, guards writes.
 - **NEVER** put auth data in `localStorage`, `sessionStorage` or a JS-readable cookie. The current user lives only in the React Query cache (`useCurrentUserQuery`).
-- `protected_route.tsx` runs `useCurrentUserQuery` (`GET /me`): loading → full-screen loader; 200 → the page; 401 → login, remembering the page asked for. `guest_route.tsx` sends a signed-in user from login and register to the notes.
-- Session expiry: the response interceptor reports a 401 (except from `/me` and `/login`) to a handler registered by `app.tsx`, which clears cached queries and re-checks the session. The API client needs no access to the router or the cache.
+- `protected_route.tsx` runs `useCurrentUserQuery` (`GET /auth/me`): loading → full-screen loader; 200 → the page; 401 → login, remembering the page asked for. `guest_route.tsx` sends a signed-in user from login and register to the notes.
+- Session expiry: the response interceptor reports a 401 (except from `/auth/me` and `/auth/login`) to a handler registered by `app.tsx`, which clears cached queries and re-checks the session. The API client needs no access to the router or the cache.
 - Login: on success, put the user in the `useCurrentUserQuery` cache and go to the remembered page. Show the API's generic error; **NEVER** say whether the email or the password was wrong.
 - The remembered page comes from router state, never from a URL parameter (no open redirects).
 - Logout: clear the whole query cache, the open tabs and the draft buffer, then go to login.

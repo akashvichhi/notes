@@ -1,40 +1,40 @@
+import { API_ENDPOINTS } from '@src/constants/api_endpoints'
+import type { IDataResponse } from '@src/types/api_response'
 import type { IUser } from '@src/types/api'
 import type { ILoginCredentials, IRegisterCredentials } from '@src/types/auth'
 
-import { api, ensureCsrf } from './api_client'
+import { api } from './api_client'
 
 
 
 export async function fetchMe(): Promise<IUser> {
-  const { data } = await api.get<{ data: IUser }>('/me')
+  const { data } = await api.get<IDataResponse<IUser>>(API_ENDPOINTS.CURRENT_USER)
   return data.data
 }
 
 export async function login(payload: ILoginCredentials): Promise<IUser> {
-  await ensureCsrf()
-  const { data } = await api.post<{ data: IUser }>('/login', payload)
+  const { data } = await api.post<IDataResponse<IUser>>(API_ENDPOINTS.LOGIN, payload)
   return data.data
 }
 
 export async function register(payload: IRegisterCredentials): Promise<IUser> {
-  await ensureCsrf()
-  const { data } = await api.post<{ data: IUser }>('/register', payload)
+  const { data } = await api.post<IDataResponse<IUser>>(API_ENDPOINTS.REGISTER, payload)
   return data.data
 }
 
 export async function logout(): Promise<void> {
-  await api.post('/logout')
+  await api.post(API_ENDPOINTS.LOGOUT)
 }
 
 export async function updateProfile(payload: { name?: string; email?: string }): Promise<IUser> {
-  const { data } = await api.patch<{ data: IUser }>('/me', payload)
+  const { data } = await api.patch<IDataResponse<IUser>>(API_ENDPOINTS.PROFILE, payload)
   return data.data
 }
 
 export async function updatePassword(payload: {
-  current_password:      string
-  password:              string
-  password_confirmation: string
+  currentPassword:      string
+  password:             string
+  passwordConfirmation: string
 }): Promise<void> {
-  await api.put('/me/password', payload)
+  await api.put(API_ENDPOINTS.PASSWORD, payload)
 }

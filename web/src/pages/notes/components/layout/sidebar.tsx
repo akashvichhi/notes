@@ -18,7 +18,7 @@ import { SidebarNav } from './sidebar_nav'
 export const Sidebar: React.MemoExoticComponent<() => React.JSX.Element> = memo(function Sidebar() {
   const { folders, tags, counts } = useBootstrap()
 
-  const createFolder: UseMutationResult<IFolder, IApiError, { name: string; parent_uuid?: TUuid; color?: string; uuid?: TUuid; }, { previous: IBootstrap | undefined; tempUuid: string; }> = useCreateFolder()
+  const createFolder: UseMutationResult<IFolder, IApiError, { name: string; parentUuid?: TUuid; color?: string; uuid?: TUuid; }, { previous: IBootstrap | undefined; tempUuid: string; }> = useCreateFolder()
   const renameFolder: TRenameFolderMutation = useRenameFolder()
   const deleteFolder: TDeleteFolderMutation = useDeleteFolder()
   const createTag: UseMutationResult<ITag, IApiError, { name: string; uuid?: TUuid; }, { previous: IBootstrap | undefined; tempUuid: string; }> = useCreateTag()

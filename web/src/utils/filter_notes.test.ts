@@ -8,11 +8,11 @@ const note: (overrides: Partial<INoteListItem>) => INoteListItem = (overrides: P
   uuid:       '00000000-0000-7000-8000-000000000001',
   title:      'Untitled',
   excerpt:    '',
-  is_starred: false,
+  isStarred: false,
   folder:     null,
   tags:       [],
-  updated_at: '2026-01-01T00:00:00+00:00',
-  deleted_at: null,
+  updatedAt: '2026-01-01T00:00:00+00:00',
+  deletedAt: null,
   ...overrides,
 })
 

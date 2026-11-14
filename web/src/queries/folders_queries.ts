@@ -3,7 +3,7 @@ import type { QueryClient, UseMutationResult } from '@tanstack/react-query'
 
 import type { IApiError } from '@src/api/api_client'
 import * as foldersApi from '@src/api/folders_api'
-import type { INotesPage } from '@src/api/notes_api'
+import type { TNotesPage } from '@src/api/notes_api'
 import { ALL_NOTES_LABEL } from '@src/constants/labels'
 import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTES_KEY } from '@src/constants/query_keys'
@@ -18,14 +18,14 @@ export interface IRenameFolderVars { uuid: string; name: string }
 export type TRenameFolderMutation = UseMutationResult<IFolder, IApiError, IRenameFolderVars, ISidebarItemContext>
 export type TDeleteFolderMutation = UseMutationResult<void, IApiError, string, ISidebarItemContext>
 
-export function useCreateFolder(): UseMutationResult<IFolder, IApiError, { name: string; parent_uuid?: TUuid; color?: string; uuid?: TUuid; }, { previous: IBootstrap | undefined; tempUuid: string; }> {
+export function useCreateFolder(): UseMutationResult<IFolder, IApiError, { name: string; parentUuid?: TUuid; color?: string; uuid?: TUuid; }, { previous: IBootstrap | undefined; tempUuid: string; }> {
   const qc: QueryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: { name: string; parent_uuid?: TUuid; color?: string; uuid?: TUuid }) => {
+    mutationFn: (payload: { name: string; parentUuid?: TUuid; color?: string; uuid?: TUuid }) => {
       const uuid: string = payload.uuid || crypto.randomUUID()
       return foldersApi.createFolder({ ...payload, uuid })
     },
-    onMutate: async (payload: { name: string; parent_uuid?: TUuid; color?: string; uuid?: TUuid; }) => {
+    onMutate: async (payload: { name: string; parentUuid?: TUuid; color?: string; uuid?: TUuid; }) => {
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
       const previous: IBootstrap | undefined = qc.getQueryData<IBootstrap>(BOOTSTRAP_KEY)
       const tempUuid: string = payload.uuid || crypto.randomUUID()
@@ -36,7 +36,7 @@ export function useCreateFolder(): UseMutationResult<IFolder, IApiError, { name:
         name:        payload.name,
         color:       payload.color ?? null,
         position:    previous ? getFoldersArray(previous.folders).length : 0,
-        parent_uuid: payload.parent_uuid ?? null,
+        parentUuid: payload.parentUuid ?? null,
       }
 
       qc.setQueryData<IBootstrap>(BOOTSTRAP_KEY, (old: NoInfer<IBootstrap> | undefined) => {
@@ -57,11 +57,11 @@ export function useCreateFolder(): UseMutationResult<IFolder, IApiError, { name:
 
       return { previous, tempUuid }
     },
-    onError: (_err: IApiError, _v: { name: string; parent_uuid?: TUuid; color?: string; uuid?: TUuid; }, ctx: { previous: IBootstrap | undefined; tempUuid: string; } | undefined) => {
+    onError: (_err: IApiError, _v: { name: string; parentUuid?: TUuid; color?: string; uuid?: TUuid; }, ctx: { previous: IBootstrap | undefined; tempUuid: string; } | undefined) => {
       if (ctx?.previous) qc.setQueryData(BOOTSTRAP_KEY, ctx.previous)
       showErrorToast(MESSAGES.FOLDER_CREATE_FAILED)
     },
-    onSuccess: (realFolder: IFolder, _v: { name: string; parent_uuid?: TUuid; color?: string; uuid?: TUuid; }, ctx: { previous: IBootstrap | undefined; tempUuid: string; }) => {
+    onSuccess: (realFolder: IFolder, _v: { name: string; parentUuid?: TUuid; color?: string; uuid?: TUuid; }, ctx: { previous: IBootstrap | undefined; tempUuid: string; }) => {
       qc.setQueryData<IBootstrap>(BOOTSTRAP_KEY, (old: NoInfer<IBootstrap> | undefined) => {
         if (!old) return old
         const current: IFolder[] = getFoldersArray(old.folders)
@@ -101,11 +101,11 @@ export function useRenameFolder(): TRenameFolderMutation {
         }
       })
 
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: TNotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p: INotesPage) => ({
+          pages: old.pages.map((p: TNotesPage) => ({
             ...p,
             data: p.data.map((n: INoteListItem) =>
               n.folder?.uuid === uuid ? { ...n, folder: { ...n.folder, name } } : n
@@ -161,11 +161,11 @@ export function useDeleteFolder(): TDeleteFolderMutation {
         }
       })
 
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: TNotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p: INotesPage) => ({
+          pages: old.pages.map((p: TNotesPage) => ({
             ...p,
             data: p.data.map((n: INoteListItem) =>
               n.folder?.uuid === uuid ? { ...n, folder: null } : n

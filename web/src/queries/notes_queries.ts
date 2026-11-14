@@ -18,11 +18,11 @@ import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
 import { showErrorToast } from '@src/utils/notifications'
 import { slugify } from '@src/utils/slugify'
 
-export interface IStarNoteVars { uuid: string; is_starred: boolean }
+export interface IStarNoteVars { uuid: string; isStarred: boolean }
 export interface IRenameNoteVars { uuid: string; title: string }
-export interface ICreateNoteVars { folder_id?: TUuid; uuid?: TUuid }
+export interface ICreateNoteVars { folderId?: TUuid; uuid?: TUuid }
 export interface INoteTagsVars { uuid: TUuid; names: string[] }
-export interface IMoveNoteVars { uuid: TUuid; folder_id: TUuid | null }
+export interface IMoveNoteVars { uuid: TUuid; folderId: TUuid | null }
 
 export type TStarNoteMutation = UseMutationResult<INote | null, IApiError, IStarNoteVars, INoteEditContext>
 export type TRenameNoteMutation = UseMutationResult<INote | null, IApiError, IRenameNoteVars, IRenameNoteContext>
@@ -67,7 +67,7 @@ export function useNote(uuid?: TUuid | null): UseQueryResult<INote | null, IApiE
 
 function scopeParams(scope: TScope): Record<string, string | undefined> {
   switch (scope.kind) {
-    case 'folder': return { folder_id: scope.uuid }
+    case 'folder': return { folderId: scope.uuid }
     case 'tag': return { tag: scope.slug }
     case 'starred': return { starred: '1' }
     case 'trash': return { trashed: '1' }
@@ -87,7 +87,7 @@ function scopeKey(scope: TScope): string {
   }
 }
 
-export function useNotes(scope: TScope): UseInfiniteQueryResult<InfiniteData<notesApi.INotesPage, unknown>, IApiError> {
+export function useNotes(scope: TScope): UseInfiniteQueryResult<InfiniteData<notesApi.TNotesPage, unknown>, IApiError> {
   return useInfiniteQuery({
     queryKey: queryKeys.notes.list(scopeKey(scope)),
     queryFn:  async ({ pageParam }: { pageParam: number }) => {
@@ -97,9 +97,9 @@ export function useNotes(scope: TScope): UseInfiniteQueryResult<InfiniteData<not
       })
     },
     initialPageParam: 1,
-    getNextPageParam: (last: notesApi.INotesPage) =>
-      last.meta.current_page < last.meta.last_page
-        ? last.meta.current_page + 1
+    getNextPageParam: (last: notesApi.TNotesPage) =>
+      last.meta.currentPage < last.meta.totalPages
+        ? last.meta.currentPage + 1
         : undefined,
     staleTime: Infinity,
   })
@@ -110,10 +110,10 @@ export function useStarNote(_scope?: TScope): TStarNoteMutation {
   const qc: QueryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ uuid, is_starred }: { uuid: string; is_starred: boolean }) => {
-      return notesApi.patchNote(uuid, { is_starred })
+    mutationFn: async ({ uuid, isStarred }: { uuid: string; isStarred: boolean }) => {
+      return notesApi.patchNote(uuid, { isStarred })
     },
-    onMutate: async ({ uuid, is_starred }: { uuid: string; is_starred: boolean; }) => {
+    onMutate: async ({ uuid, isStarred }: { uuid: string; isStarred: boolean; }) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: queryKeys.notes.detail(uuid) })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
@@ -123,24 +123,24 @@ export function useStarNote(_scope?: TScope): TStarNoteMutation {
       const prevBootstrap: IBootstrap | undefined = qc.getQueryData<IBootstrap>(BOOTSTRAP_KEY)
 
       // 1. Update all cached note lists
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p: notesApi.INotesPage) => ({
+          pages: old.pages.map((p: notesApi.TNotesPage) => ({
             ...p,
-            data: p.data.map((n: INoteListItem) => (n.uuid === uuid ? { ...n, is_starred } : n)),
+            data: p.data.map((n: INoteListItem) => (n.uuid === uuid ? { ...n, isStarred } : n)),
           })),
         }
       })
 
       // 2. Update single note query if open
       if (prevSingleNote) {
-        qc.setQueryData<INote>(queryKeys.notes.detail(uuid), { ...prevSingleNote, is_starred })
+        qc.setQueryData<INote>(queryKeys.notes.detail(uuid), { ...prevSingleNote, isStarred })
       }
 
       // 3. Update the sidebar's starred count
-      const delta: 1 | -1 = is_starred ? 1 : -1
+      const delta: 1 | -1 = isStarred ? 1 : -1
       qc.setQueryData<IBootstrap>(BOOTSTRAP_KEY, (old: NoInfer<IBootstrap> | undefined) => {
         if (!old) return old
         const currentStarred: number = old.counts?.starred ?? 0
@@ -167,7 +167,7 @@ export function useStarNote(_scope?: TScope): TStarNoteMutation {
       }
       showErrorToast(MESSAGES.NOTE_UPDATE_FAILED)
     },
-    onSettled: (_data: INote | null | undefined, _err: IApiError | null, { uuid }: { uuid: string; is_starred: boolean; }) => {
+    onSettled: (_data: INote | null | undefined, _err: IApiError | null, { uuid }: { uuid: string; isStarred: boolean; }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
@@ -196,11 +196,11 @@ export function useRenameNote(): TRenameNoteMutation {
       setTitle(uuid, title || DEFAULT_NOTE_TITLE)
 
       // 2. Instantly update note lists
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p: notesApi.INotesPage) => ({
+          pages: old.pages.map((p: notesApi.TNotesPage) => ({
             ...p,
             data: p.data.map((n: INoteListItem) => (n.uuid === uuid ? { ...n, title } : n)),
           })),
@@ -259,25 +259,25 @@ export function useCreateNote(): TCreateNoteMutation {
 
       // 2. Populate single note cache optimistically
       let currentFolder: { uuid: TUuid; name: string } | null = null
-      if (payload.folder_id) {
+      if (payload.folderId) {
         const foldersList: IFolder[] = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
-        const found: IFolder | undefined = foldersList.find((f: IFolder) => f.uuid === payload.folder_id)
+        const found: IFolder | undefined = foldersList.find((f: IFolder) => f.uuid === payload.folderId)
         currentFolder = found ? { uuid: found.uuid, name: found.name } : null
       }
 
       const optimisticNote: INote = {
         uuid,
         title:        DEFAULT_NOTE_TITLE,
-        title_locked: false,
+        titleLocked: false,
         body:         { type: 'doc', content: [] },
         excerpt:      '',
-        is_starred:   false,
+        isStarred:   false,
         version:      1,
-        word_count:   0,
+        wordCount:   0,
         folder:       currentFolder,
         tags:         [],
-        updated_at:   new Date().toISOString(),
-        deleted_at:   null,
+        updatedAt:   new Date().toISOString(),
+        deletedAt:   null,
       }
       qc.setQueryData(queryKeys.notes.detail(uuid), optimisticNote)
 
@@ -286,16 +286,16 @@ export function useCreateNote(): TCreateNoteMutation {
         uuid,
         title:      DEFAULT_NOTE_TITLE,
         excerpt:    '',
-        is_starred: false,
+        isStarred: false,
         folder:     currentFolder,
         tags:       [],
-        updated_at: new Date().toISOString(),
-        deleted_at: null,
+        updatedAt: new Date().toISOString(),
+        deletedAt: null,
       }
 
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
         if (!old?.pages?.length || !old.pages[0]) return old
-        const first: notesApi.INotesPage = old.pages[0]
+        const first: notesApi.TNotesPage = old.pages[0]
         return {
           ...old,
           pages: [
@@ -304,7 +304,7 @@ export function useCreateNote(): TCreateNoteMutation {
               data: [optimisticListItem, ...first.data],
               meta: {
                 ...first.meta,
-                total: (first.meta?.total ?? 0) + 1,
+                totalCount: (first.meta?.totalCount ?? 0) + 1,
               },
             },
             ...old.pages.slice(1),
@@ -320,10 +320,10 @@ export function useCreateNote(): TCreateNoteMutation {
           counts: {
             ...old.counts,
             all:     (old.counts?.all ?? 0) + 1,
-            folders: payload.folder_id
+            folders: payload.folderId
               ? {
                 ...old.counts?.folders,
-                [payload.folder_id]: (old.counts?.folders?.[payload.folder_id] ?? 0) + 1,
+                [payload.folderId]: (old.counts?.folders?.[payload.folderId] ?? 0) + 1,
               }
               : old.counts?.folders,
           },
@@ -373,8 +373,8 @@ export function useTrashNote(): TNoteListMutation {
       // Find note in cached pages to get starred / folder info
       let trashedItem: INoteListItem | undefined
       for (const [, queryData] of prevNotes) {
-        const pagesData: { pages?: notesApi.INotesPage[]; } = queryData as { pages?: notesApi.INotesPage[] }
-        const item: INoteListItem | undefined = pagesData?.pages?.flatMap((p: notesApi.INotesPage) => p.data).find((n: INoteListItem) => n.uuid === uuid)
+        const pagesData: { pages?: notesApi.TNotesPage[]; } = queryData as { pages?: notesApi.TNotesPage[] }
+        const item: INoteListItem | undefined = pagesData?.pages?.flatMap((p: notesApi.TNotesPage) => p.data).find((n: INoteListItem) => n.uuid === uuid)
         if (item) {
           trashedItem = item
           break
@@ -382,11 +382,11 @@ export function useTrashNote(): TNoteListMutation {
       }
 
       // Remove from non-trash lists
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p: notesApi.INotesPage) => ({
+          pages: old.pages.map((p: notesApi.TNotesPage) => ({
             ...p,
             data: p.data.filter((n: INoteListItem) => n.uuid !== uuid),
           })),
@@ -408,7 +408,7 @@ export function useTrashNote(): TNoteListMutation {
             ...old.counts,
             all:     Math.max(0, (old.counts?.all ?? 1) - 1),
             trashed: (old.counts?.trashed ?? 0) + 1,
-            starred: trashedItem?.is_starred ? Math.max(0, (old.counts?.starred ?? 1) - 1) : (old.counts?.starred ?? 0),
+            starred: trashedItem?.isStarred ? Math.max(0, (old.counts?.starred ?? 1) - 1) : (old.counts?.starred ?? 0),
             folders: nextFolderCounts,
           },
         }
@@ -447,11 +447,11 @@ export function useRestoreNote(): TNoteListMutation {
       const prevBootstrap: IBootstrap | undefined = qc.getQueryData<IBootstrap>(BOOTSTRAP_KEY)
 
       // Remove from trash list
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p: notesApi.INotesPage) => ({
+          pages: old.pages.map((p: notesApi.TNotesPage) => ({
             ...p,
             data: p.data.filter((n: INoteListItem) => n.uuid !== uuid),
           })),
@@ -506,11 +506,11 @@ export function useForceDeleteNote(): TNoteListMutation {
       const prevNotes: [readonly unknown[], unknown][] = qc.getQueriesData({ queryKey: NOTES_KEY })
       const prevBootstrap: IBootstrap | undefined = qc.getQueryData<IBootstrap>(BOOTSTRAP_KEY)
 
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p: notesApi.INotesPage) => ({
+          pages: old.pages.map((p: notesApi.TNotesPage) => ({
             ...p,
             data: p.data.filter((n: INoteListItem) => n.uuid !== uuid),
           })),
@@ -567,7 +567,7 @@ export function useDuplicateNote(): TDuplicateNoteMutation {
       let sourceItem: INoteListItem | INote | undefined = prevSingle
       if (!sourceItem && prevNotes) {
         for (const [, data] of prevNotes) {
-          const pages: notesApi.INotesPage[] | undefined = (data as { pages?: notesApi.INotesPage[] })?.pages
+          const pages: notesApi.TNotesPage[] | undefined = (data as { pages?: notesApi.TNotesPage[] })?.pages
           if (pages) {
             for (const page of pages) {
               const found: INoteListItem | undefined = page.data.find((n: INoteListItem) => n.uuid === sourceUuid)
@@ -593,11 +593,11 @@ export function useDuplicateNote(): TDuplicateNoteMutation {
         uuid:       tempUuid,
         title,
         excerpt,
-        is_starred: false,
+        isStarred: false,
         folder,
         tags,
-        updated_at: new Date().toISOString(),
-        deleted_at: null,
+        updatedAt: new Date().toISOString(),
+        deletedAt: null,
       }
 
       // If we have single note data for the source note, also pre-populate single note query
@@ -607,17 +607,17 @@ export function useDuplicateNote(): TDuplicateNoteMutation {
           uuid:         tempUuid,
           title,
           version:      1,
-          title_locked: sourceItem ? sourceItem.title !== '' : true,
-          updated_at:   new Date().toISOString(),
-          deleted_at:   null,
+          titleLocked: sourceItem ? sourceItem.title !== '' : true,
+          updatedAt:   new Date().toISOString(),
+          deletedAt:   null,
         }
         qc.setQueryData(queryKeys.notes.detail(tempUuid), optimisticNote)
       }
 
       // Prepend to note list queries
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
         if (!old?.pages?.length || !old.pages[0]) return old
-        const first: notesApi.INotesPage = old.pages[0]
+        const first: notesApi.TNotesPage = old.pages[0]
         return {
           ...old,
           pages: [
@@ -626,7 +626,7 @@ export function useDuplicateNote(): TDuplicateNoteMutation {
               data: [optimisticListItem, ...first.data],
               meta: {
                 ...first.meta,
-                total: (first.meta?.total ?? 0) + 1,
+                totalCount: (first.meta?.totalCount ?? 0) + 1,
               },
             },
             ...old.pages.slice(1),
@@ -670,11 +670,11 @@ export function useDuplicateNote(): TDuplicateNoteMutation {
       qc.setQueryData(queryKeys.notes.detail(realNote.uuid), realNote)
       if (ctx?.tempUuid) {
         qc.removeQueries({ queryKey: queryKeys.notes.detail(ctx.tempUuid) })
-        qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+        qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
           if (!old?.pages?.length) return old
           return {
             ...old,
-            pages: old.pages.map((p: notesApi.INotesPage) => ({
+            pages: old.pages.map((p: notesApi.TNotesPage) => ({
               ...p,
               data: p.data.map((n: INoteListItem) => (n.uuid === ctx.tempUuid ? realNote : n)),
             })),
@@ -774,10 +774,10 @@ export function useMoveNoteFolder(): TMoveNoteMutation {
   const qc: QueryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ uuid, folder_id }: { uuid: TUuid; folder_id: TUuid | null }) => {
-      return notesApi.patchNote(uuid, { folder_id })
+    mutationFn: async ({ uuid, folderId }: { uuid: TUuid; folderId: TUuid | null }) => {
+      return notesApi.patchNote(uuid, { folderId })
     },
-    onMutate: async ({ uuid, folder_id }: { uuid: TUuid; folder_id: TUuid | null; }) => {
+    onMutate: async ({ uuid, folderId }: { uuid: TUuid; folderId: TUuid | null; }) => {
       await qc.cancelQueries({ queryKey: NOTES_KEY })
       await qc.cancelQueries({ queryKey: queryKeys.notes.detail(uuid) })
       await qc.cancelQueries({ queryKey: BOOTSTRAP_KEY })
@@ -787,9 +787,9 @@ export function useMoveNoteFolder(): TMoveNoteMutation {
       const prevBootstrap: IBootstrap | undefined = qc.getQueryData<IBootstrap>(BOOTSTRAP_KEY)
 
       let targetFolder: { uuid: TUuid; name: string } | null = null
-      if (folder_id) {
+      if (folderId) {
         const foldersList: IFolder[] = prevBootstrap ? getFoldersArray(prevBootstrap.folders) : []
-        const found: IFolder | undefined = foldersList.find((f: IFolder) => f.uuid === folder_id)
+        const found: IFolder | undefined = foldersList.find((f: IFolder) => f.uuid === folderId)
         targetFolder = found ? { uuid: found.uuid, name: found.name } : null
       }
 
@@ -804,11 +804,11 @@ export function useMoveNoteFolder(): TMoveNoteMutation {
       }
 
       // 2. Update note lists
-      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.INotesPage[] } | undefined) => {
+      qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: notesApi.TNotesPage[] } | undefined) => {
         if (!old?.pages?.length) return old
         return {
           ...old,
-          pages: old.pages.map((p: notesApi.INotesPage) => ({
+          pages: old.pages.map((p: notesApi.TNotesPage) => ({
             ...p,
             data: p.data.map((n: INoteListItem) => (n.uuid === uuid ? { ...n, folder: targetFolder } : n)),
           })),
@@ -822,8 +822,8 @@ export function useMoveNoteFolder(): TMoveNoteMutation {
         if (prevFolderUuid && nextFolderCounts[prevFolderUuid] !== undefined) {
           nextFolderCounts[prevFolderUuid] = Math.max(0, nextFolderCounts[prevFolderUuid] - 1)
         }
-        if (folder_id) {
-          nextFolderCounts[folder_id] = (nextFolderCounts[folder_id] ?? 0) + 1
+        if (folderId) {
+          nextFolderCounts[folderId] = (nextFolderCounts[folderId] ?? 0) + 1
         }
         return {
           ...old,
@@ -848,7 +848,7 @@ export function useMoveNoteFolder(): TMoveNoteMutation {
       }
       showErrorToast(MESSAGES.NOTE_MOVE_FAILED)
     },
-    onSettled: (_data: unknown, _err: IApiError | null, { uuid }: { uuid: TUuid; folder_id: TUuid | null; }) => {
+    onSettled: (_data: unknown, _err: IApiError | null, { uuid }: { uuid: TUuid; folderId: TUuid | null; }) => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
       qc.invalidateQueries({ queryKey: queryKeys.notes.detail(uuid) })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
@@ -865,10 +865,10 @@ export function useNotesFilterQuery(
   query: string,
   params: Record<string, string | undefined>,
   enabled: boolean,
-): UseQueryResult<notesApi.INotesPage> {
+): UseQueryResult<notesApi.TNotesPage> {
   return useQuery({
     queryKey: queryKeys.notes.filter(scope, query),
-    queryFn:  (): Promise<notesApi.INotesPage> => notesApi.fetchNotes({ ...params, q: query }),
+    queryFn:  (): Promise<notesApi.TNotesPage> => notesApi.fetchNotes({ ...params, q: query }),
     enabled,
   })
 }

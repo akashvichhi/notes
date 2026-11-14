@@ -24,12 +24,12 @@ export const RegisterPage: React.MemoExoticComponent<() => React.JSX.Element> = 
   const register: UseMutationResult<IUser, IApiError, IRegisterCredentials> = useRegister()
 
   const form: UseFormReturnType<IRegisterCredentials> = useForm<IRegisterCredentials>({
-    initialValues: { name: '', email: '', password: '', password_confirmation: '' },
+    initialValues: { name: '', email: '', password: '', passwordConfirmation: '' },
     validate:      {
       name:                  (v: string) => (v.trim().length > 0 ? null : 'Enter your name'),
       email:                 validateEmail,
       password:              validatePassword,
-      password_confirmation: validatePasswordConfirmation,
+      passwordConfirmation: validatePasswordConfirmation,
     },
   })
 
@@ -61,7 +61,7 @@ export const RegisterPage: React.MemoExoticComponent<() => React.JSX.Element> = 
             <PasswordInput
               autoComplete="new-password"
               label="Confirm password"
-              {...form.getInputProps('password_confirmation')}
+              {...form.getInputProps('passwordConfirmation')}
             />
 
             <Button fullWidth loading={register.isPending} type="submit">

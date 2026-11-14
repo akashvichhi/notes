@@ -67,10 +67,10 @@ export const CreateTokenForm: React.MemoExoticComponent<({ onCancel, onCreated, 
         {
           name:            name.trim(),
           abilities,
-          expires_in_days: expiry === 'never' ? null : Number(expiry),
+          expiresInDays: expiry === 'never' ? null : Number(expiry),
         },
         {
-          onSuccess: ({ token, access_token }: { token: string; access_token: IAccessToken; }) => onCreated(token, access_token.name),
+          onSuccess: ({ token, accessToken }: { token: string; accessToken: IAccessToken; }) => onCreated(token, accessToken.name),
           onError:   (err: IApiError) => showErrorToast(err.message || MESSAGES.TOKEN_CREATE_FAILED),
         },
       )

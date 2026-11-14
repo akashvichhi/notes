@@ -18,7 +18,7 @@ export const ConflictSheet: React.NamedExoticComponent<IConflictSheetProps> = me
   serverCopy, onKeepMine, onKeepTheirs, onSaveCopy, onRestoreMine, onDiscard, onClose,
 }: IConflictSheetProps): React.JSX.Element {
   // SPEC 5.5: the server refuses edits to a trashed note, so "keep mine" can't work there.
-  if (serverCopy.deleted_at !== null) {
+  if (serverCopy.deletedAt !== null) {
     return (
       <Modal centered opened title="This note was moved to Trash" onClose={onClose}>
         <Stack>

@@ -16,7 +16,7 @@ dayjs.extend(relativeTime)
 
 const formatDate: (iso: string | null, fallback: string) => string = (iso: string | null, fallback: string): string => (iso ? dayjs(iso).format('D MMM YYYY') : fallback)
 
-const isExpired: (token: IAccessToken) => boolean = (token: IAccessToken): boolean => token.expires_at !== null && dayjs(token.expires_at).isBefore(dayjs())
+const isExpired: (token: IAccessToken) => boolean = (token: IAccessToken): boolean => token.expiresAt !== null && dayjs(token.expiresAt).isBefore(dayjs())
 
 const TokenRow: React.MemoExoticComponent<({ token }: { token: IAccessToken; }) => React.JSX.Element> = memo(function TokenRow({ token }: { token: IAccessToken }) {
   const revoke: UseMutationResult<void, IApiError, number, unknown> = useRevokeAccessToken()
@@ -59,11 +59,11 @@ const TokenRow: React.MemoExoticComponent<({ token }: { token: IAccessToken; }) 
         </Group>
       </Table.Td>
       <Table.Td>
-        <Text size="sm">{formatDate(token.created_at, '—')}</Text>
+        <Text size="sm">{formatDate(token.createdAt, '—')}</Text>
       </Table.Td>
       <Table.Td>
-        <Text c={token.last_used_at ? undefined : 'dimmed'} size="sm">
-          {token.last_used_at ? dayjs(token.last_used_at).fromNow() : 'Never'}
+        <Text c={token.lastUsedAt ? undefined : 'dimmed'} size="sm">
+          {token.lastUsedAt ? dayjs(token.lastUsedAt).fromNow() : 'Never'}
         </Text>
       </Table.Td>
       <Table.Td>
@@ -72,7 +72,7 @@ const TokenRow: React.MemoExoticComponent<({ token }: { token: IAccessToken; }) 
             Expired
           </Badge>
         ) : (
-          <Text size="sm">{formatDate(token.expires_at, 'Never')}</Text>
+          <Text size="sm">{formatDate(token.expiresAt, 'Never')}</Text>
         )}
       </Table.Td>
       <Table.Td>

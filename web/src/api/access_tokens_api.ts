@@ -1,23 +1,25 @@
-import type { IAccessToken, TAccessTokenAbility } from '@src/types/api'
+import { API_ENDPOINTS } from '@src/constants/api_endpoints'
+import type { IDataResponse } from '@src/types/api_response'
+import type { IAccessToken, ICreatedAccessToken, TAccessTokenAbility } from '@src/types/api'
 
 import { api } from './api_client'
 
 
 
 export async function fetchAccessTokens(): Promise<IAccessToken[]> {
-  const { data } = await api.get<{ data: IAccessToken[] }>('/me/access-tokens')
+  const { data } = await api.get<IDataResponse<IAccessToken[]>>(API_ENDPOINTS.ACCESS_TOKENS)
   return data.data
 }
 
 export async function createAccessToken(payload: {
-  name:            string
-  abilities:       TAccessTokenAbility[]
-  expires_in_days: number | null
-}): Promise<{ token: string; access_token: IAccessToken }> {
-  const { data } = await api.post<{ token: string; access_token: IAccessToken }>('/me/access-tokens', payload)
-  return data
+  name:          string
+  abilities:     TAccessTokenAbility[]
+  expiresInDays: number | null
+}): Promise<ICreatedAccessToken> {
+  const { data } = await api.post<IDataResponse<ICreatedAccessToken>>(API_ENDPOINTS.ACCESS_TOKENS, payload)
+  return data.data
 }
 
 export async function revokeAccessToken(id: number): Promise<void> {
-  await api.delete(`/me/access-tokens/${id}`)
+  await api.delete(API_ENDPOINTS.accessTokenById(id))
 }

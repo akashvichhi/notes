@@ -3,12 +3,20 @@ import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosReques
 import { API_URL, IS_DEV } from '@src/config/env'
 import { MESSAGES } from '@src/constants/messages'
 import type { INote } from '@src/types/api'
+import { snakeToCamel, toCamelCaseKeys, toSnakeCaseKeys } from '@src/utils/case_conversion'
 
 export interface IApiError {
   status:      number
   message:     string
+  /** Messages per form field, under the field's camelCase name. */
   errors?:     Record<string, string[]>
   serverCopy?: INote
+}
+
+/** One entry of an error's `details`, after the response keys were converted. */
+interface IErrorDetail {
+  field:   string
+  message: string
 }
 
 const getBaseUrl: () => string = (): string => {
@@ -24,22 +32,10 @@ export const api: AxiosInstance = axios.create({
   baseURL:         getBaseUrl() + '/api/v1',
   headers:         { Accept: 'application/json' },
   withCredentials: true,
-  withXSRFToken:   true,
 })
 
-/** A request the CSRF retry has already re-sent once. */
-interface IRetriableConfig extends InternalAxiosRequestConfig { __retried?: boolean }
-
-let csrfPrimed: boolean = false
-
-export async function ensureCsrf(): Promise<void> {
-  if (csrfPrimed) return
-  await axios.get(getBaseUrl() + '/sanctum/csrf-cookie', { withCredentials: true })
-  csrfPrimed = true
-}
-
 interface IErrorWithResponse {
-  response?: { status: number; data?: Record<string, unknown> }
+  response?: { status: number; data?: unknown }
 }
 
 function isApiError(e: unknown): e is IApiError {
@@ -47,8 +43,24 @@ function isApiError(e: unknown): e is IApiError {
     && typeof (e as IApiError).status === 'number' && typeof (e as IApiError).message === 'string'
 }
 
+function isErrorDetail(value: unknown): value is IErrorDetail {
+  return typeof value === 'object' && value !== null
+    && typeof (value as IErrorDetail).field === 'string' && typeof (value as IErrorDetail).message === 'string'
+}
+
+/** The field names in `details` are values, so the key conversion left them in snake_case. */
+function fieldErrors(details: unknown): Record<string, string[]> | undefined {
+  if (!Array.isArray(details)) return undefined
+  const errors: Record<string, string[]> = {}
+  for (const detail of details.filter(isErrorDetail)) {
+    const field: string = snakeToCamel(detail.field)
+    errors[field] = [...(errors[field] ?? []), detail.message]
+  }
+  return Object.keys(errors).length > 0 ? errors : undefined
+}
+
 /**
- * Turns any failure into an ApiError. The client already rejects with one, so
+ * Turns any failure into an IApiError. The client already rejects with one, so
  * this is a no-op for API calls; it covers errors thrown by other code.
  */
 export function normalizeError(e: unknown): IApiError {
@@ -62,29 +74,28 @@ export function normalizeError(e: unknown): IApiError {
     return { status: 0, message: isAxiosError(e) ? MESSAGES.NETWORK_ERROR : MESSAGES.UNEXPECTED_ERROR }
   }
 
-  const data: Record<string, unknown> = err.response.data ?? {}
-  // The API sends the conflicting note unwrapped: `{ message, server_copy: {...note} }`.
-  const serverCopy: INote | undefined = data.server_copy as INote | undefined
+  // Responses that reach the interceptor are already camelCase; converting again is harmless.
+  const data: Record<string, unknown> = (toCamelCaseKeys(err.response.data ?? {}) ?? {}) as Record<string, unknown>
 
   return {
-    status:  err.response.status,
-    message: typeof data.message === 'string' ? data.message : MESSAGES.REQUEST_FAILED,
-    errors:  data.errors as Record<string, string[]> | undefined,
-    serverCopy,
+    status:     err.response.status,
+    message:    typeof data.error === 'string' ? data.error : MESSAGES.REQUEST_FAILED,
+    errors:     fieldErrors(data.details),
+    // A lost version race carries the note as it now is.
+    serverCopy: data.serverCopy as INote | undefined,
   }
 }
 
-// 419 means the CSRF cookie expired: re-prime it and retry exactly once.
-api.interceptors.response.use(undefined, async (error: unknown): Promise<AxiosResponse> => {
-  const status: number | undefined = isAxiosError(error) ? error.response?.status : undefined
-  const config: IRetriableConfig | undefined = isAxiosError(error) ? error.config : undefined
-
-  if (status === 419 && config && !config.__retried) {
-    config.__retried = true
-    csrfPrimed = false
-    await ensureCsrf()
-    return api.request(config)
-  }
-
-  return Promise.reject(normalizeError(error))
+api.interceptors.request.use((config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+  config.data = toSnakeCaseKeys(config.data)
+  config.params = toSnakeCaseKeys(config.params)
+  return config
 })
+
+api.interceptors.response.use(
+  (response: AxiosResponse): AxiosResponse => {
+    response.data = toCamelCaseKeys(response.data)
+    return response
+  },
+  async (error: unknown): Promise<never> => Promise.reject(normalizeError(error)),
+)

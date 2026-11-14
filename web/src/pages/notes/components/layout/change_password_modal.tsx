@@ -14,7 +14,7 @@ export const ChangePasswordModal: React.MemoExoticComponent<({ onClose, }: { onC
 }: {
   onClose: () => void
 }) {
-  const updatePassword: UseMutationResult<void, IApiError, { current_password: string; password: string; password_confirmation: string; }, unknown> = useUpdatePassword()
+  const updatePassword: UseMutationResult<void, IApiError, { currentPassword: string; password: string; passwordConfirmation: string; }, unknown> = useUpdatePassword()
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -47,9 +47,9 @@ export const ChangePasswordModal: React.MemoExoticComponent<({ onClose, }: { onC
 
       updatePassword.mutate(
         {
-          current_password:      currentPassword,
+          currentPassword:      currentPassword,
           password:              newPassword,
-          password_confirmation: confirmPassword,
+          passwordConfirmation: confirmPassword,
         },
         {
           onSuccess: () => {

@@ -18,7 +18,7 @@ const HANDLERS: Omit<IConflictSheetProps, 'serverCopy'> = {
 describe('ConflictSheet', () => {
   it('offers to restore or discard when the note was moved to Trash', () => {
     renderWithProviders(
-      <ConflictSheet serverCopy={makeNote({ deleted_at: '2026-11-13T09:05:00Z' })} {...HANDLERS} />,
+      <ConflictSheet serverCopy={makeNote({ deletedAt: '2026-11-13T09:05:00Z' })} {...HANDLERS} />,
     )
 
     expect(screen.getByRole('button', { name: 'Restore and keep mine' })).toBeInTheDocument()

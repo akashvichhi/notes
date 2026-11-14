@@ -103,7 +103,7 @@ export function useUpdateProfile(): UseMutationResult<IUser, IApiError, { name?:
   })
 }
 
-export function useUpdatePassword(): UseMutationResult<void, IApiError, { current_password: string; password: string; password_confirmation: string; }, unknown> {
+export function useUpdatePassword(): UseMutationResult<void, IApiError, { currentPassword: string; password: string; passwordConfirmation: string; }, unknown> {
   return useMutation({
     mutationFn: authApi.updatePassword,
   })

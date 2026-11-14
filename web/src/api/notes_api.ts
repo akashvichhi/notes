@@ -1,58 +1,48 @@
+import { API_ENDPOINTS } from '@src/constants/api_endpoints'
+import type { IDataResponse } from '@src/types/api_response'
 import type { INote, INoteListItem, TProseMirrorDoc, TUuid } from '@src/types/api'
+import type { IPaginatedResponse } from '@src/types/pagination'
 
 import { api } from './api_client'
 
 
 
-export interface IPaginationMeta {
-  current_page: number
-  from:         number | null
-  last_page:    number
-  path:         string
-  per_page:     number
-  to:           number | null
-  total:        number
-}
+export type TNotesPage = IPaginatedResponse<INoteListItem>
 
-export interface INotesPage {
-  data: INoteListItem[]
-  meta: IPaginationMeta
-}
-
-export async function fetchNotes(params: Record<string, string | undefined>): Promise<INotesPage> {
-  const { data } = await api.get<INotesPage>('/notes', { params })
+export async function fetchNotes(params: Record<string, string | undefined>): Promise<TNotesPage> {
+  const { data } = await api.get<TNotesPage>(API_ENDPOINTS.NOTES, { params })
   return data
 }
 
 export async function fetchNote(uuid: TUuid): Promise<INote> {
-  const { data } = await api.get<{ data: INote }>(`/notes/${uuid}`)
+  const { data } = await api.get<IDataResponse<INote>>(API_ENDPOINTS.noteByUuid(uuid))
   return data.data
 }
 
-export async function createNote(payload: { folder_id?: TUuid; uuid?: TUuid }): Promise<INote> {
-  const { data } = await api.post<{ data: INote }>('/notes', payload)
+export async function createNote(payload: { folderId?: TUuid; uuid?: TUuid }): Promise<INote> {
+  const { data } = await api.post<IDataResponse<INote>>(API_ENDPOINTS.NOTES, payload)
   return data.data
 }
 
 export async function patchNote(
   uuid: TUuid,
-  payload: Partial<{ body: TProseMirrorDoc; version: number; title: string; folder_id: TUuid | null; is_starred: boolean }>,
+  payload: Partial<{ body: TProseMirrorDoc; version: number; title: string; folderId: TUuid | null; isStarred: boolean }>,
 ): Promise<INote> {
-  const { data } = await api.patch<{ data: INote }>(`/notes/${uuid}`, payload)
+  const { data } = await api.patch<IDataResponse<INote>>(API_ENDPOINTS.noteByUuid(uuid), payload)
   return data.data
 }
 
 export async function syncNoteTags(uuid: TUuid, names: string[]): Promise<INote> {
-  const { data } = await api.put<{ data: INote }>(`/notes/${uuid}/tags`, { names })
+  const { data } = await api.put<IDataResponse<INote>>(API_ENDPOINTS.noteTags(uuid), { names })
   return data.data
 }
 
-export async function trashNote(uuid: TUuid): Promise<void> { await api.delete(`/notes/${uuid}`) }
-export async function restoreNote(uuid: TUuid): Promise<void> { await api.post(`/notes/${uuid}/restore`) }
+export async function trashNote(uuid: TUuid): Promise<void> { await api.delete(API_ENDPOINTS.noteByUuid(uuid)) }
+export async function restoreNote(uuid: TUuid): Promise<void> { await api.post(API_ENDPOINTS.noteRestore(uuid)) }
 export async function forceDeleteNote(uuid: TUuid): Promise<void> {
-  await api.delete(`/notes/${uuid}`, { params: { force: 1 } })
+  await api.delete(API_ENDPOINTS.noteByUuid(uuid), { params: { force: true } })
 }
 export async function duplicateNote(uuid: TUuid): Promise<INote> {
-  const { data } = await api.post<{ data: INote }>(`/notes/${uuid}/duplicate`)
+  const { data } = await api.post<IDataResponse<INote>>(API_ENDPOINTS.noteDuplicate(uuid))
   return data.data
 }

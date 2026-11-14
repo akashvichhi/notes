@@ -8,7 +8,7 @@ import type { Editor, JSONContent } from '@tiptap/react'
 import { normalizeError } from '@src/api/api_client'
 import type { IApiError } from '@src/api/api_client'
 import * as notesApi from '@src/api/notes_api'
-import { type INotesPage, patchNote } from '@src/api/notes_api'
+import { type TNotesPage, patchNote } from '@src/api/notes_api'
 import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { clearDraft, saveDraft } from '@src/db/drafts_store'
@@ -89,11 +89,11 @@ export function useAutosave(note: INote, editor: Editor | null): IAutosave {
         if (updated.title) {
           useTabsStore.getState().setTitle(note.uuid, updated.title)
         }
-        qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: INotesPage[] } | undefined) => {
+        qc.setQueriesData({ queryKey: NOTES_KEY }, (old: { pages: TNotesPage[] } | undefined) => {
           if (!old?.pages?.length) return old
           return {
             ...old,
-            pages: old.pages.map((p: notesApi.INotesPage) => ({
+            pages: old.pages.map((p: notesApi.TNotesPage) => ({
               ...p,
               data: p.data.map((n: INoteListItem) =>
                 n.uuid === note.uuid
@@ -101,7 +101,7 @@ export function useAutosave(note: INote, editor: Editor | null): IAutosave {
                     ...n,
                     title:      updated.title ?? n.title,
                     excerpt:    updated.excerpt ?? n.excerpt,
-                    updated_at: updated.updated_at ?? n.updated_at,
+                    updatedAt: updated.updatedAt ?? n.updatedAt,
                   }
                   : n
               ),
@@ -273,7 +273,7 @@ export function useAutosave(note: INote, editor: Editor | null): IAutosave {
     const body: JSONContent | null = editor.getJSON() as INote['body']
     if (!body) return
     try {
-      const newNote: INote = await notesApi.createNote({ folder_id: note.folder?.uuid })
+      const newNote: INote = await notesApi.createNote({ folderId: note.folder?.uuid })
       await notesApi.patchNote(newNote.uuid, { body, version: newNote.version })
       resolveKeepTheirs()
       qc.invalidateQueries({ queryKey: NOTES_KEY })

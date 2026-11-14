@@ -17,7 +17,7 @@ import { IconFolder, IconPlus } from '@tabler/icons-react'
 import type { UseMutationResult } from '@tanstack/react-query'
 
 import type { IApiError } from '@src/api/api_client'
-import type { INotesPage } from '@src/api/notes_api'
+import type { TNotesPage } from '@src/api/notes_api'
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { MAX_NOTE_TITLE_LENGTH } from '@src/constants/limits'
 import { useIsPhone } from '@src/hooks/use_is_phone'
@@ -77,7 +77,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
   const [renameTitle, setRenameTitle] = useState('')
 
   const allNotes: INoteListItem[] = useMemo(() => {
-    return data?.pages.flatMap((page: INotesPage) => page.data) ?? []
+    return data?.pages.flatMap((page: TNotesPage) => page.data) ?? []
   }, [data])
 
   const filtered: INoteListItem[] = useMemo(() => {
@@ -99,7 +99,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
       setRestoreModalNote(null)
       await restoreNote.mutateAsync(uuid)
       if (folderId !== null) {
-        await moveNoteFolder.mutateAsync({ uuid, folder_id: folderId })
+        await moveNoteFolder.mutateAsync({ uuid, folderId: folderId })
       }
     },
     [restoreModalNote, restoreNote, moveNoteFolder],
@@ -110,7 +110,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
       if (!moveModalNote) return
       const uuid: string = moveModalNote.uuid
       setMoveModalNote(null)
-      moveNoteFolder.mutate({ uuid, folder_id: folderId })
+      moveNoteFolder.mutate({ uuid, folderId: folderId })
     },
     [moveModalNote, moveNoteFolder],
   )
@@ -118,7 +118,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
   const handleCreateNote: () => void = useCallback(() => {
     const uuid: `${string}-${string}-${string}-${string}-${string}` = crypto.randomUUID()
     createNote.mutate(
-      { ...(scope.kind === 'folder' ? { folder_id: scope.uuid } : {}), uuid },
+      { ...(scope.kind === 'folder' ? { folderId: scope.uuid } : {}), uuid },
       {
         onSuccess: (newNote: INote) => {
           onSelectNote(newNote.uuid, newNote.title || DEFAULT_NOTE_TITLE)
@@ -190,7 +190,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
     return (): void => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const totalCount: number = data?.pages[0]?.meta.total ?? allNotes.length
+  const totalCount: number = data?.pages[0]?.meta.totalCount ?? allNotes.length
 
   return (
     <Stack gap="xs" h="100%" p="sm">
@@ -263,7 +263,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
                 onRename={() => handleOpenRename(note)}
                 onRestore={() => restoreNote.mutate(note.uuid)}
                 onRestoreTo={() => setRestoreModalNote(note)}
-                onStar={() => starNote.mutate({ uuid: note.uuid, is_starred: !note.is_starred })}
+                onStar={() => starNote.mutate({ uuid: note.uuid, isStarred: !note.isStarred })}
                 onTrash={() => {
                   closeTab(note.uuid)
                   trashNote.mutate(note.uuid)

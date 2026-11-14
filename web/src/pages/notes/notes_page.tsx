@@ -150,10 +150,10 @@ export const AppPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(
     () => (
       <StatusBar
         folderPath={note?.folder?.name ?? null}
-        words={note?.word_count ?? 0}
+        words={note?.wordCount ?? 0}
       />
     ),
-    [note?.word_count, note?.folder?.name]
+    [note?.wordCount, note?.folder?.name]
   )
 
   return (

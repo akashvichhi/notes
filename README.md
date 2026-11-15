@@ -173,15 +173,7 @@ The `backup` container dumps the database every day at 23:10 India time and uplo
 
 - **Back up now:** `docker compose exec backup sh /usr/local/bin/backup_now.sh`
 - **Is it working?** `docker compose logs backup` shows `backup ok: notes-….dump (size)` after each run, and `docker compose ps` shows the container as unhealthy when the last backup is more than 26 hours old.
-- **Restore:** download the `.dump` file from the storage service to the server, then, from the repo root:
-  ```sh
-  docker compose stop app scheduler
-  docker cp notes-….dump notes-postgres:/tmp/restore.dump
-  docker compose exec postgres pg_restore -U notes -d notes --clean --if-exists --no-owner /tmp/restore.dump
-  docker compose exec postgres rm /tmp/restore.dump
-  docker compose start app scheduler
-  ```
-  `--clean --if-exists` replaces what is in the database with the backup's contents.
+- **Restore:** see [`docs/database_restore.md`](docs/database_restore.md).
 
 ### Develop on your machine
 

@@ -33,7 +33,8 @@ services:
   scheduler:
     <<: *api
     container_name: notes-scheduler
-    command: ["sh", "scripts/prune_daily.sh"]
+    # Every day at 23:00 India time.
+    command: ["sh", "/usr/local/bin/run_daily_at.sh", "23:00", "python", "-m", "scripts.prune_expired"]
     depends_on:
       # The app runs the migrations on start; the scheduler waits for them.
       app:

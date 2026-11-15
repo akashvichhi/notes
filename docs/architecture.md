@@ -153,8 +153,9 @@ once, and a CRDT would replace readable JSON with binary state the server can't 
 - **Personal access tokens** are created on the Access tokens page with `notes:read`
   and/or `notes:write` and an expiry. They work only at `/mcp`; every REST route takes
   the session cookie alone. Changing the password revokes every token.
-- **Expired sessions and tokens** are rejected when used and removed once a day by the
-  scheduler container (`api/scripts/prune_expired.py`).
+- **Expired sessions and tokens** are rejected when used and removed every day at 23:00
+  India time by the scheduler container (`api/scripts/prune_expired.py`, run by
+  `docker/scripts/run_daily_at.sh`).
 
 ---
 

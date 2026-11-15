@@ -24,6 +24,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY api/ ./
 RUN uv sync --frozen --no-dev
 COPY --from=web_build /src/web/dist /app/web/dist
+COPY docker/scripts/run_daily_at.sh /usr/local/bin/run_daily_at.sh
 RUN useradd --system --no-create-home notes
 USER notes
 CMD ["sh", "scripts/start.sh"]

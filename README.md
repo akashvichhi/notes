@@ -153,7 +153,7 @@ I built this app with a coding agent, working from documents I wrote first: a pr
 
 ### Run the whole app with Docker
 
-`docker-compose.yml` runs everything: Postgres, the FastAPI API (which also serves the React build), a scheduler that removes expired sessions and tokens once a day, and Caddy in front. Every service restarts after a crash and whenever Docker starts. The reasons are in decision 10 of [`docs/decisions.md`](docs/decisions.md).
+`docker-compose.yml` runs everything: Postgres, the FastAPI API (which also serves the React build), a scheduler that removes expired sessions and tokens every day at 23:00 India time, and Caddy in front. Every service restarts after a crash and whenever Docker starts. The reasons are in decision 10 of [`docs/decisions.md`](docs/decisions.md).
 
 ```sh
 cp .env.example .env

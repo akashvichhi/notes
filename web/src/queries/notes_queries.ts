@@ -892,17 +892,17 @@ export function useMoveNoteFolder(): TMoveNoteMutation {
 
 /**
  * Tops up the filter box from the server when the scope has more pages than are
- * loaded, so a filter never silently misses notes.
+ * loaded, so a filter never silently misses notes. It searches the same list the
+ * rows come from, never every note.
  */
 export function useNotesFilterQuery(
   scope: TScope,
   query: string,
-  params: Record<string, string | undefined>,
   enabled: boolean,
 ): UseQueryResult<notesApi.TNotesPage> {
   return useQuery({
     queryKey: queryKeys.notes.filter(scope, query),
-    queryFn:  (): Promise<notesApi.TNotesPage> => notesApi.fetchNotes({ ...params, q: query }),
+    queryFn:  (): Promise<notesApi.TNotesPage> => notesApi.fetchNotes({ ...scopeParams(scope), q: query }),
     enabled,
   })
 }

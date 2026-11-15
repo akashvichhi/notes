@@ -240,7 +240,6 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
       <FilterInput
         hasMore={Boolean(hasNextPage)}
         localCount={filtered.length}
-        params={{}}
         scope={scope}
         scopeLabel={scopeLabel}
         totalCount={totalCount}

@@ -22,16 +22,15 @@ export interface IFilterInputProps {
   hasMore:    boolean
   localCount: number
   totalCount: number
-  params:     Record<string, string | undefined>
 }
 
 export const FilterInput: React.NamedExoticComponent<IFilterInputProps> = memo(function FilterInput({
-  scope, scopeLabel, hasMore, localCount, totalCount, params,
+  scope, scopeLabel, hasMore, localCount, totalCount,
 }: IFilterInputProps): React.JSX.Element {
   const { filter, setFilter }: IScopeFilter = useScopeFilter(scope)
   const [debounced] = useDebouncedValue(filter, 250)
 
-  const server: UseQueryResult<TNotesPage> = useNotesFilterQuery(scope, debounced, params, hasMore && debounced.trim().length > 0)
+  const server: UseQueryResult<TNotesPage> = useNotesFilterQuery(scope, debounced, hasMore && debounced.trim().length > 0)
 
   const showSpinner: boolean = useDelayedLoading(server.isFetching)
 

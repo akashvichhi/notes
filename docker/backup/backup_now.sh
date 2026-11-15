@@ -30,7 +30,8 @@ export RCLONE_CONFIG_BACKUP_PASS
 # Deleted backups skip the trash, where they would still use the storage quota.
 export RCLONE_CONFIG_BACKUP_HARD_DELETE=true
 
-name="notes-$(TZ="$APP_TIME_ZONE" date +%Y-%m-%dT%H%M%z).dump"
+# One name per day: a second run on the same day replaces that day's file.
+name="notes-$(TZ="$APP_TIME_ZONE" date +%Y-%m-%d).dump"
 file="/tmp/$name"
 trap 'rm -f "$file"' EXIT
 

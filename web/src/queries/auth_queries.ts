@@ -10,7 +10,7 @@ import { clearAllDrafts } from '@src/db/drafts_store'
 import { useTabsStore } from '@src/stores/tabs_store'
 import { useUiStore } from '@src/stores/ui_store'
 import type { IUser } from '@src/types/api'
-import type { ILoginCredentials, IRegisterCredentials } from '@src/types/auth'
+import type { ILoginCredentials, IProfileUpdate, IRegisterCredentials } from '@src/types/auth'
 
 export { AUTH_KEY }
 
@@ -93,7 +93,7 @@ export function useLogout(): UseMutationResult<void, IApiError, void, unknown> {
 }
 
 
-export function useUpdateProfile(): UseMutationResult<IUser, IApiError, { name?: string; email?: string; }, unknown> {
+export function useUpdateProfile(): UseMutationResult<IUser, IApiError, IProfileUpdate, unknown> {
   const qc: QueryClient = useQueryClient()
   return useMutation({
     mutationFn: authApi.updateProfile,

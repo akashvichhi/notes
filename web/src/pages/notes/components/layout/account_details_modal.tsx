@@ -7,6 +7,7 @@ import type { IApiError } from '@src/api/api_client'
 import { MESSAGES } from '@src/constants/messages'
 import { useMe, useUpdateProfile } from '@src/queries/auth_queries'
 import type { IUser } from '@src/types/api'
+import type { IProfileUpdate } from '@src/types/auth'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 
 export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onClose: () => void; }) => React.JSX.Element> = memo(function AccountDetailsModal({
@@ -15,24 +16,18 @@ export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onC
   onClose: () => void
 }) {
   const { data: user } = useMe()
-  const updateProfile: UseMutationResult<IUser, IApiError, { name?: string; email?: string; }, unknown> = useUpdateProfile()
+  const updateProfile: UseMutationResult<IUser, IApiError, IProfileUpdate, unknown> = useUpdateProfile()
 
   const [name, setName] = useState(user?.name ?? '')
-  const [email, setEmail] = useState(user?.email ?? '')
 
   useEffect(() => {
     if (user) {
       setName(user.name)
-      setEmail(user.email)
     }
   }, [user])
 
   const handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.currentTarget.value)
-  }, [])
-
-  const handleEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.currentTarget.value)
   }, [])
 
   const handleSubmit: (e: SyntheticEvent<HTMLFormElement>) => void = useCallback(
@@ -69,8 +64,7 @@ export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onC
             label="Email"
             placeholder="Your email"
             type="email"
-            value={email}
-            onChange={handleEmailChange}
+            value={user?.email ?? ''}
           />
           <Group gap="xs" justify="flex-end" mt="sm">
             <Button variant="default" onClick={onClose}>

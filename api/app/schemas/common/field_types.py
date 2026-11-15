@@ -125,6 +125,11 @@ TagNameInput = Annotated[
 ]
 # A tag filter on a note list: a tag's name or slug.
 TagFilter = Annotated[str, StringConstraints(max_length=TAG_NAME_MAX_LENGTH), NoNulCharacter]
+# Narrows a note list. Short words are allowed, unlike SearchQuery, because the web
+# app's filter box sends whatever was typed; the service ignores words too short to match.
+NoteListSearch = Annotated[
+    str, StringConstraints(strip_whitespace=True, max_length=SEARCH_QUERY_MAX_LENGTH), NoNulCharacter
+]
 # Shorter than one term, a query could never match a note.
 SearchQuery = Annotated[
     str,

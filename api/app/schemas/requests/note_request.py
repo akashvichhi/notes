@@ -13,7 +13,14 @@ from app.constants.note_constants import (
     NOTE_TAG_NAMES_MAX,
     NoteSort,
 )
-from app.schemas.common.field_types import NoteTitle, NotNull, TagFilter, TagNameInput, field_error
+from app.schemas.common.field_types import (
+    NoteListSearch,
+    NoteTitle,
+    NotNull,
+    TagFilter,
+    TagNameInput,
+    field_error,
+)
 from app.schemas.common.json_types import JsonObject
 from app.schemas.common.pagination_request import PaginationRequest
 
@@ -60,6 +67,8 @@ class NoteListRequest(PaginationRequest):
     tag: TagFilter | None = None
     starred: bool = False
     trashed: bool = False
+    # Only notes with a word starting with each term, as in the search endpoint.
+    q: NoteListSearch | None = None
     sort: NoteSort = NoteSort.UPDATED
 
 

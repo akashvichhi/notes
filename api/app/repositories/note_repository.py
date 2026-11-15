@@ -6,7 +6,7 @@ from enum import Enum, auto
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select, UnaryExpression, cast, delete, func, select
+from sqlalchemy import ColumnElement, Select, UnaryExpression, cast, delete, func, select
 from sqlalchemy.dialects.postgresql import REGCONFIG
 from sqlalchemy.orm import Session, load_only, selectinload
 from sqlalchemy.orm.interfaces import LoaderOption
@@ -48,6 +48,12 @@ def _prefix_query(terms: Sequence[str]) -> str:
     like & | ! ( : are text, never operators."""
     quoted = ("'" + term.replace("\\", "\\\\").replace("'", "''") + "':*" for term in terms)
     return " & ".join(quoted)
+
+
+def _matches_terms(terms: Sequence[str]) -> ColumnElement[bool]:
+    """The note's title or text has a word starting with each term."""
+    query = func.to_tsquery(cast(SEARCH_TEXT_CONFIG, REGCONFIG), _prefix_query(terms))
+    return Note.search_vector.bool_op("@@")(query)
 
 
 _WITH_RELATIONS: tuple[LoaderOption, ...] = (selectinload(Note.folder), selectinload(Note.tags))
@@ -96,10 +102,16 @@ class NoteRepository:
         return note
 
     def page(
-        self, user_id: int, request: NoteListRequest, folder_id: int | None
+        self,
+        user_id: int,
+        request: NoteListRequest,
+        folder_id: int | None,
+        search_terms: Sequence[str] = (),
     ) -> tuple[Sequence[Note], int]:
         scope = NoteScope.TRASHED if request.trashed else NoteScope.ACTIVE
         query = _scoped(scope).where(Note.user_id == user_id)
+        if search_terms:
+            query = query.where(_matches_terms(search_terms))
         if folder_id is not None:
             query = query.where(Note.folder_id == folder_id)
         if request.starred:
@@ -127,10 +139,9 @@ class NoteRepository:
     def search(self, user_id: int, terms: Sequence[str], limit: int) -> Sequence[Note]:
         """Active notes whose title or text has a word starting with each term, newest
         edit first. Only the columns a search result shows are loaded."""
-        query = func.to_tsquery(cast(SEARCH_TEXT_CONFIG, REGCONFIG), _prefix_query(terms))
         return self._session.scalars(
             _scoped(NoteScope.ACTIVE)
-            .where(Note.user_id == user_id, Note.search_vector.bool_op("@@")(query))
+            .where(Note.user_id == user_id, _matches_terms(terms))
             .order_by(*_NEWEST_FIRST)
             .limit(limit)
             .options(load_only(Note.uuid, Note.title, Note.plain_text))

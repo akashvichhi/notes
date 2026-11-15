@@ -195,6 +195,62 @@ def test_list_filters_by_folder_tag_and_star(
     assert [note["uuid"] for note in by_star.json()["data"]] == [str(starred.uuid)]
 
 
+def test_list_searches_word_prefixes_only_inside_the_list(
+    authenticated_client: TestClient, db_session: Session, user: User
+) -> None:
+    folder = make_folder(db_session, user)
+    in_folder = make_note(db_session, user, title="Tax return", folder=folder)
+    make_note(db_session, user, title="Groceries", plain_text="Milk and eggs", folder=folder)
+    make_note(db_session, user, title="Taxi receipt")
+
+    response = authenticated_client.get(NOTES, params={"folder_id": str(folder.uuid), "q": "TAX"})
+
+    assert [note["uuid"] for note in response.json()["data"]] == [str(in_folder.uuid)]
+    assert response.json()["meta"]["total_count"] == 1
+
+
+def test_list_search_needs_every_word_and_reads_the_text(
+    authenticated_client: TestClient, db_session: Session, user: User
+) -> None:
+    make_note(db_session, user, title="Friday", plain_text="We ship the release on Friday")
+    make_note(db_session, user, title="Release plan")
+
+    response = authenticated_client.get(NOTES, params={"q": "rele frid"})
+
+    assert [note["title"] for note in response.json()["data"]] == ["Friday"]
+
+
+def test_list_search_in_the_trash_finds_only_trashed_notes(
+    authenticated_client: TestClient, db_session: Session, user: User, clock: FakeClock
+) -> None:
+    make_note(db_session, user, title="Passport renewal")
+    trashed = make_note(db_session, user, title="Passport photo")
+    _trash(trashed, clock, db_session)
+
+    response = authenticated_client.get(NOTES, params={"trashed": "true", "q": "pass"})
+
+    assert [note["title"] for note in response.json()["data"]] == ["Passport photo"]
+
+
+def test_list_search_of_only_short_words_finds_nothing(
+    authenticated_client: TestClient, db_session: Session, user: User
+) -> None:
+    make_note(db_session, user, title="To do")
+
+    response = authenticated_client.get(NOTES, params={"q": "to do"})
+
+    assert response.status_code == 200
+    assert response.json()["data"] == []
+    assert response.json()["meta"]["total_count"] == 0
+
+
+def test_list_rejects_an_oversized_search(authenticated_client: TestClient) -> None:
+    response = authenticated_client.get(NOTES, params={"q": "a" * 121})
+
+    assert response.status_code == 422
+    assert [detail["field"] for detail in response.json()["details"]] == ["q"]
+
+
 def test_list_in_an_unknown_folder_is_not_found(authenticated_client: TestClient) -> None:
     assert authenticated_client.get(NOTES, params={"folder_id": str(uuid4())}).status_code == 404
 

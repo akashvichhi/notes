@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.constants.note_constants import EMPTY_DOCUMENT_JSON, NOTE_COPY_SUFFIX, NOTE_TITLE_MAX_LENGTH
 from app.content.note_text import derive_note_text
+from app.content.search_terms import parse_search_terms
 from app.core.clock import Clock
 from app.core.exceptions import ConflictError, NoteConflictError, NotFoundError
 from app.models.note_model import Note
@@ -42,7 +43,11 @@ class NoteService:
 
     def list(self, user: User, request: NoteListRequest) -> PaginatedResponse[NoteListItemResource]:
         folder_id = self._folder_id(user, request.folder_id)
-        notes, total_count = self._notes.page(user.id, request, folder_id)
+        search_terms = parse_search_terms(request.q) if request.q else []
+        if request.q and not search_terms:
+            # Words this short match nothing, as in the search endpoint.
+            return PaginatedResponse[NoteListItemResource].create([], 0, request)
+        notes, total_count = self._notes.page(user.id, request, folder_id, search_terms)
         items = [NoteListItemResource.from_model(note) for note in notes]
         return PaginatedResponse[NoteListItemResource].create(items, total_count, request)
 

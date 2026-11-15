@@ -1,6 +1,5 @@
-# Every env file stays out, web/.env.production included: the image serves the web app
-# from the API's own origin, so the build must not point it at another server
-# (web/src/config/env.ts). Compose passes the API its settings at run time.
+# Every env file stays out: the image serves the web app from the API's own origin, so a
+# local web/.env must not point the build at another server (web/src/config/env.ts). Compose passes the API its settings at run time.
 .git
 **/node_modules
 **/.env

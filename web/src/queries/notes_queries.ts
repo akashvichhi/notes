@@ -15,7 +15,7 @@ import type {
   ICreateNoteContext, IDuplicateNoteContext, INoteEditContext, INoteListContext, INoteTagsContext, IRenameNoteContext,
 } from '@src/types/mutation_context'
 import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
-import { showErrorToast } from '@src/utils/notifications'
+import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 import { slugify } from '@src/utils/slugify'
 
 export interface IStarNoteVars { uuid: string; isStarred: boolean }
@@ -485,6 +485,40 @@ export function useRestoreNote(): TNoteListMutation {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: NOTES_KEY })
+      qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
+    },
+  })
+}
+
+function isNotesPages(data: unknown): data is InfiniteData<notesApi.TNotesPage> {
+  return typeof data === 'object' && data !== null && 'pages' in data
+}
+
+/** Trashed notes the cache knows of, from the lists and the open notes. */
+function cachedTrashedUuids(qc: QueryClient): TUuid[] {
+  const listed: INoteListItem[] = qc.getQueriesData<unknown>({ queryKey: NOTES_KEY })
+    .flatMap(([, data]: [readonly unknown[], unknown]) => (isNotesPages(data) ? data.pages.flatMap((page: notesApi.TNotesPage) => page.data) : []))
+  const opened: INote[] = qc.getQueriesData<INote | null>({ queryKey: NOTE_KEY })
+    .flatMap(([, note]: [readonly unknown[], INote | null | undefined]) => (note ? [note] : []))
+  return [...listed, ...opened]
+    .filter((note: INoteListItem) => note.deletedAt !== null)
+    .map((note: INoteListItem) => note.uuid)
+}
+
+export function useEmptyTrash(): UseMutationResult<void, IApiError, void, unknown> {
+  const qc: QueryClient = useQueryClient()
+  return useMutation({
+    mutationFn: notesApi.emptyTrash,
+    onSuccess:  () => {
+      // Their tabs would only show a note that no longer exists.
+      const closeTab: (uuid: TUuid) => void = useTabsStore.getState().close
+      cachedTrashedUuids(qc).forEach(closeTab)
+      showSuccessToast(MESSAGES.TRASH_EMPTIED)
+    },
+    onError:   () => showErrorToast(MESSAGES.TRASH_EMPTY_FAILED),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: NOTES_KEY })
+      qc.invalidateQueries({ queryKey: NOTE_KEY })
       qc.invalidateQueries({ queryKey: BOOTSTRAP_KEY })
     },
   })

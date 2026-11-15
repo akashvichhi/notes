@@ -42,6 +42,8 @@ export async function restoreNote(uuid: TUuid): Promise<void> { await api.post(A
 export async function forceDeleteNote(uuid: TUuid): Promise<void> {
   await api.delete(API_ENDPOINTS.noteByUuid(uuid), { params: { force: true } })
 }
+/** Permanently deletes every note in the Trash. */
+export async function emptyTrash(): Promise<void> { await api.delete(API_ENDPOINTS.TRASH) }
 export async function duplicateNote(uuid: TUuid): Promise<INote> {
   const { data } = await api.post<IDataResponse<INote>>(API_ENDPOINTS.noteDuplicate(uuid))
   return data.data

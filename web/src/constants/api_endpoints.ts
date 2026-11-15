@@ -15,6 +15,7 @@ interface IApiEndpoints {
   readonly NOTES:           string
   readonly FOLDERS:         string
   readonly TAGS:            string
+  readonly TRASH:           string
   readonly accessTokenById: (id: number) => string
   readonly noteByUuid:      TPathByUuid
   readonly noteTags:        TPathByUuid
@@ -38,6 +39,7 @@ export const API_ENDPOINTS: IApiEndpoints = {
   NOTES:         '/notes',
   FOLDERS:       '/folders',
   TAGS:          '/tags',
+  TRASH:         '/trash',
 
   accessTokenById: (id: number): string => `/me/access-tokens/${id}`,
   noteByUuid:      (uuid: TUuid): string => `/notes/${uuid}`,

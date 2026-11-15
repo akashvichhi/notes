@@ -13,7 +13,7 @@ import {
   Text,
   TextInput,
 } from '@mantine/core'
-import { IconFolder, IconPlus } from '@tabler/icons-react'
+import { IconFolder, IconPlus, IconTrashX } from '@tabler/icons-react'
 import type { UseMutationResult } from '@tanstack/react-query'
 
 import type { IApiError } from '@src/api/api_client'
@@ -41,6 +41,7 @@ import type { IBootstrap, IFolder, INote, INoteListItem, TUuid } from '@src/type
 import { ListSkeleton } from '@src/ui/skeletons/skeletons'
 import { filterNotes } from '@src/utils/filter_notes'
 
+import { EmptyTrashModal } from './empty_trash_modal'
 import { FilterInput } from './filter_input'
 import { NoteRow } from './note_row'
 
@@ -75,6 +76,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
   const [moveModalNote, setMoveModalNote] = useState<INoteListItem | null>(null)
   const [renameModalNote, setRenameModalNote] = useState<INoteListItem | null>(null)
   const [renameTitle, setRenameTitle] = useState('')
+  const [isEmptyTrashOpen, setIsEmptyTrashOpen] = useState<boolean>(false)
 
   const allNotes: INoteListItem[] = useMemo(() => {
     return data?.pages.flatMap((page: TNotesPage) => page.data) ?? []
@@ -137,6 +139,9 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
   const handleCloseRestoreModal: () => void = useCallback(() => {
     setRestoreModalNote(null)
   }, [])
+
+  const handleOpenEmptyTrash: () => void = useCallback((): void => setIsEmptyTrashOpen(true), [])
+  const handleCloseEmptyTrash: () => void = useCallback((): void => setIsEmptyTrashOpen(false), [])
 
   const handleOpenRename: (note: INoteListItem) => void = useCallback((note: INoteListItem) => {
     setRenameModalNote(note)
@@ -213,6 +218,17 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
             onClick={handleCreateNote}
           >
             Create note
+          </Button>
+        )}
+        {scope.kind === 'trash' && totalCount > 0 && (
+          <Button
+            color="red"
+            leftSection={<IconTrashX size={14} />}
+            size="xs"
+            variant="light"
+            onClick={handleOpenEmptyTrash}
+          >
+            Empty Trash
           </Button>
         )}
       </Group>
@@ -362,6 +378,8 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
           </Stack>
         </form>
       </Modal>
+
+      {isEmptyTrashOpen && <EmptyTrashModal noteCount={totalCount} onClose={handleCloseEmptyTrash} />}
     </Stack>
   )
 })

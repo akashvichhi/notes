@@ -4,13 +4,15 @@ from pydantic import BaseModel, StrictBool
 
 from app.constants.note_constants import NoteSort
 from app.constants.preference_constants import Theme
-from app.schemas.common.field_types import Email, GivenPassword, NotNull, UserName
+from app.schemas.common.field_types import GivenPassword, NotNull, UserName
 from app.schemas.requests.auth_request import NewPasswordFields
 
 
 class UpdateProfileRequest(BaseModel):
+    """Only the name can change; the email is fixed once the account exists, and an email
+    sent here is ignored."""
+
     name: Annotated[UserName | None, NotNull] = None
-    email: Annotated[Email | None, NotNull] = None
 
 
 class ChangePasswordRequest(NewPasswordFields):

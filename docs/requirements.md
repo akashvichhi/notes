@@ -188,7 +188,7 @@ each record to the authenticated user. **Never accept `user_id` from a client.**
 | GET | `/sanctum/csrf-cookie` | Primes the CSRF cookie |
 | POST | `/register` · `/login` · `/logout` | Cookie session. Register and login throttled 5/min per IP |
 | POST | `/forgot-password` · `/reset-password` | Throttled 5/min per IP. A reset revokes every token |
-| GET / PATCH | `/me` · `/me/password` | A password change revokes every token; the browser stays signed in |
+| GET / PATCH | `/me` · `/me/password` | `PATCH /me` changes only the name; the email never changes. A password change revokes every token; the browser stays signed in |
 | GET / POST / DELETE | `/me/access-tokens` | Personal access tokens for MCP clients |
 
 ### Bootstrap, notes, folders, tags

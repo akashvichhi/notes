@@ -8,7 +8,7 @@ from app.constants import messages
 from app.models.access_token_model import AccessToken
 from app.models.user_model import User
 from app.models.user_session_model import UserSession
-from tests.factories import PASSWORD, make_user
+from tests.factories import PASSWORD
 from tests.fakes import FakeClock
 
 PROFILE = "/api/v1/me"
@@ -41,27 +41,17 @@ def test_update_profile_changes_only_the_fields_sent(authenticated_client: TestC
     assert response.json()["data"]["email"] == user.email
 
 
-def test_update_profile_lowercases_a_new_email(authenticated_client: TestClient) -> None:
-    response = authenticated_client.patch(PROFILE, json={"email": "New@Example.com"})
-
-    assert response.json()["data"]["email"] == "new@example.com"
-
-
-def test_update_profile_rejects_another_users_email(
-    authenticated_client: TestClient, db_session: Session
+def test_update_profile_never_changes_the_email(
+    authenticated_client: TestClient, db_session: Session, user: User
 ) -> None:
-    make_user(db_session, email="taken@example.com")
+    email = user.email
 
-    response = authenticated_client.patch(PROFILE, json={"email": "TAKEN@example.com"})
-
-    assert response.status_code == 409
-    assert response.json()["details"] == [{"field": "email", "message": messages.EMAIL_TAKEN}]
-
-
-def test_update_profile_keeps_your_own_email(authenticated_client: TestClient, user: User) -> None:
-    response = authenticated_client.patch(PROFILE, json={"email": user.email.upper()})
+    response = authenticated_client.patch(PROFILE, json={"name": "Asha Rao", "email": "new@example.com"})
 
     assert response.status_code == 200
+    assert response.json()["data"]["email"] == email
+    db_session.refresh(user)
+    assert user.email == email
 
 
 def test_update_profile_rejects_a_blank_name(authenticated_client: TestClient) -> None:

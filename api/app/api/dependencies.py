@@ -130,7 +130,6 @@ def get_profile_service(
 ) -> ProfileService:
     return ProfileService(
         session,
-        UserRepository(session),
         UserSessionRepository(session),
         AccessTokenRepository(session),
         session_tokens,

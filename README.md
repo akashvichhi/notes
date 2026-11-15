@@ -153,7 +153,7 @@ I built this app with a coding agent, working from documents I wrote first: a pr
 
 ### Run the whole app with Docker
 
-`docker-compose.yml` runs everything: Postgres, the FastAPI API (which also serves the React build), a scheduler that removes expired sessions and tokens every day at 23:00 India time, and Caddy in front. Every service restarts after a crash and whenever Docker starts. The reasons are in decision 10 of [`docs/decisions.md`](docs/decisions.md).
+`docker-compose.yml` runs everything: Postgres, the FastAPI API (which also serves the React build), a scheduler that removes expired sessions and tokens every day at 23:00 India time, a nightly database backup at 23:10, and Caddy in front. Every service restarts after a crash and whenever Docker starts. The reasons are in decision 10 of [`docs/decisions.md`](docs/decisions.md).
 
 ```sh
 cp .env.example .env
@@ -166,6 +166,22 @@ The app is on `http://127.0.0.1:8000`. The `app` container runs the migrations e
 - Run `cp .env.production .env` and set a strong `POSTGRES_PASSWORD` (letters and digits) before the first start. The file holds the rest: the site's origin and the API's production settings. The hosting provider's proxy handles HTTPS and forwards plain HTTP to port 80, so Caddy serves only HTTP. If the domain points straight at the server instead, set `SITE_ADDRESS` to the domain, `HTTPS_PORT=443` and open ports 80 and 443; Caddy then gets the HTTPS certificate itself. `DATABASE_URL` and `ALLOWED_ORIGINS` are built from it in `docker-compose.yml`.
 - Run `sudo systemctl enable docker` once, so Docker, and with it the app, starts when the server boots.
 - Every push to `master` deploys automatically: GitHub Actions runs the checks, then pulls and rebuilds on the server (decision 6). By hand, it's `git pull && docker compose up -d --build`.
+
+### Backups
+
+The `backup` container dumps the database every day at 23:10 India time and uploads it with [rclone](https://rclone.org/), keeping only the newest backup (decision 11). Set the `BACKUP_REMOTE_*` values in `.env`; with `BACKUP_REMOTE_TYPE` empty, backups are off. The storage account must not use two-factor login.
+
+- **Back up now:** `docker compose exec backup sh /usr/local/bin/backup_now.sh`
+- **Is it working?** `docker compose logs backup` shows `backup ok: notes-….dump (size)` after each run, and `docker compose ps` shows the container as unhealthy when the last backup is more than 26 hours old.
+- **Restore:** download the `.dump` file from the storage service to the server, then, from the repo root:
+  ```sh
+  docker compose stop app scheduler
+  docker cp notes-….dump notes-postgres:/tmp/restore.dump
+  docker compose exec postgres pg_restore -U notes -d notes --clean --if-exists --no-owner /tmp/restore.dump
+  docker compose exec postgres rm /tmp/restore.dump
+  docker compose start app scheduler
+  ```
+  `--clean --if-exists` replaces what is in the database with the backup's contents.
 
 ### Develop on your machine
 

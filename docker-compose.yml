@@ -10,8 +10,16 @@ x-api: &api
   build:
     context: .
     dockerfile: docker/api/Dockerfile
-  env_file: .env
+  # Named one by one instead of env_file, so the backup credentials in .env never reach
+  # the API.
   environment:
+    APP_ENV: ${APP_ENV:?set APP_ENV in .env}
+    CORS_ORIGINS: ${CORS_ORIGINS:-}
+    SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:?set SESSION_COOKIE_NAME in .env}
+    SESSION_LIFETIME_DAYS: ${SESSION_LIFETIME_DAYS:?set SESSION_LIFETIME_DAYS in .env}
+    SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:?set SESSION_COOKIE_SECURE in .env}
+    WEB_DIST_DIR: ${WEB_DIST_DIR:?set WEB_DIST_DIR in .env}
+    LOG_LEVEL: ${LOG_LEVEL:?set LOG_LEVEL in .env}
     # Built from the root .env's values, so the password and the origin are set only once.
     ALLOWED_ORIGINS: ${APP_ORIGIN:?set APP_ORIGIN in .env}
     DATABASE_URL: postgresql+psycopg://notes:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/notes
@@ -39,6 +47,34 @@ services:
       # The app runs the migrations on start; the scheduler waits for them.
       app:
         condition: service_healthy
+
+  backup:
+    image: notes-backup
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: docker/backup/Dockerfile
+    container_name: notes-backup
+    # Every day at 23:10 India time, after the cleanup (decision 11).
+    command: ["sh", "/usr/local/bin/start_backups.sh", "23:10"]
+    environment:
+      PGHOST: postgres
+      PGUSER: notes
+      PGDATABASE: notes
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Empty BACKUP_REMOTE_TYPE turns backups off.
+      BACKUP_REMOTE_TYPE: ${BACKUP_REMOTE_TYPE:-}
+      BACKUP_REMOTE_USER: ${BACKUP_REMOTE_USER:-}
+      BACKUP_REMOTE_PASSWORD: ${BACKUP_REMOTE_PASSWORD:-}
+      BACKUP_REMOTE_FOLDER: ${BACKUP_REMOTE_FOLDER:-}
+    healthcheck:
+      test: ["CMD", "sh", "/usr/local/bin/check_backup.sh"]
+      interval: 5m
+      timeout: 10s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
   web:
     image: caddy:2.11.6-alpine

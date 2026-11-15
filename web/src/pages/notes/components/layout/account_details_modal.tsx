@@ -39,7 +39,7 @@ export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onC
     (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault()
       updateProfile.mutate(
-        { name, email },
+        { name },
         {
           onSuccess: () => {
             showSuccessToast(MESSAGES.ACCOUNT_UPDATED)
@@ -49,7 +49,7 @@ export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onC
         },
       )
     },
-    [name, email, updateProfile, onClose],
+    [name, updateProfile, onClose],
   )
 
   return (
@@ -65,7 +65,7 @@ export const AccountDetailsModal: React.MemoExoticComponent<({ onClose, }: { onC
             onChange={handleNameChange}
           />
           <TextInput
-            required
+            readOnly
             label="Email"
             placeholder="Your email"
             type="email"

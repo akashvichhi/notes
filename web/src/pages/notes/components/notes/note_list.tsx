@@ -205,7 +205,9 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
     <Stack gap="xs" h="100%" p="sm">
       <Group align="center" justify="space-between" wrap="nowrap">
         <Group align="baseline" gap="xs" style={{ minWidth: 0, flex: 1 }} wrap="nowrap">
-          <Text truncate fw={700} size="sm">
+          {/* Two lines fit a search or a long folder name next to the button; the
+              tooltip shows anything longer. */}
+          <Text fw={700} lineClamp={2} size="sm" title={scopeLabel}>
             {scopeLabel}
           </Text>
           <Text c="dimmed" size="xs" style={{ flexShrink: 0 }}>

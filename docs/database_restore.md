@@ -1,12 +1,12 @@
 # Restoring the database from a backup
 
-The `backup` container uploads one dump of the database every night at 23:10 India time, named `notes-YYYY-MM-DD.dump` (decision 11). Only the newest backup is kept. This page explains how to put one back.
+The `backup` container uploads one dump of the database every night at 23:10 India time, named `notes-YYYY-MM-DD.dump` (decision 11). The folder keeps the newest backup of each of the last 7 days, 4 weeks and 6 months (decision 12). This page explains how to put one back.
 
 Run every command on the server, from the repo root (`/var/www/notes`).
 
 ## Before you start
 
-- **Restore before 23:10.** The nightly run replaces the only backup. If the data was damaged by a mistake, that night's run would overwrite the good backup with the damaged data. Download the good file first, so you have a copy that the nightly run can't touch.
+- **Pick the newest backup from before the problem.** The file name is the day it was taken, at 23:10 India time. Download it first, so you have a copy that the nightly clean-up can't delete.
 - **Everything after the backup is lost.** The database goes back to exactly how it was at 23:10 on the backup's date.
 - **Everyone signs in again.** Login sessions are restored along with everything else.
 

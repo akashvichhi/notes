@@ -169,7 +169,7 @@ The app is on `http://127.0.0.1:8000`. The `app` container runs the migrations e
 
 ### Backups
 
-The `backup` container dumps the database every day at 23:10 India time and uploads it with [rclone](https://rclone.org/), keeping only the newest backup (decision 11). Set the `BACKUP_REMOTE_*` values in `.env`; with `BACKUP_REMOTE_TYPE` empty, backups are off. The storage account must not use two-factor login.
+The `backup` container dumps the database every day at 23:10 India time and uploads it with [rclone](https://rclone.org/), keeping 7 daily, 4 weekly and 6 monthly backups (decisions 11 and 12). Set the `BACKUP_REMOTE_*` values in `.env`; with `BACKUP_REMOTE_TYPE` empty, backups are off. The storage account must not use two-factor login.
 
 - **Back up now:** `docker compose exec backup sh /usr/local/bin/backup_now.sh`
 - **Is it working?** `docker compose logs backup` shows `backup ok: notes-….dump (size)` after each run, and `docker compose ps` shows the container as unhealthy when the last backup is more than 26 hours old.

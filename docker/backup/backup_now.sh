@@ -1,12 +1,11 @@
 #!/bin/sh
-# Dumps the database and uploads it, keeping only the newest backup in the folder.
+# Dumps the database, uploads it, and deletes the backups the retention no longer needs.
 # Runs nightly from start_backups.sh; by hand: docker compose exec backup sh /usr/local/bin/backup_now.sh
 # Logs file names and sizes only, never credentials.
 set -eu
 
 # Same rule as run_daily_at.sh: Asia/Kolkata, the app's time zone.
 APP_TIME_ZONE="IST-5:30"
-BACKUP_NAME_PATTERN="notes-*.dump"
 REMOTE="backup"
 
 if [ -z "${BACKUP_REMOTE_TYPE:-}" ]; then
@@ -38,10 +37,14 @@ trap 'rm -f "$file"' EXIT
 pg_dump --format=custom --file="$file"
 # The upload creates the folder, and any folder above it, when it does not exist yet.
 rclone copyto "$file" "$REMOTE:$BACKUP_REMOTE_FOLDER/$name"
-# Only after the upload, so the folder is never left without a backup. Only files named
-# like a backup are touched, whatever else the folder holds.
-rclone delete "$REMOTE:$BACKUP_REMOTE_FOLDER" --max-depth 1 \
-    --filter "- $name" --filter "+ $BACKUP_NAME_PATTERN" --filter "- *"
+# Only after the upload, so the newest backup is always among the kept ones. Only files
+# named like a backup are touched, whatever else the folder holds.
+rclone lsf --files-only --max-depth 1 "$REMOTE:$BACKUP_REMOTE_FOLDER" \
+    | sh /usr/local/bin/expired_backups.sh \
+    | while IFS= read -r expired; do
+        rclone deletefile "$REMOTE:$BACKUP_REMOTE_FOLDER/$expired"
+        echo "deleted old backup: $expired"
+    done
 
 date +%s > "$BACKUP_STATUS_FILE"
 echo "backup ok: $name ($(du -h "$file" | cut -f1))"

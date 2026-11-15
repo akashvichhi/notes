@@ -35,6 +35,7 @@ type TMessageKey =
   | 'NOTE_DELETE_FAILED'
   | 'TRASH_EMPTIED'
   | 'TRASH_EMPTY_FAILED'
+  | 'LIST_NOT_FOUND'
   | 'NOTE_DUPLICATE_FAILED'
   | 'NOTE_TAGS_FAILED'
   | 'NOTE_MOVE_FAILED'
@@ -81,6 +82,7 @@ export const MESSAGES: Readonly<Record<TMessageKey, string>> = {
   NOTE_DELETE_FAILED:     "Couldn't permanently delete note.",
   TRASH_EMPTIED:          'Trash emptied.',
   TRASH_EMPTY_FAILED:     "Couldn't empty the Trash.",
+  LIST_NOT_FOUND:         'That folder or tag no longer exists.',
   NOTE_DUPLICATE_FAILED:  "Couldn't duplicate note.",
   NOTE_TAGS_FAILED:       "Couldn't update tags on note.",
   NOTE_MOVE_FAILED:       "Couldn't move note to folder.",

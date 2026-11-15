@@ -7,8 +7,9 @@ import type { UseQueryResult } from '@tanstack/react-query'
 
 import type { TNotesPage } from '@src/api/notes_api'
 import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
+import { type IScopeFilter, useScopeFilter } from '@src/pages/notes/hooks/use_scope_filter'
 import { useNotesFilterQuery } from '@src/queries/notes_queries'
-import { useUiStore } from '@src/stores/ui_store'
+import type { TScope } from '@src/types/scope'
 
 /**
  * Hybrid filter. Loaded rows are filtered instantly with no loader; if the scope
@@ -16,6 +17,8 @@ import { useUiStore } from '@src/stores/ui_store'
  * the loaded page would silently miss notes and make them look deleted.
  */
 export interface IFilterInputProps {
+  scope:      TScope
+  scopeLabel: string
   hasMore:    boolean
   localCount: number
   totalCount: number
@@ -23,9 +26,9 @@ export interface IFilterInputProps {
 }
 
 export const FilterInput: React.NamedExoticComponent<IFilterInputProps> = memo(function FilterInput({
-  hasMore, localCount, totalCount, params,
+  scope, scopeLabel, hasMore, localCount, totalCount, params,
 }: IFilterInputProps): React.JSX.Element {
-  const { filter, setFilter, scope } = useUiStore()
+  const { filter, setFilter }: IScopeFilter = useScopeFilter(scope)
   const [debounced] = useDebouncedValue(filter, 250)
 
   const server: UseQueryResult<TNotesPage> = useNotesFilterQuery(scope, debounced, params, hasMore && debounced.trim().length > 0)
@@ -39,7 +42,7 @@ export const FilterInput: React.NamedExoticComponent<IFilterInputProps> = memo(f
     [setFilter],
   )
 
-  const placeholder: string = useMemo(() => `Filter in ${scope.label}`, [scope.label])
+  const placeholder: string = useMemo(() => `Filter in ${scopeLabel}`, [scopeLabel])
 
   const rightSection: React.JSX.Element | null = useMemo(() => {
     if (showSpinner) return <Loader size={14} />

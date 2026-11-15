@@ -20,11 +20,13 @@ import { StatusBar } from '@src/pages/notes/components/layout/status_bar'
 import { NoteList } from '@src/pages/notes/components/notes/note_list'
 import { SpotlightSearch } from '@src/pages/notes/components/search/spotlight_search'
 import { TopProgress } from '@src/pages/notes/components/top_progress'
+import { useMissingScopeRedirect } from '@src/pages/notes/hooks/use_missing_scope_redirect'
+import { type IScopeState, useScope } from '@src/pages/notes/hooks/use_scope'
 import { useCreateNote, useNote } from '@src/queries/notes_queries'
 import type { TCreateNoteMutation } from '@src/queries/notes_queries'
-import { notePath, ROUTE_PATHS } from '@src/routes/route_paths'
+import { notePath, scopePath } from '@src/routes/scope_location'
 import { useTabsStore } from '@src/stores/tabs_store'
-import { useUiStore } from '@src/stores/ui_store'
+import { type IUiState, type TView, useUiStore } from '@src/stores/ui_store'
 import type { INote } from '@src/types/api'
 import { EditorSkeleton } from '@src/ui/skeletons/skeletons'
 
@@ -32,19 +34,23 @@ import { EditorSkeleton } from '@src/ui/skeletons/skeletons'
 export const AppPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(function AppPage() {
   const qc: QueryClient = useQueryClient()
   const { uuid: routeUuid } = useParams<{ uuid: string }>()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const navigate: NavigateFunction = useNavigate()
   const isPhone: boolean = useIsPhone()
-  const { setView, scope } = useUiStore()
+  const setView: (view: TView) => void = useUiStore((s: IUiState) => s.setView)
+  const { scope, isMissing }: IScopeState = useScope()
   const { activeUuid, open: openTab } = useTabsStore()
   const createNote: TCreateNoteMutation = useCreateNote()
 
+  useMissingScopeRedirect(isMissing)
+
   // The URL and the active tab follow each other. A route that changed (a link,
   // a refresh, back/forward) opens its note; otherwise the URL follows the
-  // active tab, however it was chosen: list, tabs, search, closing a tab. Each
-  // note opened is a history entry, so Back and Forward step through them.
-  // Landing on `/` is replaced instead: otherwise Back would return to `/`,
-  // which would forward straight to the saved tab again.
+  // active tab, however it was chosen: list, tabs, search, closing a tab. The
+  // note opens under the list the URL shows (decision 13). Each note opened is
+  // a history entry, so Back and Forward step through them. Landing on a list
+  // without a note is replaced instead: otherwise Back would return to it,
+  // which would forward straight to the open tab again.
   const lastRouteUuid: React.RefObject<string | undefined> = useRef<string | undefined>(undefined)
   useEffect(() => {
     if (routeUuid !== lastRouteUuid.current) {
@@ -55,11 +61,11 @@ export const AppPage: React.MemoExoticComponent<() => React.JSX.Element> = memo(
       }
     }
 
-    const target: string = activeUuid ? notePath(activeUuid) : ROUTE_PATHS.HOME
-    if (pathname !== target) {
-      void navigate(target, { replace: pathname === ROUTE_PATHS.HOME })
+    const target: string = activeUuid ? notePath(activeUuid, scope) : scopePath(scope)
+    if (`${pathname}${search}` !== target) {
+      void navigate(target, { replace: !routeUuid })
     }
-  }, [routeUuid, activeUuid, pathname, navigate, openTab])
+  }, [routeUuid, activeUuid, pathname, search, scope, navigate, openTab])
 
   const { data: note, isLoading } = useNote(activeUuid)
 

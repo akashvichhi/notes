@@ -1,5 +1,5 @@
-import type { TScope } from '@src/stores/ui_store'
 import type { TUuid } from '@src/types/api'
+import type { TScope } from '@src/types/scope'
 
 export const BOOTSTRAP_KEY: readonly ['bootstrap'] = ['bootstrap'] as const
 export const NOTES_KEY: readonly ['notes'] = ['notes'] as const

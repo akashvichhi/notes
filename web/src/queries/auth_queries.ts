@@ -81,7 +81,7 @@ export function useLogout(): UseMutationResult<void, IApiError, void, unknown> {
       } catch {
         // ignore
       }
-      useUiStore.getState().setFilter('')
+      useUiStore.getState().clearFilter()
       useUiStore.getState().setView('list')
 
       await qc.cancelQueries()

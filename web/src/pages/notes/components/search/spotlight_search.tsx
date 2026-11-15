@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react'
+import { type NavigateFunction, useNavigate } from 'react-router'
 
 import { Progress, Text } from '@mantine/core'
 import { Spotlight, spotlight } from '@mantine/spotlight'
@@ -11,10 +12,9 @@ import { useDelayedLoading } from '@src/pages/notes/hooks/use_delayed_loading'
 import { useCreateNote } from '@src/queries/notes_queries'
 import type { TCreateNoteMutation } from '@src/queries/notes_queries'
 import { MIN_QUERY, useSearch } from '@src/queries/search_queries'
+import { scopePath } from '@src/routes/scope_location'
 import { useTabsStore } from '@src/stores/tabs_store'
 import type { ITabsState } from '@src/stores/tabs_store'
-import { useUiStore } from '@src/stores/ui_store'
-import type { TScope, IUiState } from '@src/stores/ui_store'
 import type { ISearchHit, TUuid } from '@src/types/api'
 
 import { HighlightTerms } from './highlight'
@@ -26,7 +26,7 @@ export const SpotlightSearch: React.MemoExoticComponent<() => React.JSX.Element>
   const { data, isFetching } = useSearch(query)
   const showBar: boolean = useDelayedLoading(isFetching)
   const openTab: (uuid: TUuid, title: string) => void = useTabsStore((s: ITabsState) => s.open)
-  const setScope: (s: TScope) => void = useUiStore((s: IUiState) => s.setScope)
+  const navigate: NavigateFunction = useNavigate()
   const createNote: TCreateNoteMutation = useCreateNote()
 
   const trimmedQuery: string = useMemo(() => query.trim(), [query])
@@ -37,9 +37,9 @@ export const SpotlightSearch: React.MemoExoticComponent<() => React.JSX.Element>
 
   const handleSeeAllResults: () => void = useCallback(() => {
     // Hand off to the list pane instead of competing with it.
-    setScope({ kind: 'search', q: trimmedQuery, label: `Results for “${trimmedQuery}”` })
+    void navigate(scopePath({ kind: 'search', q: trimmedQuery }))
     spotlight.close()
-  }, [setScope, trimmedQuery])
+  }, [navigate, trimmedQuery])
 
   const handleCreateEmptyNote: () => void = useCallback(() => {
     createNote.mutate({})
@@ -72,7 +72,7 @@ export const SpotlightSearch: React.MemoExoticComponent<() => React.JSX.Element>
 
         {data?.folders.map((f: { uuid: TUuid; name: string; }) => (
           <Spotlight.Action key={f.uuid} leftSection={<IconFolder size={18} />}
-            onClick={() => setScope({ kind: 'folder', uuid: f.uuid, label: f.name })}>
+            onClick={() => void navigate(scopePath({ kind: 'folder', uuid: f.uuid }))}>
             {f.name}
           </Spotlight.Action>
         ))}

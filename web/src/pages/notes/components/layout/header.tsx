@@ -9,6 +9,7 @@ import {
 
 import { useIsPhone } from '@src/hooks/use_is_phone'
 import { useRefreshFromServer } from '@src/pages/notes/hooks/use_refresh_from_server'
+import { type IScopeState, useScope } from '@src/pages/notes/hooks/use_scope'
 import { useMe } from '@src/queries/auth_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
 import type { ITab, ITabsState } from '@src/stores/tabs_store'
@@ -21,7 +22,8 @@ import { AccountMenu } from './account_menu'
 export const Header: React.MemoExoticComponent<() => React.JSX.Element> = memo(function Header() {
   const isPhone: boolean = useIsPhone()
   const { data: user } = useMe()
-  const { view, setView, toggleNav, scope } = useUiStore()
+  const { view, setView, toggleNav } = useUiStore()
+  const { label: scopeLabel }: IScopeState = useScope()
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const activeTab: ITab | undefined = useTabsStore((s: ITabsState) => s.tabs.find((t: ITab) => t.uuid === s.activeUuid))
   const isDirty: boolean = activeTab?.dirty ?? false
@@ -67,7 +69,7 @@ export const Header: React.MemoExoticComponent<() => React.JSX.Element> = memo(f
 
       {isPhone && (
         <Text truncate fw={600} size="md" style={{ flex: 1 }}>
-          {view === 'editor' && activeTitle ? activeTitle : scope.label}
+          {view === 'editor' && activeTitle ? activeTitle : scopeLabel}
         </Text>
       )}
 

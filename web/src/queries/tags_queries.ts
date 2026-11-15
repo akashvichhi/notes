@@ -3,11 +3,8 @@ import type { QueryClient, UseMutationResult } from '@tanstack/react-query'
 
 import type { IApiError } from '@src/api/api_client'
 import * as tagsApi from '@src/api/tags_api'
-import { ALL_NOTES_LABEL } from '@src/constants/labels'
 import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY } from '@src/constants/query_keys'
-import { useUiStore } from '@src/stores/ui_store'
-import type { TScope } from '@src/stores/ui_store'
 import type { IBootstrap, INote, ITag, TUuid } from '@src/types/api'
 import type { ISidebarItemContext } from '@src/types/mutation_context'
 import { getTagsArray } from '@src/utils/bootstrap_lists'
@@ -88,15 +85,6 @@ export function useRenameTag(): TRenameTagMutation {
       const oldTag: ITag | null | undefined = prevBootstrap ? getTagsArray(prevBootstrap.tags).find((t: ITag) => t.uuid === uuid) : null
       const oldSlug: string | undefined = oldTag?.slug
 
-      const currentScope: TScope = useUiStore.getState().scope
-      const wasActiveScope: boolean =
-        currentScope.kind === 'tag'
-        && (currentScope.slug === oldSlug || currentScope.label === oldTag?.name)
-      const prevScope: TScope | null = wasActiveScope ? currentScope : null
-      if (wasActiveScope) {
-        useUiStore.getState().setScope({ kind: 'tag', slug: newSlug, label: name })
-      }
-
       qc.setQueryData<IBootstrap>(BOOTSTRAP_KEY, (old: NoInfer<IBootstrap> | undefined) => {
         if (!old) return old
         const current: ITag[] = getTagsArray(old.tags)
@@ -115,12 +103,9 @@ export function useRenameTag(): TRenameTagMutation {
         }
       })
 
-      return { prevBootstrap, prevNotes, prevScope }
+      return { prevBootstrap, prevNotes }
     },
     onError: (_err: IApiError, _v: { uuid: string; name: string }, ctx: ISidebarItemContext | undefined) => {
-      if (ctx?.prevScope) {
-        useUiStore.getState().setScope(ctx.prevScope)
-      }
       if (ctx?.prevBootstrap) qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]: [readonly unknown[], unknown]) => qc.setQueryData(queryKey, data))
@@ -142,15 +127,6 @@ export function useDeleteTag(): TDeleteTagMutation {
 
       const currentTags: ITag[] = prevBootstrap ? getTagsArray(prevBootstrap.tags) : []
       const tagToDelete: ITag | undefined = currentTags.find((t: ITag) => t.uuid === uuid)
-
-      const currentScope: TScope = useUiStore.getState().scope
-      const wasActiveScope: boolean =
-        currentScope.kind === 'tag'
-        && (currentScope.slug === tagToDelete?.slug || currentScope.label === tagToDelete?.name)
-      const prevScope: TScope | null = wasActiveScope ? currentScope : null
-      if (wasActiveScope) {
-        useUiStore.getState().setScope({ kind: 'all', label: ALL_NOTES_LABEL })
-      }
 
       qc.setQueryData<IBootstrap>(BOOTSTRAP_KEY, (old: NoInfer<IBootstrap> | undefined) => {
         if (!old) return old
@@ -180,12 +156,9 @@ export function useDeleteTag(): TDeleteTagMutation {
         })
       }
 
-      return { prevBootstrap, prevNotes, prevScope }
+      return { prevBootstrap, prevNotes }
     },
     onError: (_err: IApiError, _v: string, ctx: ISidebarItemContext | undefined) => {
-      if (ctx?.prevScope) {
-        useUiStore.getState().setScope(ctx.prevScope)
-      }
       if (ctx?.prevBootstrap) qc.setQueryData(BOOTSTRAP_KEY, ctx.prevBootstrap)
       if (ctx?.prevNotes) {
         ctx.prevNotes.forEach(([queryKey, data]: [readonly unknown[], unknown]) => qc.setQueryData(queryKey, data))

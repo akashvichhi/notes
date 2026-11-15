@@ -21,6 +21,8 @@ import type { TNotesPage } from '@src/api/notes_api'
 import { DEFAULT_NOTE_TITLE } from '@src/constants/labels'
 import { MAX_NOTE_TITLE_LENGTH } from '@src/constants/limits'
 import { useIsPhone } from '@src/hooks/use_is_phone'
+import { type IScopeState, useScope } from '@src/pages/notes/hooks/use_scope'
+import { type IScopeFilter, useScopeFilter } from '@src/pages/notes/hooks/use_scope_filter'
 import { useBootstrap } from '@src/queries/bootstrap_queries'
 import {
   useCreateNote,
@@ -36,7 +38,7 @@ import {
 import type { TCreateNoteMutation, TDuplicateNoteMutation, TMoveNoteMutation, TRenameNoteMutation, TStarNoteMutation } from '@src/queries/notes_queries'
 import { useTabsStore } from '@src/stores/tabs_store'
 import type { ITabsState } from '@src/stores/tabs_store'
-import { useUiStore } from '@src/stores/ui_store'
+import { type IUiState, type TView, useUiStore } from '@src/stores/ui_store'
 import type { IBootstrap, IFolder, INote, INoteListItem, TUuid } from '@src/types/api'
 import { ListSkeleton } from '@src/ui/skeletons/skeletons'
 import { filterNotes } from '@src/utils/filter_notes'
@@ -56,7 +58,9 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
   activeUuid,
   onSelectNote,
 }: INoteListProps): React.JSX.Element {
-  const { scope, filter, setView } = useUiStore()
+  const setView: (view: TView) => void = useUiStore((s: IUiState) => s.setView)
+  const { scope, label: scopeLabel }: IScopeState = useScope()
+  const { filter }: IScopeFilter = useScopeFilter(scope)
   const isPhone: boolean = useIsPhone()
   const closeTab: (uuid: TUuid) => void = useTabsStore((s: ITabsState) => s.close)
 
@@ -202,7 +206,7 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
       <Group align="center" justify="space-between" wrap="nowrap">
         <Group align="baseline" gap="xs" style={{ minWidth: 0, flex: 1 }} wrap="nowrap">
           <Text truncate fw={700} size="sm">
-            {scope.label}
+            {scopeLabel}
           </Text>
           <Text c="dimmed" size="xs" style={{ flexShrink: 0 }}>
             {totalCount} {totalCount === 1 ? 'note' : 'notes'}
@@ -237,6 +241,8 @@ export const NoteList: React.NamedExoticComponent<INoteListProps> = memo(functio
         hasMore={Boolean(hasNextPage)}
         localCount={filtered.length}
         params={{}}
+        scope={scope}
+        scopeLabel={scopeLabel}
         totalCount={totalCount}
       />
 

@@ -9,11 +9,11 @@ import { MESSAGES } from '@src/constants/messages'
 import { BOOTSTRAP_KEY, NOTE_KEY, NOTES_KEY, queryKeys } from '@src/constants/query_keys'
 import { useTabsStore } from '@src/stores/tabs_store'
 import type { ITabsState } from '@src/stores/tabs_store'
-import type { TScope } from '@src/stores/ui_store'
 import type { IBootstrap, IFolder, INote, INoteListItem, ITag, TUuid } from '@src/types/api'
 import type {
   ICreateNoteContext, IDuplicateNoteContext, INoteEditContext, INoteListContext, INoteTagsContext, IRenameNoteContext,
 } from '@src/types/mutation_context'
+import type { TScope } from '@src/types/scope'
 import { getFoldersArray, getTagsArray } from '@src/utils/bootstrap_lists'
 import { showErrorToast, showSuccessToast } from '@src/utils/notifications'
 import { slugify } from '@src/utils/slugify'

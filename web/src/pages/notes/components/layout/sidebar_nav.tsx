@@ -1,4 +1,5 @@
 import { memo, useCallback, useState } from 'react'
+import { Link } from 'react-router'
 
 import {
   ActionIcon,
@@ -23,8 +24,11 @@ import {
 
 import { ALL_NOTES_LABEL, STARRED_LABEL, TRASH_LABEL } from '@src/constants/labels'
 import { MAX_FOLDER_NAME_LENGTH, MAX_TAG_NAME_LENGTH } from '@src/constants/limits'
-import { type TScope, useUiStore } from '@src/stores/ui_store'
+import { type IScopeState, useScope } from '@src/pages/notes/hooks/use_scope'
+import { ALL_SCOPE, scopePath } from '@src/routes/scope_location'
+import { type IUiState, type TView, useUiStore } from '@src/stores/ui_store'
 import type { INoteCounts, IFolder, ITag } from '@src/types/api'
+import type { TScope } from '@src/types/scope'
 import { stopEventPropagation } from '@src/utils/events'
 
 import { RenameItemModal } from './rename_item_modal'
@@ -52,20 +56,18 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
   onRenameTag,
   onDeleteTag,
 }: ISidebarNavProps): React.JSX.Element {
-  const { scope, setScope, setView } = useUiStore()
+  const { scope }: IScopeState = useScope()
+  const setView: (view: TView) => void = useUiStore((s: IUiState) => s.setView)
 
   const [creating, setCreating] = useState<'folder' | 'tag' | null>(null)
   const [draftName, setDraftName] = useState('')
   const [renameFolderTarget, setRenameFolderTarget] = useState<IFolder | null>(null)
   const [renameTagTarget, setRenameTagTarget] = useState<ITag | null>(null)
 
-  const pick: (next: TScope) => void = useCallback(
-    (next: TScope) => {
-      setScope(next)
-      setView('list')
-    },
-    [setScope, setView],
-  )
+  // The links change the URL; on a phone, choosing a list also shows it.
+  const showList: () => void = useCallback((): void => {
+    setView('list')
+  }, [setView])
 
   const commitInline: () => void = useCallback(() => {
     const name: string = draftName.trim()
@@ -80,29 +82,29 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
     setDraftName('')
   }, [draftName, creating, onCreateFolder, onCreateTag])
 
-  const isScopeActive: (kind: string, uuidOrSlug?: string) => boolean = (kind: string, uuidOrSlug?: string): boolean => {
-    if (scope.kind !== kind) return false
-    if (kind === 'folder') return (scope as { uuid?: string }).uuid === uuidOrSlug
-    if (kind === 'tag') return (scope as { slug?: string }).slug === uuidOrSlug
-    return true
-  }
+  // Two lists are the same list exactly when they have the same URL.
+  const isScopeActive: (candidate: TScope) => boolean = (candidate: TScope): boolean => scopePath(candidate) === scopePath(scope)
 
   return (
     <Stack gap={2} mb="md">
       <NavLink
-        active={isScopeActive('all')}
+        active={isScopeActive(ALL_SCOPE)}
+        component={Link}
         label={ALL_NOTES_LABEL}
         leftSection={<IconNote size={16} />}
         rightSection={<Text c="dimmed" size="xs">{counts?.all ?? 0}</Text>}
-        onClick={() => pick({ kind: 'all', label: ALL_NOTES_LABEL })}
+        to={scopePath(ALL_SCOPE)}
+        onClick={showList}
       />
 
       <NavLink
-        active={isScopeActive('starred')}
+        active={isScopeActive({ kind: 'starred' })}
+        component={Link}
         label={STARRED_LABEL}
         leftSection={<IconStar size={16} />}
         rightSection={<Text c="dimmed" size="xs">{counts?.starred ?? 0}</Text>}
-        onClick={() => pick({ kind: 'starred', label: STARRED_LABEL })}
+        to={scopePath({ kind: 'starred' })}
+        onClick={showList}
       />
 
       {/* Folders heading */}
@@ -143,7 +145,8 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
       {folders.map((f: IFolder) => (
         <NavLink
           key={f.uuid}
-          active={isScopeActive('folder', f.uuid)}
+          active={isScopeActive({ kind: 'folder', uuid: f.uuid })}
+          component={Link}
           label={f.name}
           leftSection={<IconFolder color={f.color ?? undefined} size={16} />}
           rightSection={
@@ -174,7 +177,8 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
               </Menu>
             </Group>
           }
-          onClick={() => pick({ kind: 'folder', uuid: f.uuid, label: f.name })}
+          to={scopePath({ kind: 'folder', uuid: f.uuid })}
+          onClick={showList}
         />
       ))}
 
@@ -216,13 +220,11 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
       <Group gap={4} px="xs" py={2}>
         {tags.map((t: ITag) => (
           <Group key={t.uuid} gap={2} wrap="nowrap">
-            <UnstyledButton
-              onClick={() => pick({ kind: 'tag', slug: t.slug, label: `#${t.name}` })}
-            >
+            <UnstyledButton component={Link} to={scopePath({ kind: 'tag', slug: t.slug })} onClick={showList}>
               <Badge
                 leftSection={<IconTag size={10} />}
                 size="sm"
-                variant={isScopeActive('tag', t.slug) ? 'filled' : 'light'}
+                variant={isScopeActive({ kind: 'tag', slug: t.slug }) ? 'filled' : 'light'}
               >
                 {t.name}
               </Badge>
@@ -252,11 +254,13 @@ export const SidebarNav: React.NamedExoticComponent<ISidebarNavProps> = memo(fun
       </Group>
 
       <NavLink
-        active={isScopeActive('trash')}
+        active={isScopeActive({ kind: 'trash' })}
+        component={Link}
         label={TRASH_LABEL}
         leftSection={<IconTrash size={16} />}
         rightSection={<Text c="dimmed" size="xs">{counts?.trashed ?? 0}</Text>}
-        onClick={() => pick({ kind: 'trash', label: TRASH_LABEL })}
+        to={scopePath({ kind: 'trash' })}
+        onClick={showList}
       />
 
       <RenameItemModal

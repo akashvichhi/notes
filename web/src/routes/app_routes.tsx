@@ -1,5 +1,5 @@
 import { type ComponentType, lazy, type LazyExoticComponent, type ReactNode } from 'react'
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, type RouteObject } from 'react-router'
 
 import { PageSkeleton } from '@src/ui/skeletons/page_skeleton'
 import { AppSkeleton } from '@src/ui/skeletons/skeletons'
@@ -8,7 +8,7 @@ import { GuestOnly } from './guest_route'
 import { RequireAuth } from './protected_route'
 import { RouteBoundary } from './route_boundary'
 import { RouteErrorBoundary } from './route_error'
-import { ROUTE_PATHS } from './route_paths'
+import { NOTES_PAGE_PATHS, ROUTE_PATHS } from './route_paths'
 
 type TLazyPage = LazyExoticComponent<ComponentType>
 
@@ -34,16 +34,11 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
     element:      <GuestOnly><RouteBoundary fallback={PAGE_FALLBACK}><RegisterPage /></RouteBoundary></GuestOnly>,
     errorElement: ROUTE_ERROR,
   },
-  {
-    path:         ROUTE_PATHS.HOME,
+  ...NOTES_PAGE_PATHS.map((path: string): RouteObject => ({
+    path,
     element:      <RequireAuth><RouteBoundary fallback={APP_FALLBACK}><AppPage /></RouteBoundary></RequireAuth>,
     errorElement: ROUTE_ERROR,
-  },
-  {
-    path:         ROUTE_PATHS.NOTE,
-    element:      <RequireAuth><RouteBoundary fallback={APP_FALLBACK}><AppPage /></RouteBoundary></RequireAuth>,
-    errorElement: ROUTE_ERROR,
-  },
+  })),
   {
     path:         ROUTE_PATHS.ACCESS_TOKENS,
     element:      <RequireAuth><RouteBoundary fallback={PAGE_FALLBACK}><AccessTokensPage /></RouteBoundary></RequireAuth>,

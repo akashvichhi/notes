@@ -1,20 +1,8 @@
 import { create } from 'zustand'
 import type { StoreApi, UseBoundStore } from 'zustand'
 
-import { ALL_NOTES_LABEL } from '@src/constants/labels'
-import type { TUuid } from '@src/types/api'
-
-
 export type TView = 'folders' | 'list' | 'editor'
 export type TSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
-
-export type TScope =
-  | { kind: 'all'; label: string }
-  | { kind: 'starred'; label: string }
-  | { kind: 'trash'; label: string }
-  | { kind: 'folder'; uuid: TUuid; label: string }
-  | { kind: 'tag'; slug: string; label: string }
-  | { kind: 'search'; q: string; label: string }
 
 export interface IEditorStats {
   words:              number
@@ -27,8 +15,9 @@ export interface IUiState {
   view:                 TView
   navOpen:              boolean
   listCollapsed:        boolean
-  scope:                TScope
   filter:               string
+  /** The list the filter was typed in (its URL): another list starts unfiltered. */
+  filterScopeKey:       string
   saveStatus:           TSaveStatus
   savedAt:              number | null
   editorStats:          IEditorStats | null
@@ -38,8 +27,8 @@ export interface IUiState {
   toggleNav:            () => void
   closeNav:             () => void
   toggleList:           () => void
-  setScope:             (s: TScope) => void
-  setFilter:            (f: string) => void
+  setFilter:            (filter: string, scopeKey: string) => void
+  clearFilter:          () => void
   setSaveStatus:        (saveStatus: TSaveStatus, savedAt?: number | null) => void
   setEditorStats:       (editorStats: IEditorStats | null) => void
   setRetrySave:         (retrySave: (() => Promise<void> | void) | null) => void
@@ -50,8 +39,8 @@ export const useUiStore: UseBoundStore<StoreApi<IUiState>> = create<IUiState>((s
   view:              'list',
   navOpen:           false,
   listCollapsed:     false,
-  scope:             { kind: 'all', label: ALL_NOTES_LABEL },
   filter:            '',
+  filterScopeKey:    '',
   saveStatus:        'idle',
   savedAt:           null,
   editorStats:       null,
@@ -61,12 +50,9 @@ export const useUiStore: UseBoundStore<StoreApi<IUiState>> = create<IUiState>((s
   toggleNav:         () => set((s: IUiState) => ({ navOpen: !s.navOpen })),
   closeNav:          () => set({ navOpen: false }),
   toggleList:        () => set((s: IUiState) => ({ listCollapsed: !s.listCollapsed })),
-  // Changing scope always clears the filter: a sticky filter makes notes
-  // look deleted.
-  setScope:          (scope: TScope) =>
-    set({ scope, filter: '' }),
-  setFilter:     (filter: string) => set({ filter }),
-  setSaveStatus: (saveStatus: TSaveStatus, savedAt: number | null | undefined) =>
+  setFilter:         (filter: string, filterScopeKey: string) => set({ filter, filterScopeKey }),
+  clearFilter:       () => set({ filter: '', filterScopeKey: '' }),
+  setSaveStatus:     (saveStatus: TSaveStatus, savedAt: number | null | undefined) =>
     set((s: IUiState) => ({ saveStatus, savedAt: savedAt !== undefined ? savedAt : s.savedAt })),
   setEditorStats:       (editorStats: IEditorStats | null) => set({ editorStats }),
   setRetrySave:         (retrySave: (() => Promise<void> | void) | null) => set({ retrySave }),

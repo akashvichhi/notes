@@ -1,6 +1,5 @@
 import type { QueryKey } from '@tanstack/react-query'
 
-import type { TScope } from '@src/stores/ui_store'
 import type { IBootstrap, INote } from '@src/types/api'
 
 /** What optimistic updates save so they can roll back: every cached list they touched. */
@@ -43,9 +42,8 @@ export interface ICreateSidebarItemContext {
   tempUuid: string
 }
 
-/** Renaming or deleting a folder or tag; the open scope may point at it. */
+/** Renaming or deleting a folder or tag. */
 export interface ISidebarItemContext {
   prevBootstrap: IBootstrap | undefined
   prevNotes:     TQuerySnapshot
-  prevScope:     TScope | null
 }

@@ -33,7 +33,7 @@ web/src/
 └── stores/        zustand stores for client-only UI state (open tabs, panels); never server data
 ```
 
-Pages: login, register, notes (list and editor, `/` and `/notes/:uuid`), access_tokens.
+Pages: login, register, notes (list and editor: `/`, `/starred`, `/trash`, `/folders/:folderUuid`, `/tags/:slug`, `/search?q=`, each optionally followed by `/notes/:uuid`), access_tokens.
 
 ## Naming
 - Files and folders: `snake_case` (`note_row.tsx`, `use_autosave.ts`).
@@ -120,7 +120,7 @@ Pages: login, register, notes (list and editor, `/` and `/notes/:uuid`), access_
 - A disabled, loading button prevents double submits.
 
 ## User feedback and UX
-- **The URL holds navigation state:** the open note is `/notes/:uuid`. Opening a note from the list navigates to its route.
+- **The URL holds navigation state:** the open list and the open note, nested (`/trash/notes/:uuid`; decision 13). Opening a note from the list navigates to its route. `routes/scope_location.ts` is the only place that maps a list to a URL and back; **NEVER** keep the list in a store.
 - Every mutation shows a failure notification (the API's `message`), wired once in the mutation hooks or a shared helper; actions the user can't see happen (move, trash, token created) also show a success notification. Texts come from `constants/messages.ts`.
 - Permanent delete always asks first, in a confirmation modal naming the record; the confirm button shows the loading state. Moving to Trash needs no confirmation because it can be undone.
 - A failed query shows `error_state` with a retry button; an empty result shows `empty_state` with a hint.
@@ -163,7 +163,7 @@ Goal: **no JavaScript error ever leaves the user on a blank screen.** Use `react
 
 ## Routing and code splitting
 - Every page is lazy-loaded with `React.lazy` and rendered through the route boundary. **NEVER** import a page statically.
-- Paths and path builders live in `routes/route_paths.ts` (`ROUTE_PATHS`, `notePath(uuid)`). **NEVER** hardcode a path string.
+- Paths live in `routes/route_paths.ts` (`ROUTE_PATHS`) and the list and note URL builders in `routes/scope_location.ts` (`scopePath(scope)`, `notePath(uuid, scope)`). **NEVER** hardcode a path string.
 - Vendor code is split into long-cached chunks (React, Mantine, React Query, icons, Tiptap, highlight), and every build file is named by its content hash under `assets/`. The chunk checks test specific packages before generic ones (`@tanstack/react-query` and `@tabler/icons-react` contain "react").
 - `vite build` writes into `web/dist`, which the API serves (decision 9).
 

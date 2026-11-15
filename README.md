@@ -147,7 +147,7 @@ Numbered decision records are in [`docs/decisions.md`](docs/decisions.md).
 
 ## How it was built
 
-I built this app with a coding agent, working from documents I wrote first: a product spec ([`docs/requirements.md`](docs/requirements.md)), an architecture document ([`docs/architecture.md`](docs/architecture.md)) and a task-by-task plan ([`docs/PLAN.md`](docs/PLAN.md)). Delivery was split into gated stages, and I reviewed and tested every stage before the next one started. The workflow is described in [`docs/BUILDING-WITH-AN-AGENT.md`](docs/BUILDING-WITH-AN-AGENT.md).
+I built this app with a coding agent, working from documents I wrote first: a product spec ([`docs/requirements.md`](docs/requirements.md)) and an architecture document ([`docs/architecture.md`](docs/architecture.md)). Delivery was split into gated stages, and I reviewed and tested every stage before the next one started.
 
 ## Local development
 

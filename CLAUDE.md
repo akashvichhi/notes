@@ -14,7 +14,6 @@ Stack rules load from each app folder's `CLAUDE.md` when working in that folder.
 ```
 notes-app/
 ├── api/            FastAPI API (Python, SQLAlchemy, Postgres) and MCP server; serves the web build
-├── api-laravel/    the previous Laravel API, kept until the cutover is verified, then deleted
 ├── web/            React app (TypeScript, Vite, Mantine, Tiptap); builds into web/dist
 ├── docker/         images and the Caddy config for Docker Compose
 ├── docs/           requirements, architecture, decisions

@@ -1,6 +1,6 @@
 /**
  * The node and mark names of the editor's schema (extensions.ts), as the
- * markdown converter needs them. Mirrors api-laravel/app/Support/Content/EditorSchema.php:
+ * markdown converter needs them. Mirrors api/app/content/editor_schema.py:
  * keep the two in step.
  */
 

@@ -13,7 +13,6 @@
 **/.coverage
 **/htmlcov
 api/tests
-api-laravel
 web/coverage
 web/dist
 assets

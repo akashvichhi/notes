@@ -16,9 +16,21 @@ DEMO_CONTENT_PATH: Final = Path(__file__).parent / "data" / "demo_content.toml"
 
 
 @dataclass(frozen=True)
+class DemoFolder:
+    # A misspelt key in the file is an error, not a silently missing value.
+    __pydantic_config__ = ConfigDict(extra="forbid")
+
+    name: str
+    # "#rrggbb", or None for the default colour.
+    color: str | None = None
+
+
+@dataclass(frozen=True)
 class DemoNote:
+    # Set like a title typed in the editor, so it stays when the body is edited.
+    title: str
     body: JsonObject
-    # A name from DemoContent.folders, or None for a note outside any folder.
+    # A folder name from DemoContent.folders, or None for a note outside any folder.
     folder: str | None
     tags: tuple[str, ...]
     starred: bool
@@ -26,16 +38,16 @@ class DemoNote:
 
 @dataclass(frozen=True)
 class DemoContent:
-    folders: tuple[str, ...]
+    folders: tuple[DemoFolder, ...]
     # In the order the note list shows them.
     notes: tuple[DemoNote, ...]
 
 
 @dataclass(frozen=True)
 class _NoteSource:
-    # A misspelt key in the file is an error, not a silently missing value.
     __pydantic_config__ = ConfigDict(extra="forbid")
 
+    title: str
     markdown: str
     folder: str | None = None
     tags: tuple[str, ...] = field(default_factory=tuple)
@@ -46,7 +58,7 @@ class _NoteSource:
 class _ContentSource:
     __pydantic_config__ = ConfigDict(extra="forbid")
 
-    folders: tuple[str, ...]
+    folders: tuple[DemoFolder, ...]
     notes: tuple[_NoteSource, ...]
 
 
@@ -57,7 +69,7 @@ def load_demo_content() -> DemoContent:
     return DemoContent(
         folders=source.folders,
         notes=tuple(
-            DemoNote(markdown_to_document(note.markdown), note.folder, note.tags, note.starred)
+            DemoNote(note.title, markdown_to_document(note.markdown), note.folder, note.tags, note.starred)
             for note in source.notes
         ),
     )

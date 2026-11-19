@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.content.demo_content import DemoContent, DemoNote
+from app.content.demo_content import DemoContent, DemoFolder, DemoNote
 from app.content.markdown_to_document import markdown_to_document
 from app.core.security import PasswordHasher, hash_token
 from app.models.access_token_model import AccessToken
@@ -26,16 +26,22 @@ from tests.fakes import START_TIME
 
 DEMO = DemoAccount(email="demo@example.com", password="Demo@2026", name="Demo")
 CONTENT = DemoContent(
-    folders=("Ideas", "Work"),
+    folders=(DemoFolder(name="Ideas", color="#fab005"), DemoFolder(name="Work", color="#7950f2")),
     notes=(
+        # Titles that differ from the body's first line, so a derived title would show.
         DemoNote(
-            body=markdown_to_document("# Launch plan\n\nShip the beta on Friday."),
+            title="Launch plan",
+            body=markdown_to_document("Ship the beta on Friday."),
             folder="Work",
             tags=("Planning", "Launch"),
             starred=True,
         ),
         DemoNote(
-            body=markdown_to_document("A loose thought"), folder=None, tags=("Planning",), starred=False
+            title="Loose thought",
+            body=markdown_to_document("Nothing decided yet"),
+            folder=None,
+            tags=("Planning",),
+            starred=False,
         ),
     ),
 )
@@ -121,11 +127,14 @@ def test_reset_replaces_changed_and_deleted_content_with_the_sample_set(db_sessi
     folders = db_session.scalars(
         select(Folder).where(Folder.user_id == user.id).order_by(Folder.position)
     ).all()
-    assert [(folder.name, folder.parent_id) for folder in folders] == [("Ideas", None), ("Work", None)]
+    assert [(folder.name, folder.color, folder.parent_id) for folder in folders] == [
+        ("Ideas", "#fab005", None),
+        ("Work", "#7950f2", None),
+    ]
     tags = db_session.scalars(select(Tag.slug).where(Tag.user_id == user.id).order_by(Tag.slug)).all()
     assert tags == ["launch", "planning"]
     notes = _notes_of(db_session, user)
-    assert sorted(note.title for note in notes) == ["A loose thought", "Launch plan"]
+    assert sorted(note.title for note in notes) == ["Launch plan", "Loose thought"]
     assert all(note.deleted_at is None for note in notes)
     assert result == DemoResetResult(user_id=user.id, created=False, folders=2, tags=2, notes=2)
 
@@ -137,9 +146,10 @@ def test_reset_stores_each_sample_note_like_a_note_written_in_the_editor(db_sess
     note = db_session.scalar(select(Note).where(Note.user_id == user.id, Note.title == "Launch plan"))
     assert note is not None
     assert note.body == CONTENT.notes[0].body
-    assert note.plain_text == "Launch plan Ship the beta on Friday."
-    assert note.word_count == 7
-    assert not note.title_locked
+    assert note.plain_text == "Ship the beta on Friday."
+    assert note.word_count == 5
+    # Locked, as for a title typed in the editor: editing the body never renames the note.
+    assert note.title_locked
     assert note.is_starred
     work = db_session.scalar(select(Folder).where(Folder.id == note.folder_id))
     assert work is not None

@@ -208,5 +208,10 @@ class NoteRepository:
         trashed_ids = _scoped(NoteScope.TRASHED).where(Note.user_id == user_id).with_only_columns(Note.id)
         self._session.execute(delete(Note).where(Note.id.in_(trashed_ids)))
 
+    def delete_all_of_user(self, user_id: int) -> None:
+        """Active and trashed; their note_tag rows go with them (ON DELETE CASCADE)."""
+        note_ids = _scoped(NoteScope.ANY).where(Note.user_id == user_id).with_only_columns(Note.id)
+        self._session.execute(delete(Note).where(Note.id.in_(note_ids)))
+
     def _count(self, query: Select[Note]) -> int:
         return self._session.scalar(select(func.count()).select_from(query.subquery())) or 0

@@ -9,6 +9,7 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 LIST_SEPARATOR = ","
 ALLOWED_ORIGINS_REQUIRED = "ALLOWED_ORIGINS must list the site's origin in production."
+DEMO_ACCOUNT_INCOMPLETE = "DEMO_PASSWORD and DEMO_NAME must be set when DEMO_EMAIL is."
 
 
 class AppEnvironment(StrEnum):
@@ -29,6 +30,11 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = True
     web_dist_dir: Path = Path("../web/dist")
     log_level: str = "INFO"
+    # The public demo account that scripts/reset_demo.py restores every night; an empty
+    # email turns the reset off.
+    demo_email: str = ""
+    demo_password: str = ""
+    demo_name: str = ""
 
     @field_validator("allowed_origins", "cors_origins", mode="before")
     @classmethod
@@ -43,6 +49,13 @@ class Settings(BaseSettings):
         """Without an allowed origin every browser write would get 403, so refuse to start instead."""
         if self.is_production and not self.allowed_origins:
             raise ValueError(ALLOWED_ORIGINS_REQUIRED)
+        return self
+
+    @model_validator(mode="after")
+    def require_complete_demo_account(self) -> Self:
+        """A reset without a password or a name would leave the demo account unusable."""
+        if self.demo_email and not (self.demo_password and self.demo_name):
+            raise ValueError(DEMO_ACCOUNT_INCOMPLETE)
         return self
 
     @property

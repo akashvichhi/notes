@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import exists, select, text
+from sqlalchemy import delete, exists, select, text
 from sqlalchemy.orm import Session
 
 from app.models.folder_model import Folder
@@ -71,6 +71,9 @@ class FolderRepository:
     def delete(self, folder: Folder) -> None:
         self._session.delete(folder)
         self._session.flush()
+
+    def delete_all_of_user(self, user_id: int) -> None:
+        self._session.execute(delete(Folder).where(Folder.user_id == user_id))
 
     def flush(self) -> None:
         self._session.flush()

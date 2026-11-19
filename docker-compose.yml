@@ -20,6 +20,10 @@ x-api: &api
     SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:?set SESSION_COOKIE_SECURE in .env}
     WEB_DIST_DIR: ${WEB_DIST_DIR:?set WEB_DIST_DIR in .env}
     LOG_LEVEL: ${LOG_LEVEL:?set LOG_LEVEL in .env}
+    # Empty DEMO_EMAIL turns the nightly demo reset off.
+    DEMO_EMAIL: ${DEMO_EMAIL:-}
+    DEMO_PASSWORD: ${DEMO_PASSWORD:-}
+    DEMO_NAME: ${DEMO_NAME:-}
     # Built from the root .env's values, so the password and the origin are set only once.
     ALLOWED_ORIGINS: ${APP_ORIGIN:?set APP_ORIGIN in .env}
     DATABASE_URL: postgresql+psycopg://notes:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/notes
@@ -45,6 +49,17 @@ services:
     command: ["sh", "/usr/local/bin/run_daily_at.sh", "23:00", "python", "-m", "scripts.prune_expired"]
     depends_on:
       # The app runs the migrations on start; the scheduler waits for them.
+      app:
+        condition: service_healthy
+
+  demo-reset:
+    <<: *api
+    container_name: notes-demo-reset
+    # Every day at 23:20 India time, after the 23:00 cleanup and the 23:10 backup
+    # (decision 14).
+    command: ["sh", "/usr/local/bin/run_daily_at.sh", "23:20", "python", "-m", "scripts.reset_demo"]
+    depends_on:
+      # Like the scheduler, it waits for the app's migrations.
       app:
         condition: service_healthy
 

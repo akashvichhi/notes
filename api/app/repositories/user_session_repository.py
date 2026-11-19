@@ -34,6 +34,9 @@ class UserSessionRepository:
             delete(UserSession).where(UserSession.user_id == user_id, UserSession.id != keep_session_id)
         )
 
+    def delete_all_of_user(self, user_id: int) -> None:
+        self._session.execute(delete(UserSession).where(UserSession.user_id == user_id))
+
     def delete_expired(self, now: datetime) -> int:
         """Sessions whose expiry has passed; the number deleted."""
         deleted = self._session.scalars(

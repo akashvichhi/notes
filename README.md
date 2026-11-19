@@ -2,6 +2,7 @@
 
 A web notes app with a rich-text editor, folders, tags and search. It runs on a FastAPI API with Postgres and includes an MCP server, so AI assistants can read and write your notes.
 
+- **Live app:** https://my-notes.app
 - **Demo account:** demo@example.com / Demo@2026
 
 ![Notes](assets/screenshots/app.png)

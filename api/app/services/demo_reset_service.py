@@ -112,8 +112,10 @@ class DemoResetService:
 
     def _add_folders(self, user: User) -> dict[str, int]:
         added = [
-            self._folders.add(Folder(user_id=user.id, name=name, position=position))
-            for position, name in enumerate(self._content.folders)
+            self._folders.add(
+                Folder(user_id=user.id, name=folder.name, color=folder.color, position=position)
+            )
+            for position, folder in enumerate(self._content.folders)
         ]
         return {folder.name: folder.id for folder in added}
 
@@ -121,8 +123,8 @@ class DemoResetService:
         note = Note(
             user_id=user.id,
             folder_id=None if sample.folder is None else folder_ids[sample.folder],
-            # The title follows the first heading, as for a note written in the editor.
-            title_locked=False,
+            title=sample.title,
+            title_locked=True,
             is_starred=sample.starred,
             version=1,
         )

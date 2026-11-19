@@ -1,147 +1,171 @@
 # The demo account's sample content, restored every night by scripts/reset_demo.py
 # (decision 14). Notes are Markdown, converted with the same converter as the MCP tools;
-# the note list shows them in this order. Describe only what the app really does.
+# the note list shows them in this order. Describe only what the app really does: it is
+# a web app, with no desktop or mobile apps.
 
-folders = ["Ideas", "Personal", "Work"]
+folders = [
+    { name = "Ideas", color = "#fab005" },
+    { name = "Personal", color = "#40c057" },
+    { name = "Work", color = "#7950f2" },
+]
 
 [[notes]]
+title = "Q4 product roadmap"
+folder = "Work"
 starred = true
-tags = ["Getting started"]
+tags = ["planning", "product"]
 markdown = '''
-# Welcome to the demo
+Three themes for the quarter, in priority order. Each one has an owner and a single success metric.
 
-This account is **shared**: everyone who signs in as the demo sees the same notes. Change anything you like. Every night at 23:20 India time the account goes back to these sample notes, so the next visitor starts fresh.
+## Goals
 
-Things to try:
+- [x] Ship version-checked saves with the conflict sheet
+- [x] Add personal access tokens and the MCP server
+- [ ] Note templates beta
+- [ ] Shared folders (design only, no build yet)
 
-- [ ] Open a folder in the sidebar, or create one of your own
-- [ ] Add a tag to a note, then open the tag to see every note that has it
-- [ ] Star a note so it shows up under **Starred**
-- [ ] Press **Ctrl+K** and search all notes
-- [ ] Delete a note, then restore it from the **Trash**
+## Milestones
 
-Please don't keep anything private here: other visitors can read it until the next reset.
+| Milestone | Owner | Target | Status |
+| --- | --- | --- | --- |
+| Sync conflict sheet | Priya | 10 Oct | Done |
+| Access tokens page | Rahul | 24 Oct | Done |
+| Templates beta | Meera | 21 Nov | In progress |
+| Shared folders spec | Dev | 12 Dec | Not started |
+
+## Risks
+
+<mark>The templates beta depends on the editor upgrade</mark>, which has taken 3 to 7 days to test before. Start it a week before the target date.
+
+> Keep scope small: one theme finished beats three half-done.
+
+## Notes from the kickoff
+
+Autosave sends the whole body with the version it was based on, so a burst of typing goes out as one request. Check it under a slow connection:
+
+```ts
+const result = await saveNote(note)
+console.log(result.state) // "saved" | "conflict"
+```
 '''
 
 [[notes]]
+title = "Weekly team sync, 12 Nov"
 folder = "Work"
-starred = true
-tags = ["Planning"]
+tags = ["meetings"]
 markdown = '''
-# This week
+**Attendees:** Priya, Rahul, Meera, Dev
 
-## Must do
+## Updates
 
-- [x] Send the project brief to the team
-- [ ] Review the design for the settings page
-- [ ] Book a room for Thursday's planning session
-
-## Nice to have
-
-- [ ] Tidy up the shared folder
-- [ ] Write down the questions for the next one-to-one
-
-> Plan the week on Monday, check it on Wednesday, close it on Friday.
-'''
-
-[[notes]]
-folder = "Work"
-tags = ["Meetings", "Planning"]
-markdown = '''
-# Project kickoff
-
-**Attendees:** product, design, engineering
+- The access tokens page is live; testing it with Claude through MCP this week.
+- Search now ignores words under 3 characters, and the UI says so.
+- Two support tickets about the conflict sheet wording. Both resolved.
 
 ## Decisions
 
-| Topic | Decision | Owner |
-|---|---|---|
-| Scope | Launch with search and tags; sharing comes later | Product |
-| Design | Reuse the existing colour palette | Design |
-| Release | A first beta at the end of next month | Engineering |
+1. Keep "Save mine as a copy" as the default button.
+2. Move the release from Thursday to Monday, to avoid weekend support.
 
-## Follow-ups
+## Action items
 
-1. Product writes the one-page brief.
-2. Design shares the first sketches next week.
-3. Engineering estimates the search work.
+- [ ] Rahul: update the token page copy
+- [ ] Meera: send the beta invite list
+- [x] Dev: share the shared-folders draft
 '''
 
 [[notes]]
-folder = "Ideas"
-tags = ["Getting started"]
+title = "Launch checklist"
+folder = "Work"
+tags = ["planning"]
 markdown = '''
-# What the editor can do
+Before every release:
 
-Text can be **bold**, *italic*, <u>underlined</u>, ~~struck through~~ or <mark>highlighted</mark>, and [links](https://example.com) work too.
+- [x] All checks green on `master`
+- [x] Changelog written
+- [x] Database backup taken
+- [ ] Release notes posted
+- [ ] Smoke test in Chrome, Firefox and Safari
+- [ ] Announce in the team channel
 
-## Lists
-
-- Bullet lists
-  - with nested items
-- [ ] Task lists you can tick off
-
-## Code
-
-```python
-def greet(name: str) -> str:
-    return f"Hello, {name}!"
-```
-
-## Tables
-
-| Shortcut | Action |
-|---|---|
-| Ctrl+B | Bold |
-| Ctrl+I | Italic |
-| Ctrl+K | Search notes |
-
-The editor counts words and characters as you type.
+If anything fails after release, roll back first and investigate second.
 '''
 
 [[notes]]
-folder = "Ideas"
-tags = ["Writing"]
-markdown = '''
-# Blog post ideas
-
-- Why I keep notes in folders *and* tags
-- A weekly review in fifteen minutes
-- What I learned from writing every day for a month
-- Letting an AI assistant search my notes through MCP
-
-Pick one, write a rough draft, and don't edit while drafting.
-'''
-
-[[notes]]
+title = "Trip to Udaipur"
 folder = "Personal"
-tags = ["Reading"]
+tags = ["travel"]
 markdown = '''
-# Reading list
+Long weekend, 19–22 December.
 
-## Reading now
+## Plan
 
-- *Deep Work* by Cal Newport
+| Day | Morning | Evening |
+| --- | --- | --- |
+| Fri | Arrive, check in | Lake Pichola boat ride |
+| Sat | City Palace | Bagore Ki Haveli show |
+| Sun | Sajjangarh | Ambrai Ghat dinner |
+| Mon | Shopping, Hathi Pol | Train home |
 
-## Next
+## Packing
 
-1. *The Pragmatic Programmer* by Andrew Hunt and David Thomas
-2. *Thinking, Fast and Slow* by Daniel Kahneman
-3. *How to Take Smart Notes* by Sönke Ahrens
-
-## Finished
-
-- ~~*Atomic Habits* by James Clear~~
+- [ ] Light jacket (evenings are cold)
+- [ ] Power bank
+- [ ] Camera and spare battery
+- [x] Train tickets booked
 '''
 
 [[notes]]
+title = "Masala chai"
 folder = "Personal"
+starred = true
+tags = ["recipes"]
 markdown = '''
-# Weekend trip checklist
+Serves 2. About 10 minutes.
 
-- [ ] Train tickets
-- [ ] Water bottle
-- [ ] Rain jacket
-- [ ] Snacks for the journey
-- [x] Ask someone to water the plants
+## Ingredients
+
+- 1 cup water, 1 cup milk
+- 2 tsp loose black tea
+- 2 tsp sugar, or to taste
+- 1 inch ginger, crushed
+- 3 green cardamom pods, 2 cloves, a small piece of cinnamon
+
+## Method
+
+1. Boil the water with the ginger and spices for 2 minutes.
+2. Add the tea and simmer for 1 minute.
+3. Add the milk and sugar; bring to a boil twice.
+4. Strain and serve hot.
+
+*Tip:* crush the cardamom just before using it. The flavour fades fast.
+'''
+
+[[notes]]
+title = "Books to read"
+folder = "Personal"
+tags = ["reading"]
+markdown = '''
+- [x] *Designing Data-Intensive Applications*, Martin Kleppmann
+- [x] *A Philosophy of Software Design*, John Ousterhout
+- [ ] *The Pragmatic Programmer*, Hunt and Thomas
+- [ ] *Thinking in Systems*, Donella Meadows
+- [ ] *Deep Work*, Cal Newport
+
+Next up: **The Pragmatic Programmer**.
+'''
+
+[[notes]]
+title = "Ideas for the side project"
+folder = "Ideas"
+tags = ["ideas"]
+markdown = '''
+Loose ideas, not commitments.
+
+- A weekly digest of starred notes, sent on Sunday morning
+- Templates for meeting notes and trip plans
+- Quick capture with a keyboard shortcut, from any page
+- Markdown export of a whole folder
+
+Most promising: **quick capture**. It fits how people actually take notes, in a hurry.
 '''

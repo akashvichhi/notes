@@ -55,9 +55,9 @@ services:
   demo-reset:
     <<: *api
     container_name: notes-demo-reset
-    # Every day at 23:20 India time, after the 23:00 cleanup and the 23:10 backup
-    # (decision 14).
-    command: ["sh", "/usr/local/bin/run_daily_at.sh", "23:20", "python", "-m", "scripts.reset_demo"]
+    # Every day at 23:05 India time, after the 23:00 cleanup and before the 23:10
+    # backup, so the backup holds the reset demo account (decision 14).
+    command: ["sh", "/usr/local/bin/run_daily_at.sh", "23:05", "python", "-m", "scripts.reset_demo"]
     depends_on:
       # Like the scheduler, it waits for the app's migrations.
       app:
@@ -70,7 +70,7 @@ services:
       context: .
       dockerfile: docker/backup/Dockerfile
     container_name: notes-backup
-    # Every day at 23:10 India time, after the cleanup (decision 11).
+    # Every day at 23:10 India time, after the cleanup and the demo reset (decisions 11, 14).
     command: ["sh", "/usr/local/bin/start_backups.sh", "23:10"]
     environment:
       PGHOST: postgres

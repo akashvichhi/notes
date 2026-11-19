@@ -3,7 +3,7 @@
 A web notes app with a rich-text editor, folders, tags and search. It runs on a FastAPI API with Postgres and includes an MCP server, so AI assistants can read and write your notes.
 
 - **Live app:** https://my-notes.app
-- **Demo account:** demo@example.com / Demo@2026. The account is shared by every visitor and resets to its sample notes every night at 23:20 IST, so don't keep anything private there.
+- **Demo account:** demo@example.com / Demo@2026. The account is shared by every visitor and resets to its sample notes every night at 23:05 IST, so don't keep anything private there.
 
 ![Notes](assets/screenshots/app.png)
 
@@ -154,7 +154,7 @@ I built this app with a coding agent, working from documents I wrote first: a pr
 
 ### Run the whole app with Docker
 
-`docker-compose.yml` runs everything: Postgres, the FastAPI API (which also serves the React build), a scheduler that removes expired sessions and tokens every day at 23:00 India time, a nightly database backup at 23:10, a reset of the public demo account at 23:20 (`demo-reset`; leave `DEMO_EMAIL` empty in `.env` to turn it off), and Caddy in front. Every service restarts after a crash and whenever Docker starts. The reasons are in decisions 10 and 14 of [`docs/decisions.md`](docs/decisions.md).
+`docker-compose.yml` runs everything: Postgres, the FastAPI API (which also serves the React build), a scheduler that removes expired sessions and tokens every day at 23:00 India time, a reset of the public demo account at 23:05 (`demo-reset`; leave `DEMO_EMAIL` empty in `.env` to turn it off), a nightly database backup at 23:10, and Caddy in front. Every service restarts after a crash and whenever Docker starts. The reasons are in decisions 10 and 14 of [`docs/decisions.md`](docs/decisions.md).
 
 ```sh
 cp .env.example .env

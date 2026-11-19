@@ -156,7 +156,7 @@ once, and a CRDT would replace readable JSON with binary state the server can't 
 - **Expired sessions and tokens** are rejected when used and removed every day at 23:00
   India time by the scheduler container (`api/scripts/prune_expired.py`, run by
   `docker/scripts/run_daily_at.sh`).
-- **The demo account** (`DEMO_EMAIL`) is reset every day at 23:20 India time by the
+- **The demo account** (`DEMO_EMAIL`) is reset every day at 23:05 India time by the
   `demo-reset` container (`api/scripts/reset_demo.py`): its sessions end, its tokens go,
   and its notes, folders and tags are replaced by the sample content, in one
   transaction (decision 14).

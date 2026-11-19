@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from uuid import UUID, uuid7
 
-from sqlalchemy import exists, select
+from sqlalchemy import delete, exists, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -64,6 +64,9 @@ class TagRepository:
         self._session.add(tag)
         self._session.flush()
         return tag
+
+    def delete_all_of_user(self, user_id: int) -> None:
+        self._session.execute(delete(Tag).where(Tag.user_id == user_id))
 
     def delete(self, tag: Tag) -> None:
         # The note_tag rows go with it (ON DELETE CASCADE); the notes stay.

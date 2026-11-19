@@ -70,7 +70,7 @@ class NoteService:
         )
         if request.uuid is not None:
             note.uuid = request.uuid
-        _apply_body(note, json.loads(EMPTY_DOCUMENT_JSON))
+        apply_note_body(note, json.loads(EMPTY_DOCUMENT_JSON))
         note_id = self._notes.add(note).id
         self._commit()
         return CreateResult(self._resource(note_id), created=True)
@@ -85,7 +85,7 @@ class NoteService:
             is_starred=False,
             version=1,
         )
-        _apply_body(note, request.body if request.body is not None else json.loads(EMPTY_DOCUMENT_JSON))
+        apply_note_body(note, request.body if request.body is not None else json.loads(EMPTY_DOCUMENT_JSON))
         note.tags = self._tags.resolve_names(user, request.tag_names)
         return self._commit_and_load(self._notes.add(note).id)
 
@@ -97,7 +97,7 @@ class NoteService:
             note = self._notes.lock(note.id)
             if note.deleted_at is not None or note.version != request.version:
                 raise NoteConflictError(NoteResource.from_model(note))
-            _apply_body(note, request.body)
+            apply_note_body(note, request.body)
             note.version += 1
         # After the body, so a title sent with it wins over the derived one.
         if request.title is not None:
@@ -184,7 +184,7 @@ class NoteService:
             raise ConflictError from None
 
 
-def _apply_body(note: Note, body: JsonObject) -> None:
+def apply_note_body(note: Note, body: JsonObject) -> None:
     """Stores the body and what is derived from it; the title follows the body until the
     user sets one."""
     text = derive_note_text(body)

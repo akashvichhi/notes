@@ -1,0 +1,147 @@
+# The demo account's sample content, restored every night by scripts/reset_demo.py
+# (decision 14). Notes are Markdown, converted with the same converter as the MCP tools;
+# the note list shows them in this order. Describe only what the app really does.
+
+folders = ["Ideas", "Personal", "Work"]
+
+[[notes]]
+starred = true
+tags = ["Getting started"]
+markdown = '''
+# Welcome to the demo
+
+This account is **shared**: everyone who signs in as the demo sees the same notes. Change anything you like. Every night at 23:20 India time the account goes back to these sample notes, so the next visitor starts fresh.
+
+Things to try:
+
+- [ ] Open a folder in the sidebar, or create one of your own
+- [ ] Add a tag to a note, then open the tag to see every note that has it
+- [ ] Star a note so it shows up under **Starred**
+- [ ] Press **Ctrl+K** and search all notes
+- [ ] Delete a note, then restore it from the **Trash**
+
+Please don't keep anything private here: other visitors can read it until the next reset.
+'''
+
+[[notes]]
+folder = "Work"
+starred = true
+tags = ["Planning"]
+markdown = '''
+# This week
+
+## Must do
+
+- [x] Send the project brief to the team
+- [ ] Review the design for the settings page
+- [ ] Book a room for Thursday's planning session
+
+## Nice to have
+
+- [ ] Tidy up the shared folder
+- [ ] Write down the questions for the next one-to-one
+
+> Plan the week on Monday, check it on Wednesday, close it on Friday.
+'''
+
+[[notes]]
+folder = "Work"
+tags = ["Meetings", "Planning"]
+markdown = '''
+# Project kickoff
+
+**Attendees:** product, design, engineering
+
+## Decisions
+
+| Topic | Decision | Owner |
+|---|---|---|
+| Scope | Launch with search and tags; sharing comes later | Product |
+| Design | Reuse the existing colour palette | Design |
+| Release | A first beta at the end of next month | Engineering |
+
+## Follow-ups
+
+1. Product writes the one-page brief.
+2. Design shares the first sketches next week.
+3. Engineering estimates the search work.
+'''
+
+[[notes]]
+folder = "Ideas"
+tags = ["Getting started"]
+markdown = '''
+# What the editor can do
+
+Text can be **bold**, *italic*, <u>underlined</u>, ~~struck through~~ or <mark>highlighted</mark>, and [links](https://example.com) work too.
+
+## Lists
+
+- Bullet lists
+  - with nested items
+- [ ] Task lists you can tick off
+
+## Code
+
+```python
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+```
+
+## Tables
+
+| Shortcut | Action |
+|---|---|
+| Ctrl+B | Bold |
+| Ctrl+I | Italic |
+| Ctrl+K | Search notes |
+
+The editor counts words and characters as you type.
+'''
+
+[[notes]]
+folder = "Ideas"
+tags = ["Writing"]
+markdown = '''
+# Blog post ideas
+
+- Why I keep notes in folders *and* tags
+- A weekly review in fifteen minutes
+- What I learned from writing every day for a month
+- Letting an AI assistant search my notes through MCP
+
+Pick one, write a rough draft, and don't edit while drafting.
+'''
+
+[[notes]]
+folder = "Personal"
+tags = ["Reading"]
+markdown = '''
+# Reading list
+
+## Reading now
+
+- *Deep Work* by Cal Newport
+
+## Next
+
+1. *The Pragmatic Programmer* by Andrew Hunt and David Thomas
+2. *Thinking, Fast and Slow* by Daniel Kahneman
+3. *How to Take Smart Notes* by Sönke Ahrens
+
+## Finished
+
+- ~~*Atomic Habits* by James Clear~~
+'''
+
+[[notes]]
+folder = "Personal"
+markdown = '''
+# Weekend trip checklist
+
+- [ ] Train tickets
+- [ ] Water bottle
+- [ ] Rain jacket
+- [ ] Snacks for the journey
+- [x] Ask someone to water the plants
+'''
